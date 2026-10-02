@@ -28,6 +28,7 @@ option.cir{background:#dbeafe;color:#0b3d91;font-weight:600}.cirl{color:#1f6feb;
 .seg{display:flex;gap:0;border:1px solid var(--bd);border-radius:6px;overflow:hidden}.seg button{border:0;background:var(--pn);color:var(--tx);padding:4px 10px;font:inherit;cursor:pointer}.seg button.on{background:var(--ac);color:#fff}
 .sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:8px 0}.sum div{background:var(--pn);border:1px solid var(--bd);border-radius:6px;padding:6px 8px}.sum b{display:block;font-size:16px;font-variant-numeric:tabular-nums}
 .ret{border-left:3px solid var(--br);padding-left:8px;margin-top:6px}
+.cells{display:flex;flex-wrap:wrap;gap:6px 10px}.cell{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.9em}.cell input{width:64px}.cell select{width:58px}
 .asg{background:var(--bg);border-radius:6px;padding:6px 8px;margin:6px 0}.asg table{width:auto}.asg td,.asg th{border:0;padding:2px 4px;text-align:center}.asg select{width:52px}
 .ed{display:flex;align-items:center;gap:8px;margin:6px 0;font-weight:600}.ed .seg button{min-width:34px}
 </style>
@@ -129,7 +130,7 @@ function ensure(){const nb=Math.max(1,Math.min(20,+$('nb').value||1));while(S.ba
  while(S.cA.length<nb+1)S.cA.push('A');S.cA.length=nb+1;while(S.bA.length<nb)S.bA.push('A');S.bA.length=nb;
  while(S.P.length<nb+1)S.P.push(0);S.P.length=nb+1}
 function buildGeo(){ensure();const nb=S.bays.length;
- $('bays').innerHTML='<table class="gt"><tr>'+S.bays.map((b,i)=>`<th>Luz ${i+1} [m]</th>`).join('')+'</tr><tr>'+S.bays.map((b,i)=>`<td><input type="number" step="0.1" data-b="${i}" value="${b}"></td>`).join('')+'</tr></table>';
+ $('bays').innerHTML='<div class="cells">'+S.bays.map((b,i)=>`<label class="cell"><b>Luz ${i+1} [m]</b><input type="number" step="0.1" data-b="${i}" value="${b}"></label>`).join('')+'</div>';
  $('bays').querySelectorAll('[data-b]').forEach(e=>e.onchange=()=>{S.bays[e.dataset.b]=+e.value;run()});
  $('pts').innerHTML='<table class="gt"><tr>'+S.P.map((p,i)=>`<th>Col ${i+1}</th>`).join('')+'</tr><tr>'+S.P.map((p,i)=>`<td><input type="number" step="0.1" data-p="${i}" value="${p}"></td>`).join('')+'</tr></table>';
  $('pts').querySelectorAll('[data-p]').forEach(e=>e.onchange=()=>{S.P[e.dataset.p]=+e.value;run()});}
@@ -154,7 +155,7 @@ const cMode=()=>$('cMode').value,bMode=()=>$('bMode').value;
 const ccfg=i=>S.CT[cMode()=='igual'?S.eC:(S.cA[i]||'A')],bcfg=i=>S.BT[bMode()=='igual'?S.eB:(S.bA[i]||'A')];
 function buildAsg(){ensure();
  const mk=(id,mode,list,lbl,ed,key)=>{const box=$(id);if(mode!='dist'){box.innerHTML='';return}
-  box.innerHTML=`<div class="asg"><table><tr>${list.map((v,i)=>`<th>${lbl} ${i+1}</th>`).join('')}</tr><tr>${list.map((v,i)=>`<td><select data-i="${i}">${['A','B','C'].map(x=>`<option ${x==v?'selected':''}>${x}</option>`).join('')}</select></td>`).join('')}</tr></table>
+  box.innerHTML=`<div class="asg"><div class="cells">${list.map((v,i)=>`<label class="cell"><b>${lbl} ${i+1}</b><select data-i="${i}">${['A','B','C'].map(x=>`<option ${x==v?'selected':''}>${x}</option>`).join('')}</select></label>`).join('')}</div>
   <div class="ed">Editando el tipo <div class="seg">${['A','B','C'].map(x=>`<button data-e="${x}" class="${x==S[ed]?'on':''}">${x}</button>`).join('')}</div></div>
   <div class="sm">Elegí qué tipo lleva cada ${lbl.toLowerCase()} y después editá cada tipo con los botones A, B, C. Los datos de abajo (y sus perfiles) corresponden al tipo marcado.</div></div>`;
   box.querySelectorAll('select').forEach(s=>s.onchange=()=>{list[s.dataset.i]=s.value;run()});
