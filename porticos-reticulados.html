@@ -236,6 +236,14 @@ function model(){ensure();saveEd();const nb=S.bays.length,H=+$('H').value,X=[0];
    const xl=X[i]-zc/2,xr=X[i]+zc/2,Lc=hs.map(y=>node(xl,y)),Rc=hs.map(y=>node(xr,y));
    for(let k=0;k<hs.length-1;k++){add({a:Lc[k],b:Lc[k+1],role:'cch'},c);add({a:Rc[k],b:Rc[k+1],role:'cch'},c)}
    const e0=E.length;lace(Lc,Rc,c.pc,false,E,'c',[true,false]);for(let k=e0;k<E.length;k++){E[k].cf=c;E[k].pk=c.prof[E[k].role]}
+   // nudo viga-columna: las barras horizontales de la columna a la altura de los cordones de una viga reticulada
+   // son la continuación de esos cordones (mismo perfil, continuas), no montantes de la columna
+   const adj=[i,i-1].filter(j=>j>=0&&j<nb&&B[j].ret);
+   hs.forEach((y,k)=>{let bj=null,role=null;
+    for(const j of adj){if(Math.abs(y-H)<1e-6){bj=B[j];role='bt';break}if(!B[j].art&&Math.abs(y-B[j].yb)<1e-6){bj=B[j];role='bb';break}}
+    if(!bj)return;let e=E.slice(e0).find(x=>(x.a==Lc[k]&&x.b==Rc[k])||(x.a==Rc[k]&&x.b==Lc[k]));
+    if(!e){e={a:Lc[k],b:Rc[k]};E.push(e)}
+    e.role=role;e.cf=bj.b;e.pk=bj.b.prof[role];e.ri=false;e.rj=false;e.nudo=true})
    if(!info.c){const p=hs[1]-hs[0];info.c={n:hs.length-1,p,a:Math.atan(zc/p)*180/Math.PI,i}}
    colTop.push({l:xl,r:xr})}}
  // vigas
@@ -339,7 +347,7 @@ function verif(){const CD=colData();const{E}=M,Fy=+$('vFy').value,Fu=+$('vFu').v
   const k=+$(web?'vkd':'vk').value;let Lx=e.L,Ly=e.L;
   if(e.role=='cw'){const cd=CD.out[CD.ci(e)];Lx=H*(cd&&isFinite(cd.k)?cd.k:99)/k;Ly=Math.min(H,+$('vLc').value||H)}
   if(e.role=='bw'){Lx=e.span;Ly=Math.min(e.span,+$('vLb').value||e.span)}
-  if(e.role=='bt')Ly=Math.max(e.L,+$('vLb').value||e.L);if(e.role=='bb')Ly=Math.max(e.L,+$('vLbb').value||e.L);
+  if(!e.nudo&&e.role=='bt')Ly=Math.max(e.L,+$('vLb').value||e.L);if(!e.nudo&&e.role=='bb')Ly=Math.max(e.L,+$('vLbb').value||e.L);
   if(e.role=='cch')Ly=Math.max(e.L,+$('vLc').value||e.L);
   Lx*=k;Ly*=k;
   const row=`<td>${i+1}</td><td style="text-align:left">${ROLE[e.role]}${tyl(e)}</td><td style="text-align:left">${p[0]}</td><td>${f2(e.L)}</td><td>${f2(Lx)}</td><td>${f2(Ly)}</td>`;
@@ -402,7 +410,8 @@ const TABS=[['mod','Modelo'],['n','Axiles N'],['m','Momentos M'],['v','Cortes V'
 function tabs(){$('tabs').innerHTML=TABS.map(([k,n])=>`<button class="${S.tab==k?'on':''}" data-k="${k}">${n}</button>`).join('');
  $('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.tab=b.dataset.k;tabs();draw()})}
 const isWeb=r=>/[cb][dm]$/.test(r),isCol=r=>r[0]=='c';
-function tyl(e){const c=e.role[0]=='c';if((c?cMode():bMode())!='dist')return '';const T=c?S.CT:S.BT,k=Object.keys(T).find(x=>T[x]===e.cf);return k?` (${k})`:''}
+function tyl(e){if(e.nudo)return ' (en nudo con columna)'+tyl0(e);return tyl0(e)}
+function tyl0(e){const c=e.role[0]=='c';if((c?cMode():bMode())!='dist')return '';const T=c?S.CT:S.BT,k=Object.keys(T).find(x=>T[x]===e.cf);return k?` (${k})`:''}
 function draw(){const svg=$('svg'),W=svg.clientWidth||900,Hs=620,{N,E,X}=M,H=M.H;
  const xmin=Math.min(...N.map(n=>n.x)),xmax=Math.max(...N.map(n=>n.x)),Lx=xmax-xmin,pad=80,sc=Math.min((W-2*pad)/Lx,(Hs-2*pad-30)/H);
  const ox=(W-Lx*sc)/2-xmin*sc,oy=Hs-pad-30,px=x=>ox+x*sc,py=y=>oy-y*sc;
