@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Pórticos Reticulados</title>
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Pórticos Reticulados</title>
 <style>
 :root{--bg:#f4f5f7;--pn:#fff;--tx:#1d2330;--mu:#6b7385;--bd:#d8dce3;--ac:#1f6feb;--t:#1a8f4c;--c:#d0342c;--col:#334;--bm:#5a4bb5;--br:#c77a00;--inp:#fffbe6}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#14171d;--pn:#1d2129;--tx:#e6e9ef;--mu:#9aa3b5;--bd:#343a46}}
@@ -28,6 +28,11 @@ option.cir{background:#dbeafe;color:#0b3d91;font-weight:600}.cirl{color:#1f6feb;
 .seg{display:flex;gap:0;border:1px solid var(--bd);border-radius:6px;overflow:hidden}.seg button{border:0;background:var(--pn);color:var(--tx);padding:4px 10px;font:inherit;cursor:pointer}.seg button.on{background:var(--ac);color:#fff}
 .sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:8px 0}.sum div{background:var(--pn);border:1px solid var(--bd);border-radius:6px;padding:6px 8px}.sum b{display:block;font-size:16px;font-variant-numeric:tabular-nums}
 .ret{border-left:3px solid var(--br);padding-left:8px;margin-top:6px}
+#selInfo:empty{display:none}#selInfo{background:var(--pn);border:2px solid #00a3c4;border-radius:8px;padding:8px 10px;margin:6px 0;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline}
+#selInfo b.t{font-size:14px}#selInfo .kv{font-variant-numeric:tabular-nums}#selInfo .kv span{color:var(--mu);font-size:11px;margin-right:4px}
+#selInfo button{margin-left:auto}
+tr[data-e]{cursor:pointer}tr[data-e]:hover td{background:rgba(0,163,196,.08)}tr.selr td{background:rgba(0,163,196,.22)!important;font-weight:600}
+.hit{cursor:pointer}
 .cells{display:flex;flex-wrap:wrap;gap:6px 10px}.cell{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.9em}.cell input{width:64px}.cell select{width:58px}
 .asg{background:var(--bg);border-radius:6px;padding:6px 8px;margin:6px 0}.asg table{width:auto}.asg td,.asg th{border:0;padding:2px 4px;text-align:center}.asg select{width:52px}
 .ed{display:flex;align-items:center;gap:8px;margin:6px 0;font-weight:600}.ed .seg button{min-width:34px}
@@ -107,10 +112,11 @@ option.cir{background:#dbeafe;color:#0b3d91;font-weight:600}.cirl{color:#1f6feb;
 </div>
 
 <div>
-<div class="tabs" id="tabs"></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between"><div class="tabs" id="tabs"></div><button class="bt" id="memBtn" title="Descarga un documento con datos, figuras, esfuerzos y verificaciones">Descargar memoria de cálculo</button></div><div class="sm" id="memMsg"></div>
 <div class="ctl" id="ctl"></div>
 <div id="stat"></div>
 <div class="sum" id="sum"></div>
+<div id="selInfo"></div>
 <svg id="svg"></svg>
 <div class="pn" style="margin-top:10px"><div id="tbl"></div></div>
 </div></div>
@@ -340,7 +346,8 @@ function globCols(CD,Fy,Es,toKN){const{E,N,H}=M,o=v=>v/toKN,u=uF(),um=uM(),n0=Ma
   let Pdd=NaN;if(dg){const pd=dg.sec.p,kd=+$('vkd').value,lcd=kd*d/Math.min(pd[3],pd[4]||pd[3])/Math.PI*Math.sqrt(Fy/Es),qd=qFac(pd[0],pd[1],Fy,Es).Q,lqd=lcd*Math.sqrt(qd),F2=lqd<=1.5?qd*Math.pow(0.658,lqd*lqd)*Fy:0.877*Fy/(lcd*lcd);Pdd=0.85*F2*pd[1]/10}
   h+=`<tr><td>${c.i+1}</td><td>${f2(o(Pu))}</td><td>${f2(o(Mu))}</td><td>${f2(l0,0)}</td><td>${f2(l1,0)}</td><td>${f2(lm,0)}</td><td>${f2(o(Pcm),0)}</td><td>${f2(e0,1)}</td><td>${f2(o(Ms))}</td><td>${f2(o(Pu1))}</td><td>${f2(o(Pd1))}</td><td style="font-weight:600;color:${r>1?'var(--c)':'inherit'}">${f2(r,2)} ${r<=1?'<b style="color:var(--t)">OK</b>':'<b style="color:var(--c)">NO</b>'}</td><td>${f2(o(Veu))}</td><td>${f2(o(Nd))} / ${isFinite(Pdd)?f2(o(Pdd)):'—'}</td></tr>`});
  return h+`</table><div class="sm">Pu y Mu: esfuerzos de primer orden en el panel inferior (Mu = (N der − N izq)/2 · z). λ0 = kL/ro con ro = z/2; λ1 según Figura E.6.6 (n0 = ${n0}); λm = √(λ0² + λ1²) (E.6.7); Pcm = π²·E·Ag/λm² (E.6.6); e0 = kL/500; Ms = (Pu·e0 + Mu)/(1 − Pu/Pcm) (E.6.5 con el momento de primer orden, H.5); Pu1 = Pu/2 + Ms/h (E.6.3); Pd1 con L1 = largo de panel y r mínimo del cordón (E.6.8, E.6.9). Celosía: Veu = π/400 · Pu/(1 − Pu/Pcm) (E.6.10, E.6.11); sumarlo al corte del análisis si corresponde.</div>`}
-function verif(){const CD=colData();const{E}=M,Fy=+$('vFy').value,Fu=+$('vFu').value,U=+$('vU').value,Es=+$('E').value,H=M.H;
+let VR=[];
+function verif(){VR=[];const CD=colData();const{E}=M,Fy=+$('vFy').value,Fu=+$('vFu').value,U=+$('vU').value,Es=+$('E').value,H=M.H;
  const u=uF(),um=uM(),toKN=UF();const ok=b=>b?'<b style="color:var(--t)">OK</b>':'<b style="color:var(--c)">NO</b>';let nOk=0,nNo=0,worst=null;const compRows=[],SUM={};const sum=(e,p,it,good)=>{const g=ROLE[e.role]+tyl(e)+' · '+p;const o=SUM[g]||(SUM[g]={n:0,no:0,it:-1,i:0});o.n++;if(!good)o.no++;if(it>o.it){o.it=it;o.i=E.indexOf(e)}};
  let h=`<table><tr><th>#</th><th>Barra</th><th>Perfil</th><th>L [m]</th><th>Lx·k [m]</th><th>Ly·k [m]</th><th>Nu [${u}]</th><th>Mu [${um}]</th><th>λx</th><th>λy</th><th>Q</th><th>Pd [${u}]</th><th>Td [${u}]</th><th>Md [${um}]</th><th>Interacción</th><th>Estado</th></tr>`;
  E.forEach((e,i)=>{const p=e.sec.p,A=p[1],rx=p[3],ry=p[4],Zx=p[5],web=isWeb(e.role);
@@ -351,18 +358,18 @@ function verif(){const CD=colData();const{E}=M,Fy=+$('vFy').value,Fu=+$('vFu').v
   if(e.role=='cch')Ly=Math.max(e.L,+$('vLc').value||e.L);
   Lx*=k;Ly*=k;
   const row=`<td>${i+1}</td><td style="text-align:left">${ROLE[e.role]}${tyl(e)}</td><td style="text-align:left">${p[0]}</td><td>${f2(e.L)}</td><td>${f2(Lx)}</td><td>${f2(Ly)}</td>`;
-  if(!ry){h+=`<tr class="vrow" data-ok="2" data-it="-1" style="color:var(--mu)">${row}<td colspan="10">Faltan ry o Z en la tabla: no se verifica</td></tr>`;return}
+  if(!ry){VR[i]={na:true};h+=`<tr class="vrow" data-e="${i}" data-ok="2" data-it="-1" style="color:var(--mu)">${row}<td colspan="10">Faltan ry o Z en la tabla: no se verifica</td></tr>`;return}
   const Nk=e.N*toKN,Mk=Math.max(Math.abs(e.M1),Math.abs(e.M2))*toKN;
   if(e.comp){const c=e.comp,Pex=Math.PI**2*c.EIx/(Lx*Lx),Pey=Math.PI**2*c.EIy/(Ly*Ly),Pe=Math.min(Pex,Pey),ra=c.Pno/Pe,Pn=ra<=2.25?c.Pno*Math.pow(0.658,ra):0.877*Pe;
-   const Pd=0.75*Pn,Td=c.Td,Md=0.9*c.Mn,rr=Nk<0?-Nk/Pd:Nk/Td,mm=Mk/Md,it=rr>=0.2?rr+8/9*mm:rr/2+mm,good=it<=1&&!c.bad;good?nOk++:nNo++;if(!worst||it>worst.it)worst={it,i};sum(e,p[0]+' + H-'+e.cf.fc,it,good);
+   const Pd=0.75*Pn,Td=c.Td,Md=0.9*c.Mn,rr=Nk<0?-Nk/Pd:Nk/Td,mm=Mk/Md,it=rr>=0.2?rr+8/9*mm:rr/2+mm,good=it<=1&&!c.bad;VR[i]={it,good,Pd,Td,Md};good?nOk++:nNo++;if(!worst||it>worst.it)worst={it,i};sum(e,p[0]+' + H-'+e.cf.fc,it,good);
    const o=v=>v/toKN;compRows.push({i,name:p[0]+' + H-'+e.cf.fc,c,Pex,Pey,Pn,it});
-   h+=`<tr class="vrow" data-ok="${good?1:0}" data-it="${it}" style="background:rgba(122,122,122,.10)">${row.replace(p[0],p[0]+' + H-'+e.cf.fc)}<td style="color:${Nk>=0?'var(--t)':'var(--c)'}">${f2(o(Nk))}</td><td>${f2(o(Mk))}</td><td colspan="2" title="Pe = π²·EIeff/(KL)², eje más débil">Pe = ${f2(o(Pe),0)}</td><td title="Clase a compresión, Tabla I1.1a">${c.cls}</td><td>${f2(o(Pd))}</td><td>${f2(o(Td))}</td><td>${f2(o(Md))}</td><td style="color:${it>1?'var(--c)':'inherit'};font-weight:600">${f2(it,2)}</td><td>${ok(good)}</td></tr>`;return}
+   h+=`<tr class="vrow" data-e="${i}" data-ok="${good?1:0}" data-it="${it}" style="background:rgba(122,122,122,.10)">${row.replace(p[0],p[0]+' + H-'+e.cf.fc)}<td style="color:${Nk>=0?'var(--t)':'var(--c)'}">${f2(o(Nk))}</td><td>${f2(o(Mk))}</td><td colspan="2" title="Pe = π²·EIeff/(KL)², eje más débil">Pe = ${f2(o(Pe),0)}</td><td title="Clase a compresión, Tabla I1.1a">${c.cls}</td><td>${f2(o(Pd))}</td><td>${f2(o(Td))}</td><td>${f2(o(Md))}</td><td style="color:${it>1?'var(--c)':'inherit'};font-weight:600">${f2(it,2)}</td><td>${ok(good)}</td></tr>`;return}
   const lx=Lx*100/rx,ly=Ly*100/ry,lc=Math.max(lx,ly)/Math.PI*Math.sqrt(Fy/Es),q=qFac(p[0],A,Fy,Es),Q=q.Q,lq=lc*Math.sqrt(Q);
   const Fcr=lq<=1.5?Q*Math.pow(0.658,lq*lq)*Fy:0.877*Fy/(lc*lc),Pd=0.85*Fcr*A/10,Td=Math.min(0.9*Fy*A,0.75*Fu*U*A)/10,Md=Zx?0.9*Fy*Zx/1000:0;
   const r=Nk<0?-Nk/Pd:Nk/Td,mm=Md?Mk/Md:(Mk>1e-6?Infinity:0),it=r>=0.2?r+8/9*mm:r/2+mm,esb=Math.max(lx,ly)<=200||Nk>=0;
-  const good=esb&&it<=1&&!q.bad;good?nOk++:nNo++;if(!worst||it>worst.it)worst={it,i};sum(e,p[0],it,good);
+  const good=esb&&it<=1&&!q.bad;VR[i]={it,good,Pd,Td,Md,esb};good?nOk++:nNo++;if(!worst||it>worst.it)worst={it,i};sum(e,p[0],it,good);
   const o=v=>v/toKN;
-  h+=`<tr class="vrow" data-ok="${good?1:0}" data-it="${it}">${row}<td style="color:${Nk>=0?'var(--t)':'var(--c)'}">${f2(o(Nk))}</td><td>${f2(o(Mk))}</td><td>${f2(lx,0)}</td><td style="color:${Math.max(lx,ly)>200&&Nk<0?'var(--c)':'inherit'}">${f2(ly,0)}</td><td title="${q.txt}">${f2(Q,3)}</td><td>${f2(o(Pd))}</td><td>${f2(o(Td))}</td><td>${Md?f2(o(Md)):'—'}</td><td style="color:${it>1?'var(--c)':'inherit'};font-weight:600">${f2(it,2)}</td><td>${ok(good)}</td></tr>`});
+  h+=`<tr class="vrow" data-e="${i}" data-ok="${good?1:0}" data-it="${it}">${row}<td style="color:${Nk>=0?'var(--t)':'var(--c)'}">${f2(o(Nk))}</td><td>${f2(o(Mk))}</td><td>${f2(lx,0)}</td><td style="color:${Math.max(lx,ly)>200&&Nk<0?'var(--c)':'inherit'}">${f2(ly,0)}</td><td title="${q.txt}">${f2(Q,3)}</td><td>${f2(o(Pd))}</td><td>${f2(o(Td))}</td><td>${Md?f2(o(Md)):'—'}</td><td style="color:${it>1?'var(--c)':'inherit'};font-weight:600">${f2(it,2)}</td><td>${ok(good)}</td></tr>`});
 let det='';if(compRows.length){const o=v=>v/toKN,u2=uF(),seen=new Set(),rows=compRows.sort((a,b)=>b.it-a.it).filter(x=>{const k=x.name;if(seen.has(k))return false;seen.add(k);return true});
  det='<h4 style="margin-top:14px">Columnas rellenas de hormigón — AISC 360-22 capítulo I (barra más solicitada)</h4><table><tr><th>#</th><th>Perfil</th><th>λ</th><th>λp / λr</th><th>Clase comp. / flex.</th><th>Ec [MPa]</th><th>C3</th><th>EIeff,x [kN·m²]</th><th>Pp</th><th>Pno</th><th>Pe,x / Pe,y</th><th>φcPn</th><th>Mp [kNm]</th><th>φbMn [kNm]</th></tr>'+
  rows.map(x=>{const c=x.c;return `<tr><td>${x.i+1}</td><td style="text-align:left">${x.name}</td><td>${f2(c.lam,1)}</td><td>${f2(c.lp,1)} / ${f2(c.lr,1)}</td><td>${c.cls} / ${c.clsb}</td><td>${f2(c.Ec,0)}</td><td>${f2(c.C3,3)}</td><td>${f2(c.EIx,0)}</td><td>${f2(o(c.Pp),1)}</td><td>${f2(o(c.Pno),1)}</td><td>${f2(o(x.Pex),0)} / ${f2(o(x.Pey),0)}</td><td>${f2(o(0.75*x.Pn),1)}</td><td>${f2(c.Mp,1)}</td><td>${f2(0.9*c.Mn,1)}</td></tr>`}).join('')+
@@ -375,6 +382,77 @@ let det='';if(compRows.length){const o=v=>v/toKN,u2=uF(),seen=new Set(),rows=com
 function vfApply(){const t=$('vfTab');if(!t)return;const only=$('vfNo').checked,srt=$('vfSort').value,rows=[...t.querySelectorAll('tr.vrow')];
  rows.sort((a,b)=>srt=='it'?(+b.dataset.it)-(+a.dataset.it):(+a.cells[0].textContent)-(+b.cells[0].textContent)).forEach(r=>r.parentNode.appendChild(r));
  let v=0;rows.forEach(r=>{const show=!only||r.dataset.ok=='0';r.hidden=!show;if(show)v++});$('vfCnt').textContent=`mostrando ${v} de ${rows.length}`}
+
+
+// ---------- memoria de cálculo ----------
+function memSVG(kind){const prev=S.tab,sel=S.sel;S.tab=kind;S.sel=null;S.mem=true;draw();const svg=$('svg').cloneNode(true);S.mem=false;S.tab=prev;S.sel=sel;
+ svg.removeAttribute('id');svg.setAttribute('width','100%');svg.setAttribute('xmlns','http://www.w3.org/2000/svg');svg.setAttribute('style','background:#fff;border:1px solid #ccc;border-radius:6px');return svg.outerHTML}
+function memTable(html){const d=document.createElement('div');d.innerHTML=html;d.querySelectorAll('.vfbar,input,select,button').forEach(x=>x.remove());d.querySelectorAll('[hidden]').forEach(x=>x.hidden=false);d.querySelectorAll('[data-e]').forEach(x=>x.removeAttribute('data-e'));return d.innerHTML}
+async function memoria(){if(RS.err){$('memMsg').textContent='Corregí el error del modelo antes de generar la memoria.';return}
+ const E=M.E,N=M.N,u=uF(),um=uM(),toKN=UF(),H=M.H,fecha=new Date().toLocaleDateString('es-AR'),proy=$('gp').value.trim(),nom=$('gn').value.trim();
+ const vh=verif(),R=RS.R,U=RS.U;
+ const tbl=(head,rows)=>`<table><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table>`;
+ const pn=([f,i])=>DB[f][i][0],pat=v=>(PAT.find(p=>p[0]==v)||['',v])[1];
+ const usedC=[...new Set(M.C.map(x=>x.c))],usedB=[...new Set(M.B.map(x=>x.b))],keyOf=(T,o)=>Object.keys(T).find(x=>T[x]===o)||'A';
+ const cDesc=c=>c.ct=='llena'?`Alma llena · ${pn(c.prof.cw)}${c.fill=='1'?` relleno de hormigón H-${c.fc}`:''}`:`Reticulada · z = ${f2(c.zc)} m · α = ${c.ac}° · ${pat(c.pc)} · cordones ${pn(c.prof.cch)}${c.fill=='1'?` rellenos H-${c.fc}`:''} · diagonales ${pn(c.prof.cd)} · montantes ${pn(c.prof.cm)}`;
+ const bDesc=b=>b.bt=='llena'?`Alma llena · ${pn(b.prof.bw)} · unión ${$('bcon').value=='rig'?'rígida':'articulada'}`:`Reticulada · z = ${f2(b.zb)} m · α = ${b.ab}° · ${pat(b.pb)} · unión ${b.bj=='art'?'articulada (solo cordón superior)':'empotrada (ambos cordones)'} · c. superior ${pn(b.prof.bt)} · c. inferior ${pn(b.prof.bb)} · diagonales ${pn(b.prof.bd)} · montantes ${pn(b.prof.bm)}`;
+ // desplazamientos
+ let dx=0,dy=0;N.forEach((n,i)=>{if(Math.abs(n.y-H)<1e-6&&Math.abs(U[i*3])>Math.abs(dx))dx=U[i*3];if(Math.abs(U[i*3+1])>Math.abs(dy)&&n.y>H-M.zb-1e-6)dy=U[i*3+1]});
+ const Lmax=Math.max(...S.bays);
+ // esfuerzos máximos por grupo
+ const G={};E.forEach((e,i)=>{const g=ROLE[e.role]+tyl(e)+' · '+e.sec.name;const o=G[g]||(G[g]={n:0,Nt:0,Nc:0,M:0,V:0,it:-1,i:0});o.n++;o.Nt=Math.max(o.Nt,e.N);o.Nc=Math.min(o.Nc,e.N);o.M=Math.max(o.M,Math.abs(e.M1),Math.abs(e.M2));o.V=Math.max(o.V,Math.abs(e.V));const v=VR[i];if(v&&!v.na&&v.it>o.it){o.it=v.it;o.i=i}});
+ const nOk=VR.filter(v=>v&&!v.na&&v.good).length,nNo=VR.filter(v=>v&&!v.na&&!v.good).length,worst=VR.reduce((w,v,i)=>v&&!v.na&&(!w||v.it>w.it)?{it:v.it,i}:w,null);
+ const fig=(k,t,txt)=>`<figure>${memSVG(k)}<figcaption><b>${t}.</b> ${txt}</figcaption></figure>`;
+ const doc=`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><title>Memoria de cálculo${nom?' – '+esc(nom):''}</title><style>
+:root{--t:#1a8f4c;--c:#d0342c;--ac:#1f6feb;--mu:#6b7385;--bd:#ccd}
+body{font:11pt/1.45 "Segoe UI",Arial,sans-serif;color:#1d2330;max-width:1000px;margin:0 auto;padding:24px 28px;background:#fff}
+h1{font-size:20pt;margin:0 0 4px}h2{font-size:14pt;border-bottom:2px solid #1d2330;padding-bottom:3px;margin:26px 0 8px;break-after:avoid}h3{font-size:12pt;margin:16px 0 6px}
+.meta{color:#555;margin-bottom:12px}table{border-collapse:collapse;width:100%;font-size:9pt;margin:6px 0 10px;break-inside:auto}th,td{border:1px solid #ccd;padding:3px 5px;text-align:left;font-variant-numeric:tabular-nums}th{background:#eef1f6}td:first-child,th:first-child{text-align:left}tr{break-inside:avoid}
+figure{margin:10px 0 16px;break-inside:avoid}figcaption{font-size:9.5pt;color:#444;margin-top:4px}.sm{color:#666;font-size:9pt}.msg{padding:6px 8px;border-radius:4px;margin:6px 0}.err{background:#fde2e1;color:#8a1c14}.ok{background:#e1f5e8;color:#135c30}
+.box{background:#f4f6f9;border-radius:6px;padding:8px 12px}.np{margin:10px 0}@media print{.np{display:none}body{padding:0}h2{break-before:auto}}
+ul{margin:4px 0 8px 18px;padding:0}</style></head><body>
+<div class="np"><button onclick="window.print()" style="padding:8px 14px;font:inherit;cursor:pointer">Imprimir / Guardar como PDF</button></div>
+<h1>Memoria de cálculo — Pórtico${nom?' '+esc(nom):''}</h1>
+<div class="meta">${proy?'Proyecto: <b>'+esc(proy)+'</b> · ':''}Fecha: ${fecha} · Análisis elástico lineal de primer orden (método de rigidez directa, pórtico plano)</div>
+<h2>1. Objeto y normas</h2>
+<p>Se determinan los esfuerzos, desplazamientos y reacciones del pórtico plano descripto y se verifican sus barras de acero según <b>CIRSOC 301-2018</b> (compresión E.3/E.7, tracción D.2, flexión F, interacción H.1). Las columnas de tubo rellenas de hormigón se verifican según <b>AISC 360-22, capítulo I</b>.</p>
+<h2>2. Geometría</h2>
+${tbl(['Dato','Valor'],[['Cantidad de vanos',S.bays.length],['Luces entre ejes [m]',S.bays.map(b=>f2(b)).join(' · ')],['Altura de columnas H [m]',f2(H)],['Apoyos',$('sup').value=='fix'?'Empotrados':'Articulados'],['Barras / nudos del modelo',E.length+' / '+N.length]])}
+<h3>Columnas</h3>${tbl(['Tipo','Columnas','Descripción'],usedC.map(c=>[keyOf(S.CT,c),M.C.map((x,i)=>x.c===c?i+1:null).filter(x=>x).join(', '),cDesc(c)]))}
+<h3>Vigas</h3>${tbl(['Tipo','Vanos','Descripción'],usedB.map(b=>[keyOf(S.BT,b),M.B.map((x,i)=>x.b===b?i+1:null).filter(x=>x).join(', '),bDesc(b)]))}
+${fig('mod','Figura 1','Modelo de cálculo con cotas, uniones y cargas aplicadas.')}
+<h2>3. Materiales</h2>
+${tbl(['Material','Valor'],[['Acero: E',$('E').value+' MPa'],['Acero: Fy / Fu',$('vFy').value+' / '+$('vFu').value+' MPa'],...(usedC.some(c=>c.fill=='1')?[['Hormigón de relleno','H-'+[...new Set(usedC.filter(c=>c.fill=='1').map(c=>c.fc))].join(', H-')+' (Ec = 0,043·wc^1,5·√f′c, wc = 2400 kg/m³)']]:[])])}
+<h2>4. Cargas</h2>
+${tbl(['Carga','Valor'],[['Horizontal en cabeza de columna izquierda',$('qH').value+' '+u],['Repartida vertical sobre vigas',$('qV').value+' '+u+'/m'],['Puntuales en cabeza de columnas',S.P.map((p,i)=>`C${i+1}: ${p}`).join(' · ')+' '+u],['Peso propio columnas / vigas',($('ppC').value=='1'?'Sí':'No')+' / '+($('ppB').value=='1'?'Sí':'No')+' (acero 78,5 kN/m³; hormigón 24 kN/m³)']])}
+<p class="sm">Las cargas se consideran ya mayoradas según la combinación que corresponda (CIRSOC 101/102). La repartida se aplica en los nudos del cordón superior (vigas reticuladas) o de la viga (alma llena).</p>
+<h2>5. Hipótesis del modelo</h2><ul>
+<li>Pórtico plano, análisis elástico lineal de primer orden (sin efecto P-Δ).</li>
+<li>Cordones y barras de alma llena continuos; diagonales y montantes de las celosías articulados en sus extremos (Vierendeel: montantes rígidos).</li>
+<li>Viga reticulada con unión empotrada: ambos cordones unidos a la columna (en H y H − z). Unión articulada: solo apoya el cordón superior.</li>
+<li>Columnas rellenas: rigidez EA = Es·As + Ec·Ac y EIeff = Es·Is + C3·Ec·Ic (AISC 360-22, I2-14).</li></ul>
+<h2>6. Resultados</h2>
+<div class="box">Desplazamiento horizontal máximo en cabeza: <b>${f2(dx*1e3,1)} mm</b> (H/Δ = ${Math.abs(dx)>1e-9?Math.round(H/Math.abs(dx)):'∞'}) · Flecha vertical máxima de viga: <b>${f2(dy*1e3,1)} mm</b> (L/δ = ${Math.abs(dy)>1e-9?Math.round(Lmax/Math.abs(dy)):'∞'})</div>
+${fig('n','Figura 2','Esfuerzos axiles N ['+u+']. Verde: tracción; rojo: compresión.')}
+${fig('m','Figura 3','Momentos flectores M ['+um+'], dibujados del lado traccionado.')}
+${fig('v','Figura 4','Esfuerzos de corte V ['+u+'].')}
+${fig('d','Figura 5','Deformada (escala amplificada).')}
+${fig('r','Figura 6','Reacciones de apoyo.')}
+<h3>Reacciones</h3>${tbl(['Apoyo (x; y) [m]',`Rx [${u}]`,`Ry [${u}]`,`M [${um}]`],Object.entries(R).map(([i,r])=>[`(${f2(N[i].x)}; ${f2(N[i].y)})`,f2(r[0]),f2(r[1]),f2(r[2])]))}
+<h3>Esfuerzos máximos por grupo de barras</h3>${tbl(['Grupo · perfil','Barras',`N tracción [${u}]`,`N compresión [${u}]`,`|M| máx [${um}]`,`|V| máx [${u}]`,'Interacción máx. (barra)'],Object.entries(G).map(([g,o])=>[g,o.n,f2(o.Nt),f2(o.Nc),f2(o.M),f2(o.V),o.it>=0?`<b style="color:${o.it>1?'#d0342c':'inherit'}">${f2(o.it,2)}</b> (${o.i+1})`:'—']))}
+<h2>7. Verificación de barras</h2>
+<div class="msg ${nNo?'err':'ok'}">${nOk} barras verifican · ${nNo} no verifican${worst?' · interacción máxima '+f2(worst.it,2)+' en la barra '+(worst.i+1):''}</div>
+${memTable(vh)}
+<h2>8. Conclusión</h2>
+<p>${nNo?`<b>${nNo} barras no verifican</b> con los perfiles adoptados: revisar los grupos marcados en la tabla de esfuerzos máximos y redimensionar.`:'Todas las barras verificadas cumplen con las exigencias de resistencia y esbeltez para las cargas indicadas.'} El desplazamiento horizontal de cabeza resulta H/${Math.abs(dx)>1e-9?Math.round(H/Math.abs(dx)):'∞'} y la flecha de viga L/${Math.abs(dy)>1e-9?Math.round(Lmax/Math.abs(dy)):'∞'}; comparar con los límites de servicio que correspondan al proyecto.</p>
+<h2>Anexo — Esfuerzos en todas las barras</h2>
+${tbl(['#','Barra','Perfil','L [m]',`N [${u}]`,`V [${u}]`,`Mi [${um}]`,`Mj [${um}]`],E.map((e,i)=>[i+1,ROLE[e.role]+tyl(e),e.sec.name,f2(e.L),f2(e.N),f2(e.V),f2(e.M1),f2(e.M2)]))}
+<p class="sm">Generado con la herramienta "Pórticos reticulados" el ${fecha}.</p></body></html>`;
+ draw();
+ const fn=('Memoria_'+(nom||'portico')+'_'+new Date().toISOString().slice(0,10)).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9_\-]+/g,'_')+'.html';
+ try{const dl=window.claude?await claude.use('downloads'):null;if(dl){await dl.save({filename:fn,data:new Blob([doc],{type:'text/html'})});$('memMsg').textContent='Memoria descargada: '+fn+'. Abrila y usá "Imprimir / Guardar como PDF".';return}}catch(x){}
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([doc],{type:'text/html'}));a.download=fn;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);
+ $('memMsg').textContent='Memoria descargada: '+fn+'. Abrila con el navegador y usá "Imprimir / Guardar como PDF" para tenerla en PDF.'}
 
 // ---------- guardar / cargar ----------
 let DBR=null,SAVED=[];const LSK='porticos_reticulados';
@@ -402,7 +480,7 @@ async function initSave(){try{SAVED=JSON.parse(localStorage.getItem(LSK)||'[]')}
 
 // ---------- dibujo ----------
 let M,RS;
-function run(){fillInfo();M=model();RS=M.info.err?{err:M.info.err}:solve(M);
+function run(){fillInfo();M=model();RS=M.info.err?{err:M.info.err}:solve(M);VR=[];if(!RS.err){try{verif()}catch(x){}}if(S.sel!=null&&(!M.E[S.sel]||RS.err))S.sel=null;
  $('cInfo').textContent=M.info.c?`${M.info.c.n} paneles · panel real ${f2(M.info.c.p)} m · α real ${f2(M.info.c.a,1)}° (col. 1)`:'';
  $('bInfo').textContent=M.info.b?`${M.info.b.n} paneles · panel real ${f2(M.info.b.p)} m · α real ${f2(M.info.b.a,1)}° (vano 1)`:'';
  draw()}
@@ -472,8 +550,12 @@ function draw(){const svg=$('svg'),W=svg.clientWidth||900,Hs=620,{N,E,X}=M,H=M.H
   if(kind=='mod'){const m1=M.info.b,m2=M.info.c;let t=[];if(m1)t.push(`Viga: ${m1.n} paneles de ${f2(m1.p)} m · α = ${f2(m1.a,1)}°`);if(m2)t.push(`Columna: ${m2.n} paneles de ${f2(m2.p)} m · α = ${f2(m2.a,1)}°`);
    t.forEach((x,i)=>c+=`<text x="12" y="${20+i*15}" font-size="11" fill="${G}">${x}</text>`)}
   s=c+s}
+ let hl='';if(S.sel!=null&&E[S.sel]){const e=E[S.sel],A=N[e.a],B=N[e.b];hl=`<line x1="${px(A.x)}" y1="${py(A.y)}" x2="${px(B.x)}" y2="${py(B.y)}" stroke="#00a3c4" stroke-width="8" stroke-opacity=".55" stroke-linecap="round"/><text x="${(px(A.x)+px(B.x))/2+8}" y="${(py(A.y)+py(B.y))/2-8}" font-size="12" font-weight="700" fill="#007a93">${S.sel+1}</text>`}
+ const hits=S.mem?'':E.map((e,i)=>{const A=N[e.a],B=N[e.b];return `<line class="hit" data-e="${i}" x1="${px(A.x)}" y1="${py(A.y)}" x2="${px(B.x)}" y2="${py(B.y)}" stroke="transparent" stroke-width="11"><title>Barra ${i+1} · ${ROLE[e.role]}</title></line>`}).join('');
+ s+=hl+hits;
  svg.innerHTML=`<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#e67e22"/></marker><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#0f7b6c"/></marker></defs>`+s;
- table()}
+ svg.querySelectorAll('.hit').forEach(l=>l.onclick=ev=>{ev.stopPropagation();selectE(+l.dataset.e,'svg')});
+ showSel();table()}
 function table(){if(RS.err){$('tbl').innerHTML='';return}const{N,E}=M,k=S.tab,U=RS.U;let h='';
  const nm=i=>{const n=N[i];return `(${f2(n.x,2)}; ${f2(n.y,2)})`};
  if(k=='d')h='<table><tr><th>Nudo (x;y) m</th><th>δx [mm]</th><th>δy [mm]</th><th>θ [rad]</th></tr>'+N.map((n,i)=>`<tr><td>${nm(i)}</td><td>${f2(U[i*3]*1e3,2)}</td><td>${f2(U[i*3+1]*1e3,2)}</td><td>${f2(U[i*3+2],5)}</td></tr>`).join('')+'</table>';
@@ -481,8 +563,18 @@ function table(){if(RS.err){$('tbl').innerHTML='';return}const{N,E}=M,k=S.tab,U=
   Object.entries(RS.R).forEach(([i,r])=>{sx+=r[0];sy+=r[1];h+=`<tr><td>${nm(i)}</td><td>${f2(r[0])}</td><td>${f2(r[1])}</td><td>${f2(r[2])}</td></tr>`});h+=`<tr><th>Σ</th><th>${f2(sx)}</th><th>${f2(sy)}</th><th></th></tr></table>`}
  else if(k=='ver')h=verif();
  else h=`<table><tr><th>#</th><th>Barra</th><th>Perfil</th><th>i → j</th><th>L [m]</th><th>N [${uF()}] (+tracc.)</th><th>V [${uF()}]</th><th>Mi [${uM()}]</th><th>Mj [${uM()}]</th><th>σ=N/A [MPa]</th></tr>`+
-  E.map((e,n)=>`<tr><td>${n+1}</td><td style="text-align:left">${ROLE[e.role]}${tyl(e)}</td><td style="text-align:left">${e.sec.name}</td><td>${nm(e.a)} → ${nm(e.b)}</td><td>${f2(e.L)}</td><td style="color:${e.N>=0?'var(--t)':'var(--c)'}">${f2(e.N)}</td><td>${f2(e.V)}</td><td>${f2(e.M1)}</td><td>${f2(e.M2)}</td><td>${f2(e.N*UF()/e.sec.A/1e3,1)}</td></tr>`).join('')+'</table>';
- $('tbl').innerHTML=h;if(k=='ver'&&$('vfTab')){$('vfNo').onchange=vfApply;$('vfSort').onchange=vfApply;vfApply()}}
+  E.map((e,n)=>`<tr data-e="${n}"><td>${n+1}</td><td style="text-align:left">${ROLE[e.role]}${tyl(e)}</td><td style="text-align:left">${e.sec.name}</td><td>${nm(e.a)} → ${nm(e.b)}</td><td>${f2(e.L)}</td><td style="color:${e.N>=0?'var(--t)':'var(--c)'}">${f2(e.N)}</td><td>${f2(e.V)}</td><td>${f2(e.M1)}</td><td>${f2(e.M2)}</td><td>${f2(e.N*UF()/e.sec.A/1e3,1)}</td></tr>`).join('')+'</table>';
+ $('tbl').innerHTML=h;if(k=='ver'&&$('vfTab')){$('vfNo').onchange=vfApply;$('vfSort').onchange=vfApply;vfApply()}
+ $('tbl').querySelectorAll('tr[data-e]').forEach(r=>{if(+r.dataset.e===S.sel){r.classList.add('selr');r.hidden=false}r.onclick=()=>selectE(+r.dataset.e,'tbl')});
+ if(S._scrollRow){S._scrollRow=false;const r=$('tbl').querySelector('tr.selr');if(r){const box=$('tbl');box.scrollTop=r.offsetTop-box.clientHeight/2}}}
+function selectE(i,from){S.sel=(S.sel===i&&from=='svg')?null:i;S._scrollRow=from=='svg';draw();if(from=='tbl')$('svg').scrollIntoView({block:'nearest',behavior:'smooth'})}
+function showSel(){const b=$('selInfo');if(S.sel==null||RS.err||!M.E[S.sel]){b.innerHTML='';return}const e=M.E[S.sel],N=M.N,u=uF(),um=uM(),v=VR[S.sel],toKN=UF();
+ const kv=(k,x)=>`<span class="kv"><span>${k}</span>${x}</span>`,nn=i=>`(${f2(N[i].x)}; ${f2(N[i].y)})`;
+ let ver='';if(v){ver=v.na?kv('Verificación','sin datos de ry/Z'):kv('Interacción',`<b style="color:${v.good?'var(--t)':'var(--c)'}">${f2(v.it,2)} ${v.good?'OK':'NO verifica'}</b>`)+kv(`Pd [${u}]`,f2(v.Pd/toKN))+kv(`Td [${u}]`,f2(v.Td/toKN))+(v.Md?kv(`Md [${um}]`,f2(v.Md/toKN)):'')}
+ b.innerHTML=`<b class="t">Barra ${S.sel+1} · ${ROLE[e.role]}${tyl(e)}</b>`+kv('Perfil',e.sec.name+(e.comp?' + H-'+e.cf.fc:''))+kv('L',f2(e.L)+' m')+kv('Nudos',nn(e.a)+' → '+nn(e.b))+
+  kv(`N [${u}]`,`<b style="color:${e.N>=0?'var(--t)':'var(--c)'}">${f2(e.N)} ${e.N>=0?'(tracción)':'(compresión)'}</b>`)+kv(`V [${u}]`,f2(e.V))+kv(`Mi / Mj [${um}]`,f2(e.M1)+' / '+f2(e.M2))+kv('σ = N/A',f2(e.N*toKN/e.sec.A/1e3,1)+' MPa')+ver+
+  `<button class="bt l" id="selX">Cerrar</button>`;
+ $('selX').onclick=()=>{S.sel=null;draw()}}
 $('nb').onchange=()=>{buildGeo();buildAsg();run()};
 ['cMode','bMode'].forEach(id=>$(id).onchange=()=>{saveEd();buildAsg();buildProf();run()});
 $('un').onchange=()=>{const o=S._u||'kN',n=$('un').value,k=(o=='t'?9.80665:1)/(n=='t'?9.80665:1);S._u=n;['qH','qV'].forEach(i=>$(i).value=+(+$(i).value*k).toFixed(3));S.P=S.P.map(p=>+(p*k).toFixed(3));document.querySelectorAll('.uF').forEach(s=>s.textContent=n);buildGeo();run()};
@@ -490,6 +582,7 @@ $('bj').onchange=()=>{bjText();run()};
 ['fill','fc'].forEach(id=>$(id).addEventListener('change',run));
 ['H','sup','bcon','E','zc','ac','pc','zb','ab','pb','qH','qV','ppC','ppB','vFy','vFu','vU','vk','vkd','vLb','vLc','vKc','vKcv','vLbb','vN0'].forEach(id=>$(id).onchange=run);
 window.onresize=draw;
+$('memBtn').onclick=memoria;
 bjText();segs();buildGeo();saveEd();buildAsg();buildProf();tabs();run();initSave();requestAnimationFrame(draw);
 </script>
-</html>
+</html></html>
