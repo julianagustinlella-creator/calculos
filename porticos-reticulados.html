@@ -94,11 +94,16 @@ option.cir{background:#dbeafe;color:#0b3d91;font-weight:600}.cirl{color:#1f6feb;
 <label>Fy [MPa]<input id="vFy" type="number" value="235"></label>
 <label>Fu [MPa]<input id="vFu" type="number" value="370"></label>
 <label>U (área neta efectiva)<input id="vU" type="number" step="0.05" value="0.85"></label>
-<label>k cordones y alma llena<input id="vk" type="number" step="0.05" value="1"></label>
+<h4 style="margin:8px 0 2px">Longitudes de pandeo</h4>
+<label>k de columnas en el plano (pórtico desplazable)<select id="vKc"><option value="auto">Automático (nomograma, G de cada nudo)</option><option value="man">Manual</option></select></label>
+<label>k columnas manual<input id="vKcv" type="number" step="0.05" value="2"></label>
+<label>Lb columnas fuera del plano [m] (entre riostras o vigas transversales)<input id="vLc" type="number" step="0.1" value="6"></label>
+<label>k cordones de columna entre nudos de celosía<input id="vk" type="number" step="0.05" value="1"></label>
 <label>k diagonales y montantes<input id="vkd" type="number" step="0.05" value="1"></label>
-<label>Lb cordones de viga fuera del plano [m]<input id="vLb" type="number" step="0.1" value="1.5"></label>
-<label>Lb columnas fuera del plano [m]<input id="vLc" type="number" step="0.1" value="6"></label>
-<div class="sm">En el plano: alma llena con la longitud total (H o luz); cordones y celosía con la longitud de cada barra. φc=0,85 · φt=0,9/0,75 · φb=0,9 · interacción H.1 · λ≤200 · Q por pandeo local en tubos (E.7).</div></div>
+<label>Lb cordón superior de viga fuera del plano [m] (separación de correas)<input id="vLb" type="number" step="0.1" value="1.5"></label>
+<label>Lb cordón inferior de viga fuera del plano [m] (separación de puntales o riostras)<input id="vLbb" type="number" step="0.1" value="5"></label>
+<label>Planos de celosía en columnas reticuladas n0<input id="vN0" type="number" step="1" min="1" max="2" value="1"></label>
+<div class="sm">Columnas: k en el plano por nomograma de pórtico desplazable (G = Σ(EI/L) columnas / Σ(EI/L) vigas; base empotrada G = 1, articulada G = 10; columna reticulada con sus dos apoyos G = 1). Viga reticulada: I = At·Ab/(At+Ab)·z²; viga articulada no aporta. Columnas reticuladas: además, pandeo global como barra armada del Grupo IV (E.6.3.1). El análisis es de primer orden: el segundo orden queda cubierto por k y por E.6.3.1. El cordón inferior de viga usa su propio Lb (compresión por succión o junto a la columna). φc=0,85 · φt=0,9/0,75 · φb=0,9 · interacción H.1 · λ≤200 · Q por pandeo local en tubos (E.7).</div></div>
 </div>
 
 <div>
@@ -295,14 +300,46 @@ function qFac(name,A,Fy,Es){let m=name.match(/Ø\s*([\d,]+)\s*x\s*([\d,]+)/);con
   for(const w of [B,H]){const b=w-3*t,bt=b/t;if(bt>lim){const be=Math.min(b,1.91*t*Math.sqrt(Es/Fy)*(1-0.38/bt*Math.sqrt(Es/Fy)));Aef-=2*(b-be)*t;tx.push(`b/t=${bt.toFixed(1)}>${lim.toFixed(1)}`)}}
   return{Q:Aef/A,txt:tx.length?tx.join(', ')+': Qa=Aef/Ag (E.7.18)':`b/t ≤ ${lim.toFixed(1)}: compacto`}}
  return{Q:1,txt:'Q=1 (no evaluado para esta familia)'}}
-function verif(){const{E}=M,Fy=+$('vFy').value,Fu=+$('vFu').value,U=+$('vU').value,Es=+$('E').value,H=M.H;
+function kSway(GA,GB){if(GA>1e3&&GB>1e3)return Infinity;const f=k=>{const u=Math.PI/k;return (GA*GB*u*u-36)/(6*(GA+GB))-u/Math.tan(u)};let a=1.0001,b=60;if(f(a)*f(b)>0)return b;for(let it=0;it<80;it++){const m=(a+b)/2;f(a)*f(m)<=0?b=m:a=m}return (a+b)/2}
+function colData(){const{E,N,X,H,C,B}=M,nb=X.length-1,mid=e=>(N[e.a].x+N[e.b].x)/2,ci=e=>{let b=0;X.forEach((x,i)=>{if(Math.abs(mid(e)-x)<Math.abs(mid(e)-X[b]))b=i});return b};
+ const fix=$('sup').value=='fix',rig=$('bcon').value=='rig',out=[];
+ const beamI=j=>{const es=E.filter(e=>/^b[wtb]$/.test(e.role)&&mid(e)>X[j]&&mid(e)<X[j+1]);if(!es.length)return 0;const Bj=B[j];
+  if(!Bj.ret)return rig?es[0].sec.p[2]:0;
+  if(Bj.art)return 0;const t=es.find(e=>e.role=='bt'),b=es.find(e=>e.role=='bb');if(!t||!b)return 0;const At=t.sec.p[1],Ab=b.sec.p[1],z=Bj.zb*100;return At*Ab/(At+Ab)*z*z};
+ for(let i=0;i<=nb;i++){const es=E.filter(e=>(e.role=='cw'||e.role=='cch')&&ci(e)==i);if(!es.length){out.push(null);continue}
+  const ret=C[i].ret,p=es[0].sec.p,Ic=ret?2*p[1]*(C[i].zc*100/2)**2:p[2];
+  let sb=0;[i-1,i].forEach(j=>{if(j>=0&&j<nb){const I=beamI(j);if(I)sb+=I/((X[j+1]-X[j])*100)}});
+  const GA=sb?(Ic/(H*100))/sb:1e6,GB=(fix||ret)?1:10;
+  const k=$('vKc').value=='man'?+$('vKcv').value:kSway(GA,GB);
+  out.push({i,ret,Ic,GA,GB,k,es,p,zc:C[i].zc,cfg:C[i].c})}
+ return{out,ci}}
+function globCols(CD,Fy,Es,toKN){const{E,N,H}=M,o=v=>v/toKN,u=uF(),um=uM(),n0=Math.max(1,+$('vN0').value||1);
+ let h=`<h4 style="margin-top:14px">Columnas: longitud efectiva en el plano (nomograma de pórtico desplazable)</h4><table><tr><th>Col</th><th>Tipo</th><th>G arriba</th><th>G base</th><th>k</th><th>k·H [m]</th></tr>`;
+ CD.out.forEach(c=>{if(!c)return;h+=`<tr><td>${c.i+1}</td><td>${c.ret?'Reticulada':'Alma llena'}</td><td>${c.GA>1e5?'∞':f2(c.GA,2)}</td><td>${f2(c.GB,1)}</td><td>${isFinite(c.k)?f2(c.k,2):'inestable'}</td><td>${isFinite(c.k)?f2(c.k*H):'—'}</td></tr>`});
+ h+='</table>';const rets=CD.out.filter(c=>c&&c.ret);if(!rets.length)return h;
+ h+=`<h4 style="margin-top:14px">Columnas reticuladas: pandeo global como barra armada Grupo IV (CIRSOC 301-2018, E.6.3.1)</h4><table><tr><th>Col</th><th>Pu [${u}]</th><th>Mu [${um}]</th><th>λ0</th><th>λ1</th><th>λm</th><th>Pcm [${u}]</th><th>e0 [cm]</th><th>Ms [${um}]</th><th>Pu1 [${u}]</th><th>Pd1 [${u}]</th><th>Pu1/Pd1</th><th>Veu [${u}]</th><th>Diagonal Nu / Pd [${u}]</th></tr>`;
+ rets.forEach(c=>{const ys=c.es.map(e=>Math.min(N[e.a].y,N[e.b].y)),y0=Math.min(...ys),base=c.es.filter((e,k)=>Math.abs(ys[k]-y0)<1e-6);if(base.length<2)return;
+  const xa=e=>(N[e.a].x+N[e.b].x)/2,[L,R]=xa(base[0])<xa(base[1])?[base[0],base[1]]:[base[1],base[0]],NL=L.N*toKN,NR=R.N*toKN,Pu=Math.max(0,-(NL+NR)),Mu=Math.abs(NR-NL)/2*c.zc;
+  const A1=c.p[1],Ag=2*A1,hcm=c.zc*100,a=(Math.max(N[L.a].y,N[L.b].y)-y0)*100,kL=(isFinite(c.k)?c.k:99)*H*100,ro=hcm/2,l0=kL/ro;
+  const pat=c.cfg.pc,d=Math.hypot(hcm,a),dg=E.find(e=>e.role=='cd'&&e.cf===c.cfg),mt=E.find(e=>e.role=='cm'&&e.cf===c.cfg),Ad=dg?dg.sec.p[1]:0,Am=mt?mt.sec.p[1]:0;
+  let l1=NaN;if(Ad){if(pat=='x')l1=Math.PI*Math.sqrt(Ag*d**3/(2*n0*Ad*a*hcm*hcm));else if(['pratt','howe','warrenm'].includes(pat)&&Am)l1=Math.PI*Math.sqrt(Ag/n0*(d**3/(Ad*a*hcm*hcm)+hcm/(Am*a)));else if(pat=='warren')l1=Math.PI*Math.sqrt(Ag*d**3/(n0*Ad*a*hcm*hcm))}
+  if(pat=='vier'||!isFinite(l1)){h+=`<tr><td>${c.i+1}</td><td colspan="13">Celosía tipo ${pat}: no corresponde al Grupo IV (verificar como Grupo V, presillas)</td></tr>`;return}
+  const lm=Math.hypot(l0,l1),Pcm=Math.PI**2*Es*Ag/(lm*lm)/10,e0=kL/500,amp=1-Pu/Pcm;
+  if(amp<=0){h+=`<tr><td>${c.i+1}</td><td>${f2(o(Pu))}</td><td colspan="12"><b style="color:var(--c)">Pu ≥ Pcm: la columna armada es inestable</b></td></tr>`;return}
+  const Ms=(Pu*e0/100+Mu)/amp,Pu1=Pu/2+Ms*100/hcm,ri=Math.min(c.p[3],c.p[4]||c.p[3]),lc1=a/ri/Math.PI*Math.sqrt(Fy/Es),Q=qFac(c.p[0],A1,Fy,Es).Q,lq=lc1*Math.sqrt(Q);
+  const Fcr=lq<=1.5?Q*Math.pow(0.658,lq*lq)*Fy:0.877*Fy/(lc1*lc1),Pd1=0.85*Fcr*A1/10,r=Pu1/Pd1;
+  const Veu=Math.PI/400*Pu/amp,Nd=Veu*d/hcm/n0/(pat=='x'?2:1);
+  let Pdd=NaN;if(dg){const pd=dg.sec.p,kd=+$('vkd').value,lcd=kd*d/Math.min(pd[3],pd[4]||pd[3])/Math.PI*Math.sqrt(Fy/Es),qd=qFac(pd[0],pd[1],Fy,Es).Q,lqd=lcd*Math.sqrt(qd),F2=lqd<=1.5?qd*Math.pow(0.658,lqd*lqd)*Fy:0.877*Fy/(lcd*lcd);Pdd=0.85*F2*pd[1]/10}
+  h+=`<tr><td>${c.i+1}</td><td>${f2(o(Pu))}</td><td>${f2(o(Mu))}</td><td>${f2(l0,0)}</td><td>${f2(l1,0)}</td><td>${f2(lm,0)}</td><td>${f2(o(Pcm),0)}</td><td>${f2(e0,1)}</td><td>${f2(o(Ms))}</td><td>${f2(o(Pu1))}</td><td>${f2(o(Pd1))}</td><td style="font-weight:600;color:${r>1?'var(--c)':'inherit'}">${f2(r,2)} ${r<=1?'<b style="color:var(--t)">OK</b>':'<b style="color:var(--c)">NO</b>'}</td><td>${f2(o(Veu))}</td><td>${f2(o(Nd))} / ${isFinite(Pdd)?f2(o(Pdd)):'—'}</td></tr>`});
+ return h+`</table><div class="sm">Pu y Mu: esfuerzos de primer orden en el panel inferior (Mu = (N der − N izq)/2 · z). λ0 = kL/ro con ro = z/2; λ1 según Figura E.6.6 (n0 = ${n0}); λm = √(λ0² + λ1²) (E.6.7); Pcm = π²·E·Ag/λm² (E.6.6); e0 = kL/500; Ms = (Pu·e0 + Mu)/(1 − Pu/Pcm) (E.6.5 con el momento de primer orden, H.5); Pu1 = Pu/2 + Ms/h (E.6.3); Pd1 con L1 = largo de panel y r mínimo del cordón (E.6.8, E.6.9). Celosía: Veu = π/400 · Pu/(1 − Pu/Pcm) (E.6.10, E.6.11); sumarlo al corte del análisis si corresponde.</div>`}
+function verif(){const CD=colData();const{E}=M,Fy=+$('vFy').value,Fu=+$('vFu').value,U=+$('vU').value,Es=+$('E').value,H=M.H;
  const u=uF(),um=uM(),toKN=UF();const ok=b=>b?'<b style="color:var(--t)">OK</b>':'<b style="color:var(--c)">NO</b>';let nOk=0,nNo=0,worst=null;const compRows=[];
  let h=`<table><tr><th>#</th><th>Barra</th><th>Perfil</th><th>L [m]</th><th>Lx·k [m]</th><th>Ly·k [m]</th><th>Nu [${u}]</th><th>Mu [${um}]</th><th>λx</th><th>λy</th><th>Q</th><th>Pd [${u}]</th><th>Td [${u}]</th><th>Md [${um}]</th><th>Interacción</th><th>Estado</th></tr>`;
  E.forEach((e,i)=>{const p=e.sec.p,A=p[1],rx=p[3],ry=p[4],Zx=p[5],web=isWeb(e.role);
   const k=+$(web?'vkd':'vk').value;let Lx=e.L,Ly=e.L;
-  if(e.role=='cw'){Lx=H;Ly=Math.min(H,+$('vLc').value||H)}
+  if(e.role=='cw'){const cd=CD.out[CD.ci(e)];Lx=H*(cd&&isFinite(cd.k)?cd.k:99)/k;Ly=Math.min(H,+$('vLc').value||H)}
   if(e.role=='bw'){Lx=e.span;Ly=Math.min(e.span,+$('vLb').value||e.span)}
-  if(e.role=='bt'||e.role=='bb')Ly=Math.max(e.L,+$('vLb').value||e.L);
+  if(e.role=='bt')Ly=Math.max(e.L,+$('vLb').value||e.L);if(e.role=='bb')Ly=Math.max(e.L,+$('vLbb').value||e.L);
   if(e.role=='cch')Ly=Math.max(e.L,+$('vLc').value||e.L);
   Lx*=k;Ly*=k;
   const row=`<td>${i+1}</td><td style="text-align:left">${ROLE[e.role]}${tyl(e)}</td><td style="text-align:left">${p[0]}</td><td>${f2(e.L)}</td><td>${f2(Lx)}</td><td>${f2(Ly)}</td>`;
@@ -322,11 +359,12 @@ let det='';if(compRows.length){const o=v=>v/toKN,u2=uF(),seen=new Set(),rows=com
  det='<h4 style="margin-top:14px">Columnas rellenas de hormigón — AISC 360-22 capítulo I (barra más solicitada)</h4><table><tr><th>#</th><th>Perfil</th><th>λ</th><th>λp / λr</th><th>Clase comp. / flex.</th><th>Ec [MPa]</th><th>C3</th><th>EIeff,x [kN·m²]</th><th>Pp</th><th>Pno</th><th>Pe,x / Pe,y</th><th>φcPn</th><th>Mp [kNm]</th><th>φbMn [kNm]</th></tr>'+
  rows.map(x=>{const c=x.c;return `<tr><td>${x.i+1}</td><td style="text-align:left">${x.name}</td><td>${f2(c.lam,1)}</td><td>${f2(c.lp,1)} / ${f2(c.lr,1)}</td><td>${c.cls} / ${c.clsb}</td><td>${f2(c.Ec,0)}</td><td>${f2(c.C3,3)}</td><td>${f2(c.EIx,0)}</td><td>${f2(o(c.Pp),1)}</td><td>${f2(o(c.Pno),1)}</td><td>${f2(o(x.Pex),0)} / ${f2(o(x.Pey),0)}</td><td>${f2(o(0.75*x.Pn),1)}</td><td>${f2(c.Mp,1)}</td><td>${f2(0.9*c.Mn,1)}</td></tr>`}).join('')+
  `</table><div class="sm">Fuerzas en ${u2}. λ = D/t (circular) o b/t con b = lado mayor − 3t (rectangular). Pp = Fy·As + C2·f'c·Ac (I2-9b; C2 = 0,85 rectangular, 0,95 circular) · no compacta: I2-9c · esbelta: I2-9e con Fcr I2-10/I2-11 · EIeff = Es·Is + C3·Ec·Ic (I2-14), C3 = 0,45 + 3·As/Ag ≤ 0,9 (I2-15) · Ec = 0,043·wc^1,5·√f'c con wc = 2400 kg/m³ · Pn por I2-2/I2-3 con φc = 0,75 · Mp por distribución plástica de tensiones (I3.4b); no compacta: interpolación hacia My (primera fluencia del tubo solo, conservador) · interacción H1 (I5) · tracción φt·Fy·As (I2.2c). Desplazamientos y esfuerzos calculados con EA = Es·As + Ec·Ac y EIeff.</div>`}
+  det+=globCols(CD,Fy,Es,toKN);
   return `<div class="msg ${nNo?'err':'ok'}">${nOk} barras verifican · ${nNo} no verifican${worst?` · máxima interacción ${f2(worst.it,2)} (barra ${worst.i+1})`:''}</div>`+h+'</table>'+det}
 
 // ---------- guardar / cargar ----------
 let DBR=null,SAVED=[];const LSK='porticos_reticulados';
-const IDS=['nb','H','sup','bcon','un','E','zc','ac','pc','zb','ab','pb','bj','qH','qV','ppC','ppB','fill','fc','vFy','vFu','vU','vk','vkd','vLb','vLc'];
+const IDS=['nb','H','sup','bcon','un','E','zc','ac','pc','zb','ab','pb','bj','qH','qV','ppC','ppB','fill','fc','vFy','vFu','vU','vk','vkd','vLb','vLc','vKc','vKcv','vLbb','vN0'];
 function snapshot(){saveEd();const nm=o=>Object.fromEntries(Object.entries(o).map(([x,v])=>[x,{...v,prof:Object.fromEntries(Object.entries(v.prof).map(([k,[f,i]])=>[k,[f,DB[f][i][0]]]))}]));return{CT:nm(S.CT),BT:nm(S.BT),cA:S.cA,bA:S.bA,eC:S.eC,eB:S.eB,cMode:cMode(),bMode:bMode(),bays:S.bays,P:S.P,ct:S.ct,bt:S.bt,v:Object.fromEntries(IDS.map(i=>[i,$(i).value])),prof:Object.fromEntries(Object.entries(S.prof).map(([k,[f,i]])=>[k,[f,DB[f][i][0]]]))}}
 function restore(d){IDS.forEach(i=>{if(d.v[i]!==undefined)$(i).value=d.v[i]});S.bays=[...d.bays];S.P=[...d.P];S.ct=d.ct;S.bt=d.bt;S._u=$('un').value;
  Object.entries(d.prof).forEach(([k,[f,n]])=>{S.prof[k]=[f,Math.max(0,DB[f].findIndex(p=>p[0]==n))]});
@@ -435,7 +473,7 @@ $('nb').onchange=()=>{buildGeo();buildAsg();run()};
 $('un').onchange=()=>{const o=S._u||'kN',n=$('un').value,k=(o=='t'?9.80665:1)/(n=='t'?9.80665:1);S._u=n;['qH','qV'].forEach(i=>$(i).value=+(+$(i).value*k).toFixed(3));S.P=S.P.map(p=>+(p*k).toFixed(3));document.querySelectorAll('.uF').forEach(s=>s.textContent=n);buildGeo();run()};
 $('bj').onchange=()=>{bjText();run()};
 ['fill','fc'].forEach(id=>$(id).addEventListener('change',run));
-['H','sup','bcon','E','zc','ac','pc','zb','ab','pb','qH','qV','ppC','ppB','vFy','vFu','vU','vk','vkd','vLb','vLc'].forEach(id=>$(id).onchange=run);
+['H','sup','bcon','E','zc','ac','pc','zb','ab','pb','qH','qV','ppC','ppB','vFy','vFu','vU','vk','vkd','vLb','vLc','vKc','vKcv','vLbb','vN0'].forEach(id=>$(id).onchange=run);
 window.onresize=draw;
 bjText();segs();buildGeo();saveEd();buildAsg();buildProf();tabs();run();initSave();requestAnimationFrame(draw);
 </script>
