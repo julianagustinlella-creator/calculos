@@ -49,6 +49,10 @@ option.cir{background:#dbeafe;color:#0b3d91;font-weight:600}.cirl{color:#1f6feb;
 
 <div class="pn"><h3>Columnas</h3>
 <div class="seg" id="cT"><button data-v="llena">Alma llena</button><button data-v="ret">Reticulada</button></div>
+<label>Tubo relleno de hormigón<select id="fill"><option value="0">No</option><option value="1">Sí</option></select></label>
+<div id="fillBox" class="ret" style="border-color:#7a7a7a">
+<label>Calidad del hormigón<select id="fc"><option value="20">H-20 (f'c = 20 MPa)</option><option value="25" selected>H-25 (f'c = 25 MPa)</option><option value="30">H-30 (f'c = 30 MPa)</option><option value="35">H-35 (f'c = 35 MPa)</option><option value="40">H-40 (f'c = 40 MPa)</option><option value="45">H-45 (f'c = 45 MPa)</option><option value="50">H-50 (f'c = 50 MPa)</option></select></label>
+<div class="sm" id="fillTxt"></div></div>
 <div id="cRet" class="ret">
 <label>z entre ejes de cordones [m]<input id="zc" type="number" step="0.05" value="0.5"></label>
 <label>Ángulo diagonal–cordón α [°]<input id="ac" type="number" step="1" value="45"></label>
@@ -136,6 +140,43 @@ function sec(k){const[f,i]=S.prof[k];const p=DB[f][Math.min(i,DB[f].length-1)];r
 const BJ={emp:`<b>Empotrada (nudo rígido).</b> Los dos cordones se unen a la columna: el superior en H y el inferior en H − z. La viga le transmite momento a la columna como un par de fuerzas en los cordones (M ≈ N<sub>cordón</sub> · z).<br>• El pórtico resiste la carga horizontal por flexión de las columnas: la cabeza se desplaza menos.<br>• La viga trabaja como empotrada: menos momento al centro, pero aparece momento en los extremos (el cordón inferior se comprime cerca de la columna).<br>• La columna recibe momento y un corte concentrado en H − z, donde llega el cordón inferior: suele ser lo que la dimensiona.<br>• La unión de los dos cordones debe resistir esa fuerza (soldadura o bulones).`,
 art:`<b>Articulada (viga simplemente apoyada).</b> Solo el cordón superior apoya sobre la columna; el cordón inferior termina en el primer nudo de la celosía y no toca la columna (en obra: sin unión o con agujero ovalado). Se agrega la diagonal extrema que lleva la reacción al apoyo.<br>• La viga no transmite momento a la columna: trabaja como simplemente apoyada, con más esfuerzo en los cordones al centro y más flecha.<br>• La columna solo recibe carga axial y la horizontal: con apoyos articulados en la base el pórtico es un mecanismo, así que hacen falta <b>bases empotradas</b> o arriostramientos.<br>• La unión es más simple y barata; el cordón inferior suele quedar comprimido con succión de viento: revisar su arriostramiento lateral.`};
 function bjText(){$('bjTxt').innerHTML=BJ[$('bj').value]}
+
+// ---------- tubos rellenos de hormigón · AISC 360-22 cap. I ----------
+const isTube=n=>/^Tubo/.test(n);
+function fillOn(e){return $('fill').value=='1'&&(e.role=='cw'||e.role=='cch')&&isTube(e.sec.name)}
+const CFTc={};
+function cft(p,fc,Fy,Es){const key=p[0]+'|'+fc+'|'+Fy+'|'+Es;if(CFTc[key])return CFTc[key];
+ const nm=s=>parseFloat(s.replace(',','.'));let m=p[0].match(/Ø\s*([\d,]+)\s*x\s*([\d,]+)/),r={round:!!m};
+ const wc=2400,Ec=0.043*Math.pow(wc,1.5)*Math.sqrt(fc);// MPa (AISC 360-22 I2.1b, SI)
+ let As=p[1]*100,Ac,Icx,Icy,Isx=p[2]*1e4,Isy=p[1]*100*Math.pow(p[4]*10,2),strips;// mm², mm⁴
+ if(m){const D=nm(m[1]),t=nm(m[2]),Di=D-2*t;Ac=Math.PI*Di*Di/4;Icx=Icy=Math.PI*Math.pow(Di,4)/64;r.D=D;r.t=t;r.lam=D/t;
+  r.lp=0.15*Es/Fy;r.lr=0.19*Es/Fy;r.lmax=0.31*Es/Fy;r.lpb=0.09*Es/Fy;r.lrb=0.31*Es/Fy;r.C2=0.95;r.h=D;
+  strips=y=>{const ws=2*Math.sqrt(Math.max(0,D*D/4-y*y)),wcc=2*Math.sqrt(Math.max(0,Di*Di/4-y*y));return[ws-wcc,wcc]}}
+ else{m=p[0].match(/^Tubo\s+([\d,]+)\s*x\s*([\d,]+)\s*x\s*([\d,]+)/);const B=nm(m[1]),H=nm(m[2]),t=nm(m[3]),bi=B-2*t,hi=H-2*t;
+  Ac=bi*hi;Icx=bi*hi*hi*hi/12;Icy=hi*bi*bi*bi/12;r.B=B;r.H=H;r.t=t;r.lam=(Math.max(B,H)-3*t)/t;
+  const s=Math.sqrt(Es/Fy);r.lp=2.26*s;r.lr=3.00*s;r.lmax=5.00*s;r.lpb=2.26*s;r.lrb=3.00*s;r.C2=0.85;r.h=H;
+  strips=y=>Math.abs(y)>H/2?[0,0]:Math.abs(y)>hi/2?[B,0]:[2*t,bi]}
+ const Ag=As+Ac,C3=Math.min(0.9,0.45+3*As/Ag);
+ r.As=As;r.Ac=Ac;r.Ec=Ec;r.C3=C3;
+ r.EA=(Es*As+Ec*Ac)*1e-3;// kN
+ r.EIx=(Es*Isx+C3*Ec*Icx)*1e-9;r.EIy=(Es*Isy+C3*Ec*Icy)*1e-9;// kN·m² (I2-14)
+ const Pp=(Fy*As+r.C2*fc*Ac)/1e3,Py=(Fy*As+0.7*fc*Ac)/1e3;let Pno,cls;
+ if(r.lam<=r.lp){Pno=Pp;cls='Compacta'}
+ else if(r.lam<=r.lr){Pno=Pp-(Pp-Py)/Math.pow(r.lr-r.lp,2)*Math.pow(r.lam-r.lp,2);cls='No compacta'}
+ else{const Fcr=r.round?0.72*Fy/Math.pow(r.lam*Fy/Es,0.2):9*Es/(r.lam*r.lam);Pno=(Fcr*As+0.7*fc*Ac)/1e3;cls='Esbelta'}
+ r.Pp=Pp;r.Py=Py;r.Pno=Pno;r.cls=cls;r.bad=r.lam>r.lmax;
+ const n=600,h=r.h,dy=h/n;const F=yn=>{let f=0;for(let k=0;k<n;k++){const y=-h/2+(k+.5)*dy,[ws,wcc]=strips(y);f+=y>yn?(Fy*ws+r.C2*fc*wcc)*dy:-Fy*ws*dy}return f};
+ let lo=-h/2,hi2=h/2;for(let it=0;it<60;it++){const mid=(lo+hi2)/2;F(mid)>0?lo=mid:hi2=mid}const yn=(lo+hi2)/2;let Mp=0;
+ for(let k=0;k<n;k++){const y=-h/2+(k+.5)*dy,[ws,wcc]=strips(y);Mp+=(y>yn?(Fy*ws+r.C2*fc*wcc):-Fy*ws)*dy*(y-yn)}
+ r.Mp=Mp/1e6;r.My=Fy*Isx/(h/2)/1e6;
+ r.Mn=r.lam<=r.lpb?r.Mp:r.lam<=r.lrb?r.Mp-(r.Mp-r.My)*(r.lam-r.lpb)/(r.lrb-r.lpb):r.My;r.clsb=r.lam<=r.lpb?'Compacta':r.lam<=r.lrb?'No compacta':'Esbelta';
+ r.Td=0.9*Fy*As/1e3;r.w=24*Ac*1e-6;
+ return CFTc[key]=r}
+function fillInfo(){const box=$('fillBox');box.hidden=$('fill').value!='1';if(box.hidden)return;
+ const k=S.ct=='llena'?'cw':'cch',[f,i]=S.prof[k],p=DB[f][i];
+ if(!isTube(p[0])){$('fillTxt').innerHTML='<b style="color:var(--c)">El perfil de la columna no es un tubo: el relleno no se aplica.</b>';return}
+ const r=cft(p,+$('fc').value,+$('vFy').value,+$('E').value);
+ $('fillTxt').innerHTML=`${S.ct=='ret'?'Se aplica a los dos cordones de la columna. ':''}Ec = ${f2(r.Ec,0)} MPa · C3 = ${f2(r.C3,3)} · EIeff = ${f2(r.EIx,0)} kN·m² (tubo solo ${f2(+$('E').value*p[2]*1e-5,0)}) · sección ${r.cls.toLowerCase()} a compresión${r.bad?' <b style="color:var(--c)">· supera el límite de esbeltez de la Tabla I1.1a</b>':''}.`}
 // ---------- modelo ----------
 // α = ángulo entre diagonal y cordón → largo de panel p = z / tan α
 function nPan(len,z,a){return Math.max(1,Math.round(len/(z/Math.tan(a*Math.PI/180))))}
@@ -190,9 +231,9 @@ function kloc(EA,EI,L,ri,rj){const a=EA/L,b=12*EI/L**3,c=6*EI/L**2,d=4*EI/L,e=2*
  return k}
 function solve(M){const{N,E,sup,F}=M,Em=+$('E').value*1e3,n=N.length*3,fix=$('sup').value=='fix';
  E.forEach(e=>{const A=N[e.a],B=N[e.b];e.L=Math.hypot(B.x-A.x,B.y-A.y);e.c=(B.x-A.x)/e.L;e.s=(B.y-A.y)/e.L;e.sec=sec(e.role)});
- const ppc=$('ppC').value=='1',ppb=$('ppB').value=='1';E.forEach(e=>{if(!(e.role[0]=='c'?ppc:ppb))return;const w=e.sec.A*78.5*e.L;F[e.a*3+1]-=w/2;F[e.b*3+1]-=w/2});
+ const ppc=$('ppC').value=='1',ppb=$('ppB').value=='1';E.forEach(e=>{if(!(e.role[0]=='c'?ppc:ppb))return;const w=(e.sec.A*78.5+(fillOn(e)?cft(e.sec.p,+$('fc').value,+$('vFy').value,+$('E').value).w:0))*e.L;F[e.a*3+1]-=w/2;F[e.b*3+1]-=w/2});
  const K=Array.from({length:n},()=>new Float64Array(n)),rotStiff=new Array(N.length).fill(0);
- E.forEach(e=>{e.k=kloc(Em*e.sec.A,Em*e.sec.I,e.L,e.ri,e.rj);const{c,s}=e,T=[[c,s,0],[-s,c,0],[0,0,1]],dof=[e.a*3,e.a*3+1,e.a*3+2,e.b*3,e.b*3+1,e.b*3+2];
+ E.forEach(e=>{e.comp=fillOn(e)?cft(e.sec.p,+$('fc').value,+$('vFy').value,+$('E').value):null;e.k=e.comp?kloc(e.comp.EA,e.comp.EIx,e.L,e.ri,e.rj):kloc(Em*e.sec.A,Em*e.sec.I,e.L,e.ri,e.rj);const{c,s}=e,T=[[c,s,0],[-s,c,0],[0,0,1]],dof=[e.a*3,e.a*3+1,e.a*3+2,e.b*3,e.b*3+1,e.b*3+2];
   const TT=(i,j)=>Math.floor(i/3)==Math.floor(j/3)?T[i%3][j%3]:0;
   for(let i=0;i<6;i++)for(let j=0;j<6;j++){let v=0;for(let p=0;p<6;p++){const tp=TT(p,i);if(!tp)continue;for(let q=0;q<6;q++){const tq=TT(q,j);if(tq)v+=tp*e.k[p][q]*tq}}K[dof[i]][dof[j]]+=v}
   if(!e.ri)rotStiff[e.a]=1;if(!e.rj)rotStiff[e.b]=1});
@@ -225,7 +266,7 @@ function qFac(name,A,Fy,Es){let m=name.match(/Ø\s*([\d,]+)\s*x\s*([\d,]+)/);con
   return{Q:Aef/A,txt:tx.length?tx.join(', ')+': Qa=Aef/Ag (E.7.18)':`b/t ≤ ${lim.toFixed(1)}: compacto`}}
  return{Q:1,txt:'Q=1 (no evaluado para esta familia)'}}
 function verif(){const{E}=M,Fy=+$('vFy').value,Fu=+$('vFu').value,U=+$('vU').value,Es=+$('E').value,H=M.H;
- const u=uF(),um=uM(),toKN=UF();const ok=b=>b?'<b style="color:var(--t)">OK</b>':'<b style="color:var(--c)">NO</b>';let nOk=0,nNo=0,worst=null;
+ const u=uF(),um=uM(),toKN=UF();const ok=b=>b?'<b style="color:var(--t)">OK</b>':'<b style="color:var(--c)">NO</b>';let nOk=0,nNo=0,worst=null;const compRows=[];
  let h=`<table><tr><th>#</th><th>Barra</th><th>Perfil</th><th>L [m]</th><th>Lx·k [m]</th><th>Ly·k [m]</th><th>Nu [${u}]</th><th>Mu [${um}]</th><th>λx</th><th>λy</th><th>Q</th><th>Pd [${u}]</th><th>Td [${u}]</th><th>Md [${um}]</th><th>Interacción</th><th>Estado</th></tr>`;
  E.forEach((e,i)=>{const p=e.sec.p,A=p[1],rx=p[3],ry=p[4],Zx=p[5],web=isWeb(e.role);
   const k=+$(web?'vkd':'vk').value;let Lx=e.L,Ly=e.L;
@@ -237,17 +278,25 @@ function verif(){const{E}=M,Fy=+$('vFy').value,Fu=+$('vFu').value,U=+$('vU').val
   const row=`<td>${i+1}</td><td style="text-align:left">${ROLE[e.role]}</td><td style="text-align:left">${p[0]}</td><td>${f2(e.L)}</td><td>${f2(Lx)}</td><td>${f2(Ly)}</td>`;
   if(!ry){h+=`<tr style="color:var(--mu)">${row}<td colspan="10">Faltan ry o Z en la tabla: no se verifica</td></tr>`;return}
   const Nk=e.N*toKN,Mk=Math.max(Math.abs(e.M1),Math.abs(e.M2))*toKN;
+  if(e.comp){const c=e.comp,Pex=Math.PI**2*c.EIx/(Lx*Lx),Pey=Math.PI**2*c.EIy/(Ly*Ly),Pe=Math.min(Pex,Pey),ra=c.Pno/Pe,Pn=ra<=2.25?c.Pno*Math.pow(0.658,ra):0.877*Pe;
+   const Pd=0.75*Pn,Td=c.Td,Md=0.9*c.Mn,rr=Nk<0?-Nk/Pd:Nk/Td,mm=Mk/Md,it=rr>=0.2?rr+8/9*mm:rr/2+mm,good=it<=1&&!c.bad;good?nOk++:nNo++;if(!worst||it>worst.it)worst={it,i};
+   const o=v=>v/toKN;compRows.push({i,name:p[0],c,Pex,Pey,Pn,it});
+   h+=`<tr style="background:rgba(122,122,122,.10)">${row.replace(p[0],p[0]+' + H-'+$('fc').value)}<td style="color:${Nk>=0?'var(--t)':'var(--c)'}">${f2(o(Nk))}</td><td>${f2(o(Mk))}</td><td colspan="2" title="Pe = π²·EIeff/(KL)², eje más débil">Pe = ${f2(o(Pe),0)}</td><td title="Clase a compresión, Tabla I1.1a">${c.cls}</td><td>${f2(o(Pd))}</td><td>${f2(o(Td))}</td><td>${f2(o(Md))}</td><td style="color:${it>1?'var(--c)':'inherit'};font-weight:600">${f2(it,2)}</td><td>${ok(good)}</td></tr>`;return}
   const lx=Lx*100/rx,ly=Ly*100/ry,lc=Math.max(lx,ly)/Math.PI*Math.sqrt(Fy/Es),q=qFac(p[0],A,Fy,Es),Q=q.Q,lq=lc*Math.sqrt(Q);
   const Fcr=lq<=1.5?Q*Math.pow(0.658,lq*lq)*Fy:0.877*Fy/(lc*lc),Pd=0.85*Fcr*A/10,Td=Math.min(0.9*Fy*A,0.75*Fu*U*A)/10,Md=Zx?0.9*Fy*Zx/1000:0;
   const r=Nk<0?-Nk/Pd:Nk/Td,mm=Md?Mk/Md:(Mk>1e-6?Infinity:0),it=r>=0.2?r+8/9*mm:r/2+mm,esb=Math.max(lx,ly)<=200||Nk>=0;
   const good=esb&&it<=1&&!q.bad;good?nOk++:nNo++;if(!worst||it>worst.it)worst={it,i};
   const o=v=>v/toKN;
   h+=`<tr>${row}<td style="color:${Nk>=0?'var(--t)':'var(--c)'}">${f2(o(Nk))}</td><td>${f2(o(Mk))}</td><td>${f2(lx,0)}</td><td style="color:${Math.max(lx,ly)>200&&Nk<0?'var(--c)':'inherit'}">${f2(ly,0)}</td><td title="${q.txt}">${f2(Q,3)}</td><td>${f2(o(Pd))}</td><td>${f2(o(Td))}</td><td>${Md?f2(o(Md)):'—'}</td><td style="color:${it>1?'var(--c)':'inherit'};font-weight:600">${f2(it,2)}</td><td>${ok(good)}</td></tr>`});
- return `<div class="msg ${nNo?'err':'ok'}">${nOk} barras verifican · ${nNo} no verifican${worst?` · máxima interacción ${f2(worst.it,2)} (barra ${worst.i+1})`:''}</div>`+h+'</table>'}
+let det='';if(compRows.length){const o=v=>v/toKN,u2=uF(),seen=new Set(),rows=compRows.sort((a,b)=>b.it-a.it).filter(x=>{const k=x.name;if(seen.has(k))return false;seen.add(k);return true});
+ det='<h4 style="margin-top:14px">Columnas rellenas de hormigón — AISC 360-22 capítulo I (barra más solicitada)</h4><table><tr><th>#</th><th>Perfil</th><th>λ</th><th>λp / λr</th><th>Clase comp. / flex.</th><th>Ec [MPa]</th><th>C3</th><th>EIeff,x [kN·m²]</th><th>Pp</th><th>Pno</th><th>Pe,x / Pe,y</th><th>φcPn</th><th>Mp [kNm]</th><th>φbMn [kNm]</th></tr>'+
+ rows.map(x=>{const c=x.c;return `<tr><td>${x.i+1}</td><td style="text-align:left">${x.name} + H-${$('fc').value}</td><td>${f2(c.lam,1)}</td><td>${f2(c.lp,1)} / ${f2(c.lr,1)}</td><td>${c.cls} / ${c.clsb}</td><td>${f2(c.Ec,0)}</td><td>${f2(c.C3,3)}</td><td>${f2(c.EIx,0)}</td><td>${f2(o(c.Pp),1)}</td><td>${f2(o(c.Pno),1)}</td><td>${f2(o(x.Pex),0)} / ${f2(o(x.Pey),0)}</td><td>${f2(o(0.75*x.Pn),1)}</td><td>${f2(c.Mp,1)}</td><td>${f2(0.9*c.Mn,1)}</td></tr>`}).join('')+
+ `</table><div class="sm">Fuerzas en ${u2}. λ = D/t (circular) o b/t con b = lado mayor − 3t (rectangular). Pp = Fy·As + C2·f'c·Ac (I2-9b; C2 = 0,85 rectangular, 0,95 circular) · no compacta: I2-9c · esbelta: I2-9e con Fcr I2-10/I2-11 · EIeff = Es·Is + C3·Ec·Ic (I2-14), C3 = 0,45 + 3·As/Ag ≤ 0,9 (I2-15) · Ec = 0,043·wc^1,5·√f'c con wc = 2400 kg/m³ · Pn por I2-2/I2-3 con φc = 0,75 · Mp por distribución plástica de tensiones (I3.4b); no compacta: interpolación hacia My (primera fluencia del tubo solo, conservador) · interacción H1 (I5) · tracción φt·Fy·As (I2.2c). Desplazamientos y esfuerzos calculados con EA = Es·As + Ec·Ac y EIeff.</div>`}
+  return `<div class="msg ${nNo?'err':'ok'}">${nOk} barras verifican · ${nNo} no verifican${worst?` · máxima interacción ${f2(worst.it,2)} (barra ${worst.i+1})`:''}</div>`+h+'</table>'+det}
 
 // ---------- guardar / cargar ----------
 let DBR=null,SAVED=[];const LSK='porticos_reticulados';
-const IDS=['nb','H','sup','bcon','un','E','zc','ac','pc','zb','ab','pb','bj','qH','qV','ppC','ppB','vFy','vFu','vU','vk','vkd','vLb','vLc'];
+const IDS=['nb','H','sup','bcon','un','E','zc','ac','pc','zb','ab','pb','bj','qH','qV','ppC','ppB','fill','fc','vFy','vFu','vU','vk','vkd','vLb','vLc'];
 function snapshot(){return{bays:S.bays,P:S.P,ct:S.ct,bt:S.bt,v:Object.fromEntries(IDS.map(i=>[i,$(i).value])),prof:Object.fromEntries(Object.entries(S.prof).map(([k,[f,i]])=>[k,[f,DB[f][i][0]]]))}}
 function restore(d){IDS.forEach(i=>{if(d.v[i]!==undefined)$(i).value=d.v[i]});S.bays=[...d.bays];S.P=[...d.P];S.ct=d.ct;S.bt=d.bt;S._u=$('un').value;
  Object.entries(d.prof).forEach(([k,[f,n]])=>{S.prof[k]=[f,Math.max(0,DB[f].findIndex(p=>p[0]==n))]});bjText();document.querySelectorAll('.uF').forEach(s=>s.textContent=S._u);segs();buildGeo();buildProf();run()}
@@ -269,7 +318,7 @@ async function initSave(){try{SAVED=JSON.parse(localStorage.getItem(LSK)||'[]')}
 
 // ---------- dibujo ----------
 let M,RS;
-function run(){M=model();RS=M.info.err?{err:M.info.err}:solve(M);
+function run(){fillInfo();M=model();RS=M.info.err?{err:M.info.err}:solve(M);
  $('cInfo').textContent=M.info.c?`${M.info.c.n} paneles · panel real ${f2(M.info.c.p)} m · α real ${f2(M.info.c.a,1)}° (col. 1)`:'';
  $('bInfo').textContent=M.info.b?`${M.info.b.n} paneles · panel real ${f2(M.info.b.p)} m · α real ${f2(M.info.b.a,1)}° (vano 1)`:'';
  draw()}
@@ -349,6 +398,7 @@ function table(){if(RS.err){$('tbl').innerHTML='';return}const{N,E}=M,k=S.tab,U=
 $('nb').onchange=()=>{buildGeo();run()};
 $('un').onchange=()=>{const o=S._u||'kN',n=$('un').value,k=(o=='t'?9.80665:1)/(n=='t'?9.80665:1);S._u=n;['qH','qV'].forEach(i=>$(i).value=+(+$(i).value*k).toFixed(3));S.P=S.P.map(p=>+(p*k).toFixed(3));document.querySelectorAll('.uF').forEach(s=>s.textContent=n);buildGeo();run()};
 $('bj').onchange=()=>{bjText();run()};
+['fill','fc'].forEach(id=>$(id).addEventListener('change',run));
 ['H','sup','bcon','E','zc','ac','pc','zb','ab','pb','qH','qV','ppC','ppB','vFy','vFu','vU','vk','vkd','vLb','vLc'].forEach(id=>$(id).onchange=run);
 window.onresize=draw;
 bjText();segs();buildGeo();buildProf();tabs();run();initSave();requestAnimationFrame(draw);
