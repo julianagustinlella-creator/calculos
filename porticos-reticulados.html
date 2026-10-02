@@ -40,7 +40,7 @@ option.cir{background:#dbeafe;color:#0b3d91;font-weight:600}.cirl{color:#1f6feb;
 <div id="gl"></div></div>
 
 <div class="pn"><h3>Geometría</h3>
-<label>Nº de vanos<input id="nb" type="number" min="1" max="8" value="1"></label>
+<label>Nº de vanos<input id="nb" type="number" min="1" max="20" value="1"></label>
 <div id="bays"></div>
 <label>Altura de columnas H [m]<input id="H" type="number" step="0.1" value="6"></label>
 <label>Apoyos<select id="sup"><option value="pin">Articulados</option><option value="fix">Empotrados</option></select></label>
@@ -125,7 +125,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 ['pc','pb'].forEach(id=>$(id).innerHTML=PAT.map(([k,n])=>`<option value="${k}">${n}</option>`).join(''));$('pc').value='warren';$('pb').value='pratt';
 function segs(){[['cT','ct'],['bT','bt']].forEach(([id,k])=>{$(id).querySelectorAll('button').forEach(b=>{b.className=b.dataset.v==S[k]?'on':'';b.onclick=()=>{S[k]=b.dataset.v;segs();buildProf();run()}})});
  $('cRet').hidden=S.ct!='ret';$('bRet').hidden=S.bt!='ret';}
-function ensure(){const nb=Math.max(1,Math.min(8,+$('nb').value||1));while(S.bays.length<nb)S.bays.push(S.bays[S.bays.length-1]||10);S.bays.length=nb;
+function ensure(){const nb=Math.max(1,Math.min(20,+$('nb').value||1));while(S.bays.length<nb)S.bays.push(S.bays[S.bays.length-1]||10);S.bays.length=nb;
  while(S.cA.length<nb+1)S.cA.push('A');S.cA.length=nb+1;while(S.bA.length<nb)S.bA.push('A');S.bA.length=nb;
  while(S.P.length<nb+1)S.P.push(0);S.P.length=nb+1}
 function buildGeo(){ensure();const nb=S.bays.length;
