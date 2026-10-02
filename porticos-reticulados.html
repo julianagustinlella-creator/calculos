@@ -73,7 +73,10 @@ option.cir{background:#dbeafe;color:#0b3d91;font-weight:600}.cirl{color:#1f6feb;
 <label>Vertical repartida en viga [<span class="uF">kN</span>/m] (↓ +)<input id="qV" type="number" step="0.1" value="5"></label>
 <div class="sm">La repartida se aplica en los nudos del cordón superior (reticulada) o de la viga (alma llena).</div>
 <h4>Puntuales en cabeza de columnas [<span class="uF">kN</span>] (↓ +)</h4><div id="pts"></div>
-<label>Incluir peso propio (acero 78,5 kN/m³)<select id="pp"><option value="1">Sí</option><option value="0">No</option></select></label>
+<h4>Peso propio (acero 78,5 kN/m³)</h4>
+<label>Columnas (con cordones y celosía)<select id="ppC"><option value="1">Sí</option><option value="0">No</option></select></label>
+<label>Viga (con cordones y celosía)<select id="ppB"><option value="1">Sí</option><option value="0">No</option></select></label>
+<div class="sm">Poné "No" si ese peso ya está incluido en la carga repartida o en las puntuales, para no contarlo dos veces.</div>
 </div>
 
 <div class="pn"><h3>Verificación (CIRSOC 301-2018)</h3>
@@ -187,7 +190,7 @@ function kloc(EA,EI,L,ri,rj){const a=EA/L,b=12*EI/L**3,c=6*EI/L**2,d=4*EI/L,e=2*
  return k}
 function solve(M){const{N,E,sup,F}=M,Em=+$('E').value*1e3,n=N.length*3,fix=$('sup').value=='fix';
  E.forEach(e=>{const A=N[e.a],B=N[e.b];e.L=Math.hypot(B.x-A.x,B.y-A.y);e.c=(B.x-A.x)/e.L;e.s=(B.y-A.y)/e.L;e.sec=sec(e.role)});
- if($('pp').value=='1')E.forEach(e=>{const w=e.sec.A*78.5*e.L;F[e.a*3+1]-=w/2;F[e.b*3+1]-=w/2});
+ const ppc=$('ppC').value=='1',ppb=$('ppB').value=='1';E.forEach(e=>{if(!(e.role[0]=='c'?ppc:ppb))return;const w=e.sec.A*78.5*e.L;F[e.a*3+1]-=w/2;F[e.b*3+1]-=w/2});
  const K=Array.from({length:n},()=>new Float64Array(n)),rotStiff=new Array(N.length).fill(0);
  E.forEach(e=>{e.k=kloc(Em*e.sec.A,Em*e.sec.I,e.L,e.ri,e.rj);const{c,s}=e,T=[[c,s,0],[-s,c,0],[0,0,1]],dof=[e.a*3,e.a*3+1,e.a*3+2,e.b*3,e.b*3+1,e.b*3+2];
   const TT=(i,j)=>Math.floor(i/3)==Math.floor(j/3)?T[i%3][j%3]:0;
@@ -244,7 +247,7 @@ function verif(){const{E}=M,Fy=+$('vFy').value,Fu=+$('vFu').value,U=+$('vU').val
 
 // ---------- guardar / cargar ----------
 let DBR=null,SAVED=[];const LSK='porticos_reticulados';
-const IDS=['nb','H','sup','bcon','un','E','zc','ac','pc','zb','ab','pb','bj','qH','qV','pp','vFy','vFu','vU','vk','vkd','vLb','vLc'];
+const IDS=['nb','H','sup','bcon','un','E','zc','ac','pc','zb','ab','pb','bj','qH','qV','ppC','ppB','vFy','vFu','vU','vk','vkd','vLb','vLc'];
 function snapshot(){return{bays:S.bays,P:S.P,ct:S.ct,bt:S.bt,v:Object.fromEntries(IDS.map(i=>[i,$(i).value])),prof:Object.fromEntries(Object.entries(S.prof).map(([k,[f,i]])=>[k,[f,DB[f][i][0]]]))}}
 function restore(d){IDS.forEach(i=>{if(d.v[i]!==undefined)$(i).value=d.v[i]});S.bays=[...d.bays];S.P=[...d.P];S.ct=d.ct;S.bt=d.bt;S._u=$('un').value;
  Object.entries(d.prof).forEach(([k,[f,n]])=>{S.prof[k]=[f,Math.max(0,DB[f].findIndex(p=>p[0]==n))]});bjText();document.querySelectorAll('.uF').forEach(s=>s.textContent=S._u);segs();buildGeo();buildProf();run()}
@@ -346,7 +349,7 @@ function table(){if(RS.err){$('tbl').innerHTML='';return}const{N,E}=M,k=S.tab,U=
 $('nb').onchange=()=>{buildGeo();run()};
 $('un').onchange=()=>{const o=S._u||'kN',n=$('un').value,k=(o=='t'?9.80665:1)/(n=='t'?9.80665:1);S._u=n;['qH','qV'].forEach(i=>$(i).value=+(+$(i).value*k).toFixed(3));S.P=S.P.map(p=>+(p*k).toFixed(3));document.querySelectorAll('.uF').forEach(s=>s.textContent=n);buildGeo();run()};
 $('bj').onchange=()=>{bjText();run()};
-['H','sup','bcon','E','zc','ac','pc','zb','ab','pb','qH','qV','pp','vFy','vFu','vU','vk','vkd','vLb','vLc'].forEach(id=>$(id).onchange=run);
+['H','sup','bcon','E','zc','ac','pc','zb','ab','pb','qH','qV','ppC','ppB','vFy','vFu','vU','vk','vkd','vLb','vLc'].forEach(id=>$(id).onchange=run);
 window.onresize=draw;
 bjText();segs();buildGeo();buildProf();tabs();run();initSave();requestAnimationFrame(draw);
 </script>
