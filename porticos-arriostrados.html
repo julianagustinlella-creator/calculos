@@ -61,7 +61,7 @@ input,select{color:#1d2330}th{color:#1d2330}#svg{background:#fff}#svg text{fill-
 <label>k diagonales<input id="vkd" type="number" step="0.05" value="1"></label>
 <label>Exigencias sísmicas IC 103 en diagonales<select id="vsis"><option value="1">Sí</option><option value="0">No</option></select></label>
 <div class="sm">Longitud de pandeo = k · largo de la barra en ambos ejes. φc=0,85 · φt=0,9 / 0,75 · φb=0,9. E se toma del campo de Geometría.</div></div>
-<div class="pn"><h3>Cargas [<span class="uF">kN</span>] (→ + , ↓ +)</h3><div id="ld"></div><div class="sm">H izq.: horizontal en el nudo izquierdo del nivel. q vigas: carga vertical repartida sobre todas las vigas del nivel [<span class="uF">kN</span>/m]. P col: carga vertical puntual en la cabeza de cada columna del nivel.</div></div>
+<div class="pn"><h3>Cargas [<span class="uF">kN</span>] (→ + , ↓ +)</h3><div id="ld"></div><div class="sm">H: carga horizontal en la cabeza de cada columna del nivel (→ positiva). q vigas: carga vertical repartida sobre todas las vigas del nivel [<span class="uF">kN</span>/m]. P col: carga vertical puntual en la cabeza de cada columna del nivel.</div></div>
 </div>
 <div>
 <div class="tabs" id="tabs"></div>
@@ -83,8 +83,9 @@ function ensure(){const nb=+$('nb').value,ns=+$('ns').value;
  while(S.lev.length<ns)S.lev.push(4);S.lev.length=ns;
  for(let j=0;j<ns;j++){S.types[j]=S.types[j]||[];for(let i=0;i<nb;i++)if(S.types[j][i]===undefined)S.types[j][i]=(i==1||nb==1)?'X':'—';S.types[j].length=nb;}
  S.types.length=ns;
- for(let j=0;j<ns;j++){S.loads[j]=S.loads[j]||{H:0,P:[],q:0};if(S.loads[j].q===undefined)S.loads[j].q=0;for(let i=0;i<=nb;i++)if(S.loads[j].P[i]===undefined)S.loads[j].P[i]=0;S.loads[j].P.length=nb+1;}
- S.loads.length=ns;if(S.loads[ns-1].H==0&&!S._h){S.loads[ns-1].H=50;S._h=1}}
+ for(let j=0;j<ns;j++){S.loads[j]=S.loads[j]||{H:0,P:[],q:0};if(S.loads[j].q===undefined)S.loads[j].q=0;for(let i=0;i<=nb;i++)if(S.loads[j].P[i]===undefined)S.loads[j].P[i]=0;S.loads[j].P.length=nb+1;
+  const Lj=S.loads[j];if(!Lj.Hc){Lj.Hc=[Lj.H||0]}for(let i=0;i<=nb;i++)if(Lj.Hc[i]===undefined)Lj.Hc[i]=0;Lj.Hc.length=nb+1;Lj.H=Lj.Hc[0];}
+ S.loads.length=ns;if(S.loads[ns-1].Hc[0]==0&&!S._h){S.loads[ns-1].Hc[0]=S.loads[ns-1].H=50;S._h=1}}
 function buildGT(){const nb=S.bays.length,ns=S.lev.length;let h='<table class="gt"><tr><th>Nivel \\ Vano</th>';
  for(let i=0;i<nb;i++)h+=`<th>${i+1}</th>`;h+='<th>h [m]</th></tr>';
  for(let j=ns-1;j>=0;j--){h+=`<tr><th>${j+1}</th>`;for(let i=0;i<nb;i++)h+=`<td><select data-t="${j},${i}">${TYPES.map(t=>`<option ${t==S.types[j][i]?'selected':''}>${t}</option>`).join('')}</select></td>`;
@@ -94,10 +95,12 @@ function buildGT(){const nb=S.bays.length,ns=S.lev.length;let h='<table class="g
  $('gt').querySelectorAll('select').forEach(e=>e.onchange=()=>{const[j,i]=e.dataset.t.split(',');S.types[j][i]=e.value;run()});
  $('gt').querySelectorAll('[data-h]').forEach(e=>e.onchange=()=>{S.lev[e.dataset.h]=+e.value;run()});
  $('gt').querySelectorAll('[data-b]').forEach(e=>e.onchange=()=>{S.bays[e.dataset.b]=+e.value;run()});
- let l='<table class="gt"><tr><th>Nivel</th><th>H izq. →</th><th>q vigas ↓ [/m]</th>';for(let i=0;i<=nb;i++)l+=`<th>P col${i+1} ↓</th>`;l+='</tr>';
- for(let j=ns-1;j>=0;j--){l+=`<tr><th>${j+1}</th><td><input type="number" data-lh="${j}" value="${S.loads[j].H}"></td><td><input type="number" step="0.1" data-lq="${j}" value="${S.loads[j].q}"></td>`;for(let i=0;i<=nb;i++)l+=`<td><input type="number" data-lp="${j},${i}" value="${S.loads[j].P[i]}"></td>`;l+='</tr>'}
+  let l='<table class="gt"><tr><th>Nivel</th><th>Carga</th>';for(let i=0;i<=nb;i++)l+=`<th>Col ${i+1}</th>`;l+='<th>q vigas ↓ [/m]</th></tr>';
+ for(let j=ns-1;j>=0;j--){const L=S.loads[j];
+  l+=`<tr><th rowspan="2">${j+1}</th><td>H →</td>`+L.Hc.map((h,i)=>`<td><input type="number" step="0.1" data-lh="${j},${i}" value="${h}"></td>`).join('')+`<td rowspan="2"><input type="number" step="0.1" data-lq="${j}" value="${L.q}"></td></tr>`;
+  l+=`<tr><td>P ↓</td>`+L.P.map((p,i)=>`<td><input type="number" step="0.1" data-lp="${j},${i}" value="${p}"></td>`).join('')+'</tr>'}
  $('ld').innerHTML=l+'</table>';
- $('ld').querySelectorAll('[data-lh]').forEach(e=>e.onchange=()=>{S.loads[e.dataset.lh].H=+e.value;run()});
+ $('ld').querySelectorAll('[data-lh]').forEach(e=>e.onchange=()=>{const[j,i]=e.dataset.lh.split(',');S.loads[j].Hc[i]=+e.value;S.loads[j].H=S.loads[j].Hc[0];run()});
  $('ld').querySelectorAll('[data-lq]').forEach(e=>e.onchange=()=>{S.loads[e.dataset.lq].q=+e.value;run()});
  $('ld').querySelectorAll('[data-lp]').forEach(e=>e.onchange=()=>{const[j,i]=e.dataset.lp.split(',');S.loads[j].P[i]=+e.value;run()});}
 function buildProf(){let h='';for(const[k,n]of[['col','Columnas'],['beam','Vigas'],['br','Diagonales']]){const[f,ix]=S.prof[k];
@@ -117,7 +120,7 @@ function sec(k){const[f,i]=S.prof[k];const p=DB[f][Math.min(i,DB[f].length-1)];r
 // ---------- guardar / cargar ----------
 let DBR=null,SAVED=[];const LSK='porticos_guardados';
 function snapshot(){return{ov:Object.fromEntries(Object.entries(S.ov).map(([k,o])=>[k,{...o,prof:o.prof?[o.prof[0],DB[o.prof[0]][o.prof[1]][0]]:undefined}])),bays:S.bays,lev:S.lev,types:S.types,loads:S.loads,prof:Object.fromEntries(Object.entries(S.prof).map(([k,[f,i]])=>[k,[f,DB[f][i][0]]])),sup:$('sup').value,bcon:$('bcon').value,xmode:$('xmode').value,E:+$('E').value,un:$('un').value}}
-function restore(d){S.sel=null;S.ov=Object.fromEntries(Object.entries(d.ov||{}).map(([k,o])=>[k,{...o,prof:o.prof?[o.prof[0],Math.max(0,DB[o.prof[0]].findIndex(p=>p[0]==o.prof[1]))]:undefined}]));Object.values(S.ov).forEach(o=>{if(!o.prof)delete o.prof});$('nb').value=d.bays.length;$('ns').value=d.lev.length;S.bays=[...d.bays];S.lev=[...d.lev];S.types=d.types.map(r=>[...r]);S.loads=d.loads.map(L=>({H:L.H,P:[...L.P],q:L.q||0}));S.prof=Object.fromEntries(Object.entries(d.prof).map(([k,[f,v]])=>[k,[f,typeof v=='string'?Math.max(0,DB[f].findIndex(p=>p[0]==v)):v]]));S._h=1;
+function restore(d){S.sel=null;S.ov=Object.fromEntries(Object.entries(d.ov||{}).map(([k,o])=>[k,{...o,prof:o.prof?[o.prof[0],Math.max(0,DB[o.prof[0]].findIndex(p=>p[0]==o.prof[1]))]:undefined}]));Object.values(S.ov).forEach(o=>{if(!o.prof)delete o.prof});$('nb').value=d.bays.length;$('ns').value=d.lev.length;S.bays=[...d.bays];S.lev=[...d.lev];S.types=d.types.map(r=>[...r]);S.loads=d.loads.map(L=>({H:L.H,P:[...L.P],q:L.q||0,Hc:L.Hc?[...L.Hc]:undefined}));S.prof=Object.fromEntries(Object.entries(d.prof).map(([k,[f,v]])=>[k,[f,typeof v=='string'?Math.max(0,DB[f].findIndex(p=>p[0]==v)):v]]));S._h=1;
  $('sup').value=d.sup;$('bcon').value=d.bcon;$('xmode').value=d.xmode;$('E').value=d.E;$('un').value=d.un||'kN';S._u=$('un').value;document.querySelectorAll('.uF').forEach(s=>s.textContent=S._u);ensure();buildGT();buildProf();run()}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function listSaved(){const g={};SAVED.forEach(x=>(g[x.proyecto||'Sin proyecto']=g[x.proyecto||'Sin proyecto']||[]).push(x));
@@ -192,7 +195,7 @@ function model(){const nb=S.bays.length,ns=S.lev.length,X=[0],Y=[0];
  E.forEach(e=>{if(e.t=='br'){e.ri=e.rj=true}});
  const sup=[];N.forEach((n,i)=>{if(n.y==0)sup.push(i)});
  const F=new Array(N.length*3).fill(0);
- for(let j=1;j<=ns;j++){const L=S.loads[j-1];F[g(0,j)*3]+=L.H*UF();for(let i=0;i<=nb;i++)F[g(i,j)*3+1]-=L.P[i]*UF()}
+ for(let j=1;j<=ns;j++){const L=S.loads[j-1];for(let i=0;i<=nb;i++){F[g(i,j)*3]+=(L.Hc[i]||0)*UF();F[g(i,j)*3+1]-=L.P[i]*UF()}}
  E.forEach(e=>{if(e.t=='beam'){const j=Math.round(N[e.a].y*1e6);const lv=Y.findIndex(y=>Math.round(y*1e6)==j);e.q=lv>0?(S.loads[lv-1].q||0)*UF():0}});
  return{N,E,sup,F,X,Y}}
 // fuerzas de empotramiento (ejes locales) por carga repartida wx (axial) y wy (transversal), con liberaciones
@@ -287,7 +290,7 @@ function draw(){const svg=$('svg'),W=svg.clientWidth||900,H=620,{N,E,X,Y}=M;
 });
  if(kind=='r')Object.entries(RS.R).forEach(([i,r])=>{const x=px(N[i].x),y=py(N[i].y);s+=`<text x="${x}" y="${y+72}" text-anchor="middle" font-size="11" fill="#0f7b6c">Rx=${f2(r[0],1)}</text><text x="${x}" y="${y+86}" text-anchor="middle" font-size="11" fill="#0f7b6c">Ry=${f2(r[1],1)}</text>`+($('sup').value=='fix'?`<text x="${x}" y="${y+100}" text-anchor="middle" font-size="11" fill="#0f7b6c">M=${f2(r[2],1)}</text>`:'')});}
  // cargas
- for(let j=1;j<=S.lev.length;j++){const L=S.loads[j-1];if(L.H){const y=py(Y[j]),x=px(0),d=L.H>0?1:-1;s+=`<line x1="${x-d*50}" y1="${y}" x2="${x-d*6}" y2="${y}" stroke="#e67e22" stroke-width="2.5" marker-end="url(#ar)"/><text x="${x-d*50}" y="${y-5}" font-size="11" fill="#e67e22" text-anchor="middle">${L.H} ${uF()}</text>`}
+ for(let j=1;j<=S.lev.length;j++){const L=S.loads[j-1];(L.Hc||[]).forEach((h,i)=>{if(!h)return;const y=py(Y[j]),x=px(X[i]),d=h>0?1:-1;s+=`<line x1="${x-d*50}" y1="${y}" x2="${x-d*6}" y2="${y}" stroke="#e67e22" stroke-width="2.5" marker-end="url(#ar)"/><text x="${x-d*50}" y="${y-5}" font-size="11" fill="#e67e22" text-anchor="middle">${h} ${uF()}</text>`});
   if(L.q){for(let i=0;i<S.bays.length;i++){const xa=px(X[i]),xb=px(X[i+1]),y=py(Y[j])-26;s+=`<rect x="${xa}" y="${y-6}" width="${xb-xa}" height="6" fill="#e67e22" fill-opacity=".18" stroke="#e67e22" stroke-width=".8"/>`;
    for(let q=1;q<6;q++){const xx=xa+(xb-xa)*q/6;s+=`<line x1="${xx}" y1="${y}" x2="${xx}" y2="${y+18}" stroke="#e67e22" stroke-width="1" marker-end="url(#ar)"/>`}
    s+=`<text x="${(xa+xb)/2}" y="${y-9}" text-anchor="middle" font-size="10.5" fill="#e67e22">q = ${L.q} ${uF()}/m</text>`}}
@@ -357,7 +360,7 @@ function ovList(){const ks=Object.keys(S.ov).filter(k=>M&&M.E.some(e=>e.key===k)
  $('ovClr').onclick=()=>{if($('ovClr').textContent!='¿Seguro?'){$('ovClr').textContent='¿Seguro?';return}S.ov={};run()}}
 ['nb','ns'].forEach(id=>$(id).onchange=()=>{ensure();buildGT();run()});
 $('all').onchange=()=>{const v=$('all').value;if(!v)return;S.types.forEach(r=>r.fill(v));$('all').value='';buildGT();run()};
-$('un').onchange=()=>{const o=S._u||'kN',n=$('un').value,k=(o=='t'?9.80665:1)/(n=='t'?9.80665:1);S._u=n;S.loads.forEach(L=>{L.H=+(L.H*k).toFixed(3);L.q=+((L.q||0)*k).toFixed(3);L.P=L.P.map(p=>+(p*k).toFixed(3))});document.querySelectorAll('.uF').forEach(s=>s.textContent=n);buildGT();run()};
+$('un').onchange=()=>{const o=S._u||'kN',n=$('un').value,k=(o=='t'?9.80665:1)/(n=='t'?9.80665:1);S._u=n;S.loads.forEach(L=>{L.Hc=L.Hc.map(h=>+(h*k).toFixed(3));L.H=L.Hc[0];L.q=+((L.q||0)*k).toFixed(3);L.P=L.P.map(p=>+(p*k).toFixed(3))});document.querySelectorAll('.uF').forEach(s=>s.textContent=n);buildGT();run()};
 ['sup','bcon','xmode','E','vFy','vFu','vU','vRy','vkc','vkb','vkd','vsis'].forEach(id=>$(id).onchange=run);
 window.onresize=draw;
 ensure();buildGT();buildProf();tabs();run();initSave();requestAnimationFrame(draw);
