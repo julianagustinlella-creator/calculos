@@ -66,7 +66,7 @@ input,select{color:#1d2330}th{color:#1d2330}#svg{background:#fff}#svg text{fill-
 <div>
 <div class="tabs" id="tabs"></div>
 <div class="ctl" id="ctl"></div>
-<div id="stat"></div>
+<div id="stat"></div><div id="kinfo" style="margin:4px 0 6px;font-size:12.5px"></div>
 <div id="ed"></div>
 <svg id="svg"></svg>
 <div class="pn" style="margin-top:10px"><div id="tbl"></div></div>
@@ -246,7 +246,20 @@ function solve(M){const{N,E,sup,F}=M,Em=+$('E').value*1e3,n=N.length*3,xten=$('x
 
 // ---------- dibujo ----------
 let M,RS;
-function run(){ensure();M=model();RS=solve(M);draw()}
+function rigidez(){KR=null;if(RS.err)return;try{
+ const nb=S.bays.length,ns=S.lev.length,{N}=M,E2=M.E.map(e=>({...e,q:0})),F=new Array(N.length*3).fill(0),top=[];
+ N.forEach((n,i)=>{if(n.k&&n.k=='g'+n.k.slice(1).split('_')[0]+'_'+ns)top.push(i)});
+ const tops=[...Array(nb+1).keys()].map(i=>N.findIndex(n=>n.k=='g'+i+'_'+ns));tops.forEach(i=>F[i*3]+=1/tops.length);
+ const r=solve({...M,E:E2,F}),U=r.U;if(r.err)return;const fu=UF();
+ const lev=j=>{const ids=[...Array(nb+1).keys()].map(i=>N.findIndex(n=>n.k=='g'+i+'_'+j));return ids.reduce((a,i)=>a+U[i*3],0)/ids.length};
+ const d=[0];for(let j=1;j<=ns;j++)d.push(lev(j));// desplazamiento por 1 kN (unidad interna kN) — solve divide fuerzas, no desplazamientos
+ KR={K:1/d[ns],story:S.lev.map((h,j)=>({h,k:1/(d[j+1]-d[j])}))}}catch(x){KR=null}}
+let KR=null;
+function kTxt(k){// k en kN/m
+ return $('un').value=='t'?`${f2(k/9.80665/100,2)} t/cm`:`${f2(k/1000,2)} kN/mm`}
+function run(){ensure();M=model();RS=solve(M);rigidez();
+ $('kinfo').innerHTML=KR?`<b>Rigidez lateral del pórtico:</b> K = ${kTxt(KR.K)} <span class="sm">(fuerza horizontal en el último nivel / desplazamiento de ese nivel)</span>`+(KR.story.length>1?` · por piso: ${KR.story.map((s,j)=>`P${j+1} ${kTxt(s.k)}`).join(' · ')}`:''):'';
+ draw()}
 const TABS=[['mod','Modelo'],['n','Axiles N'],['m','Momentos M'],['v','Cortes V'],['d','Desplazamientos'],['r','Reacciones'],['ver','Verificación']];
 function tabs(){$('tabs').innerHTML=TABS.map(([k,n])=>`<button class="${S.tab==k?'on':''}" data-k="${k}">${n}</button>`).join('');
  $('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.tab=b.dataset.k;tabs();draw()})}
@@ -322,6 +335,7 @@ function draw(){const svg=$('svg'),W=svg.clientWidth||900,H=620,{N,E,X,Y}=M;
 function table(){if(RS.err){$('tbl').innerHTML='';return}const{N,E}=M,k=S.tab,U=RS.U;let h='';
  const nm=i=>{const n=N[i];return `(${f2(n.x,2)}; ${f2(n.y,2)})`};
  if(k=='d'){h='<table><tr><th>Nudo (x;y) m</th><th>δx [mm]</th><th>δy [mm]</th><th>θ [rad]</th></tr>'+N.map((n,i)=>`<tr><td>${nm(i)}</td><td>${f2(U[i*3]*1e3,3)}</td><td>${f2(U[i*3+1]*1e3,3)}</td><td>${f2(U[i*3+2],5)}</td></tr>`).join('')+'</table>';
+  if(KR){h=`<h4>Rigidez lateral</h4><table><tr><th>Piso</th><th>h [m]</th><th>Rigidez de piso k = V/Δ</th></tr>`+KR.story.map((s,j)=>`<tr><td>${j+1}</td><td>${f2(s.h)}</td><td>${kTxt(s.k)}</td></tr>`).join('')+`<tr><th>Pórtico (último nivel)</th><th></th><th>${kTxt(KR.K)}</th></tr></table><div class="sm">Se calcula aplicando una fuerza horizontal unitaria repartida en los nudos del último nivel, con las mismas barras activas que el cálculo principal (con "Solo tracción", sin las diagonales comprimidas). k de piso = corte del piso / desplazamiento relativo del piso (promedio de las columnas). Para pasar a desplazamiento: δ = H / K.</div>`+h}
   h+='<h4>Deriva de piso (columna izquierda)</h4><table><tr><th>Nivel</th><th>h [m]</th><th>δ [mm]</th><th>Δ piso [mm]</th><th>h/Δ</th></tr>';
   let prev=0;M.Y.slice(1).forEach((y,j)=>{const i=N.findIndex(n=>n.k=='g0_'+(j+1)),d=U[i*3]*1e3,dd=d-prev;h+=`<tr><td>${j+1}</td><td>${S.lev[j]}</td><td>${f2(d,3)}</td><td>${f2(dd,3)}</td><td>${Math.abs(dd)>1e-9?Math.round(S.lev[j]*1e3/Math.abs(dd)):'∞'}</td></tr>`;prev=d});h+='</table>'}
  else if(k=='r'){h=`<table><tr><th>Apoyo</th><th>Rx [${uF()}]</th><th>Ry [${uF()}]</th><th>M [${uM()}]</th></tr>`;let sx=0,sy=0;
