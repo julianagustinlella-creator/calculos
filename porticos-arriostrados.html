@@ -12,7 +12,7 @@ input,select{font:inherit;padding:3px 5px;border:1px solid var(--bd);border-radi
 input[type=number]{width:80px}select{max-width:210px}
 table{border-collapse:collapse;width:100%;font-size:12px}td,th{border:1px solid var(--bd);padding:3px 5px;text-align:right}th{background:#eef1f6}
 .gt td{text-align:center;padding:2px}.gt select{max-width:100px;font-size:11px}.gt input{width:60px}
-.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}.tabs button{border:1px solid var(--bd);background:#fff;padding:6px 12px;border-radius:6px;cursor:pointer;font:inherit}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}.tabs button{border:1px solid var(--bd);background:#fff;color:#1d2330;padding:6px 12px;border-radius:6px;cursor:pointer;font:inherit}
 .tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
 #svg{width:100%;height:620px;background:#fff;border:1px solid var(--bd);border-radius:8px}
 .msg{padding:6px;border-radius:4px;margin:6px 0}.err{background:#fde2e1;color:#8a1c14}.ok{background:#e1f5e8;color:#135c30}
@@ -57,7 +57,7 @@ input,select{color:#1d2330}th{color:#1d2330}#svg{background:#fff}#svg text{fill-
 <label>k diagonales<input id="vkd" type="number" step="0.05" value="1"></label>
 <label>Exigencias sísmicas IC 103 en diagonales<select id="vsis"><option value="1">Sí</option><option value="0">No</option></select></label>
 <div class="sm">Longitud de pandeo = k · largo de la barra en ambos ejes. φc=0,85 · φt=0,9 / 0,75 · φb=0,9. E se toma del campo de Geometría.</div></div>
-<div class="pn"><h3>Cargas en nudos [<span class="uF">kN</span>] (→ + , ↓ +)</h3><div id="ld"></div></div>
+<div class="pn"><h3>Cargas [<span class="uF">kN</span>] (→ + , ↓ +)</h3><div id="ld"></div><div class="sm">H izq.: horizontal en el nudo izquierdo del nivel. q vigas: carga vertical repartida sobre todas las vigas del nivel [<span class="uF">kN</span>/m]. P col: carga vertical puntual en la cabeza de cada columna del nivel.</div></div>
 </div>
 <div>
 <div class="tabs" id="tabs"></div>
@@ -78,7 +78,7 @@ function ensure(){const nb=+$('nb').value,ns=+$('ns').value;
  while(S.lev.length<ns)S.lev.push(4);S.lev.length=ns;
  for(let j=0;j<ns;j++){S.types[j]=S.types[j]||[];for(let i=0;i<nb;i++)if(S.types[j][i]===undefined)S.types[j][i]=(i==1||nb==1)?'X':'—';S.types[j].length=nb;}
  S.types.length=ns;
- for(let j=0;j<ns;j++){S.loads[j]=S.loads[j]||{H:0,P:[]};for(let i=0;i<=nb;i++)if(S.loads[j].P[i]===undefined)S.loads[j].P[i]=0;S.loads[j].P.length=nb+1;}
+ for(let j=0;j<ns;j++){S.loads[j]=S.loads[j]||{H:0,P:[],q:0};if(S.loads[j].q===undefined)S.loads[j].q=0;for(let i=0;i<=nb;i++)if(S.loads[j].P[i]===undefined)S.loads[j].P[i]=0;S.loads[j].P.length=nb+1;}
  S.loads.length=ns;if(S.loads[ns-1].H==0&&!S._h){S.loads[ns-1].H=50;S._h=1}}
 function buildGT(){const nb=S.bays.length,ns=S.lev.length;let h='<table class="gt"><tr><th>Nivel \\ Vano</th>';
  for(let i=0;i<nb;i++)h+=`<th>${i+1}</th>`;h+='<th>h [m]</th></tr>';
@@ -89,10 +89,11 @@ function buildGT(){const nb=S.bays.length,ns=S.lev.length;let h='<table class="g
  $('gt').querySelectorAll('select').forEach(e=>e.onchange=()=>{const[j,i]=e.dataset.t.split(',');S.types[j][i]=e.value;run()});
  $('gt').querySelectorAll('[data-h]').forEach(e=>e.onchange=()=>{S.lev[e.dataset.h]=+e.value;run()});
  $('gt').querySelectorAll('[data-b]').forEach(e=>e.onchange=()=>{S.bays[e.dataset.b]=+e.value;run()});
- let l='<table class="gt"><tr><th>Nivel</th><th>H izq.</th>';for(let i=0;i<=nb;i++)l+=`<th>P col${i+1}</th>`;l+='</tr>';
- for(let j=ns-1;j>=0;j--){l+=`<tr><th>${j+1}</th><td><input type="number" data-lh="${j}" value="${S.loads[j].H}"></td>`;for(let i=0;i<=nb;i++)l+=`<td><input type="number" data-lp="${j},${i}" value="${S.loads[j].P[i]}"></td>`;l+='</tr>'}
+ let l='<table class="gt"><tr><th>Nivel</th><th>H izq. →</th><th>q vigas ↓ [/m]</th>';for(let i=0;i<=nb;i++)l+=`<th>P col${i+1} ↓</th>`;l+='</tr>';
+ for(let j=ns-1;j>=0;j--){l+=`<tr><th>${j+1}</th><td><input type="number" data-lh="${j}" value="${S.loads[j].H}"></td><td><input type="number" step="0.1" data-lq="${j}" value="${S.loads[j].q}"></td>`;for(let i=0;i<=nb;i++)l+=`<td><input type="number" data-lp="${j},${i}" value="${S.loads[j].P[i]}"></td>`;l+='</tr>'}
  $('ld').innerHTML=l+'</table>';
  $('ld').querySelectorAll('[data-lh]').forEach(e=>e.onchange=()=>{S.loads[e.dataset.lh].H=+e.value;run()});
+ $('ld').querySelectorAll('[data-lq]').forEach(e=>e.onchange=()=>{S.loads[e.dataset.lq].q=+e.value;run()});
  $('ld').querySelectorAll('[data-lp]').forEach(e=>e.onchange=()=>{const[j,i]=e.dataset.lp.split(',');S.loads[j].P[i]=+e.value;run()});}
 function buildProf(){let h='';for(const[k,n]of[['col','Columnas'],['beam','Vigas'],['br','Diagonales']]){const[f,ix]=S.prof[k];
  h+=`<div style="margin:6px 0"><b>${n}</b><label><select data-f="${k}">${Object.keys(DB).map(x=>`<option value="${x}" ${x==f?'selected':''}>${FAM[x]||x}</option>`).join('')}</select>
@@ -107,7 +108,7 @@ function sec(k){const[f,i]=S.prof[k];const p=DB[f][Math.min(i,DB[f].length-1)];r
 // ---------- guardar / cargar ----------
 let DBR=null,SAVED=[];const LSK='porticos_guardados';
 function snapshot(){return{bays:S.bays,lev:S.lev,types:S.types,loads:S.loads,prof:Object.fromEntries(Object.entries(S.prof).map(([k,[f,i]])=>[k,[f,DB[f][i][0]]])),sup:$('sup').value,bcon:$('bcon').value,xmode:$('xmode').value,E:+$('E').value,un:$('un').value}}
-function restore(d){$('nb').value=d.bays.length;$('ns').value=d.lev.length;S.bays=[...d.bays];S.lev=[...d.lev];S.types=d.types.map(r=>[...r]);S.loads=d.loads.map(L=>({H:L.H,P:[...L.P]}));S.prof=Object.fromEntries(Object.entries(d.prof).map(([k,[f,v]])=>[k,[f,typeof v=='string'?Math.max(0,DB[f].findIndex(p=>p[0]==v)):v]]));S._h=1;
+function restore(d){$('nb').value=d.bays.length;$('ns').value=d.lev.length;S.bays=[...d.bays];S.lev=[...d.lev];S.types=d.types.map(r=>[...r]);S.loads=d.loads.map(L=>({H:L.H,P:[...L.P],q:L.q||0}));S.prof=Object.fromEntries(Object.entries(d.prof).map(([k,[f,v]])=>[k,[f,typeof v=='string'?Math.max(0,DB[f].findIndex(p=>p[0]==v)):v]]));S._h=1;
  $('sup').value=d.sup;$('bcon').value=d.bcon;$('xmode').value=d.xmode;$('E').value=d.E;$('un').value=d.un||'kN';S._u=$('un').value;document.querySelectorAll('.uF').forEach(s=>s.textContent=S._u);ensure();buildGT();buildProf();run()}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function listSaved(){const g={};SAVED.forEach(x=>(g[x.proyecto||'Sin proyecto']=g[x.proyecto||'Sin proyecto']||[]).push(x));
@@ -135,7 +136,7 @@ function verif(){const{E}=M,Fy=+$('vFy').value,Fu=+$('vFu').value,U=+$('vU').val
  E.forEach((e,n)=>{const p=e.sec.p,A=p[1],rx=p[3],ry=p[4],Zx=p[5];const Lc=e.L*100,k=+$(e.t=='col'?'vkc':e.t=='beam'?'vkb':'vkd').value;
   const row=`<td>${n+1}</td><td>${T[e.t]}</td><td style="text-align:left">${p[0]}</td><td>${f2(e.L)}</td><td>${k}</td>`;
   if(!ry){h+=`<tr style="color:var(--mu)">${row}<td colspan="${sis?15:13}">Faltan ry o Z en la tabla: no se verifica</td></tr>`;return}
-  const Nt=e.N*toT,Mt=Math.max(Math.abs(e.M1),Math.abs(e.M2))*toT;
+  const Nt=e.N*toT,Mt=(e.Mmax!==undefined?e.Mmax:Math.max(Math.abs(e.M1),Math.abs(e.M2)))*toT;
   const lx=k*Lc/rx,ly=k*Lc/ry,lc=Math.max(lx,ly)*Math.sqrt(Fy/Es)/Math.PI;
   const q=qFac(p[0],A,Fy,Es),Q=q.Q,lq=lc*Math.sqrt(Q);
   const Fcr=lq<1.5?Q*Math.pow(0.658,lq*lq)*Fy:0.877*Fy/(lc*lc),Pd=0.85*Fcr*A,Td=Math.min(0.9*A*Fy,0.75*A*Fu*U);
@@ -183,7 +184,14 @@ function model(){const nb=S.bays.length,ns=S.lev.length,X=[0],Y=[0];
  const sup=[];N.forEach((n,i)=>{if(n.y==0)sup.push(i)});
  const F=new Array(N.length*3).fill(0);
  for(let j=1;j<=ns;j++){const L=S.loads[j-1];F[g(0,j)*3]+=L.H*UF();for(let i=0;i<=nb;i++)F[g(i,j)*3+1]-=L.P[i]*UF()}
+ E.forEach(e=>{if(e.t=='beam'){const j=Math.round(N[e.a].y*1e6);const lv=Y.findIndex(y=>Math.round(y*1e6)==j);e.q=lv>0?(S.loads[lv-1].q||0)*UF():0}});
  return{N,E,sup,F,X,Y}}
+// fuerzas de empotramiento (ejes locales) por carga repartida wx (axial) y wy (transversal), con liberaciones
+function fefLoc(EA,EI,L,ri,rj,wx,wy){const a=EA/L,b=12*EI/L**3,c=6*EI/L**2,d=4*EI/L,e=2*EI/L;
+ let k=[[a,0,0,-a,0,0],[0,b,c,0,-b,c],[0,c,d,0,-c,e],[-a,0,0,a,0,0],[0,-b,-c,0,b,-c],[0,c,e,0,-c,d]];
+ let f=[-wx*L/2,-wy*L/2,-wy*L*L/12,-wx*L/2,-wy*L/2,wy*L*L/12];
+ for(const r of [ri?2:-1,rj?5:-1])if(r>=0){const p=k[r][r];if(p<=0)continue;const row=k[r].slice(),fr=f[r];f=f.map((v,i)=>v-row[i]*fr/p);k=k.map((ri_,i)=>ri_.map((v,j)=>v-row[i]*row[j]/p))}
+ return f}
 function kloc(EA,EI,L,ri,rj){const a=EA/L,b=12*EI/L**3,c=6*EI/L**2,d=4*EI/L,e=2*EI/L;
  let k=[[a,0,0,-a,0,0],[0,b,c,0,-b,c],[0,c,d,0,-c,e],[-a,0,0,a,0,0],[0,-b,-c,0,b,-c],[0,c,e,0,-c,d]];
  for(const r of [ri?2:-1,rj?5:-1])if(r>=0){const p=k[r][r];if(p<=0)continue;const row=k[r].slice();
@@ -203,7 +211,9 @@ function solve(M){const{N,E,sup,F}=M,Em=+$('E').value*1e3,n=N.length*3,xten=$('x
   const fixed=new Set();sup.forEach(i=>{fixed.add(i*3);fixed.add(i*3+1);if(fix)fixed.add(i*3+2)});
   rotStiff.forEach((r,i)=>{if(!r)fixed.add(i*3+2)});
   const free=[...Array(n).keys()].filter(d=>!fixed.has(d)),m=free.length;
-  const A=free.map(i=>Float64Array.from(free.map(j=>K[i][j]))),b=free.map(i=>F[i]);
+  const Ft=F.slice();E.forEach(e=>{e.fc=null;if(!e.on||!e.q)return;const{c,s}=e,wx=-e.q*s,wy=-e.q*c;e.wy=wy;e.fc=fefLoc(Em*e.sec.A,Em*e.sec.I,e.L,e.ri,e.rj,wx,wy);
+   const dof=[e.a*3,e.a*3+1,e.a*3+2,e.b*3,e.b*3+1,e.b*3+2],fc=e.fc;[0,3].forEach(o=>{Ft[dof[o]]-=c*fc[o]-s*fc[o+1];Ft[dof[o+1]]-=s*fc[o]+c*fc[o+1];Ft[dof[o+2]]-=fc[o+2]})});
+  const A=free.map(i=>Float64Array.from(free.map(j=>K[i][j]))),b=free.map(i=>Ft[i]);
   const scale=Math.max(...A.map((r,i)=>Math.abs(r[i])))||1;
   for(let c=0;c<m;c++){let p=c;for(let r=c+1;r<m;r++)if(Math.abs(A[r][c])>Math.abs(A[p][c]))p=r;
    if(Math.abs(A[p][c])<1e-9*scale)return{err:'Estructura inestable (mecanismo). Agregue diagonales, empotre apoyos o haga rígidas las uniones.'};
@@ -213,12 +223,13 @@ function solve(M){const{N,E,sup,F}=M,Em=+$('E').value*1e3,n=N.length*3,xten=$('x
   U=new Array(n).fill(0);free.forEach((d,i)=>U[d]=x[i]);
   E.forEach(e=>{if(!e.on){e.f=[0,0,0,0,0,0];e.N=e.V=e.M1=e.M2=0;return}const{c,s}=e;const ug=[e.a*3,e.a*3+1,e.a*3+2,e.b*3,e.b*3+1,e.b*3+2].map(d=>U[d]);
    const ul=[c*ug[0]+s*ug[1],-s*ug[0]+c*ug[1],ug[2],c*ug[3]+s*ug[4],-s*ug[3]+c*ug[4],ug[5]];
-   e.f=e.k.map(r=>r.reduce((a,v,i)=>a+v*ul[i],0));e.N=e.f[3];e.V=e.f[1];e.M1=-e.f[2];e.M2=e.f[5]});
+   e.f=e.k.map(r=>r.reduce((a,v,i)=>a+v*ul[i],0));if(e.fc)e.f=e.f.map((v,i)=>v+e.fc[i]);e.N=e.f[3];e.V=e.f[1];e.M1=-e.f[2];e.M2=e.f[5];
+   e.Mx=x=>-e.f[2]+e.f[1]*x+(e.wy||0)*x*x/2;e.Vx=x=>e.f[1]+(e.wy||0)*x;e.Mmax=Math.max(Math.abs(e.M1),Math.abs(e.M2));if(e.wy){const x0=-e.f[1]/e.wy;if(x0>0&&x0<e.L)e.Mmax=Math.max(e.Mmax,Math.abs(e.Mx(x0)))}});
   if(!xten||it>20)break;let ch=false;E.forEach(e=>{if(e.x&&e.on&&e.N<-1e-6){e.on=false;ch=true}});if(!ch)break;it++}
  // reacciones
  const R={};sup.forEach(i=>{R[i]=[0,0,0]});
  E.forEach(e=>{if(!e.on)return;const{c,s,f}=e;[[e.a,0],[e.b,3]].forEach(([nd,o])=>{if(R[nd]){R[nd][0]+=c*f[o]-s*f[o+1];R[nd][1]+=s*f[o]+c*f[o+1];R[nd][2]+=f[o+2]}})});
- const fu=UF();E.forEach(e=>{if(e.N===undefined)return;e.N/=fu;e.V/=fu;e.M1/=fu;e.M2/=fu});Object.values(R).forEach(r=>{for(let i=0;i<3;i++)r[i]/=fu});
+ const fu=UF();E.forEach(e=>{if(e.N===undefined)return;e.N/=fu;e.V/=fu;e.M1/=fu;e.M2/=fu;if(e.Mmax!==undefined)e.Mmax/=fu;if(e.Mx){const m=e.Mx,v=e.Vx;e.Mx=x=>m(x)/fu;e.Vx=x=>v(x)/fu}});Object.values(R).forEach(r=>{for(let i=0;i<3;i++)r[i]/=fu});
  return{U,R}}
 
 // ---------- dibujo ----------
@@ -244,13 +255,16 @@ function draw(){const svg=$('svg'),W=svg.clientWidth||900,H=620,{N,E,X,Y}=M;
  // apoyos
  M.sup.forEach(i=>{const x=px(N[i].x),y=py(N[i].y);s+=$('sup').value=='fix'?`<rect x="${x-12}" y="${y}" width="24" height="6" fill="#555"/>`:`<path d="M${x} ${y}l-10 14h20z" fill="none" stroke="#555" stroke-width="1.5"/>`});
  if(!RS.err){
- const vals=E.map(e=>kind=='n'?Math.abs(e.N):kind=='v'?Math.abs(e.V):Math.max(Math.abs(e.M1),Math.abs(e.M2))),mx=Math.max(...vals,1e-9);
+ const vals=E.map(e=>kind=='n'?Math.abs(e.N):kind=='v'?Math.max(Math.abs(e.V),e.Vx?Math.abs(e.Vx(e.L)):0):(e.Mmax!==undefined?e.Mmax:Math.max(Math.abs(e.M1),Math.abs(e.M2)))),mx=Math.max(...vals,1e-9);
  if(['n','m','v'].includes(kind)){const k=0.08*Math.min(Lx,Ly)*S.sc[kind]/mx;
   E.forEach(e=>{if(e.on===false)return;const A=N[e.a],B=N[e.b],nx=-e.s,ny=e.c;
    let a,b;if(kind=='n'){a=b=e.N}else if(kind=='v'){a=b=e.V}else{a=e.M1;b=e.M2}
    if(kind=='m'){a=-a;b=-b}// dibuja del lado traccionado
    const cl=kind=='n'?(e.N>=0?'var(--t)':'var(--c)'):(kind=='m'?'#8e44ad':'#16809a');
-   s+=`<path d="M${px(A.x)} ${py(A.y)}L${px(A.x+nx*a*k)} ${py(A.y+ny*a*k)}L${px(B.x+nx*b*k)} ${py(B.y+ny*b*k)}L${px(B.x)} ${py(B.y)}z" fill="${cl}" fill-opacity=".25" stroke="${cl}"/>`;
+      if(e.wy&&kind!='n'){const fn=kind=='m'?(x=>-e.Mx(x)):(x=>e.Vx(x));let d=`M${px(A.x)} ${py(A.y)}`;for(let q=0;q<=16;q++){const x=e.L*q/16,v=fn(x),X0=A.x+e.c*x,Y0=A.y+e.s*x;d+=`L${px(X0+nx*v*k)} ${py(Y0+ny*v*k)}`}d+=`L${px(B.x)} ${py(B.y)}z`;
+    s+=`<path d="${d}" fill="${cl}" fill-opacity=".25" stroke="${cl}"/>`;
+    if(kind=='m'&&e.Mmax>Math.max(Math.abs(e.M1),Math.abs(e.M2))+1e-9){const x0=-e.f[1]/e.wy,v=-e.Mx(x0),X0=A.x+e.c*x0,Y0=A.y+e.s*x0;s+=`<text x="${px(X0+nx*v*k)}" y="${py(Y0+ny*v*k)+(v<0?-4:12)}" text-anchor="middle" font-size="11" fill="${cl}" font-weight="600">${f2(e.Mx(x0),1)}</text>`}}
+   else s+=`<path d="M${px(A.x)} ${py(A.y)}L${px(A.x+nx*a*k)} ${py(A.y+ny*a*k)}L${px(B.x+nx*b*k)} ${py(B.y+ny*b*k)}L${px(B.x)} ${py(B.y)}z" fill="${cl}" fill-opacity=".25" stroke="${cl}"/>`;
    const lab=kind=='m'?(Math.abs(e.M1)>Math.abs(e.M2)?[e.M1,A,a]:[e.M2,B,b]):[kind=='n'?e.N:e.V,{x:(A.x+B.x)/2,y:(A.y+B.y)/2},a];
    if(Math.abs(lab[0])>mx*0.005){const P=lab[1],off=lab[2];s+=`<text x="${px(P.x+nx*off*k)+3}" y="${py(P.y+ny*off*k)-3}" font-size="11" fill="${cl}" font-weight="600">${f2(lab[0],1)}</text>`}})}
  if(kind=='d'){const U=RS.U,f=S.sc.dm;
@@ -265,6 +279,9 @@ function draw(){const svg=$('svg'),W=svg.clientWidth||900,H=620,{N,E,X,Y}=M;
  if(kind=='r')Object.entries(RS.R).forEach(([i,r])=>{const x=px(N[i].x),y=py(N[i].y);s+=`<text x="${x}" y="${y+72}" text-anchor="middle" font-size="11" fill="#0f7b6c">Rx=${f2(r[0],1)}</text><text x="${x}" y="${y+86}" text-anchor="middle" font-size="11" fill="#0f7b6c">Ry=${f2(r[1],1)}</text>`+($('sup').value=='fix'?`<text x="${x}" y="${y+100}" text-anchor="middle" font-size="11" fill="#0f7b6c">M=${f2(r[2],1)}</text>`:'')});}
  // cargas
  for(let j=1;j<=S.lev.length;j++){const L=S.loads[j-1];if(L.H){const y=py(Y[j]),x=px(0),d=L.H>0?1:-1;s+=`<line x1="${x-d*50}" y1="${y}" x2="${x-d*6}" y2="${y}" stroke="#e67e22" stroke-width="2.5" marker-end="url(#ar)"/><text x="${x-d*50}" y="${y-5}" font-size="11" fill="#e67e22" text-anchor="middle">${L.H} ${uF()}</text>`}
+  if(L.q){for(let i=0;i<S.bays.length;i++){const xa=px(X[i]),xb=px(X[i+1]),y=py(Y[j])-26;s+=`<rect x="${xa}" y="${y-6}" width="${xb-xa}" height="6" fill="#e67e22" fill-opacity=".18" stroke="#e67e22" stroke-width=".8"/>`;
+   for(let q=1;q<6;q++){const xx=xa+(xb-xa)*q/6;s+=`<line x1="${xx}" y1="${y}" x2="${xx}" y2="${y+18}" stroke="#e67e22" stroke-width="1" marker-end="url(#ar)"/>`}
+   s+=`<text x="${(xa+xb)/2}" y="${y-9}" text-anchor="middle" font-size="10.5" fill="#e67e22">q = ${L.q} ${uF()}/m</text>`}}
   L.P.forEach((p,i)=>{if(p){const x=px(X[i]),y=py(Y[j]);s+=`<line x1="${x}" y1="${y-40}" x2="${x}" y2="${y-6}" stroke="#e67e22" stroke-width="2" marker-end="url(#ar)"/><text x="${x+4}" y="${y-30}" font-size="11" fill="#e67e22">${p}</text>`}})}
 
  // cotas y ángulos (gris)
@@ -291,16 +308,16 @@ function table(){if(RS.err){$('tbl').innerHTML='';return}const{N,E}=M,k=S.tab,U=
  if(k=='d'){h='<table><tr><th>Nudo (x;y) m</th><th>δx [mm]</th><th>δy [mm]</th><th>θ [rad]</th></tr>'+N.map((n,i)=>`<tr><td>${nm(i)}</td><td>${f2(U[i*3]*1e3,3)}</td><td>${f2(U[i*3+1]*1e3,3)}</td><td>${f2(U[i*3+2],5)}</td></tr>`).join('')+'</table>';
   h+='<h4>Deriva de piso (columna izquierda)</h4><table><tr><th>Nivel</th><th>h [m]</th><th>δ [mm]</th><th>Δ piso [mm]</th><th>h/Δ</th></tr>';
   let prev=0;M.Y.slice(1).forEach((y,j)=>{const i=N.findIndex(n=>n.k=='g0_'+(j+1)),d=U[i*3]*1e3,dd=d-prev;h+=`<tr><td>${j+1}</td><td>${S.lev[j]}</td><td>${f2(d,3)}</td><td>${f2(dd,3)}</td><td>${Math.abs(dd)>1e-9?Math.round(S.lev[j]*1e3/Math.abs(dd)):'∞'}</td></tr>`;prev=d});h+='</table>'}
- else if(k=='r'){h='<table><tr><th>Apoyo</th><th>Rx [${uF()}]</th><th>Ry [${uF()}]</th><th>M [${uM()}]</th></tr>';let sx=0,sy=0;
+ else if(k=='r'){h=`<table><tr><th>Apoyo</th><th>Rx [${uF()}]</th><th>Ry [${uF()}]</th><th>M [${uM()}]</th></tr>`;let sx=0,sy=0;
   Object.entries(RS.R).forEach(([i,r])=>{sx+=r[0];sy+=r[1];h+=`<tr><td>${nm(i)}</td><td>${f2(r[0])}</td><td>${f2(r[1])}</td><td>${f2(r[2])}</td></tr>`});h+=`<tr><th>Σ</th><th>${f2(sx)}</th><th>${f2(sy)}</th><th></th></tr></table>`}
  else if(k=='ver')h=verif();
  else{const T={col:'Columna',beam:'Viga',br:'Diagonal'};
-  h='<table><tr><th>#</th><th>Tipo</th><th>Perfil</th><th>i → j</th><th>L [m]</th><th>N [${uF()}] (+tracc.)</th><th>V [${uF()}]</th><th>Mi [${uM()}]</th><th>Mj [${uM()}]</th><th>σ=N/A [MPa]</th><th>λx=L/rx</th></tr>'+
+  h=`<table><tr><th>#</th><th>Tipo</th><th>Perfil</th><th>i → j</th><th>L [m]</th><th>N [${uF()}] (+tracc.)</th><th>V [${uF()}]</th><th>Mi [${uM()}]</th><th>Mj [${uM()}]</th><th>σ=N/A [MPa]</th><th>λx=L/rx</th></tr>`+
   E.map((e,n)=>{const r=Math.sqrt(e.sec.I/e.sec.A);return `<tr ${e.on===false?'style="color:#999"':''}><td>${n+1}</td><td>${T[e.t]}${e.on===false?' (inactiva)':''}</td><td style="text-align:left">${e.sec.name}</td><td>${nm(e.a)} → ${nm(e.b)}</td><td>${f2(e.L)}</td><td style="color:${e.N>=0?'var(--t)':'var(--c)'}">${f2(e.N)}</td><td>${f2(e.V)}</td><td>${f2(e.M1)}</td><td>${f2(e.M2)}</td><td>${f2(e.N*UF()/e.sec.A/1e3,1)}</td><td>${Math.round(e.L/r)}</td></tr>`}).join('')+'</table>'}
  $('tbl').innerHTML=h}
 ['nb','ns'].forEach(id=>$(id).onchange=()=>{ensure();buildGT();run()});
 $('all').onchange=()=>{const v=$('all').value;if(!v)return;S.types.forEach(r=>r.fill(v));$('all').value='';buildGT();run()};
-$('un').onchange=()=>{const o=S._u||'kN',n=$('un').value,k=(o=='t'?9.80665:1)/(n=='t'?9.80665:1);S._u=n;S.loads.forEach(L=>{L.H=+(L.H*k).toFixed(3);L.P=L.P.map(p=>+(p*k).toFixed(3))});document.querySelectorAll('.uF').forEach(s=>s.textContent=n);buildGT();run()};
+$('un').onchange=()=>{const o=S._u||'kN',n=$('un').value,k=(o=='t'?9.80665:1)/(n=='t'?9.80665:1);S._u=n;S.loads.forEach(L=>{L.H=+(L.H*k).toFixed(3);L.q=+((L.q||0)*k).toFixed(3);L.P=L.P.map(p=>+(p*k).toFixed(3))});document.querySelectorAll('.uF').forEach(s=>s.textContent=n);buildGT();run()};
 ['sup','bcon','xmode','E','vFy','vFu','vU','vRy','vkc','vkb','vkd','vsis'].forEach(id=>$(id).onchange=run);
 window.onresize=draw;
 ensure();buildGT();buildProf();tabs();run();initSave();requestAnimationFrame(draw);
