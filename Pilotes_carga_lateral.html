@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Pilote lateral</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -287,10 +289,10 @@ svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
       <h3 style="margin-top:16px">Secuencia recomendada</h3>
       <ol>
         <li>Calcular T (o R) y clasificar el pilote.</li>
-        <li><b>Predimensionar</b> L con Blum (granular) o con Broms invertido.</li>
+        <li><i>(Opcional)</i> <b>Predimensionar</b> L con Blum (pilotes cortos en suelo granular). Si ya tenés L y Broms cumple, Blum no agrega una verificación nueva.</li>
         <li><b>Verificar rotura</b> con Broms: Qg·FS ≤ Qu, con FS entre 2 y 3.</li>
         <li><b>Verificar servicio</b> con Winkler: desplazamiento de la cabeza menor que el admisible (típicamente 6 a 12 mm, según la estructura).</li>
-        <li><b>Armar el pilote</b> con el diagrama de Winkler bajo carga mayorada: Mu = γf·M. Verificar flexo-compresión y flexo-tracción con el axial concomitante, y el corte Vu.</li>
+        <li><b>Armar el pilote</b> con Hu: Mu = máx(Winkler; reparto plástico de Broms con Hu). Con cargas altas frente a Qu el suelo superficial plastifica y el momento crece y baja: manda el plástico. Con cabeza libre, la zona crítica de estribos se extiende hasta cubrir la profundidad del momento máximo. Verificar flexo-compresión y flexo-tracción con el axial concomitante, y el corte Vu.</li>
       </ol>
       <p class="note">Valores de nh (tabla 11.15, kN/m³). Arena seca o húmeda: suelta 1800–2200, media 5500–7000, densa 15000–18000. Arena sumergida: 1000–1400, 3500–4500, 9000–12000. K en arcilla (kN/m³): qu &lt; 200 kPa → 10000–20000; 200–800 → 20000–40000; &gt; 800 → &gt; 40000.</p>
     </section>
@@ -308,7 +310,7 @@ svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
           <div class="f"><label for="db">Diámetro de barra</label><select id="db"><option>10</option><option>12</option><option selected>16</option><option>20</option><option>25</option><option>32</option></select><span class="u">mm</span></div>
           <div class="f"><label for="cov">Recubrimiento libre</label><input id="cov" type="number" step="0.5" value="7.5"><span class="u">cm</span></div>
           <div class="f"><label for="dst">Estribo / zuncho Ø</label><input id="dst" type="number" step="2" value="8"><span class="u">mm</span></div>
-          <div class="f"><label for="s1">Separación en zona crítica (cabeza)</label><input id="s1" type="number" step="1" value="10"><span class="u">cm</span></div>
+          <div class="f"><label for="s1">Separación en zona crítica (cabeza)</label><input id="s1" type="number" step="1" value="9"><span class="u">cm</span></div>
           <div class="f"><label for="s2">Separación en zona adyacente</label><input id="s2" type="number" step="1" value="15"><span class="u">cm</span></div>
           <div class="f"><label for="sst">Separación en el resto del pilote</label><input id="sst" type="number" step="1" value="20"><span class="u">cm</span></div>
           <div class="f"><label for="phim">Factor φ según</label><select id="phim"><option value="ic">IC 103-II (sismo): φ = 0,90</option><option value="cap">IC 103-II por capacidad: φ = 1,00</option><option value="cirsoc">CIRSOC 201: φ variable</option></select><span class="u"></span></div>
@@ -425,13 +427,13 @@ function drawRC(p,Mabs,Vabs){
   $('rctab').innerHTML='<tr><th>Sección</th><th>Valor</th></tr>'+[
     ['As total',fmt(sec.As*1e4)+' cm²'],['Ag',fmt(sec.Ag*1e4,0)+' cm²'],['Cuantía ρt = As/Ag',fmt(sec.rho*100,3)+' %'],
     ['ρt mín IC 103-II 6.6.2.1 '+caseA,fmt(rhoA*100,3)+' %'],
-    ['Verificación cuantía mínima',pill(rhoOK,'ρt ≥ '+fmt(rhoMin*100,3)+' %','ρt < '+fmt(rhoMin*100,3)+' %')+(rhoOK?'':' faltan '+fmt((rhoMin-sec.rho)*sec.Ag*1e4)+' cm²')],
+    ['Verificación cuantía mínima',(rhoOK?'≥ ':'< ')+fmt(rhoMin*100,3)+' % '+pill(rhoOK)+(rhoOK?'':' faltan '+fmt((rhoMin-sec.rho)*sec.Ag*1e4)+' cm²')],
     ['Radio a ejes de barras',fmt(sec.r*100,1)+' cm'],['β1',fmt(sec.b1,3)],
     ['φPn máx (compresión)',fmt(fF(sec.phic*sec.Pmax),1)+' '+uF()],['φ adoptado',phiTxt],['φPn tracción pura = φ·As·fy',fmt(fF(phiT*sec.As*fy*1000),1)+' '+uF()],
     ['φMn flexión pura (N = 0)',fmt(fF(phiMnAt(sec,0)))+' '+uM()]
   ].map(row).join('')+`<tr><td colspan="2" class="hint">La armadura transversal por zonas (6.6.1 y 6.6.2.3) se verifica en la tabla de abajo. Con superestructura dúctil (6.3), Hu debe salir del diseño por capacidad (sobrerresistencia), no hace falta superar R = 1,5.</td></tr>`;
   // combos
-  const Mauto=p.gf*Mabs,res=combos.map(c=>{const M=c.M===''?Mauto:Math.abs(c.M),cap=phiMnAt(sec,c.N);return {...c,Mu:M,cap,ratio:cap&&cap>0?M/cap:Infinity}});
+  const Mauto=DES.Mu,res=combos.map(c=>{const M=c.M===''?Mauto:Math.abs(c.M),cap=phiMnAt(sec,c.N);return {...c,Mu:M,cap,ratio:cap&&cap>0?M/cap:Infinity}});
   res.forEach((c,i)=>{if(!$('cr'+i))return;$('cr'+i).textContent=c.cap==null?'fuera de rango':fmt(fF(c.cap));
     $('cs'+i).innerHTML=(c.cap==null?pill(false,'','Nu excede'):pill(c.ratio<=1,fmt(c.ratio*100,0)+' %',fmt(c.ratio*100,0)+' %'))+(c.M===''?` <span class="hint">Mu auto = ${fmt(fF(c.Mu))}</span>`:'')});
   // diagram
@@ -617,7 +619,8 @@ function drawStirrups(p,sec,fc,fy,db,cov,dst,conf){
   const s1=num('s1')/100,s2=num('s2')/100,s3=num('sst')/100,Asp=Math.PI*dst*dst/4,rs=s=>4*Asp/(dpp*s);
   const sC=Math.min(6*db,Math.max(D/4,0.1)),sA=Math.min(10*db,Math.max(D/3,0.15)),sR=Math.min(D,12*db,0.6);
   const Asmax=18*Ag/(fy*1000)*1000,maxOK=sec.As<=Asmax;
-  const z1=Math.min(lp,p.L),z2=Math.min(lp+ladj,p.L);
+  const ext=head==='libre'&&isFinite(lp)&&DES.zMu>0,zc=ext?Math.max(lp,DES.zMu+lp/2):lp;
+  const z1=Math.min(zc,p.L),z2=Math.min(zc+ladj,p.L);
   const art=pl?'2.3.7.2.1':'2.3.7.2.2';
   $('hingehint').innerHTML=pl?'Elegí esta opción si el mecanismo de colapso admite rótula plástica en el pilote, o si no podés garantizar que el pilote quede elástico. Exige la cuantía completa de las expresiones [2.3-20] y [2.3-21] en la cabeza y el 70 % en la zona adyacente, y limita la armadura longitudinal máxima (6.6.2.2).'
     :'Elegí esta opción si el pilote se diseña para quedar elástico: por ejemplo, si Hu y Mu salen del diseño por capacidad de la superestructura (6.3) y la sección los resiste con φ. En la cabeza alcanza con el 70 % de [2.3-20] (pero no menos que [2.3-21]), y en la zona adyacente con el 50 % de [2.3-20] y el 70 % de [2.3-21].';
@@ -630,7 +633,7 @@ function drawStirrups(p,sec,fc,fy,db,cov,dst,conf){
     ['ρt·m (≤ 0,40), m = fy/(0,85f\'c)',fmt(rtm,3)],
     ['ρs por [2.3-20] = (1,30−ρt·m)/2,40 · Ag/Ac · f\'c/fyt · Pu/(φf\'cAg) − 0,0084, φ = 0,90',fmt(e20*100,3)+' %'],
     ['ρs por [2.3-21] = Ast·fy/(110·d\'\'·fyt·db)',fmt(e21*100,3)+' %'],
-    ['<b>Zona crítica (cabeza)</b>: 0 a '+(isFinite(lp)?fmt(z1)+' m':'—'),''],
+    ['<b>Zona crítica</b>: 0 a '+(isFinite(lp)?fmt(z1)+' m':'—')+(ext?` (cabeza según 6.6.1 + rótula esperada en el M máx: con cabeza libre el momento máximo está a z = ${fmt(DES.zMu)} m, así que la zona crítica se extiende hasta z<sub>M</sub> + lp/2 = ${fmt(Math.min(DES.zMu+lp/2,p.L))} m)`:' (cabeza, 6.6.1)'),''],
     ['lp = '+(alpha?alpha+'·D (2.3.5.1, Pu/f\'cAg '+(nPu<=0.25?'≤ 0,25':nPu<=0.5?'≤ 0,50':'≤ 0,70')+')':'—'),isFinite(lp)?fmt(lp)+' m':'<span class="pill bad">Pu > 0,70 f\'cAg: no permitido</span>'],
     ['ρs requerida ('+art+'(a)'+(pl?'':': 70 % de [2.3-20], ≥ [2.3-21]')+')',fmt(reqC*100,3)+' %'],
     ['ρs dispuesta = 4·Asp/(d\'\'·s) con Ø'+num('dst')+' c/ '+fmt(s1*100,0)+' cm',fmt(rs(s1)*100,3)+' % '+pill(rs(s1)>=reqC)],
@@ -652,11 +655,12 @@ function drawStirrups(p,sec,fc,fy,db,cov,dst,conf){
   const zone=(a,b,sp,lab,col)=>{if(b<=a)return;for(let z=a+sp/2;z<b;z+=sp){g+=`<line x1="${px}" x2="${px+pw}" y1="${Y(z)}" y2="${Y(z)}" stroke="${col}" stroke-width="1.6"/>`}
     g+=`<line x1="${px+pw+8}" x2="${px+pw+8}" y1="${Y(a)}" y2="${Y(b)}" stroke="${col}" stroke-width="2"/><text x="${px+pw+14}" y="${(Y(a)+Y(b))/2-4}" style="fill:${col};font-weight:500">${lab}</text><text x="${px+pw+14}" y="${(Y(a)+Y(b))/2+9}">${fmt(a)}–${fmt(b)} m · c/${fmt(sp*100,0)}</text>`};
   if(isFinite(z1)){zone(0,z1,s1,'crítica',css('--bad'));zone(z1,z2,s2,'adyacente',css('--warn'));zone(z2,p.L,s3,'resto',acc)}
+  if(DES.zMu>0&&DES.zMu<=p.L){const yM=Y(DES.zMu);g+=`<line x1="${px-40}" x2="${px+pw}" y1="${yM}" y2="${yM}" stroke="${css('--bad')}" stroke-dasharray="4 3" stroke-width="1.5"/><circle cx="${px+pw/2}" cy="${yM}" r="6" fill="none" stroke="${css('--bad')}" stroke-width="2"/><text x="${px-44}" y="${yM-3}" text-anchor="end" style="fill:${css('--bad')};font-weight:500">M máx</text><text x="${px-44}" y="${yM+10}" text-anchor="end">z = ${fmt(DES.zMu)} m</text>`}
   g+=`<text x="${px-8}" y="${Y(p.L)}" text-anchor="end">L = ${fmt(p.L)} m</text><text x="10" y="16" class="ttl">${pl?'Con rótula plástica':'Respuesta elástica'}</text>`;
   $('stsk').innerHTML=g;
 }
 // ---------- main ----------
-const CW=['Rigidez del pilote frente al suelo: define qué método aplica.','Servicio: cuánto se corre la cabeza con H (Winkler).','Momento de diseño de la sección, con Hu (Winkler).','Falla del suelo o del pilote por carga lateral (Broms).','Dos controles por separado: que el suelo no falle (Broms) y que la cabeza no se corra más que el admisible. Gobierna el mayor %; menos de 100 % cumple.','Longitud enterrada necesaria por equilibrio (Blum).'];
+const CW=['Rigidez del pilote frente al suelo: define qué método aplica.','Servicio: cuánto se corre la cabeza con H (Winkler).','Momento para armar la sección: el mayor entre Winkler (elástico) y el reparto plástico de Broms, ambos con Hu.','Falla del suelo o del pilote por carga lateral (Broms).','Dos controles por separado: que el suelo no falle (Broms) y que la cabeza no se corra más que el admisible. Gobierna el mayor %; menos de 100 % cumple.','Longitud enterrada necesaria por equilibrio (Blum).'];
 function row(c){return '<tr>'+c.map((x,i)=>i?`<td class="n">${x}</td>`:`<td>${x}</td>`).join('')+'</tr>'}
 function pill(ok,t1='Cumple',t2='No cumple'){return `<span class="pill ${ok?'ok':'bad'}">${ok?t1:t2}</span>`}
 function calc(){
@@ -682,12 +686,15 @@ function calc(){
   const cls=rel<=2?'Rígido / corto':rel>=5?'Largo / flexible':'Intermedio';
   const w=winkler(p),br=broms(p),bd=bromsDefl(p),bl=blum(p);
   const Mabs=Math.max(...w.M.map(Math.abs)),iM=w.M.findIndex(m=>Math.abs(m)===Mabs);
+  {const Hu=p.gf*p.Q,MuW=p.gf*Mabs,zW=w.z[iM];let Mpl=null,zPl=null;
+   if(head==='libre'){if(soil==='arena'){const f=0.82*Math.sqrt(Hu/(p.gam*p.D*p.Kp));Mpl=Hu*(p.e+0.67*f);zPl=f}else{const f=Hu/(9*p.cu*p.D);Mpl=Hu*(p.e+1.5*p.D+0.5*f);zPl=1.5*p.D+f}}
+   const usePl=Mpl!=null&&Mpl>MuW;DES={Hu,MuW,zW,Mpl,zPl,Mu:usePl?Mpl:MuW,zMu:usePl?zPl:zW,src:usePl?'reparto plástico (Broms con Hu)':'Winkler'};}
   const x0=w.x[0],Qadm=Math.min(br.gov/p.FS,bd.Qx);
   // cards
   $('cards').innerHTML=[
     ['Clasificación',cls,`L/${ch} = ${fmt(rel)} · ${ch} = ${fmt(soil==='arena'?T:R)} m`,rel<=2?'info':rel>=5?'info':'warn'],
     ['Desplazamiento cabeza',fmt(x0*1000)+' mm',pill(Math.abs(x0)<=p.xadm,'≤ '+fmt(p.xadm*1000,0)+' mm','> '+fmt(p.xadm*1000,0)+' mm')+' Winkler, servicio'],
-    ['Mu armado',fmt(fF(p.gf*Mabs))+' '+uM(),`con Hu = ${fmt(fF(p.gf*p.Q))} ${uF()}, a z = ${fmt(w.z[iM])} m · Vu = ${fmt(fF(p.gf*Math.max(...w.V.map(Math.abs))))} ${uF()}`],
+    ['Mu de diseño',fmt(fF(DES.Mu))+' '+uM(),`gobierna ${DES.src}, a z = ${fmt(DES.zMu)} m. Winkler ${fmt(fF(DES.MuW))}${DES.Mpl!=null?' · plástico '+fmt(fF(DES.Mpl)):''} ${uM()} · Vu = ${fmt(fF(p.gf*Math.max(...w.V.map(Math.abs))))} ${uF()}`],
     ['Qu Broms',fmt(fF(br.gov),1)+' '+uF(),`${br.mode} · FS = Qu/${hasVu&&p.gf===1?'Hu':'H'} = ${fmt(br.gov/p.Q)}`],
     ['Uso lateral del pilote',fmt(p.Q/Qadm*100,0)+' %',pill(p.Q<=Qadm)+`<br>• Resistencia del suelo (Broms): H / (Qu/FS) = ${fmt(fF(p.Q),1)} / ${fmt(fF(br.gov/p.FS),1)} = <b>${fmt(p.Q/(br.gov/p.FS)*100,0)} %</b>${br.gov/p.FS<=bd.Qx?' ← gobierna':''}<br>• Desplazamiento: con H la cabeza se corre ${fmt(bd.x*1000,0)} mm frente a ${fmt(p.xadm*1000,0)} mm admisibles = <b>${fmt(p.Q/bd.Qx*100,0)} %</b>${bd.Qx<br.gov/p.FS?' ← gobierna':''} (H máx por desplazamiento = ${fmt(fF(bd.Qx),1)} ${uF()})`],
     ['Blum t necesario',fmt(bl.t)+' m',pill(p.L>=bl.t,'L = '+fmt(p.L)+' m alcanza','L = '+fmt(p.L)+' m no alcanza')]
@@ -697,7 +704,7 @@ function calc(){
   if(rel<=2)rec+=`<li>Gira casi como cuerpo rígido. Manda el suelo: verificá rotura con <b>Broms pilote corto</b> y dimensioná el empotramiento con <b>Blum</b>${soil==='arena'?'':' (Blum es para granular; en arcilla usá Broms)'}.</li><li>La tabla 11.14 de Matlock-Reese <b>no aplica</b> (exige L ≥ 5${ch}). Para desplazamiento y Mu usá el Winkler por diferencias finitas de esta página, que vale para cualquier L.</li>`;
   else if(rel<5)rec+=`<li>Comportamiento intermedio: usá <b>Winkler</b> (esta FD o la fig. 11.29) para servicio y Mu, y <b>Broms</b> revisando corto e intermedio/largo.</li><li>Blum tiende a ser conservador acá porque supone giro rígido.</li>`;
   else rec+=`<li>Pilote largo: la longitud no aumenta la capacidad. Mandan My y la rigidez. Usá <b>Matlock-Reese / Davisson-Gill</b> (tabla 11.14) o esta FD, y <b>Broms largo</b> para la carga última.</li><li>Blum no corresponde: el pilote no gira como cuerpo rígido.</li>`;
-  rec+=`<li>Armado con Hu = ${fmt(fF(p.gf*p.Q))} ${uF()}: Mu = ${fmt(p.gf)} × ${fmt(fF(Mabs))} = <b>${fmt(fF(p.gf*Mabs))} ${uM()}</b> y Vu = ${fmt(fF(p.gf*Math.max(...w.V.map(Math.abs))))} ${uF()}, con el axial concomitante.</li></ul>`;
+  rec+=`<li>Armado con Hu = ${fmt(fF(p.gf*p.Q))} ${uF()}: Mu = <b>${fmt(fF(DES.Mu))} ${uM()}</b> (${DES.src}, a ${fmt(DES.zMu)} m de profundidad) y Vu = ${fmt(fF(p.gf*Math.max(...w.V.map(Math.abs))))} ${uF()}, con el axial concomitante.</li></ul>`;
   $('reco').innerHTML=rec;
   // winkler plots
   const L=p.L,c1=css('--accent'),c2=css('--bad'),c3=css('--c2'),c4=css('--soil');
@@ -709,7 +716,10 @@ function calc(){
     ['x cabeza',fmt(x0*1000)+' mm'],['θ cabeza',fmt(w.t[0],5)+' rad'],['x punta',fmt(w.x[w.x.length-1]*1000)+' mm'],
     ['Punto de giro (x = 0)',izero>0?fmt(w.z[izero])+' m':'no gira dentro de L'],
     ['M máx',fmt(fF(w.M[iM]))+' '+uM()+' a '+fmt(w.z[iM])+' m'],['V cabeza (control = Qg)',fmt(fF(w.V[0]))+' '+uF()],
-    ['M resistente My',fmt(fF(p.My))+' '+uM()+' '+pill(p.gf*Mabs<=p.My,'Mu ≤ My','Mu > My')]
+    ['<b>Mu de diseño con Hu</b>: Winkler (elástico)',fmt(fF(DES.MuW))+' '+uM()+' a '+fmt(DES.zW)+' m'],
+    ['<b>Mu de diseño con Hu</b>: reparto plástico, f = 0,82√(Hu/γDKp), M = Hu(e+0,67f)'+(soil!=='arena'?' [arcilla: f = Hu/9cuD, M = Hu(e+1,5D+0,5f)]':''),DES.Mpl!=null?fmt(fF(DES.Mpl))+' '+uM()+' a '+fmt(DES.zPl)+' m':'solo cabeza libre'],
+    ['<b>Mu adoptado = máx</b> (gobierna '+DES.src+')','<b>'+fmt(fF(DES.Mu))+' '+uM()+'</b>'],
+    ['M resistente My',fmt(fF(p.My))+' '+uM()+' '+pill(DES.Mu<=p.My,'Mu ≤ My','Mu > My')]
   ].map(row).join('');
   const Mg=head==='libre'?p.Q*p.e:0;
   if(soil==='arena'&&head==='libre'){const xmr=(2.435*p.Q*T**3+1.623*Mg*T*T)/p.EI,mmr=0.772*p.Q*T+Mg;
@@ -755,7 +765,7 @@ function calc(){
 }
 
 // ---------- memoria de cálculo (Word) ----------
-let LAST={};
+let LAST={},DES={};
 function svgPng(svg,scale=2){return new Promise(res=>{
   const vb=svg.viewBox.baseVal,W=vb.width,H=vb.height,cl=svg.cloneNode(true);
   cl.setAttribute('xmlns','http://www.w3.org/2000/svg');cl.setAttribute('width',W);cl.setAttribute('height',H);
