@@ -22,6 +22,12 @@
   --c2:#C59BD6; --grid:#28322F; color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+details.help{margin:2px 0 8px;font-size:12px;color:var(--muted)}
+details.help summary{cursor:pointer;color:var(--accent);font-weight:500;font-size:12.5px}
+details.help p{margin:6px 0}
+table.mini{font-size:11.5px;margin:4px 0}table.mini th,table.mini td{padding:3px 5px}
+.chip{border:1px solid var(--accent);background:var(--panel);color:var(--accent);border-radius:12px;padding:1px 8px;font:500 11.5px var(--mono);cursor:pointer}
+.chip:hover{background:var(--accent);color:var(--panel)}
 fieldset.sol{background:var(--accent-bg);border-radius:8px;padding:10px 10px 6px;margin-bottom:10px;border:0}
 fieldset.sol legend{color:var(--accent);float:left;width:100%}
 .solsum{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:12.5px;margin:6px 0;line-height:1.6}
@@ -123,6 +129,16 @@ svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
   </fieldset>
   <fieldset><legend>2 · Criterios de verificación</legend>
     <div class="f"><label for="xadm">Desplazamiento admisible</label><input id="xadm" type="number" step="1"><span class="u">mm</span></div>
+    <details class="help"><summary>¿Qué desplazamiento admisible uso?</summary>
+      <p>Ningún reglamento argentino lo fija: depende de cuánto tolera la estructura que se apoya en el pilote. Valores habituales (tocá uno para cargarlo):</p>
+      <div class="tw"><table class="mini"><tr><th>Situación</th><th>mm</th></tr>
+        <tr><td>Equipos sensibles, estructuras muy rígidas</td><td><button class="chip" data-set="xadm" data-v="6">6</button></td></tr>
+        <tr><td>Edificios y naves con carga de servicio</td><td><button class="chip" data-set="xadm" data-v="10">10</button> <button class="chip" data-set="xadm" data-v="12">12</button></td></tr>
+        <tr><td>Sismo, con la acción de diseño</td><td><button class="chip" data-set="xadm" data-v="15">15</button> <button class="chip" data-set="xadm" data-v="20">20</button> <button class="chip" data-set="xadm" data-v="25">25</button></td></tr>
+        <tr><td>Carteles, postes, torres de iluminación</td><td><button class="chip" data-set="xadm" data-v="25">25</button> <button class="chip" data-set="xadm" data-v="50">50</button></td></tr>
+      </table></div>
+      <p>Pórticos arriostrados: el desplazamiento de la base pasa casi entero a la estructura. Con sismo usá 15 a 20 mm y sumalo a la deriva del piso para verificar la distorsión del IC 103 Parte I.</p>
+    </details>
     <div class="f"><label for="FS">FS geotécnico sobre Qu (Broms)</label><input id="FS" type="number" step="0.1"><span class="u">—</span></div>
   </fieldset>
   <fieldset><legend>3 · Suelo</legend>
@@ -130,8 +146,26 @@ svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
     <div class="f"><label for="gam">Peso unitario γ</label><input id="gam" type="number" step="0.05"><span class="u" data-d="F/m3"></span></div>
     <div class="f soilA"><label for="phi">Ángulo de fricción φ'</label><input id="phi" type="number" step="1"><span class="u">°</span></div>
     <div class="f soilA"><label for="nh">nh (reacción horizontal)</label><input id="nh" type="number" step="10"><span class="u" data-d="F/m3"></span></div>
+    <details class="help soilA"><summary>¿Qué es nh y cómo lo elijo?</summary>
+      <p><b>nh</b> mide cuánto se endurece la arena con la profundidad frente a un empuje lateral. Con él, el suelo se modela como resortes de rigidez <b>k = nh·z</b> (por metro de pilote y por metro de desplazamiento): en superficie casi no resiste y a más profundidad resiste más, porque la arena está más confinada. Es el dato que más pesa en el desplazamiento calculado.</p>
+      <p>Se elige por la <b>compacidad de la arena</b> (SPT o densidad relativa del estudio de suelos) y por si está <b>seca o húmeda, o bajo napa</b>. Tocá un valor para cargarlo:</p>
+      <div class="tw"><table class="mini"><tr><th>Compacidad</th><th>SPT N</th><th>Dr</th><th>φ aprox.</th><th>Seca/húmeda</th><th>Bajo napa</th></tr>
+        <tr><td>Suelta</td><td>4–10</td><td>15–35 %</td><td>28–30°</td><td><button class="chip" data-set="nh" data-v="2000">2000</button></td><td><button class="chip" data-set="nh" data-v="1200">1200</button></td></tr>
+        <tr><td>Media</td><td>10–30</td><td>35–65 %</td><td>30–36°</td><td><button class="chip" data-set="nh" data-v="6000">6000</button></td><td><button class="chip" data-set="nh" data-v="4000">4000</button></td></tr>
+        <tr><td>Densa</td><td>30–50</td><td>65–85 %</td><td>36–41°</td><td><button class="chip" data-set="nh" data-v="16500">16500</button></td><td><button class="chip" data-set="nh" data-v="10500">10500</button></td></tr>
+      </table></div>
+      <p>Valores en kN/m³ (centro de los rangos de la tabla 11.15 del Das, que viene de Terzaghi, 1955). En t/m³ se dividen por 9,81: arena media seca ≈ 610 t/m³. SPT, Dr y φ son correlaciones orientativas (Terzaghi y Peck; Meyerhof). Para tus γ = 1,7 t/m³ y φ = 30° corresponde una arena entre suelta y media: un nh de 500 a 600 t/m³ es razonable. Si hay dudas, calculá con el extremo bajo del rango: da más desplazamiento.</p>
+    </details>
     <div class="f soilC"><label for="cu">Cohesión no drenada cu</label><input id="cu" type="number" step="0.5"><span class="u" data-d="F/m2"></span></div>
     <div class="f soilC"><label for="K">Módulo horizontal K</label><input id="K" type="number" step="10"><span class="u" data-d="F/m3"></span></div>
+    <details class="help soilC"><summary>¿Qué es K y cómo lo elijo?</summary>
+      <p><b>K</b> es el módulo de reacción horizontal de la arcilla. A diferencia de la arena, se supone <b>constante con la profundidad</b>: k = K·D. Depende de la consistencia, medida por la resistencia a compresión simple qu (≈ 2·cu). Tocá un valor para cargarlo:</p>
+      <div class="tw"><table class="mini"><tr><th>Consistencia</th><th>qu (kPa)</th><th>K (kN/m³)</th></tr>
+        <tr><td>Blanda a media</td><td>&lt; 200</td><td><button class="chip" data-set="K" data-v="15000">15000</button></td></tr>
+        <tr><td>Firme</td><td>200–800</td><td><button class="chip" data-set="K" data-v="30000">30000</button></td></tr>
+        <tr><td>Dura</td><td>&gt; 800</td><td><button class="chip" data-set="K" data-v="45000">45000</button></td></tr>
+      </table></div><p>Fuente: Das, §11.16, rango de valores después de la ec. 11.104.</p>
+    </details>
     <p class="hint soilA" id="nh-hint"></p>
     <p class="hint soilC" id="K-hint"></p>
   </fieldset>
@@ -298,7 +332,7 @@ svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
 <script>
 const G=9.80665;
 let U='t', soil='arena', head='libre', loadMode='ult';
-const defs={gam:16.67,phi:30,nh:6000,cu:50,K:15000,L:2.5,D:0.9,fc:21,Eu:'',Iu:'',crk:1,My:245,Q:29.4,e:0,xadm:10,FS:1.5,gf:1,fb:3,etap:1.2};
+const defs={gam:16.67,phi:30,nh:6000,cu:50,K:15000,L:2.5,D:0.9,fc:21,Eu:'',Iu:'',crk:1,My:245,Q:29.4,e:0,xadm:15,FS:1.5,gf:1,fb:3,etap:1.2};
 const dims={gam:'F/m3',nh:'F/m3',K:'F/m3',cu:'F/m2',My:'F·m',Q:'F'};
 const $=id=>document.getElementById(id);
 function fac(){return U==='t'?G:1}
@@ -314,7 +348,8 @@ function init(){
   document.querySelectorAll('aside input,aside select').forEach(el=>el.addEventListener('input',calc));$('myauto').addEventListener('change',calc);
   $('u-t').onclick=()=>setUnits('t');$('u-kN').onclick=()=>setUnits('kN');
   $('gotoS').onclick=e=>{e.preventDefault();document.querySelector('nav.tabs button[data-t="s"]').click();document.querySelector('nav.tabs').scrollIntoView({behavior:'smooth'})};
-  segs('seg-soil',v=>{soil=v});segs('seg-head',v=>{head=v});segs('seg-load',v=>{loadMode=v;$('FS').value=v==='ult'?1.5:2.5;$('gf').value=v==='ult'?1:1.5;$('etap').value=v==='ult'?1.2:1.5});
+  document.querySelectorAll('.chip[data-set]').forEach(b=>b.onclick=()=>{const k=b.dataset.set,v=+b.dataset.v;$(k).value=dims[k]?+(v/fac()).toPrecision(4):v;calc()});
+  segs('seg-soil',v=>{soil=v});segs('seg-head',v=>{head=v});segs('seg-load',v=>{loadMode=v;$('FS').value=v==='ult'?1.5:2.5;$('gf').value=v==='ult'?1:1.5;$('etap').value=v==='ult'?1.2:1.5;$('xadm').value=v==='ult'?15:10});
   document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>{
     document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('on',x===b));
     ['w','b','bl','g','s'].forEach(t=>$('t-'+t).hidden=(t!==b.dataset.t));
@@ -559,7 +594,7 @@ function bromsSketch(p,br){
 }
 
 // ---------- main ----------
-const CW=['Rigidez del pilote frente al suelo: define qué método aplica.','Servicio: cuánto se corre la cabeza con H (Winkler).','Momento de diseño de la sección, con Hu (Winkler).','Falla del suelo o del pilote por carga lateral (Broms).','Compara tu H con la máxima que el pilote soporta cumpliendo resistencia del suelo y desplazamiento. Menos de 100 % cumple.','Longitud enterrada necesaria por equilibrio (Blum).'];
+const CW=['Rigidez del pilote frente al suelo: define qué método aplica.','Servicio: cuánto se corre la cabeza con H (Winkler).','Momento de diseño de la sección, con Hu (Winkler).','Falla del suelo o del pilote por carga lateral (Broms).','Dos controles por separado: que el suelo no falle (Broms) y que la cabeza no se corra más que el admisible. Gobierna el mayor %; menos de 100 % cumple.','Longitud enterrada necesaria por equilibrio (Blum).'];
 function row(c){return '<tr>'+c.map((x,i)=>i?`<td class="n">${x}</td>`:`<td>${x}</td>`).join('')+'</tr>'}
 function pill(ok,t1='Cumple',t2='No cumple'){return `<span class="pill ${ok?'ok':'bad'}">${ok?t1:t2}</span>`}
 function calc(){
@@ -592,7 +627,7 @@ function calc(){
     ['Desplazamiento cabeza',fmt(x0*1000)+' mm',pill(Math.abs(x0)<=p.xadm,'≤ '+fmt(p.xadm*1000,0)+' mm','> '+fmt(p.xadm*1000,0)+' mm')+' Winkler, servicio'],
     ['Mu armado',fmt(fF(p.gf*Mabs))+' '+uM(),`con Hu = ${fmt(fF(p.gf*p.Q))} ${uF()}, a z = ${fmt(w.z[iM])} m · Vu = ${fmt(fF(p.gf*Math.max(...w.V.map(Math.abs))))} ${uF()}`],
     ['Qu Broms',fmt(fF(br.gov),1)+' '+uF(),`${br.mode} · FS = Qu/${hasVu&&p.gf===1?'Hu':'H'} = ${fmt(br.gov/p.Q)}`],
-    ['Uso lateral del pilote',fmt(p.Q/Qadm*100,0)+' %',pill(p.Q<=Qadm)+` tu H = ${fmt(fF(p.Q),1)} ${uF()} frente a lo que resiste: ${fmt(fF(Qadm),1)} ${uF()} = mín(Qu/FS = ${fmt(fF(br.gov/p.FS),1)}; por desplazamiento = ${fmt(fF(bd.Qx),1)})`],
+    ['Uso lateral del pilote',fmt(p.Q/Qadm*100,0)+' %',pill(p.Q<=Qadm)+`<br>• Resistencia del suelo (Broms): H / (Qu/FS) = ${fmt(fF(p.Q),1)} / ${fmt(fF(br.gov/p.FS),1)} = <b>${fmt(p.Q/(br.gov/p.FS)*100,0)} %</b>${br.gov/p.FS<=bd.Qx?' ← gobierna':''}<br>• Desplazamiento: con H la cabeza se corre ${fmt(bd.x*1000,0)} mm frente a ${fmt(p.xadm*1000,0)} mm admisibles = <b>${fmt(p.Q/bd.Qx*100,0)} %</b>${bd.Qx<br.gov/p.FS?' ← gobierna':''} (H máx por desplazamiento = ${fmt(fF(bd.Qx),1)} ${uF()})`],
     ['Blum t necesario',fmt(bl.t)+' m',pill(p.L>=bl.t,'L = '+fmt(p.L)+' m alcanza','L = '+fmt(p.L)+' m no alcanza')]
   ].map((c,i)=>`<div class="card"><div class="k">${c[0]}</div><div class="v">${c[1]}</div><div class="s">${c[2]}</div><div class="w">${CW[i]}</div></div>`).join('');
   // recommendation
