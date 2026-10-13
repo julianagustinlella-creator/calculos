@@ -329,7 +329,7 @@ svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
       <p class="what"><b>Qué verifica:</b> el confinamiento y la separación de los estribos o zunchos en las tres zonas del pilote. La cabeza siempre se arma como zona de rótula plástica de columna (6.6.1.1), con longitud lp según 2.3.5 medida desde la cara inferior del cabezal (6.6.1.2). La cuantía volumétrica ρs exigida depende de si se acepta que el pilote forme rótula plástica (columna circular plástica, 2.3.7.2.1) o si se diseña para que no la forme (columna circular elástica, 2.3.7.2.2).</p>
       <div class="seg" id="seg-hinge" style="max-width:520px"><button data-v="si" class="on">Pilote CON rótula plástica (2.3.7.2.1)</button><button data-v="no">SIN rótula: respuesta elástica (2.3.7.2.2)</button></div>
       <p class="hint" id="hingehint"></p>
-      <div class="two"><div class="tw"><table id="sttab"></table></div><div class="plot"><svg id="stsk" viewBox="0 0 300 330" role="img" aria-label="Zonas de armadura transversal"></svg></div></div>
+      <div class="two"><div class="tw"><table id="sttab"></table></div><div class="plot"><svg id="stsk" viewBox="0 0 320 370" role="img" aria-label="Zonas de armadura transversal"></svg></div></div>
       <h3 style="margin-top:14px">Corte (aproximado)</h3>
       <div class="tw"><table id="rcv"></table></div>
     </section>
@@ -649,14 +649,17 @@ function drawStirrups(p,sec,fc,fy,db,cov,dst,conf){
   if(pl)rows.push(['<b>Armadura longitudinal máxima</b> (6.6.2.2 → 2.3.6(b)): As ≤ 18·Ag/fy = '+fmt(Asmax*1e4,1)+' cm² (24·Ag/fy en empalmes)',fmt(sec.As*1e4,1)+' cm² '+pill(maxOK)]);
   $('sttab').innerHTML='<tr><th>Verificación</th><th>Valor</th></tr>'+rows.map(r=>r[1]===''?`<tr><td colspan="2" style="background:var(--bg)">${r[0]}</td></tr>`:row(r)).join('');
   // sketch
-  const ink=css('--ink'),acc=css('--accent'),mut=css('--muted'),top=30,H=270,px=120,pw=50,Y=z=>top+z/p.L*H;let g='';
-  g+=`<rect x="${px-30}" y="${top-14}" width="${pw+60}" height="14" fill="${mut}" fill-opacity=".35"/><text x="${px+pw/2}" y="${top-18}" text-anchor="middle">cabezal</text>`;
+  const ink=css('--ink'),acc=css('--accent'),mut=css('--muted'),top=78,H=270,px=130,pw=50,Y=z=>top+z/p.L*H;let g='';
+  g+=`<rect x="0" y="${top}" width="320" height="${H+12}" fill="${css('--soil')}" fill-opacity=".10"/><line x1="0" x2="320" y1="${top}" y2="${top}" stroke="${css('--soil')}" stroke-width="2"/><text x="6" y="${top-4}">terreno</text>`;
+  if(head==='libre'){g+=`<rect x="${px+pw/2-9}" y="${top-34}" width="18" height="34" fill="${mut}" fill-opacity=".45" stroke="${ink}"/><rect x="${px+pw/2-16}" y="${top-4}" width="32" height="4" fill="${ink}"/><text x="${px+pw+6}" y="${top-20}">columna</text><text x="${px+pw+6}" y="${top-8}">sin cabezal</text>`;
+    g+=arrow(px-50,top-6,px+pw/2-10,top-6,css('--accent'),2)+`<text x="${px-50}" y="${top-12}" style="fill:${css('--accent')}">H</text>`}
+  else{g+=`<rect x="${px-40}" y="${top-26}" width="${pw+80}" height="26" fill="${mut}" fill-opacity=".45" stroke="${ink}"/><text x="${px+pw/2}" y="${top-11}" text-anchor="middle" style="fill:${ink}">cabezal / viga rígida</text><text x="${px+pw/2}" y="${top-32}" text-anchor="middle">cabeza restringida</text>`}
   g+=`<rect x="${px}" y="${top}" width="${pw}" height="${H}" fill="${css('--soil-bg')}" stroke="${ink}" stroke-width="1.4"/>`;
   const zone=(a,b,sp,lab,col)=>{if(b<=a)return;for(let z=a+sp/2;z<b;z+=sp){g+=`<line x1="${px}" x2="${px+pw}" y1="${Y(z)}" y2="${Y(z)}" stroke="${col}" stroke-width="1.6"/>`}
     g+=`<line x1="${px+pw+8}" x2="${px+pw+8}" y1="${Y(a)}" y2="${Y(b)}" stroke="${col}" stroke-width="2"/><text x="${px+pw+14}" y="${(Y(a)+Y(b))/2-4}" style="fill:${col};font-weight:500">${lab}</text><text x="${px+pw+14}" y="${(Y(a)+Y(b))/2+9}">${fmt(a)}–${fmt(b)} m · c/${fmt(sp*100,0)}</text>`};
   if(isFinite(z1)){zone(0,z1,s1,'crítica',css('--bad'));zone(z1,z2,s2,'adyacente',css('--warn'));zone(z2,p.L,s3,'resto',acc)}
   if(DES.zMu>0&&DES.zMu<=p.L){const yM=Y(DES.zMu);g+=`<line x1="${px-40}" x2="${px+pw}" y1="${yM}" y2="${yM}" stroke="${css('--bad')}" stroke-dasharray="4 3" stroke-width="1.5"/><circle cx="${px+pw/2}" cy="${yM}" r="6" fill="none" stroke="${css('--bad')}" stroke-width="2"/><text x="${px-44}" y="${yM-3}" text-anchor="end" style="fill:${css('--bad')};font-weight:500">M máx</text><text x="${px-44}" y="${yM+10}" text-anchor="end">z = ${fmt(DES.zMu)} m</text>`}
-  g+=`<text x="${px-8}" y="${Y(p.L)}" text-anchor="end">L = ${fmt(p.L)} m</text><text x="10" y="16" class="ttl">${pl?'Con rótula plástica':'Respuesta elástica'}</text>`;
+  g+=`<text x="${px-8}" y="${Y(p.L)}" text-anchor="end">L = ${fmt(p.L)} m</text><text x="8" y="16" class="ttl">${pl?'Con rótula plástica':'Respuesta elástica'} · ${head==='libre'?'cabeza libre':'cabeza restringida'}</text>`;
   $('stsk').innerHTML=g;
 }
 // ---------- main ----------
