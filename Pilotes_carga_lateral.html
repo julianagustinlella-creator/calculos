@@ -1,0 +1,688 @@
+<title>Pilote lateral</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F3F4F0; --panel:#FFFFFF; --ink:#1D272B; --muted:#5E6A6E; --line:#D7DBD3;
+  --soil:#B08447; --soil-bg:#EFE5D4; --accent:#2B5C7E; --accent-bg:#E1EBF2;
+  --ok:#2E7D4F; --ok-bg:#E1F1E6; --bad:#B23A2E; --bad-bg:#F6E1DE; --warn:#9A6A00; --warn-bg:#F7EDD2;
+  --c2:#8A4F9E; --grid:#E6E9E2;
+  --sans:"IBM Plex Sans",system-ui,sans-serif; --cond:"IBM Plex Sans Condensed","Arial Narrow",sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#151B1E; --panel:#1D2528; --ink:#E4E8E4; --muted:#9AA6A8; --line:#33403F;
+  --soil:#D2A766; --soil-bg:#3A3022; --accent:#7FB2D6; --accent-bg:#1F3443;
+  --ok:#6CC28F; --ok-bg:#1D3427; --bad:#EE8577; --bad-bg:#3E2320; --warn:#E3B54F; --warn-bg:#3A3019;
+  --c2:#C59BD6; --grid:#28322F; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#151B1E; --panel:#1D2528; --ink:#E4E8E4; --muted:#9AA6A8; --line:#33403F;
+  --soil:#D2A766; --soil-bg:#3A3022; --accent:#7FB2D6; --accent-bg:#1F3443;
+  --ok:#6CC28F; --ok-bg:#1D3427; --bad:#EE8577; --bad-bg:#3E2320; --warn:#E3B54F; --warn-bg:#3A3019;
+  --c2:#C59BD6; --grid:#28322F; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+.exp{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.exp input{padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:13px var(--sans);width:220px;max-width:100%}
+.btn{border:1px solid var(--accent);background:var(--accent);color:var(--panel);border-radius:6px;padding:6px 12px;font:500 13px var(--sans);cursor:pointer}
+.btn.sec{background:var(--panel);color:var(--accent)}
+#expmsg{font-size:12px;color:var(--muted);width:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;padding:20px 16px 40px}
+h1,h2,h3{font-family:var(--cond);font-weight:600;text-wrap:balance;margin:0}
+h1{font-size:26px;letter-spacing:.2px} h2{font-size:19px} h3{font-size:15px}
+.wrap{max-width:1320px;margin:0 auto}
+header.top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:16px}
+header.top p{margin:4px 0 0;color:var(--muted);max-width:70ch}
+.units{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.units button{border:0;background:var(--panel);color:var(--ink);padding:6px 14px;font:500 13px var(--sans);cursor:pointer}
+.units button.on{background:var(--accent);color:var(--panel)}
+.layout{display:grid;grid-template-columns:330px minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:1fr}}
+aside{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+@media (max-width:900px){aside{position:static;max-height:none}}
+fieldset{border:0;border-top:1px solid var(--line);margin:0;padding:10px 0 4px}
+fieldset:first-of-type{border-top:0;padding-top:0}
+legend{font:600 11px var(--cond);letter-spacing:1px;text-transform:uppercase;color:var(--soil);padding:0 0 6px}
+.f{display:grid;grid-template-columns:1fr 92px 46px;align-items:center;gap:6px;margin:5px 0}
+.f label{font-size:13px;color:var(--ink)}
+.f input,.f select{width:100%;padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);font:13px var(--mono);text-align:right}
+.f select{text-align:left;font-family:var(--sans)}
+.f .u{font:11px var(--mono);color:var(--muted)}
+.f input:focus,.f select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:5px;overflow:hidden;margin:4px 0 8px}
+.seg button{border:0;background:var(--bg);color:var(--ink);padding:6px;font:500 13px var(--sans);cursor:pointer}
+.seg button.on{background:var(--soil);color:#fff}
+.hint{font-size:11.5px;color:var(--muted);margin:2px 0 6px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.card .k{font:600 11px var(--cond);letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+.card .v{font:500 22px var(--mono);font-variant-numeric:tabular-nums;margin-top:2px}
+.card .s{font-size:12px;color:var(--muted)}
+.pill{display:inline-block;font:600 11px var(--cond);letter-spacing:.6px;padding:2px 8px;border-radius:20px;text-transform:uppercase}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.bad{background:var(--bad-bg);color:var(--bad)} .pill.warn{background:var(--warn-bg);color:var(--warn)} .pill.info{background:var(--accent-bg);color:var(--accent)}
+nav.tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid var(--line);margin-bottom:14px}
+nav.tabs button{border:0;background:none;color:var(--muted);padding:8px 12px;font:600 14px var(--cond);letter-spacing:.3px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+nav.tabs button.on{color:var(--ink);border-bottom-color:var(--soil)}
+section.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:14px}
+section.panel>h2{margin-bottom:4px}
+.lead{color:var(--muted);margin:0 0 12px;max-width:80ch}
+.plots{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.plot{border:1px solid var(--line);border-radius:6px;padding:6px;background:var(--bg)}
+.plot svg{display:block;width:100%;height:auto}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:760px){.two{grid-template-columns:1fr}}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{font:600 12px var(--cond);letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
+td.n{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.gov td{background:var(--accent-bg)}
+.tw{overflow-x:auto}
+.eq{font-family:var(--mono);font-size:12.5px;background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:8px 10px;margin:8px 0;white-space:pre-wrap;overflow-x:auto}
+.note{font-size:12.5px;color:var(--muted);border-left:3px solid var(--soil);padding:4px 10px;margin:10px 0;border-radius:0}
+.reco{background:var(--soil-bg);border-radius:8px;padding:12px 14px;margin-bottom:14px}
+.reco h3{margin-bottom:4px}
+.reco ul{margin:6px 0 0;padding-left:18px}
+svg text{font-family:var(--mono);font-size:10px;fill:var(--muted)}
+svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div>
+    <h1>Pilote cargado lateralmente</h1>
+    <p>Winkler (Matlock-Reese / Davisson-Gill), Broms y Blum según Das, <i>Fundamentos de Ingeniería de Cimentaciones</i>, §11.16. Cambiá cualquier dato y todo se recalcula.</p>
+  </div>
+  <div class="exp"><input id="obra" placeholder="Obra / designación del pilote"><button class="btn" id="bdoc">Exportar memoria Word</button><button class="btn sec" id="bcopy">Copiar memoria</button><span id="expmsg"></span></div>
+  <div class="units" role="group" aria-label="Unidades">
+    <button id="u-t" class="on">t · m</button><button id="u-kN">kN · m</button>
+  </div>
+</header>
+
+<div class="layout">
+<aside>
+  <fieldset><legend>Suelo</legend>
+    <div class="seg" id="seg-soil"><button data-v="arena" class="on">Arena (c = 0)</button><button data-v="arcilla">Arcilla (φ = 0)</button></div>
+    <div class="f"><label for="gam">Peso unitario γ</label><input id="gam" type="number" step="0.05"><span class="u" data-d="F/m3"></span></div>
+    <div class="f soilA"><label for="phi">Ángulo de fricción φ'</label><input id="phi" type="number" step="1"><span class="u">°</span></div>
+    <div class="f soilA"><label for="nh">nh (reacción horizontal)</label><input id="nh" type="number" step="10"><span class="u" data-d="F/m3"></span></div>
+    <div class="f soilC"><label for="cu">Cohesión no drenada cu</label><input id="cu" type="number" step="0.5"><span class="u" data-d="F/m2"></span></div>
+    <div class="f soilC"><label for="K">Módulo horizontal K</label><input id="K" type="number" step="10"><span class="u" data-d="F/m3"></span></div>
+    <p class="hint soilA" id="nh-hint"></p>
+    <p class="hint soilC" id="K-hint"></p>
+  </fieldset>
+  <fieldset><legend>Pilote</legend>
+    <div class="f"><label for="L">Longitud empotrada L</label><input id="L" type="number" step="0.1"><span class="u">m</span></div>
+    <div class="f"><label for="D">Diámetro D</label><input id="D" type="number" step="0.05"><span class="u">m</span></div>
+    <div class="f"><label for="fc">f'c (para Ec)</label><input id="fc" type="number" step="1"><span class="u">MPa</span></div>
+    <div class="f"><label for="Eu">Ep (vacío = 4700√f'c)</label><input id="Eu" type="number" placeholder="auto"><span class="u">MPa</span></div>
+    <div class="f"><label for="Iu">Ip (vacío = πD⁴/64)</label><input id="Iu" type="number" step="0.0001" placeholder="auto"><span class="u">m⁴</span></div>
+    <div class="f"><label for="crk">Factor de rigidez fisurada</label><input id="crk" type="number" step="0.05"><span class="u">×EI</span></div>
+    <div class="f"><label for="My">Momento resistente My</label><input id="My" type="number" step="0.5"><span class="u" data-d="F·m"></span></div>
+    <p class="hint">My: momento de fluencia de la sección (Mn del hormigón armado o S·Fy del acero). Lo usa Broms para pilote largo.</p>
+  </fieldset>
+  <fieldset><legend>Cargas y cabeza</legend>
+    <div class="seg" id="seg-head"><button data-v="libre" class="on">Cabeza libre</button><button data-v="restr">Restringida</button></div>
+    <div class="f"><label for="Q">Carga lateral de servicio Qg</label><input id="Q" type="number" step="0.1"><span class="u" data-d="F"></span></div>
+    <div class="f"><label for="e">Altura de aplicación e</label><input id="e" type="number" step="0.05"><span class="u">m</span></div>
+    <div class="f"><label for="xadm">Desplazamiento admisible</label><input id="xadm" type="number" step="1"><span class="u">mm</span></div>
+    <div class="f"><label for="FS">FS sobre Qu (Broms)</label><input id="FS" type="number" step="0.1"><span class="u">—</span></div>
+    <div class="f"><label for="Vu">Carga lateral mayorada Vu</label><input id="Vu" type="number" step="0.1" placeholder="opcional"><span class="u" data-d="F"></span></div>
+    <div class="f"><label for="gf">Mayoración si no hay Vu</label><input id="gf" type="number" step="0.05"><span class="u">γf</span></div>
+    <p class="hint">Qg (servicio) se usa para el desplazamiento y para el FS de Broms. Vu (mayorada) se usa para Mu y Vu del armado. Como Winkler es lineal, Mu = M(Qg)·Vu/Qg. Si dejás Vu vacío, se usa γf.</p>
+    <p class="hint">Cabeza libre con e &gt; 0 equivale a Mg = Qg·e en el terreno. Con cabeza restringida se toma e = 0.</p>
+  </fieldset>
+  <fieldset><legend>Blum</legend>
+    <div class="f"><label for="fb">Ancho de cálculo b' = n·D</label><input id="fb" type="number" step="0.5"><span class="u">n</span></div>
+    <div class="f"><label for="etap">Seguridad sobre el pasivo ηp</label><input id="etap" type="number" step="0.1"><span class="u">—</span></div>
+  </fieldset>
+</aside>
+
+<main>
+  <div class="cards" id="cards"></div>
+  <div class="reco" id="reco"></div>
+  <nav class="tabs" role="tablist">
+    <button data-t="w" class="on">Winkler (elástico)</button>
+    <button data-t="b">Broms (carga última)</button>
+    <button data-t="bl">Blum (empotramiento)</button>
+    <button data-t="g">Cuándo usar cada método</button>
+    <button data-t="s">Sección H°A° (interacción)</button>
+  </nav>
+
+  <div id="t-w">
+    <section class="panel">
+      <h2>Viga sobre fundación elástica de Winkler</h2>
+      <p class="lead">Resuelve EpIp·x'''' + k·x = 0 (ec. 11.84) por diferencias finitas con 120 tramos. En arena k = nh·z (Matlock-Reese), en arcilla k = K·D constante (Davisson-Gill). Vale para pilotes rígidos, intermedios o largos, con cabeza libre o restringida. Diagramas con la carga de servicio Qg.</p>
+      <div class="plots" id="wplots"></div>
+      <div class="two" style="margin-top:14px">
+        <div class="tw"><table id="wtab"></table></div>
+        <div>
+          <h3>Control con la tabla 11.14 (Matlock-Reese)</h3>
+          <div class="tw"><table id="mrtab"></table></div>
+          <p class="note" id="mrnote"></p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="t-b" hidden>
+    <section class="panel">
+      <h2>Método de Broms: resistencia lateral última</h2>
+      <p class="lead">Supone que el suelo alcanza su resistencia pasiva: 3·Kp·γ·z·D en arena, y 9·cu·D por debajo de 1,5D en arcilla. Revisa pilote corto (falla del suelo) e intermedio/largo (fluye el pilote con My). Gobierna el menor Qu. Las ecuaciones son las analíticas con las que se construyen los ábacos de las figuras 11.31 a 11.33.</p>
+      <div class="two">
+        <div>
+          <div class="tw"><table id="btab"></table></div>
+          <div class="eq" id="beq"></div>
+        </div>
+        <div class="plot"><svg id="bsk" viewBox="0 0 360 330" role="img" aria-label="Esquema de presiones de Broms"></svg></div>
+      </div>
+      <h3 style="margin-top:14px">Qu en función de la longitud empotrada</h3>
+      <div class="plot" style="margin-top:6px"><svg id="bcurve" viewBox="0 0 720 280" role="img" aria-label="Qu versus L"></svg></div>
+      <h3 style="margin-top:14px">Desplazamiento de la cabeza (fig. 11.33)</h3>
+      <div class="tw"><table id="bdef"></table></div>
+    </section>
+  </div>
+
+  <div id="t-bl" hidden>
+    <section class="panel">
+      <h2>Método de Blum: empotramiento necesario</h2>
+      <p class="lead">Método clásico alemán para pilotes y tablestacas en suelo granular. El pilote gira como cuerpo rígido. Delante actúa el pasivo γ·Kp·z·b'/ηp hasta el punto de giro t₀, y debajo de t₀ el contraempuje se reemplaza por una fuerza concentrada C. Se impone momento nulo en t₀ y se alarga 20 %: t = 1,2·t₀. Sirve para <b>dimensionar</b> L; Broms sirve para <b>verificar</b> un L dado.</p>
+      <div class="two">
+        <div>
+          <div class="tw"><table id="bltab"></table></div>
+          <div class="eq" id="bleq"></div>
+          <p class="note">b' = n·D toma en cuenta el efecto espacial delante de un pilote aislado. Broms usa el equivalente n = 3. Para pilotes poco separados, n no puede superar la separación entre ejes.</p>
+        </div>
+        <div class="plots" id="blplots" style="grid-template-columns:1fr 1fr"></div>
+      </div>
+    </section>
+  </div>
+
+  <div id="t-g" hidden>
+    <section class="panel">
+      <h2>Cuándo usar cada método</h2>
+      <p class="lead">Primero se clasifica el pilote por su rigidez relativa con el suelo. Esa clasificación define qué método representa mejor el comportamiento.</p>
+      <div class="tw"><table>
+        <tr><th>Clasificación</th><th>Arena (T = (EI/nh)^⅕)</th><th>Arcilla (R = (EI/k)^¼)</th><th>Comportamiento</th></tr>
+        <tr><td>Rígido / corto</td><td class="n">L ≤ 2T</td><td class="n">L ≤ 2R</td><td>Gira como cuerpo rígido. Falla el suelo antes que el pilote. Momento chico, desplazamiento y giro dominantes.</td></tr>
+        <tr><td>Intermedio</td><td class="n">2T &lt; L &lt; 5T</td><td class="n">2R &lt; L &lt; 5R</td><td>Flexión y giro combinados. Hace falta la solución elástica completa.</td></tr>
+        <tr><td>Largo / flexible</td><td class="n">L ≥ 5T</td><td class="n">L ≥ 5R</td><td>La punta no se entera de la carga. Falla por flexión del pilote (rótula plástica a una profundidad de 1 a 2T).</td></tr>
+      </table></div>
+      <div class="tw" style="margin-top:14px"><table>
+        <tr><th>Método</th><th>Qué da</th><th>Suelo</th><th>Pilote</th><th>Usalo para</th><th>Limitaciones</th></tr>
+        <tr><td><b>Winkler, Matlock-Reese</b> (ec. 11.85–11.89, tabla 11.14)</td><td>x, θ, M, V, p' en toda la profundidad, con carga de servicio</td><td>Arena, k = nh·z</td><td>Tabla 11.14 solo si L ≥ 5T; fig. 11.29 para Zmáx 2–5. La FD de esta página cubre cualquier L.</td><td>Desplazamiento de servicio, diagrama de momentos y Mu para armar el pilote</td><td>Elástico lineal: no da la carga última. Depende mucho de nh.</td></tr>
+        <tr><td><b>Winkler, Davisson-Gill</b> (ec. 11.92–11.94)</td><td>Lo mismo, con k constante</td><td>Arcilla sobreconsolidada</td><td>Cualquiera (fig. 11.30)</td><td>Ídem en suelos cohesivos</td><td>k constante es una simplificación. En arcillas blandas k crece con z.</td></tr>
+        <tr><td><b>Broms</b> (fig. 11.31–11.33)</td><td>Carga lateral última Qu, modo de falla, desplazamiento aproximado</td><td>Arena o arcilla homogénea</td><td>Corto, intermedio o largo; cabeza libre o restringida</td><td>Verificar la seguridad a rotura de un pilote de L dado</td><td>Suelo homogéneo. Ignora la carga axial. Desplazamiento solo estimativo.</td></tr>
+        <tr><td><b>Blum</b></td><td>Empotramiento necesario t y momento máximo</td><td>Granular (o cohesivo con presiones equivalentes)</td><td>Rígido / corto (postes, pozos, tablestacas en voladizo)</td><td>Predimensionar la longitud de pozos y postes con carga horizontal</td><td>No da desplazamientos. La seguridad depende de ηp y del 20 % adicional.</td></tr>
+        <tr><td>Curvas p-y (Reese, API)</td><td>Respuesta no lineal completa</td><td>Cualquiera, estratificado</td><td>Cualquiera</td><td>Cargas grandes o cíclicas, suelos estratificados, obras importantes</td><td>Requiere software (LPILE, etc.) y buenos parámetros. No incluido acá.</td></tr>
+      </table></div>
+      <h3 style="margin-top:16px">Secuencia recomendada</h3>
+      <ol>
+        <li>Calcular T (o R) y clasificar el pilote.</li>
+        <li><b>Predimensionar</b> L con Blum (granular) o con Broms invertido.</li>
+        <li><b>Verificar rotura</b> con Broms: Qg·FS ≤ Qu, con FS entre 2 y 3.</li>
+        <li><b>Verificar servicio</b> con Winkler: desplazamiento de la cabeza menor que el admisible (típicamente 6 a 12 mm, según la estructura).</li>
+        <li><b>Armar el pilote</b> con el diagrama de Winkler bajo carga mayorada: Mu = γf·M. Verificar flexo-compresión y flexo-tracción con el axial concomitante, y el corte Vu.</li>
+      </ol>
+      <p class="note">Valores de nh (tabla 11.15, kN/m³). Arena seca o húmeda: suelta 1800–2200, media 5500–7000, densa 15000–18000. Arena sumergida: 1000–1400, 3500–4500, 9000–12000. K en arcilla (kN/m³): qu &lt; 200 kPa → 10000–20000; 200–800 → 20000–40000; &gt; 800 → &gt; 40000.</p>
+    </section>
+  </div>
+
+  <div id="t-s" hidden>
+    <section class="panel">
+      <h2>Sección de hormigón armado: diagrama de interacción N–M</h2>
+      <p class="lead">Sección circular de diámetro D (el del pilote) con barras distribuidas en la periferia. Compatibilidad de deformaciones según CIRSOC 201: εcu = 0,003, bloque de Whitney 0,85f'c con β1, acero elastoplástico. φ varía entre 0,65 (estribos) o 0,75 (zuncho) y 0,90 según la deformación εt de la barra más traccionada. El f'c es el del panel izquierdo. Compresión positiva.</p>
+      <div class="two">
+        <div>
+          <div class="f"><label for="fy">fy del acero</label><input id="fy" type="number" step="10" value="420"><span class="u">MPa</span></div>
+          <div class="f"><label for="nb">Cantidad de barras</label><input id="nb" type="number" step="1" min="4" value="8"><span class="u">u</span></div>
+          <div class="f"><label for="db">Diámetro de barra</label><select id="db"><option>10</option><option>12</option><option selected>16</option><option>20</option><option>25</option><option>32</option></select><span class="u">mm</span></div>
+          <div class="f"><label for="cov">Recubrimiento libre</label><input id="cov" type="number" step="0.5" value="7.5"><span class="u">cm</span></div>
+          <div class="f"><label for="dst">Estribo / zuncho Ø</label><input id="dst" type="number" step="2" value="8"><span class="u">mm</span></div>
+          <div class="f"><label for="conf">Armadura transversal</label><select id="conf"><option value="e">Estribos</option><option value="z">Zuncho</option></select><span class="u"></span></div>
+          <p class="hint">Hormigón colado contra el suelo: recubrimiento mínimo 7,5 cm.</p>
+          <div class="tw"><table id="rctab"></table></div>
+        </div>
+        <div class="plot"><svg id="rcsec" viewBox="0 0 300 300" role="img" aria-label="Sección transversal"></svg></div>
+      </div>
+      <h3 style="margin-top:14px">Solicitaciones mayoradas</h3>
+      <p class="hint">Si dejás Mu vacío se usa el automático: γf · |M| máx de Winkler. Nu positivo es compresión y negativo tracción (la columna traccionada del arriostramiento).</p>
+      <div class="tw"><table id="combos"></table></div>
+      <button id="addc" style="margin-top:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:5px;padding:5px 12px;cursor:pointer;font:500 13px var(--sans)">+ Agregar combinación</button>
+      <div class="plot" style="margin-top:12px"><svg id="rcdiag" viewBox="0 0 720 420" role="img" aria-label="Diagrama de interacción"></svg></div>
+      <h3 style="margin-top:14px">Corte (aproximado)</h3>
+      <div class="tw"><table id="rcv"></table></div>
+    </section>
+  </div>
+</main>
+</div>
+</div>
+
+<script>
+const G=9.80665;
+let U='t', soil='arena', head='libre';
+const defs={gam:16.67,phi:30,nh:6000,cu:50,K:15000,L:2.5,D:0.9,fc:21,Eu:'',Iu:'',crk:1,My:245,Q:29.4,e:0,xadm:10,FS:2.5,gf:1.5,fb:3,etap:1.5};
+const dims={gam:'F/m3',nh:'F/m3',K:'F/m3',cu:'F/m2',My:'F·m',Q:'F',Vu:'F'};
+const $=id=>document.getElementById(id);
+function fac(){return U==='t'?G:1}
+function setUnits(u){
+  const old=U;U=u;
+  for(const k in dims){const el=$(k);if(el.value!==''){let v=parseFloat(el.value)*(old==='t'?G:1)/(U==='t'?G:1);el.value=+v.toPrecision(4)}}
+  document.querySelectorAll('.u[data-d]').forEach(s=>{const F=U==='t'?'t':'kN';s.textContent=s.dataset.d.replace('F',F).replace('m3','m³').replace('m2','m²')});
+  $('u-t').classList.toggle('on',U==='t');$('u-kN').classList.toggle('on',U==='kN');
+  drawCombos();calc();
+}
+function init(){
+  for(const k in defs){const v=defs[k];$(k).value=(v===''?'':(dims[k]?+(v/G).toPrecision(4):v))}
+  document.querySelectorAll('aside input,aside select').forEach(el=>el.addEventListener('input',calc));
+  $('u-t').onclick=()=>setUnits('t');$('u-kN').onclick=()=>setUnits('kN');
+  segs('seg-soil',v=>{soil=v});segs('seg-head',v=>{head=v});
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('on',x===b));
+    ['w','b','bl','g','s'].forEach(t=>$('t-'+t).hidden=(t!==b.dataset.t));
+  });
+  $('t-s').addEventListener('input',calc);$('t-s').addEventListener('change',calc);
+  $('addc').onclick=()=>{combos.push({n:'Combinación '+(combos.length+1),N:0,M:''});drawCombos();calc()};
+  setUnits('t');
+}
+// combos in internal kN / kN·m
+let combos=[{n:'Compresión máxima',N:196,M:''},{n:'Tracción (arrancamiento)',N:-78,M:''}];
+const cin='border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:3px 5px;border-radius:4px';
+function drawCombos(){
+  $('combos').innerHTML=`<tr><th>Combinación</th><th>Nu (${uF()})</th><th>Mu (${uM()})</th><th>φMn a ese Nu</th><th>Uso</th><th></th></tr>`+combos.map((c,i)=>
+   `<tr><td><input id="cn${i}" data-i="${i}" data-k="n" value="${c.n}" style="width:100%;${cin}"></td>
+    <td class="n"><input id="cN${i}" data-i="${i}" data-k="N" type="number" step="0.5" value="${+fF(c.N).toPrecision(4)}" style="width:84px;text-align:right;font-family:var(--mono);${cin}"></td>
+    <td class="n"><input id="cM${i}" data-i="${i}" data-k="M" type="number" step="0.1" placeholder="auto" value="${c.M===''?'':+fF(c.M).toPrecision(4)}" style="width:84px;text-align:right;font-family:var(--mono);${cin}"></td>
+    <td class="n" id="cr${i}">—</td><td id="cs${i}">—</td>
+    <td><button data-del="${i}" aria-label="Quitar combinación" style="border:0;background:none;color:var(--muted);cursor:pointer;font-size:16px">×</button></td></tr>`).join('');
+  $('combos').querySelectorAll('input').forEach(el=>el.addEventListener('input',e=>{e.stopPropagation();const c=combos[+el.dataset.i],k=el.dataset.k;
+    if(k==='n')c.n=el.value;else if(el.value==='')c[k]=k==='M'?'':0;else c[k]=parseFloat(el.value)*fac();calc()}));
+  $('combos').querySelectorAll('button[data-del]').forEach(b=>b.onclick=()=>{combos.splice(+b.dataset.del,1);drawCombos();calc()});
+}
+// ---------- RC circular section ----------
+function rcSection(D,fc,fy,nb,db,cov,dst,conf){
+  const R=D/2,Ab=Math.PI*db*db/4,r=R-cov-dst-db/2,Es=2e8,ey=fy/Es,fM=fc/1000,b1=fM<=28?0.85:Math.max(0.65,0.85-0.05*(fM-28)/7);
+  const bars=[];for(let i=0;i<nb;i++){const a=2*Math.PI*i/nb;bars.push({y:r*Math.cos(a),x:r*Math.sin(a)})}
+  const ds=bars.map(b=>R-b.y),dt=Math.max(...ds),As=nb*Ab,Ag=Math.PI*R*R;
+  const phic=conf==='z'?0.75:0.65,kmax=conf==='z'?0.85:0.80;
+  const P0=0.85*fc*(Ag-As)+fy*As,Pmax=kmax*P0;
+  function pt(c){
+    const a=Math.min(b1*c,D);let Cc=0,yc=0;
+    if(a>0){const th=Math.acos(Math.max(-1,Math.min(1,(R-a)/R))),Ac=R*R*(th-Math.sin(th)*Math.cos(th));Cc=0.85*fc*Ac;yc=Ac>0?2*R**3*Math.sin(th)**3/(3*Ac):0}
+    let P=Cc,M=Cc*yc;
+    ds.forEach((d,i)=>{const es=0.003*(c-d)/c;let fs=Math.max(-fy,Math.min(fy,es*Es));if(d<a)fs-=0.85*fc;P+=fs*Ab;M+=fs*Ab*(R-d)});
+    const et=0.003*(dt-c)/c,phi=et<=ey?phic:et>=0.005?0.9:phic+(0.9-phic)*(et-ey)/(0.005-ey);
+    return {P,M,phi,et};
+  }
+  const pts=[];pts.push({P:-fy*As,M:0,phi:0.9});
+  for(let i=0;i<=240;i++){const c=D*Math.pow(10,-3+i*(Math.log10(30)+3)/240);pts.push(pt(c))}
+  pts.push({P:P0,M:0,phi:phic});
+  pts.forEach(q=>{q.pP=Math.min(q.phi*q.P,phic*Pmax);q.pM=q.phi*q.M});
+  return {R,r,Ab,As,Ag,rho:As/Ag,b1,P0,Pmax,phic,pts,bars,ey};
+}
+function phiMnAt(sec,N){ // capacity on the upper branch at given axial N (internal units consistent)
+  const P=sec.pts;let best=null;
+  for(let i=0;i<P.length-1;i++){const a=P[i],b=P[i+1];if((N-a.pP)*(N-b.pP)<=0&&a.pP!==b.pP){const t=(N-a.pP)/(b.pP-a.pP),m=a.pM+t*(b.pM-a.pM);if(best===null||m>best)best=m}}
+  return best;
+}
+function drawRC(p,Mabs,Vabs){
+  const fc=num('fc'),fy=num('fy'),nb=Math.max(3,Math.round(num('nb'))),db=num('db')/1000,cov=num('cov')/100,dst=num('dst')/1000,conf=$('conf').value;
+  if(![fc,fy,db,cov,dst].every(isFinite))return;
+  const sec=rcSection(p.D,fc*1000,fy*1000,nb,db,cov,dst,conf);
+  // section drawing
+  const S=300,sc=(S-60)/p.D,cx=S/2,cy=S/2+6;let s=`<text class="ttl" x="10" y="16">${nb} Ø${num('db')} · Ø${fmt(p.D*100,0)} cm</text>`;
+  s+=`<circle cx="${cx}" cy="${cy}" r="${sec.R*sc}" fill="${css('--soil-bg')}" stroke="${css('--ink')}" stroke-width="1.5"/>`;
+  s+=`<circle cx="${cx}" cy="${cy}" r="${(sec.R-cov-dst/2)*sc}" fill="none" stroke="${css('--muted')}" stroke-dasharray="${conf==='z'?'0':'4 3'}"/>`;
+  sec.bars.forEach(b=>{s+=`<circle cx="${cx+b.x*sc}" cy="${cy-b.y*sc}" r="${Math.max(2.5,db/2*sc)}" fill="${css('--accent')}"/>`});
+  s+=`<text x="${cx}" y="${S-6}" text-anchor="middle">rec. ${fmt(cov*100,1)} cm · ${conf==='z'?'zuncho':'estribos'} Ø${num('dst')}</text>`;
+  $('rcsec').innerHTML=s;
+  const rhoOK=sec.rho>=0.005;
+  $('rctab').innerHTML='<tr><th>Sección</th><th>Valor</th></tr>'+[
+    ['As total',fmt(sec.As*1e4)+' cm²'],['Ag',fmt(sec.Ag*1e4,0)+' cm²'],['Cuantía ρ = As/Ag',fmt(sec.rho*100,2)+' % '+`<span class="pill ${rhoOK?'ok':'warn'}">${rhoOK?'≥ 0,5 %':'< 0,5 %'}</span>`],
+    ['Radio a ejes de barras',fmt(sec.r*100,1)+' cm'],['β1',fmt(sec.b1,3)],
+    ['φPn máx (compresión)',fmt(fF(sec.phic*sec.Pmax),1)+' '+uF()],['φPn tracción pura = 0,9·As·fy',fmt(fF(0.9*sec.As*fy*1000),1)+' '+uF()],
+    ['φMn flexión pura (N = 0)',fmt(fF(phiMnAt(sec,0)))+' '+uM()]
+  ].map(row).join('')+`<tr><td colspan="2" class="hint">ρ: los reglamentos piden para pilotes entre 0,4 % y 1 % según zona sísmica y tipo. Verificá el mínimo que corresponda.</td></tr>`;
+  // combos
+  const Mauto=p.gf*Mabs,res=combos.map(c=>{const M=c.M===''?Mauto:Math.abs(c.M),cap=phiMnAt(sec,c.N);return {...c,Mu:M,cap,ratio:cap&&cap>0?M/cap:Infinity}});
+  res.forEach((c,i)=>{if(!$('cr'+i))return;$('cr'+i).textContent=c.cap==null?'fuera de rango':fmt(fF(c.cap));
+    $('cs'+i).innerHTML=(c.cap==null?pill(false,'','Nu excede'):pill(c.ratio<=1,fmt(c.ratio*100,0)+' %',fmt(c.ratio*100,0)+' %'))+(c.M===''?` <span class="hint">Mu auto = ${fmt(fF(c.Mu))}</span>`:'')});
+  // diagram
+  const W=720,H=420,ml=64,mr=20,mt=18,mb=40,pw=W-ml-mr,ph=H-mt-mb,P=sec.pts;
+  const mx=Math.max(...P.map(q=>q.M),...res.map(c=>c.Mu))*1.08,pmin=Math.min(...P.map(q=>q.P),...res.map(c=>c.N))*1.1,pmaxv=Math.max(...P.map(q=>q.P),...res.map(c=>c.N))*1.05;
+  const xt=nice(0,fF(mx),6),yt=nice(fF(pmin),fF(pmaxv),7),X=v=>ml+fF(v)/xt[xt.length-1]*pw,Y=v=>mt+ph-(fF(v)-yt[0])/(yt[yt.length-1]-yt[0])*ph;
+  let g='';
+  yt.forEach(t=>{const y=mt+ph-(t-yt[0])/(yt[yt.length-1]-yt[0])*ph;g+=`<line x1="${ml}" x2="${ml+pw}" y1="${y}" y2="${y}" stroke="${css('--grid')}"/><text x="${ml-6}" y="${y+3}" text-anchor="end">${+t.toPrecision(3)}</text>`});
+  xt.forEach(t=>{const x=ml+t/xt[xt.length-1]*pw;g+=`<line y1="${mt}" y2="${mt+ph}" x1="${x}" x2="${x}" stroke="${css('--grid')}"/><text x="${x}" y="${mt+ph+14}" text-anchor="middle">${+t.toPrecision(3)}</text>`});
+  g+=`<line x1="${ml}" x2="${ml+pw}" y1="${Y(0)}" y2="${Y(0)}" stroke="${css('--muted')}"/>`;
+  const nom=P.map(q=>`${X(q.M).toFixed(1)},${Y(q.P).toFixed(1)}`).join(' '),des=P.map(q=>`${X(q.pM).toFixed(1)},${Y(q.pP).toFixed(1)}`).join(' ');
+  g+=`<polyline points="${nom}" fill="none" stroke="${css('--muted')}" stroke-width="1.4" stroke-dasharray="5 4"/>`;
+  g+=`<polygon points="${X(0)},${Y(P[0].pP)} ${des} ${X(0)},${Y(P[P.length-1].pP)}" fill="${css('--accent')}" fill-opacity=".10" stroke="${css('--accent')}" stroke-width="2.4"/>`;
+  res.forEach(c=>{const ok=c.ratio<=1,col=ok?css('--ok'):css('--bad');g+=`<circle cx="${X(c.Mu)}" cy="${Y(c.N)}" r="5.5" fill="${col}" stroke="${css('--panel')}" stroke-width="1.5"/><text x="${X(c.Mu)+9}" y="${Y(c.N)+4}" style="fill:${col};font-weight:500">${c.n}</text>`});
+  g+=`<line x1="${ml+pw-200}" x2="${ml+pw-176}" y1="${mt+12}" y2="${mt+12}" stroke="${css('--accent')}" stroke-width="2.4"/><text x="${ml+pw-172}" y="${mt+15}" style="fill:${css('--ink')}">φPn – φMn (diseño)</text>`;
+  g+=`<line x1="${ml+pw-200}" x2="${ml+pw-176}" y1="${mt+28}" y2="${mt+28}" stroke="${css('--muted')}" stroke-dasharray="5 4"/><text x="${ml+pw-172}" y="${mt+31}" style="fill:${css('--ink')}">Pn – Mn (nominal)</text>`;
+  g+=`<text x="${ml+pw/2}" y="${H-6}" text-anchor="middle">M (${uM()})</text><text x="14" y="${mt+ph/2}" transform="rotate(-90 14 ${mt+ph/2})" text-anchor="middle">N (${uF()}) · compresión +</text>`;
+  $('rcdiag').innerHTML=g;
+  // shear approx (CIRSOC 201 / ACI: bw = D, d = 0,8D)
+  const d=0.8*p.D,Vc=0.17*Math.sqrt(fc)*1000*p.D*d,phiVc=0.75*Vc,Vu=p.gf*Vabs;
+  LAST.rc={sec,res,Vu,phiVc,nb,db:num('db'),cov,dst:num('dst'),conf,fy,fc};
+  $('rcv').innerHTML='<tr><th>Corte</th><th>Valor</th></tr>'+[['Vu = γf · |V| máx (Winkler)',fmt(fF(Vu))+' '+uF()],['φVc = 0,75 · 0,17√f\'c · D · 0,8D (sin efecto del axial)',fmt(fF(phiVc))+' '+uF()],
+    ['Verificación',pill(Vu<=phiVc,'Vu ≤ φVc: estribos mínimos','Vu > φVc: calcular estribos')]].map(row).join('');
+}
+function segs(id,fn){const s=$(id);s.querySelectorAll('button').forEach(b=>b.onclick=()=>{s.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));fn(b.dataset.v);calc()})}
+function num(id){const v=parseFloat($(id).value);return isFinite(v)?v:NaN}
+function inp(){
+  const f=fac(),D=num('D'),L=num('L');
+  const Ec=$('Eu').value!==''?num('Eu')*1000:4700*Math.sqrt(num('fc'))*1000;
+  const Ig=$('Iu').value!==''?num('Iu'):Math.PI*D**4/64;
+  const EI=Ec*Ig*num('crk');
+  const phi=num('phi');
+  return {D,L,Ec,Ig,EI,gam:num('gam')*f,phi,Kp:Math.tan((45+phi/2)*Math.PI/180)**2,nh:num('nh')*f,cu:num('cu')*f,K:num('K')*f,
+    My:num('My')*f,Q:num('Q')*f,e:head==='libre'?num('e'):0,xadm:num('xadm')/1000,FS:num('FS'),gf:num('gf'),fb:num('fb'),etap:num('etap')};
+}
+// display helpers (internal kN)
+const fF=v=>v/fac(), uF=()=>U==='t'?'t':'kN', uM=()=>U==='t'?'t·m':'kN·m', uq=()=>U==='t'?'t/m':'kN/m';
+function fmt(v,d=2){if(!isFinite(v))return '—';const a=Math.abs(v);if(a!==0&&(a<1e-3||a>=1e6))return v.toExponential(2);return v.toLocaleString('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d})}
+
+// ---------- Winkler FD ----------
+function winkler(p){
+  const N=120,h=p.L/N,n=N+5,EI=p.EI;
+  const A=Array.from({length:n},()=>new Float64Array(n)),b=new Float64Array(n);
+  const kAt=z=>soil==='arena'?p.nh*z:p.K*p.D;
+  const idx=j=>j+2;
+  for(let i=0;i<=N;i++){const r=i,z=i*h;
+    A[r][idx(i-2)]+=1;A[r][idx(i-1)]+=-4;A[r][idx(i)]+=6+kAt(z)*h**4/EI;A[r][idx(i+1)]+=-4;A[r][idx(i+2)]+=1;}
+  const Mg=head==='libre'?p.Q*p.e:0;
+  let r=N+1;
+  if(head==='libre'){A[r][idx(-1)]=1;A[r][idx(0)]=-2;A[r][idx(1)]=1;b[r]=Mg*h*h/EI}
+  else{A[r][idx(1)]=1;A[r][idx(-1)]=-1;b[r]=0}
+  r=N+2;A[r][idx(-2)]=-1;A[r][idx(-1)]=2;A[r][idx(1)]=-2;A[r][idx(2)]=1;b[r]=2*p.Q*h**3/EI;
+  r=N+3;A[r][idx(N-1)]=1;A[r][idx(N)]=-2;A[r][idx(N+1)]=1;
+  r=N+4;A[r][idx(N-2)]=-1;A[r][idx(N-1)]=2;A[r][idx(N+1)]=-2;A[r][idx(N+2)]=1;
+  // gaussian elimination
+  for(let c=0;c<n;c++){let m=c;for(let i=c+1;i<n;i++)if(Math.abs(A[i][c])>Math.abs(A[m][c]))m=i;
+    [A[c],A[m]]=[A[m],A[c]];[b[c],b[m]]=[b[m],b[c]];const pv=A[c][c];if(Math.abs(pv)<1e-300)return null;
+    for(let i=c+1;i<n;i++){const f=A[i][c]/pv;if(f===0)continue;for(let j=c;j<n;j++)A[i][j]-=f*A[c][j];b[i]-=f*b[c]}}
+  const x=new Float64Array(n);for(let i=n-1;i>=0;i--){let s=b[i];for(let j=i+1;j<n;j++)s-=A[i][j]*x[j];x[i]=s/A[i][i]}
+  const X=j=>x[idx(j)],out={z:[],x:[],t:[],M:[],V:[],p:[]};
+  for(let i=0;i<=N;i++){const z=i*h;out.z.push(z);out.x.push(X(i));out.t.push((X(i+1)-X(i-1))/(2*h));
+    out.M.push(EI*(X(i-1)-2*X(i)+X(i+1))/h/h);out.V.push(EI*(X(i+2)-2*X(i+1)+2*X(i-1)-X(i-2))/(2*h**3));out.p.push(-kAt(z)*X(i))}
+  return out;
+}
+
+// ---------- Broms ----------
+function broms(p,L){
+  L=L??p.L;const {D,gam,Kp,My,e,cu}=p,r={};
+  if(soil==='arena'){const g=gam*D*Kp;
+    r.short=head==='libre'?0.5*gam*D*L**3*Kp/(e+L):1.5*gam*D*L*L*Kp;
+    if(head==='libre'){let Q=Math.pow(My/(0.544/Math.sqrt(g)),2/3);
+      for(let i=0;i<40;i++){const s=Math.sqrt(Q/g),fv=Q*(e+0.544*s)-My,d=e+0.816*s;Q-=fv/d;if(Q<=0)Q=1e-6}
+      r.long=Q;r.gov=Math.min(r.short,r.long);r.mode=r.short<=r.long?'Corto: falla del suelo':'Largo: fluencia del pilote'}
+    else{r.inter=(0.5*gam*D*L**3*Kp+My)/L;r.long=Math.pow(2*My*Math.sqrt(g)/0.544,2/3);
+      r.gov=Math.min(r.short,r.inter,r.long);r.mode=r.gov===r.short?'Corto: falla del suelo':r.gov===r.inter?'Intermedio: rótula en la cabeza':'Largo: dos rótulas'}
+    r.f=0.82*Math.sqrt(r.gov/g);r.Mmax=head==='libre'?r.gov*(e+0.67*r.f):null;
+  }else{const L1=L-1.5*D,cD=cu*D;const root=(a,b,c)=>(-b+Math.sqrt(b*b-4*a*c))/(2*a);
+    if(head==='libre'){const fs=L1>0?root(2.25,9*e+13.5*D+4.5*L1,-2.25*L1*L1):0;r.short=9*cD*fs;
+      const fl=root(4.5,9*(e+1.5*D),-My/cD);r.long=9*cD*fl;r.gov=Math.min(r.short,r.long);
+      r.mode=r.short<=r.long?'Corto: falla del suelo':'Largo: fluencia del pilote'}
+    else{r.short=9*cD*Math.max(L1,0);const fi=root(2.25,13.5*D+4.5*L1,-2.25*L1*L1-My/cD);r.inter=9*cD*fi;
+      const fl=root(4.5,13.5*D,-2*My/cD);r.long=9*cD*fl;r.gov=Math.min(r.short,r.inter,r.long);
+      r.mode=r.gov===r.short?'Corto: falla del suelo':r.gov===r.inter?'Intermedio: rótula en la cabeza':'Largo: dos rótulas'}
+    r.f=r.gov/(9*cD);r.Mmax=head==='libre'?r.gov*(e+1.5*D+0.5*r.f):null;}
+  return r;
+}
+function bromsDefl(p){
+  const lin=(x,a,b,ys,yl)=>x<=a?ys:x>=b?yl:ys+(yl-ys)*(x-a)/(b-a);
+  if(soil==='arena'){const eta=Math.pow(p.nh/p.EI,0.2),eL=eta*p.L;
+    const I=head==='libre'?lin(eL,2,4,18*(1+1.33*p.e/p.L)/eL**3,2.4/eL+1.6*p.e/p.L):lin(eL,2,4,2/eL**3,0.93/eL);
+    const k=p.L/(Math.pow(p.EI,0.6)*Math.pow(p.nh,0.4));
+    return {par:'ηL',val:eL,cls:eL<=2?'rígido':eL>=4?'largo':'intermedio',I,x:I*p.Q*k,Qx:p.xadm/(I*k)}}
+  const beta=Math.pow(p.K*p.D/(4*p.EI),0.25),bL=beta*p.L;
+  const I=head==='libre'?lin(bL,1.5,2.5,4*(1+1.5*p.e/p.L),2*bL*(p.e*beta+1)):lin(bL,1.5,2.5,1,bL);
+  const k=1/(p.K*p.D*p.L);return {par:'βL',val:bL,cls:bL<=1.5?'rígido':bL>=2.5?'largo':'intermedio',I,x:I*p.Q*k,Qx:p.xadm/(I*k)};
+}
+
+// ---------- Blum ----------
+function blum(p){
+  const b=p.fb*p.D,a=p.gam*p.Kp*b/p.etap,H=p.Q,e=head==='libre'?p.e:0;
+  let t=Math.cbrt(6*H/a)+e;for(let i=0;i<60;i++){const f=a*t**3/6-H*(e+t),d=a*t*t/2-H;t-=f/d;if(t<=0)t=0.01}
+  const zm=Math.sqrt(2*H/a),Mmax=H*(e+zm)-a*zm**3/6,C=a*t*t/2-H;
+  return {b,a,t0:t,t:1.2*t,zm,Mmax,C};
+}
+
+// ---------- plotting ----------
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function nice(min,max,n=4){const span=max-min||Math.abs(max)||1,step0=span/n,mag=Math.pow(10,Math.floor(Math.log10(step0))),s=[1,2,2.5,5,10].map(m=>m*mag).find(m=>m>=step0);
+  const lo=Math.floor(min/s)*s,hi=Math.ceil(max/s)*s,t=[];for(let v=lo;v<=hi+s*1e-9;v+=s)t.push(+v.toFixed(10));return t}
+function profile(title,unit,z,vals,color,L,extra){
+  const W=220,H=300,ml=34,mr=10,mt=30,mb=24,pw=W-ml-mr,ph=H-mt-mb;
+  let mn=Math.min(0,...vals),mx=Math.max(0,...vals);if(mn===mx){mx=1}
+  const tk=nice(mn,mx,3);mn=tk[0];mx=tk[tk.length-1];
+  const X=v=>ml+(v-mn)/(mx-mn)*pw,Y=d=>mt+d/L*ph;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${title}"><text class="ttl" x="${ml}" y="14">${title}</text><text x="${W-mr}" y="14" text-anchor="end">${unit}</text>`;
+  tk.forEach(t=>{s+=`<line x1="${X(t)}" y1="${mt}" x2="${X(t)}" y2="${mt+ph}" stroke="${css('--grid')}"/><text x="${X(t)}" y="${mt-4}" text-anchor="middle">${+t.toPrecision(3)}</text>`});
+  nice(0,L,5).filter(d=>d<=L+1e-9).forEach(d=>{s+=`<line x1="${ml}" y1="${Y(d)}" x2="${ml+pw}" y2="${Y(d)}" stroke="${css('--grid')}"/><text x="${ml-4}" y="${Y(d)+3}" text-anchor="end">${+d.toPrecision(3)}</text>`});
+  s+=`<line x1="${X(0)}" y1="${mt}" x2="${X(0)}" y2="${mt+ph}" stroke="${css('--muted')}"/>`;
+  let pts=z.map((d,i)=>`${X(vals[i]).toFixed(1)},${Y(d).toFixed(1)}`);
+  s+=`<polygon points="${X(0)},${Y(z[0])} ${pts.join(' ')} ${X(0)},${Y(z[z.length-1])}" fill="${color}" fill-opacity=".15"/><polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="2"/>`;
+  let im=0;vals.forEach((v,i)=>{if(Math.abs(v)>Math.abs(vals[im]))im=i});
+  s+=`<circle cx="${X(vals[im])}" cy="${Y(z[im])}" r="3.5" fill="${color}"/><text x="${Math.min(Math.max(X(vals[im]),ml+20),ml+pw-20)}" y="${Math.min(Y(z[im])+14,mt+ph-4)}" text-anchor="middle" style="fill:${color};font-weight:500">${fmt(vals[im],vals[im]&&Math.abs(vals[im])<0.1?4:2)}</text>`;
+  if(extra)s+=extra(X,Y);
+  s+=`<text x="10" y="${mt+ph/2}" transform="rotate(-90 10 ${mt+ph/2})" text-anchor="middle">z (m)</text></svg>`;
+  return `<div class="plot">${s}</div>`;
+}
+function xyplot(svg,series,xl,yl,mark){
+  const W=720,H=280,ml=54,mr=14,mt=16,mb=36,pw=W-ml-mr,ph=H-mt-mb;
+  const xs=series[0].x;let ymax=0;series.forEach(s=>s.y.forEach(v=>{if(isFinite(v))ymax=Math.max(ymax,v)}));
+  const xt=nice(0,xs[xs.length-1],8),yt=nice(0,ymax,5),xm=xt[xt.length-1],ym=yt[yt.length-1];
+  const X=v=>ml+v/xm*pw,Y=v=>mt+ph-v/ym*ph;
+  let s=`<rect x="${ml}" y="${mt}" width="${pw}" height="${ph}" fill="none"/>`;
+  yt.forEach(t=>{s+=`<line x1="${ml}" x2="${ml+pw}" y1="${Y(t)}" y2="${Y(t)}" stroke="${css('--grid')}"/><text x="${ml-6}" y="${Y(t)+3}" text-anchor="end">${+t.toPrecision(3)}</text>`});
+  xt.forEach(t=>{s+=`<line y1="${mt}" y2="${mt+ph}" x1="${X(t)}" x2="${X(t)}" stroke="${css('--grid')}"/><text x="${X(t)}" y="${mt+ph+14}" text-anchor="middle">${+t.toPrecision(3)}</text>`});
+  s+=`<text x="${ml+pw/2}" y="${H-4}" text-anchor="middle">${xl}</text><text x="12" y="${mt+ph/2}" transform="rotate(-90 12 ${mt+ph/2})" text-anchor="middle">${yl}</text>`;
+  series.forEach((sr,k)=>{const pts=sr.x.map((x,i)=>isFinite(sr.y[i])?`${X(x).toFixed(1)},${Y(Math.min(sr.y[i],ym)).toFixed(1)}`:'').filter(Boolean).join(' ');
+    s+=`<polyline points="${pts}" fill="none" stroke="${sr.c}" stroke-width="${sr.w||1.6}" ${sr.dash?`stroke-dasharray="${sr.dash}"`:''}/>`;
+    s+=`<line x1="${ml+12+k*150}" x2="${ml+34+k*150}" y1="${mt+10}" y2="${mt+10}" stroke="${sr.c}" stroke-width="${sr.w||1.6}" ${sr.dash?`stroke-dasharray="${sr.dash}"`:''}/><text x="${ml+38+k*150}" y="${mt+13}" style="fill:${css('--ink')}">${sr.n}</text>`});
+  if(mark){s+=`<line x1="${X(mark.x)}" x2="${X(mark.x)}" y1="${mt}" y2="${mt+ph}" stroke="${css('--soil')}" stroke-dasharray="3 3"/><circle cx="${X(mark.x)}" cy="${Y(mark.y)}" r="4.5" fill="${css('--soil')}"/><text x="${X(mark.x)+6}" y="${Y(mark.y)-6}" style="fill:${css('--soil')};font-weight:500">L = ${fmt(mark.x)} m · Qu = ${fmt(mark.y,1)} ${uF()}</text>`}
+  svg.innerHTML=s;
+}
+function arrow(x1,y1,x2,y2,c,w=2){const a=Math.atan2(y2-y1,x2-x1),h=7;return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w}"/><polygon points="${x2},${y2} ${x2-h*Math.cos(a-0.4)},${y2-h*Math.sin(a-0.4)} ${x2-h*Math.cos(a+0.4)},${y2-h*Math.sin(a+0.4)}" fill="${c}"/>`}
+function bromsSketch(p,br){
+  const ink=css('--ink'),soilc=css('--soil'),acc=css('--accent'),bad=css('--bad'),mut=css('--muted');
+  const gy=70,ph=220,px=150,pw=22,Y=z=>gy+z/p.L*ph;let s='';
+  s+=`<rect x="0" y="${gy}" width="360" height="${ph+30}" fill="${soilc}" fill-opacity=".12"/><line x1="0" x2="360" y1="${gy}" y2="${gy}" stroke="${soilc}" stroke-width="2"/>`;
+  const ey=head==='libre'&&p.e>0?gy-Math.min(45,p.e/p.L*ph+12):gy;
+  s+=`<rect x="${px}" y="${ey-6}" width="${pw}" height="${gy+ph-ey+6}" fill="${css('--panel')}" stroke="${ink}" stroke-width="1.5"/>`;
+  s+=arrow(px-80,ey,px-2,ey,acc,2.5)+`<text x="${px-80}" y="${ey-6}" style="fill:${acc};font-weight:500">Qu = ${fmt(fF(br.gov),1)} ${uF()}</text>`;
+  if(head!=='libre')s+=`<rect x="${px-14}" y="${gy-26}" width="${pw+28}" height="16" fill="${mut}" fill-opacity=".35"/><text x="${px+pw/2}" y="${gy-30}" text-anchor="middle">cabezal (giro impedido)</text>`;
+  const short=br.mode.startsWith('Corto');
+  if(soil==='arena'){
+    if(short){const pmax=110;s+=`<polygon points="${px+pw},${gy} ${px+pw+pmax},${Y(p.L)} ${px+pw},${Y(p.L)}" fill="${bad}" fill-opacity=".22" stroke="${bad}"/>`;
+      s+=`<text x="${px+pw+pmax-4}" y="${Y(p.L)-6}" text-anchor="end" style="fill:${bad}">3γLDKp</text>`;
+      s+=head==='libre'?arrow(px-60,Y(p.L)-4,px-2,Y(p.L)-4,bad)+`<text x="${px-60}" y="${Y(p.L)-10}">reacción en la punta</text>`:'';
+    }else{const fz=Math.min(br.f,p.L),pm=110*fz/p.L;s+=`<polygon points="${px+pw},${gy} ${px+pw+pm},${Y(fz)} ${px+pw},${Y(fz)}" fill="${bad}" fill-opacity=".22" stroke="${bad}"/>`;
+      s+=`<circle cx="${px+pw/2}" cy="${Y(fz)}" r="6" fill="none" stroke="${bad}" stroke-width="2"/><text x="${px+pw+pm+6}" y="${Y(fz)+4}" style="fill:${bad}">rótula, f = ${fmt(br.f)} m</text>`}
+  }else{
+    const z1=Math.min(1.5*p.D,p.L),fz=Math.min(z1+br.f,p.L),pw2=70;
+    s+=`<text x="${px+pw+6}" y="${Y(z1/2)+4}">1,5D sin reacción</text>`;
+    s+=`<rect x="${px+pw}" y="${Y(z1)}" width="${pw2}" height="${Y(fz)-Y(z1)}" fill="${bad}" fill-opacity=".22" stroke="${bad}"/><text x="${px+pw+pw2+4}" y="${(Y(z1)+Y(fz))/2+4}" style="fill:${bad}">9cuD</text>`;
+    if(short&&fz<p.L)s+=`<rect x="${px-pw2}" y="${Y(fz)}" width="${pw2}" height="${Y(p.L)-Y(fz)}" fill="${bad}" fill-opacity=".22" stroke="${bad}"/><text x="${px-pw2-4}" y="${(Y(fz)+Y(p.L))/2+4}" text-anchor="end" style="fill:${bad}">9cuD</text>`;
+    if(!short)s+=`<circle cx="${px+pw/2}" cy="${Y(fz)}" r="6" fill="none" stroke="${bad}" stroke-width="2"/><text x="${px+pw+pw2+4}" y="${Y(fz)+16}" style="fill:${bad}">rótula</text>`;
+  }
+  s+=`<text x="8" y="16" class="ttl">${br.mode}</text><text x="8" y="32">${soil==='arena'?'Presión pasiva 3·Kp·γ·z·D':'Reacción 9·cu·D debajo de 1,5D'}</text><text x="${px+pw/2}" y="${gy+ph+22}" text-anchor="middle">L = ${fmt(p.L)} m</text>`;
+  $('bsk').innerHTML=s;
+}
+
+// ---------- main ----------
+function row(c){return '<tr>'+c.map((x,i)=>i?`<td class="n">${x}</td>`:`<td>${x}</td>`).join('')+'</tr>'}
+function pill(ok,t1='Cumple',t2='No cumple'){return `<span class="pill ${ok?'ok':'bad'}">${ok?t1:t2}</span>`}
+function calc(){
+  document.querySelectorAll('.soilA').forEach(e=>e.hidden=soil!=='arena');document.querySelectorAll('.soilC').forEach(e=>e.hidden=soil==='arena');
+  const tf=U==='t'?' (t/m³ ≈ kN/m³ ÷ 9,81)':'';
+  $('nh-hint').textContent='Tabla 11.15, nh en kN/m³: arena seca o húmeda suelta 1800–2200, media 5500–7000, densa 15000–18000. Sumergida: 1000–1400 / 3500–4500 / 9000–12000.'+tf;
+  $('K-hint').textContent='K en kN/m³: qu < 200 kPa → 10000–20000; 200–800 → 20000–40000; > 800 → > 40000.'+tf;
+  const p=inp();if(!Object.values(p).every(v=>isFinite(v))||p.L<=0||p.D<=0||p.EI<=0)return;
+  const Vu_=num('Vu')*fac(),hasVu=isFinite(Vu_)&&Vu_>0;if(hasVu)p.gf=Vu_/p.Q;
+  const T=Math.pow(p.EI/p.nh,0.2),R=Math.pow(p.EI/(p.K*p.D),0.25),rel=soil==='arena'?p.L/T:p.L/R,ch=soil==='arena'?'T':'R';
+  const cls=rel<=2?'Rígido / corto':rel>=5?'Largo / flexible':'Intermedio';
+  const w=winkler(p),br=broms(p),bd=bromsDefl(p),bl=blum(p);
+  const Mabs=Math.max(...w.M.map(Math.abs)),iM=w.M.findIndex(m=>Math.abs(m)===Mabs);
+  const x0=w.x[0],Qadm=Math.min(br.gov/p.FS,bd.Qx);
+  // cards
+  $('cards').innerHTML=[
+    ['Clasificación',cls,`L/${ch} = ${fmt(rel)} · ${ch} = ${fmt(soil==='arena'?T:R)} m`,rel<=2?'info':rel>=5?'info':'warn'],
+    ['Desplazamiento cabeza',fmt(x0*1000)+' mm',pill(Math.abs(x0)<=p.xadm,'≤ '+fmt(p.xadm*1000,0)+' mm','> '+fmt(p.xadm*1000,0)+' mm')+' Winkler, servicio'],
+    ['M máx servicio',fmt(fF(w.M[iM]))+' '+uM(),`a z = ${fmt(w.z[iM])} m · Mu = ${fmt(fF(p.gf*Mabs))} ${uM()} (${hasVu?'con Vu':'γf = '+fmt(p.gf)})`],
+    ['Qu Broms',fmt(fF(br.gov),1)+' '+uF(),`${br.mode} · FS real = ${fmt(br.gov/p.Q)}`],
+    ['Qg admisible',fmt(fF(Qadm),1)+' '+uF(),pill(p.Q<=Qadm)+` mín(Qu/FS; desplazamiento)`],
+    ['Blum t necesario',fmt(bl.t)+' m',pill(p.L>=bl.t,'L = '+fmt(p.L)+' m alcanza','L = '+fmt(p.L)+' m no alcanza')]
+  ].map(c=>`<div class="card"><div class="k">${c[0]}</div><div class="v">${c[1]}</div><div class="s">${c[2]}</div></div>`).join('');
+  // recommendation
+  let rec=`<h3>Para este pilote: ${cls.toLowerCase()} (L/${ch} = ${fmt(rel)})</h3><ul>`;
+  if(rel<=2)rec+=`<li>Gira casi como cuerpo rígido. Manda el suelo: verificá rotura con <b>Broms pilote corto</b> y dimensioná el empotramiento con <b>Blum</b>${soil==='arena'?'':' (Blum es para granular; en arcilla usá Broms)'}.</li><li>La tabla 11.14 de Matlock-Reese <b>no aplica</b> (exige L ≥ 5${ch}). Para desplazamiento y Mu usá el Winkler por diferencias finitas de esta página, que vale para cualquier L.</li>`;
+  else if(rel<5)rec+=`<li>Comportamiento intermedio: usá <b>Winkler</b> (esta FD o la fig. 11.29) para servicio y Mu, y <b>Broms</b> revisando corto e intermedio/largo.</li><li>Blum tiende a ser conservador acá porque supone giro rígido.</li>`;
+  else rec+=`<li>Pilote largo: la longitud no aumenta la capacidad. Mandan My y la rigidez. Usá <b>Matlock-Reese / Davisson-Gill</b> (tabla 11.14) o esta FD, y <b>Broms largo</b> para la carga última.</li><li>Blum no corresponde: el pilote no gira como cuerpo rígido.</li>`;
+  rec+=`<li>Armado (${hasVu?'factor Vu/Qg':'γf'}): Mu = ${fmt(p.gf)} × ${fmt(fF(Mabs))} = <b>${fmt(fF(p.gf*Mabs))} ${uM()}</b> y Vu = ${fmt(fF(p.gf*Math.max(...w.V.map(Math.abs))))} ${uF()}, con el axial concomitante.</li></ul>`;
+  $('reco').innerHTML=rec;
+  // winkler plots
+  const L=p.L,c1=css('--accent'),c2=css('--bad'),c3=css('--c2'),c4=css('--soil');
+  $('wplots').innerHTML=profile('Desplazamiento x','mm',w.z,w.x.map(v=>v*1000),c1,L)+profile('Momento M',uM(),w.z,w.M.map(fF),c2,L)+profile('Corte V',uF(),w.z,w.V.map(fF),c3,L)+profile("Reacción del suelo p'",uq(),w.z,w.p.map(fF),c4,L);
+  const izero=w.x.findIndex((v,i)=>i>0&&Math.sign(v)!==Math.sign(w.x[0]));
+  $('wtab').innerHTML='<tr><th>Resultado (servicio)</th><th>Valor</th></tr>'+[
+    ['Ep·Ip de cálculo',fmt(fF(p.EI),0)+' '+(U==='t'?'t·m²':'kN·m²')],
+    ['k',soil==='arena'?`nh·z = ${fmt(fF(p.nh),0)}·z`:`K·D = ${fmt(fF(p.K*p.D),0)} ${U==='t'?'t/m²':'kN/m²'}`],
+    ['x cabeza',fmt(x0*1000)+' mm'],['θ cabeza',fmt(w.t[0],5)+' rad'],['x punta',fmt(w.x[w.x.length-1]*1000)+' mm'],
+    ['Punto de giro (x = 0)',izero>0?fmt(w.z[izero])+' m':'no gira dentro de L'],
+    ['M máx',fmt(fF(w.M[iM]))+' '+uM()+' a '+fmt(w.z[iM])+' m'],['V cabeza (control = Qg)',fmt(fF(w.V[0]))+' '+uF()],
+    ['M resistente My',fmt(fF(p.My))+' '+uM()+' '+pill(p.gf*Mabs<=p.My,'Mu ≤ My','Mu > My')]
+  ].map(row).join('');
+  const Mg=head==='libre'?p.Q*p.e:0;
+  if(soil==='arena'&&head==='libre'){const xmr=(2.435*p.Q*T**3+1.623*Mg*T*T)/p.EI,mmr=0.772*p.Q*T+Mg;
+    $('mrtab').innerHTML='<tr><th></th><th>Tabla 11.14</th><th>FD</th></tr>'+row(['x cabeza (mm)',fmt(xmr*1000),fmt(x0*1000)])+row(['M máx ('+uM()+')',(Mg?'≈ ':'')+fmt(fF(mmr)),fmt(fF(Math.max(...w.M)))]);
+    $('mrnote').innerHTML=rel>=5?'L/T ≥ 5: la tabla es válida y debe coincidir con la FD.':`L/T = ${fmt(rel)} &lt; 5: la tabla 11.14 <b>no es válida</b>. Se muestra para ver cuánto se equivocaría. Vale la FD.`}
+  else{$('mrtab').innerHTML='';$('mrnote').textContent=soil==='arena'?'La tabla 11.14 es para cabeza libre. Con cabeza restringida usá la FD.':'En arcilla, Davisson-Gill (fig. 11.30) da coeficientes con k constante. La FD resuelve el mismo problema exactamente.'}
+  // broms
+  const r=[];const g=x=>x===br.gov?' class="gov"':'';
+  r.push(`<tr><th>Mecanismo</th><th>Qu (${uF()})</th></tr>`);
+  r.push(`<tr${g(br.short)}><td>Corto (falla del suelo)</td><td class="n">${fmt(fF(br.short),1)}</td></tr>`);
+  if(br.inter!==undefined)r.push(`<tr${g(br.inter)}><td>Intermedio (rótula en la cabeza)</td><td class="n">${fmt(fF(br.inter),1)}</td></tr>`);
+  r.push(`<tr${g(br.long)}><td>Largo (fluye el pilote, My)</td><td class="n">${fmt(fF(br.long),1)}</td></tr>`);
+  r.push(row(['<b>Qu gobernante</b>','<b>'+fmt(fF(br.gov),1)+'</b>']));
+  r.push(row(['Qu / FS',fmt(fF(br.gov/p.FS),1)]));
+  r.push(row(['FS real = Qu / Qg',fmt(br.gov/p.Q)+' '+pill(br.gov/p.Q>=p.FS)]));
+  if(br.Mmax!=null)r.push(row(['M máx a rotura ('+uM()+')',fmt(fF(br.Mmax))]));
+  $('btab').innerHTML=r.join('');
+  $('beq').textContent=soil==='arena'?
+   (head==='libre'?`Kp = tan²(45+φ/2) = ${fmt(p.Kp,3)}\nCorto:  Qu = 0,5·γ·D·L³·Kp/(e+L)\nLargo:  My = Qu·(e + 0,544·√(Qu/(γ·D·Kp)))\nf = 0,82·√(Qu/(γDKp)) = ${fmt(br.f)} m   Mmáx = Qu·(e+0,67f)`
+   :`Kp = ${fmt(p.Kp,3)}\nCorto:       Qu = 1,5·γ·D·L²·Kp\nIntermedio:  Qu = (0,5·γ·D·L³·Kp + My)/L\nLargo:       Qu = (2·My·√(γDKp)/0,544)^(2/3)`)
+   :(head==='libre'?`f = Qu/(9·cu·D),  L = 1,5D + f + g\nCorto:  Qu·(e+1,5D+0,5f) = 2,25·cu·D·g²\nLargo:  My = Qu·(e+1,5D+0,5f)`
+   :`Corto:       Qu = 9·cu·D·(L − 1,5D)\nIntermedio:  My = Qu·(1,5D+0,5f) − 2,25·cu·D·g²\nLargo:       2·My = Qu·(1,5D+0,5f)`);
+  bromsSketch(p,br);
+  const Ls=[],s1=[],s2=[],s3=[];const Lm=Math.max(3*p.L,2);for(let i=1;i<=80;i++){const l=Lm*i/80;const b2=broms(p,l);Ls.push(l);s1.push(fF(b2.short));s2.push(fF(b2.inter??b2.long));s3.push(fF(b2.gov))}
+  const ser=[{x:Ls,y:s1,c:css('--muted'),n:'Corto',dash:'5 4'},{x:Ls,y:s2,c:css('--c2'),n:br.inter!==undefined?'Intermedio':'Largo',dash:'2 3'},{x:Ls,y:s3,c:css('--accent'),n:'Gobierna',w:2.6}];
+  xyplot($('bcurve'),ser,'Longitud empotrada L (m)','Qu ('+uF()+')',{x:p.L,y:fF(br.gov)});
+  $('bdef').innerHTML='<tr><th>Parámetro</th><th>Valor</th></tr>'+[[bd.par,fmt(bd.val)+' → '+bd.cls],['Coeficiente adimensional',fmt(bd.I,3)],['x cabeza con Qg (Broms)',fmt(bd.x*1000)+' mm'],['x cabeza con Qg (Winkler FD)',fmt(x0*1000)+' mm'],['Qg admisible por desplazamiento',fmt(fF(bd.Qx),1)+' '+uF()]].map(row).join('');
+  // blum
+  $('bltab').innerHTML='<tr><th>Resultado</th><th>Valor</th></tr>'+[
+    ["Ancho de cálculo b'",fmt(bl.b)+' m'],['Kp',fmt(p.Kp,3)],['Punto de giro t₀',fmt(bl.t0)+' m'],['Empotramiento t = 1,2·t₀',fmt(bl.t)+' m'],
+    ['L disponible',fmt(p.L)+' m '+pill(p.L>=bl.t)],['Contrafuerza C en t₀',fmt(fF(bl.C),1)+' '+uF()],['Prof. de M máx (V = 0)',fmt(bl.zm)+' m'],
+    ['M máx (servicio)',fmt(fF(bl.Mmax))+' '+uM()],['Mu = γf·M',fmt(fF(p.gf*bl.Mmax))+' '+uM()]
+  ].map(row).join('')+(soil!=='arena'?'<tr><td colspan="2"><span class="pill warn">Atención</span> Blum se plantea para suelo granular. En arcilla los resultados no son representativos.</td></tr>':'');
+  $('bleq').textContent=`Pasivo:  e(z) = γ·Kp·b'·z/ηp\nGiro:    Qg·(e + t₀) = γ·Kp·b'·t₀³/(6·ηp)\nt = 1,2·t₀     C = γKpb't₀²/(2ηp) − Qg\nM máx:   zm = √(2·Qg·ηp/(γ·Kp·b')),   M = Qg·(e+zm) − γKpb'zm³/(6ηp)`;
+  const zb=[],pb=[],mb=[],N=80,el=head==='libre'?p.e:0;
+  for(let i=0;i<=N;i++){const z=bl.t0*i/N;zb.push(z);pb.push(bl.a*z);mb.push(p.Q*(el+z)-bl.a*z**3/6)}
+  $('blplots').innerHTML=profile('Pasivo neto',uq(),zb,pb.map(fF),c4,bl.t0,(X,Y)=>`<text x="${X(0)+4}" y="${Y(bl.t0)-6}" style="fill:${css('--bad')}">C = ${fmt(fF(bl.C),1)} ${uF()} en t₀</text>`)+profile('Momento (Blum)',uM(),zb,mb.map(fF),c2,bl.t0);
+  LAST={p,T,R,rel,ch,cls,w,br,bd,bl,Mabs,iM,x0,Qadm,hasVu};
+  drawRC(p,Mabs,Math.max(...w.V.map(Math.abs)));
+}
+
+// ---------- memoria de cálculo (Word) ----------
+let LAST={};
+function svgPng(svg,scale=2){return new Promise(res=>{
+  const vb=svg.viewBox.baseVal,W=vb.width,H=vb.height,cl=svg.cloneNode(true);
+  cl.setAttribute('xmlns','http://www.w3.org/2000/svg');cl.setAttribute('width',W);cl.setAttribute('height',H);
+  const st=document.createElementNS('http://www.w3.org/2000/svg','style');
+  st.textContent=`text{font-family:Arial,sans-serif;font-size:10px;fill:${css('--muted')}} .ttl{font-size:12px;font-weight:bold;fill:${css('--ink')}}`;
+  cl.insertBefore(st,cl.firstChild);
+  const bg=document.createElementNS('http://www.w3.org/2000/svg','rect');bg.setAttribute('width',W);bg.setAttribute('height',H);bg.setAttribute('fill','#ffffff');cl.insertBefore(bg,st.nextSibling);
+  const img=new Image();img.onload=()=>{const c=document.createElement('canvas');c.width=W*scale;c.height=H*scale;const x=c.getContext('2d');x.scale(scale,scale);x.drawImage(img,0,0);res({d:c.toDataURL('image/png'),W,H})};
+  img.onerror=()=>res(null);img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(cl));
+})}
+function cleanTable(id){const t=$(id).cloneNode(true);t.querySelectorAll('.pill').forEach(s=>{const b=document.createElement('b');b.textContent='['+s.textContent.trim()+']';s.replaceWith(b)});t.querySelectorAll('.hint').forEach(s=>s.removeAttribute('class'));return '<table>'+t.innerHTML+'</table>'}
+function tb(rows,h){return '<table>'+(h?'<tr>'+h.map(x=>`<th>${x}</th>`).join('')+'</tr>':'')+rows.map(r=>'<tr>'+r.map((x,i)=>`<td${i?' class="n"':''}>${x}</td>`).join('')+'</tr>').join('')+'</table>'}
+async function buildMemoria(){
+  const root=document.documentElement,prevTheme=root.getAttribute('data-theme');root.setAttribute('data-theme','light');calc();
+  const L=LAST,p=L.p,imgs=[];
+  const grab=async (sel,w)=>{const out=[];for(const sv of document.querySelectorAll(sel)){const r=await svgPng(sv);if(r){imgs.push(r);const wpx=w||Math.min(600,r.W);out.push(`<img src="IMG${imgs.length}" width="${wpx}" height="${Math.round(wpx*r.H/r.W)}">`)}}return out};
+  const gW=await grab('#wplots svg',150),gBs=await grab('#bsk',300),gBc=await grab('#bcurve',600),gBl=await grab('#blplots svg',220),gS=await grab('#rcsec',220),gD=await grab('#rcdiag',600);
+  if(prevTheme===null)root.removeAttribute('data-theme');else root.setAttribute('data-theme',prevTheme);calc();
+  const obra=$('obra').value||'Pilote con carga lateral',hoy=new Date().toLocaleDateString('es-AR');
+  const ok=b=>b?'<b class="ok">CUMPLE</b>':'<b class="no">NO CUMPLE</b>';
+  const rc=L.rc,soilTxt=soil==='arena'?`Arena: γ = ${fmt(fF(p.gam))} ${uF()}/m³, φ' = ${fmt(p.phi,0)}°, Kp = ${fmt(p.Kp,3)}, nh = ${fmt(fF(p.nh),0)} ${uF()}/m³`:`Arcilla: γ = ${fmt(fF(p.gam))} ${uF()}/m³, cu = ${fmt(fF(p.cu))} ${uF()}/m², K = ${fmt(fF(p.K),0)} ${uF()}/m³`;
+  const combRows=rc.res.map(c=>[c.n,fmt(fF(c.N)),fmt(fF(c.Mu)),c.cap==null?'fuera de rango':fmt(fF(c.cap)),c.cap==null?'—':fmt(c.ratio*100,0)+' %',ok(c.ratio<=1)]);
+  const allOK=rc.res.every(c=>c.ratio<=1);
+  let h=`<h1>Memoria de cálculo</h1><p class="sub">${obra} · Pilote con carga lateral · ${hoy}</p>
+<h2>1. Objeto</h2><p>Verificar el pilote de Ø${fmt(p.D*100,0)} cm y ${fmt(p.L)} m de longitud empotrada frente a la carga horizontal transmitida en su cabeza: desplazamiento en servicio, resistencia lateral del suelo, empotramiento necesario y armado de la sección de hormigón armado. Referencias: B. M. Das, <i>Fundamentos de Ingeniería de Cimentaciones</i>, 7ª ed., §11.16; CIRSOC 201.</p>
+<h2>2. Datos</h2>`+tb([
+ ['Suelo',soilTxt],['Diámetro D',fmt(p.D)+' m'],['Longitud empotrada L',fmt(p.L)+' m'],['Ep',fmt(p.Ec/1000,0)+' MPa'],['Ip',fmt(p.Ig,5)+' m⁴ (factor de rigidez '+fmt(num('crk'))+')'],
+ ['Ep·Ip',fmt(fF(p.EI),0)+' '+uF()+'·m²'],['Condición de cabeza',head==='libre'?'Libre':'Restringida (giro impedido)'],['Carga lateral de servicio Qg',fmt(fF(p.Q))+' '+uF()],
+ ['Altura de aplicación e',fmt(p.e)+' m'],['Cargas mayoradas',L.hasVu?`Vu = ${fmt(fF(p.gf*p.Q))} ${uF()} (Vu/Qg = ${fmt(p.gf)})`:`γf = ${fmt(p.gf)}`],
+ ['Desplazamiento admisible',fmt(p.xadm*1000,0)+' mm'],['FS sobre Qu (Broms)',fmt(p.FS)],['Momento resistente My (Broms)',fmt(fF(p.My))+' '+uM()]],['Dato','Valor'])+`
+<h2>3. Clasificación del pilote</h2><p>${soil==='arena'?`Longitud característica T = (EpIp/nh)^(1/5) = ${fmt(L.T)} m (ec. 11.90).`:`Longitud característica R = (EpIp/k)^(1/4) = ${fmt(L.R)} m, con k = K·D (ec. 11.94).`} L/${L.ch} = ${fmt(L.rel)} → <b>${L.cls}</b>. Criterio: L ≤ 2${L.ch} rígido; L ≥ 5${L.ch} largo.</p>
+<h2>4. Análisis elástico (Winkler)</h2><p>Se resuelve la ecuación de la viga sobre fundación elástica EpIp·d⁴x/dz⁴ + k·x = 0 (ec. 11.84) por diferencias finitas con 120 tramos, con k = ${soil==='arena'?'nh·z (Matlock y Reese)':'K·D constante (Davisson y Gill)'}. Resultados con la carga de servicio Qg:</p>${cleanTable('wtab')}
+<table class="img"><tr>${gW.map(i=>`<td>${i}</td>`).join('')}</tr></table>
+<p>Desplazamiento en la cabeza: ${fmt(L.x0*1000)} mm frente a ${fmt(p.xadm*1000,0)} mm admisibles → ${ok(Math.abs(L.x0)<=p.xadm)}</p>
+<h2>5. Resistencia lateral última (Broms)</h2><p>Se supone la plastificación del suelo: presión pasiva 3·Kp·γ·z·D en arena, o 9·cu·D por debajo de 1,5D en arcilla. Se revisan los mecanismos de pilote corto, intermedio y largo, y gobierna el menor.</p>
+<pre>${$('beq').textContent}</pre>${cleanTable('btab')}<p>${gBs[0]||''}</p><p>${gBc[0]||''}</p>
+<p>Desplazamiento de la cabeza según la fig. 11.33:</p>${cleanTable('bdef')}
+<p>Carga admisible Qadm = mín(Qu/FS; Q por desplazamiento) = ${fmt(fF(L.Qadm),1)} ${uF()} frente a Qg = ${fmt(fF(p.Q),1)} ${uF()} → ${ok(p.Q<=L.Qadm)}</p>
+<h2>6. Empotramiento necesario (Blum)</h2><pre>${$('bleq').textContent}</pre>${cleanTable('bltab')}<table class="img"><tr>${gBl.map(i=>`<td>${i}</td>`).join('')}</tr></table>
+<h2>7. Sección de hormigón armado</h2><p>Sección circular Ø${fmt(p.D*100,0)} cm con ${rc.nb} Ø${rc.db} mm, recubrimiento ${fmt(rc.cov*100,1)} cm, ${rc.conf==='z'?'zuncho':'estribos'} Ø${rc.dst} mm; f'c = ${fmt(rc.fc,0)} MPa, fy = ${fmt(rc.fy,0)} MPa. Diagrama de interacción por compatibilidad de deformaciones (εcu = 0,003, bloque rectangular 0,85f'c con β1), con φ entre ${fmt(rc.sec.phic)} y 0,90 según εt (CIRSOC 201).</p>
+<table class="img"><tr><td>${gS[0]||''}</td><td>${cleanTable('rctab')}</td></tr></table>
+<p>Solicitaciones mayoradas:</p>${tb(combRows,['Combinación','Nu ('+uF()+')','Mu ('+uM()+')','φMn ('+uM()+')','Uso','Verificación'])}<p>${gD[0]||''}</p>
+<p>Corte:</p>${cleanTable('rcv')}
+<h2>8. Conclusiones</h2><ul>
+<li>Clasificación: ${L.cls} (L/${L.ch} = ${fmt(L.rel)}).</li>
+<li>Desplazamiento en servicio (Winkler): ${fmt(L.x0*1000)} mm → ${ok(Math.abs(L.x0)<=p.xadm)}</li>
+<li>Resistencia lateral (Broms): Qu = ${fmt(fF(L.br.gov),1)} ${uF()}, FS = ${fmt(L.br.gov/p.Q)} → ${ok(L.br.gov/p.Q>=p.FS)}</li>
+<li>Empotramiento (Blum): t = ${fmt(L.bl.t)} m frente a L = ${fmt(p.L)} m → ${ok(p.L>=L.bl.t)}</li>
+<li>Flexo-compresión y flexo-tracción de la sección: ${ok(allOK)}</li>
+<li>Corte: Vu = ${fmt(fF(rc.Vu))} ${uF()}, φVc = ${fmt(fF(rc.phiVc))} ${uF()} → ${rc.Vu<=rc.phiVc?'estribos mínimos':'calcular estribos'}</li></ul>`;
+  return {h,imgs,obra};
+}
+const docCSS=`body{font-family:Arial,sans-serif;font-size:10pt;color:#000}h1{font-size:16pt;margin:0}h2{font-size:12pt;color:#1F4E78;border-bottom:1px solid #1F4E78;margin-top:14pt}.sub{color:#555;margin-top:2pt}table{border-collapse:collapse;margin:6pt 0}td,th{border:1px solid #999;padding:3pt 6pt;font-size:9pt;vertical-align:top}th{background:#DDEBF7;text-align:left}td.n{text-align:right}table.img td{border:0;padding:2pt}pre{font-family:Consolas,monospace;font-size:9pt;background:#F2F2F2;padding:6pt;border:1px solid #ccc}b.ok{color:#2E7D4F}b.no{color:#B23A2E}`;
+function b64u(str){return btoa(unescape(encodeURIComponent(str)))}
+function wrap76(s){return s.replace(/.{1,76}/g,'$&\r\n')}
+async function exportDoc(){
+  $('expmsg').textContent='Generando…';
+  try{const {h,imgs,obra}=await buildMemoria();const B='----=_NextPart_pilote';
+    let html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><style>${docCSS}</style></head><body>${h}</body></html>`;
+    imgs.forEach((im,i)=>{html=html.split(`src="IMG${i+1}"`).join(`src="file:///C:/memoria_files/img${i+1}.png"`)});
+    let m=`MIME-Version: 1.0\r\nContent-Type: multipart/related; boundary="${B}"; type="text/html"\r\n\r\n--${B}\r\nContent-Type: text/html; charset="utf-8"\r\nContent-Transfer-Encoding: base64\r\nContent-Location: file:///C:/memoria.htm\r\n\r\n${wrap76(b64u(html))}\r\n`;
+    imgs.forEach((im,i)=>{m+=`--${B}\r\nContent-Type: image/png\r\nContent-Transfer-Encoding: base64\r\nContent-Location: file:///C:/memoria_files/img${i+1}.png\r\n\r\n${wrap76(im.d.split(',')[1])}\r\n`});
+    m+=`--${B}--\r\n`;
+    if(typeof JSZip==='undefined')throw new Error('falta la librería JSZip (requiere conexión a internet)');
+    const z=new JSZip();
+    z.file('[Content_Types].xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="mht" ContentType="message/rfc822"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>');
+    z.file('_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');
+    z.file('word/_rels/document.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="htmlChunk" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/aFChunk" Target="memoria.mht"/></Relationships>');
+    z.file('word/document.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body><w:altChunk r:id="htmlChunk"/><w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1418" w:header="709" w:footer="709" w:gutter="0"/></w:sectPr></w:body></w:document>');
+    z.file('word/memoria.mht',m);
+    const blob=await z.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+    const fname='Memoria '+obra.replace(/[\/:*?"<>|]/g,'-')+'.docx';
+    const dl=window.claude&&window.claude.use?await window.claude.use('downloads'):null;
+    if(dl){try{await dl.save({filename:fname,data:blob});$('expmsg').textContent='Memoria guardada. Al abrirla, Word la convierte; guardala de nuevo como .docx para editarla libremente.'}
+      catch(err){$('expmsg').textContent=err&&err.code==='declined'?'Descarga cancelada.':'No se pudo guardar ('+(err&&err.code||'error')+'). Probá "Copiar memoria".'}}
+    else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;document.body.appendChild(a);a.click();a.remove();
+      $('expmsg').textContent='Memoria descargada ('+fname+'). Abrila con Word de escritorio.'}
+  }catch(e){$('expmsg').textContent='No se pudo generar: '+e.message}
+}
+async function copyDoc(){
+  try{const {h,imgs}=await buildMemoria();let html=`<style>${docCSS}</style>`+h;imgs.forEach((im,i)=>{html=html.split(`src="IMG${i+1}"`).join(`src="${im.d}"`)});
+    await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([h.replace(/<[^>]+>/g,' ')],{type:'text/plain'})})]);
+    $('expmsg').textContent='Memoria copiada. Pegala en un documento de Word con Ctrl+V.';
+  }catch(e){$('expmsg').textContent='El navegador no permitió copiar. Abrí el archivo HTML local y usá "Exportar memoria Word".'}
+}
+init();
+$('bdoc').onclick=exportDoc;$('bcopy').onclick=copyDoc;
+</script>
