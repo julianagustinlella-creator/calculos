@@ -143,11 +143,13 @@ svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
     <div class="f"><label for="Iu">Ip (vacío = πD⁴/64)</label><input id="Iu" type="number" step="0.0001" placeholder="auto"><span class="u">m⁴</span></div>
     <div class="f"><label for="crk">Factor de rigidez fisurada</label><input id="crk" type="number" step="0.05"><span class="u">×EI</span></div>
     <div class="f"><label for="My">Momento resistente My</label><input id="My" type="number" step="0.5"><span class="u" data-d="F·m"></span></div>
-    <p class="hint">My: momento de fluencia de la sección (Mn del hormigón armado o S·Fy del acero). Lo usa Broms para pilote largo.</p>
+    <label class="hint" style="display:flex;gap:6px;align-items:center;cursor:pointer"><input type="checkbox" id="myauto" checked> Tomar My de la sección H°A° (Mn nominal al axial más desfavorable)</label>
+    <p class="hint" id="myhint">My: momento resistente de la sección. Lo usa Broms para el mecanismo de pilote largo (rótula plástica).</p>
   </fieldset>
   <fieldset><legend>5 · Blum</legend>
     <div class="f"><label for="fb">Ancho de cálculo b' = n·D</label><input id="fb" type="number" step="0.5"><span class="u">n</span></div>
     <div class="f"><label for="etap">Seguridad sobre el pasivo ηp</label><input id="etap" type="number" step="0.1"><span class="u">—</span></div>
+    <p class="hint" id="blhint"></p>
   </fieldset>
 </aside>
 
@@ -188,6 +190,7 @@ svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
         <div>
           <div class="tw"><table id="btab"></table></div>
           <div class="eq" id="beq"></div>
+          <div class="what" id="bexp" style="max-width:none"></div>
         </div>
         <div class="plot"><svg id="bsk" viewBox="0 0 360 330" role="img" aria-label="Esquema de presiones de Broms"></svg></div>
       </div>
@@ -207,7 +210,22 @@ svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
         <div>
           <div class="tw"><table id="bltab"></table></div>
           <div class="eq" id="bleq"></div>
-          <p class="note">b' = n·D toma en cuenta el efecto espacial delante de un pilote aislado. Broms usa el equivalente n = 3. Para pilotes poco separados, n no puede superar la separación entre ejes.</p>
+          <div class="what" style="max-width:none">
+            <b>De dónde salen los datos de Blum</b>
+            <p style="margin:6px 0 4px"><b>n (ancho de cálculo b' = n·D).</b> Delante de un pilote aislado, el suelo que se moviliza es una cuña mucho más ancha que el pilote: es el "efecto espacial" o tridimensional del empuje pasivo. Blum lo toma con un ancho ficticio mayor que D. Valores habituales:</p>
+            <ul style="margin:0 0 6px;padding-left:18px">
+              <li><b>Pilote o pozo aislado</b>, con separación entre ejes de 3D o más: <b>n = 3</b>. Es el mismo factor que usa Broms (pasivo 3·Kp·γ·z·D), así los dos métodos quedan comparables.</li>
+              <li><b>Pilotes en fila poco separados</b> (separación a &lt; 3D): <b>n = a/D</b>. Las cuñas se superponen y cada pilote no puede tomar más ancho que el que le corresponde.</li>
+              <li><b>Pantalla o tablestaca continua</b>: <b>n = 1</b> por metro de ancho (sin efecto espacial).</li>
+              <li>Suelo superficial flojo, removido o que puede erosionarse: bajá n o despreciá los primeros 0,5 a 1 m.</li>
+            </ul>
+            <p style="margin:6px 0 4px"><b>ηp (seguridad sobre el empuje pasivo).</b> El método divide el pasivo por ηp: el pilote tiene que equilibrar H usando solo una fracción de la resistencia del suelo. Elegilo según la carga que cargaste:</p>
+            <ul style="margin:0 0 6px;padding-left:18px">
+              <li><b>Carga de servicio</b>: ηp = <b>1,5</b> (práctica clásica de Blum y de las recomendaciones alemanas EAU). Usá 2,0 si la carga es permanente o el suelo está poco caracterizado.</li>
+              <li><b>Carga última de sismo</b>, que ya es una acción de diseño: ηp = <b>1,0 a 1,3</b>. Para no sumar coeficientes, el factor de seguridad total (factor de carga × ηp) debería quedar cerca de 1,5.</li>
+            </ul>
+            <p style="margin:6px 0 0"><b>El 20 % adicional</b> (t = 1,2·t₀) no es un coeficiente de seguridad. Es la corrección de Blum por reemplazar el contraempuje debajo del punto de giro por una fuerza concentrada C: hace falta un tramo extra de pilote para desarrollarla. <b>Kp</b> se toma de Rankine, tan²(45 + φ/2), sin fricción pilote-suelo, del lado seguro.</p>
+          </div>
         </div>
         <div class="plots" id="blplots" style="grid-template-columns:1fr 1fr"></div>
       </div>
@@ -280,7 +298,7 @@ svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
 <script>
 const G=9.80665;
 let U='t', soil='arena', head='libre', loadMode='ult';
-const defs={gam:16.67,phi:30,nh:6000,cu:50,K:15000,L:2.5,D:0.9,fc:21,Eu:'',Iu:'',crk:1,My:245,Q:29.4,e:0,xadm:10,FS:1.5,gf:1,fb:3,etap:1.5};
+const defs={gam:16.67,phi:30,nh:6000,cu:50,K:15000,L:2.5,D:0.9,fc:21,Eu:'',Iu:'',crk:1,My:245,Q:29.4,e:0,xadm:10,FS:1.5,gf:1,fb:3,etap:1.2};
 const dims={gam:'F/m3',nh:'F/m3',K:'F/m3',cu:'F/m2',My:'F·m',Q:'F'};
 const $=id=>document.getElementById(id);
 function fac(){return U==='t'?G:1}
@@ -293,10 +311,10 @@ function setUnits(u){
 }
 function init(){
   for(const k in defs){const v=defs[k];$(k).value=(v===''?'':(dims[k]?+(v/G).toPrecision(4):v))}
-  document.querySelectorAll('aside input,aside select').forEach(el=>el.addEventListener('input',calc));
+  document.querySelectorAll('aside input,aside select').forEach(el=>el.addEventListener('input',calc));$('myauto').addEventListener('change',calc);
   $('u-t').onclick=()=>setUnits('t');$('u-kN').onclick=()=>setUnits('kN');
   $('gotoS').onclick=e=>{e.preventDefault();document.querySelector('nav.tabs button[data-t="s"]').click();document.querySelector('nav.tabs').scrollIntoView({behavior:'smooth'})};
-  segs('seg-soil',v=>{soil=v});segs('seg-head',v=>{head=v});segs('seg-load',v=>{loadMode=v;$('FS').value=v==='ult'?1.5:2.5;$('gf').value=v==='ult'?1:1.5});
+  segs('seg-soil',v=>{soil=v});segs('seg-head',v=>{head=v});segs('seg-load',v=>{loadMode=v;$('FS').value=v==='ult'?1.5:2.5;$('gf').value=v==='ult'?1:1.5;$('etap').value=v==='ult'?1.2:1.5});
   document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>{
     document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('on',x===b));
     ['w','b','bl','g','s'].forEach(t=>$('t-'+t).hidden=(t!==b.dataset.t));
@@ -340,6 +358,7 @@ function rcSection(D,fc,fy,nb,db,cov,dst,conf,phim){
   pts.forEach(q=>{q.pP=Math.min(q.phi*q.P,phic*Pmax);q.pM=q.phi*q.M});
   return {R,r,Ab,As,Ag,rho:As/Ag,b1,P0,Pmax,phic,pts,bars,ey};
 }
+function MnAt(sec,N){const P=sec.pts;let best=null;for(let i=0;i<P.length-1;i++){const a=P[i],b=P[i+1];if((N-a.P)*(N-b.P)<=0&&a.P!==b.P){const t=(N-a.P)/(b.P-a.P),m=a.M+t*(b.M-a.M);if(best===null||m>best)best=m}}return best}
 function phiMnAt(sec,N){ // capacity on the upper branch at given axial N (internal units consistent)
   const P=sec.pts;let best=null;
   for(let i=0;i<P.length-1;i++){const a=P[i],b=P[i+1];if((N-a.pP)*(N-b.pP)<=0&&a.pP!==b.pP){const t=(N-a.pP)/(b.pP-a.pP),m=a.pM+t*(b.pM-a.pM);if(best===null||m>best)best=m}}
@@ -549,7 +568,14 @@ function calc(){
   $('nh-hint').textContent='Tabla 11.15, nh en kN/m³: arena seca o húmeda suelta 1800–2200, media 5500–7000, densa 15000–18000. Sumergida: 1000–1400 / 3500–4500 / 9000–12000.'+tf;
   $('K-hint').textContent='K en kN/m³: qu < 200 kPa → 10000–20000; 200–800 → 20000–40000; > 800 → > 40000.'+tf;
   const p=inp();if(!Object.values(p).every(v=>isFinite(v))||p.L<=0||p.D<=0||p.EI<=0)return;
+  if($('myauto').checked){const fcv=num('fc'),fyv=num('fy'),nbv=Math.max(3,Math.round(num('nb'))),dbv=num('db')/1000,cv=num('cov')/100,dsv=num('dst')/1000;
+    if([fcv,fyv,dbv,cv,dsv].every(isFinite)){const sc0=rcSection(p.D,fcv*1000,fyv*1000,nbv,dbv,cv,dsv,$('conf').value,'cap');
+      const Ns=combos.length?combos.map(c=>c.N):[0],cand=Ns.map(N=>({N,M:MnAt(sc0,N)})).filter(x=>x.M!=null&&x.M>0);
+      if(cand.length){const g=cand.reduce((a,b)=>b.M<a.M?b:a);p.My=g.M;$('My').value=+fF(g.M).toPrecision(4);
+        $('myhint').textContent=`My = Mn de ${nbv}Ø${num('db')} con Nu = ${fmt(fF(g.N))} ${uF()} (la combinación con menor Mn). Se cambia la armadura en la pestaña Sección H°A°.`}}}
+  $('My').disabled=$('myauto').checked;if(!$('myauto').checked)$('myhint').textContent='My: momento resistente de la sección, cargado a mano. Lo usa Broms para el mecanismo de pilote largo.';
   const hasVu=loadMode==='ult';
+  $('blhint').innerHTML=`n = 3 para pilote aislado; n = a/D si la separación a &lt; 3D; n = 1 para pantalla continua. ηp recomendado con ${hasVu?'carga última de sismo: <b>1,0 a 1,3</b>':'carga de servicio: <b>1,5</b> (2,0 si la carga es permanente)'}. Detalle en la pestaña Blum.`;
   $('Qlab').textContent=hasVu?'Carga lateral última Hu':'Carga lateral de servicio H';
   $('gflab').textContent=hasVu?'Factor Hu / H servicio':'Mayoración Hu / H';
   $('solsum').innerHTML=`Para el <b>armado</b> (Mu, Vu): Hu = <b>${fmt(fF(p.gf*p.Q))} ${uF()}</b><br>Para <b>desplazamiento, Broms y Blum</b>: H = <b>${fmt(fF(p.Q))} ${uF()}</b>`+(head==='libre'&&p.e>0?`<br>Momento en el terreno: H·e = <b>${fmt(fF(p.Q*p.e))} ${uM()}</b>`:'');
@@ -609,6 +635,9 @@ function calc(){
    :`Kp = ${fmt(p.Kp,3)}\nCorto:       Qu = 1,5·γ·D·L²·Kp\nIntermedio:  Qu = (0,5·γ·D·L³·Kp + My)/L\nLargo:       Qu = (2·My·√(γDKp)/0,544)^(2/3)`)
    :(head==='libre'?`f = Qu/(9·cu·D),  L = 1,5D + f + g\nCorto:  Qu·(e+1,5D+0,5f) = 2,25·cu·D·g²\nLargo:  My = Qu·(e+1,5D+0,5f)`
    :`Corto:       Qu = 9·cu·D·(L − 1,5D)\nIntermedio:  My = Qu·(1,5D+0,5f) − 2,25·cu·D·g²\nLargo:       2·My = Qu·(1,5D+0,5f)`);
+  {const sh=broms(p);const Msh=soil==='arena'?(head==='libre'?sh.short*(p.e+0.67*0.82*Math.sqrt(sh.short/(p.gam*p.D*p.Kp))):(2/3)*sh.short*p.L):(head==='libre'?sh.short*(p.e+1.5*p.D+0.5*sh.short/(9*p.cu*p.D)):null);
+   const longGov=!br.mode.startsWith('Corto');
+   $('bexp').innerHTML=`<b>Corto y largo en Broms no es lo mismo que rígido y flexible.</b> La clasificación de arriba (L/${ch} = ${fmt(rel)}, ${cls.toLowerCase()}) compara rigideces en régimen elástico y dice cómo se deforma el pilote. Broms responde otra pregunta: <b>qué se rompe primero</b> cuando la carga crece. Revisa dos mecanismos y gobierna el de menor Qu:<ul style="margin:6px 0;padding-left:18px"><li><b>Corto (falla del suelo):</b> el pilote gira entero y el suelo llega al empuje pasivo en toda la longitud. Supone que el pilote aguanta el momento que eso genera${Msh!=null?`: <b>M = ${fmt(fF(Msh))} ${uM()}</b>`:''}.</li><li><b>${br.inter!==undefined?'Intermedio o largo':'Largo'} (fluye el pilote):</b> antes de que falle el suelo, el momento llega a My = <b>${fmt(fF(p.My))} ${uM()}</b> y se forma una rótula plástica.</li></ul>`+(longGov?`<b>En este caso gobierna el pilote:</b> ${Msh!=null?`para movilizar todo el suelo haría falta M = ${fmt(fF(Msh))} ${uM()}, más que My = ${fmt(fF(p.My))} ${uM()}. `:''}La sección rompe antes que el suelo, aunque el pilote sea rígido. Para que gobierne el suelo, aumentá la armadura en la pestaña Sección H°A°${$('myauto').checked?' (My se recalcula solo)':' o revisá el valor de My'}.`:`<b>En este caso gobierna el suelo:</b> la sección resiste el momento necesario${Msh!=null?` (My = ${fmt(fF(p.My))} ≥ ${fmt(fF(Msh))} ${uM()})`:''}, así que la capacidad lateral la limita el empuje pasivo.`);}
   bromsSketch(p,br);
   const Ls=[],s1=[],s2=[],s3=[];const Lm=Math.max(3*p.L,2);for(let i=1;i<=80;i++){const l=Lm*i/80;const b2=broms(p,l);Ls.push(l);s1.push(fF(b2.short));s2.push(fF(b2.inter??b2.long));s3.push(fF(b2.gov))}
   const ser=[{x:Ls,y:s1,c:css('--muted'),n:'Corto',dash:'5 4'},{x:Ls,y:s2,c:css('--c2'),n:br.inter!==undefined?'Intermedio':'Largo',dash:'2 3'},{x:Ls,y:s3,c:css('--accent'),n:'Gobierna',w:2.6}];
