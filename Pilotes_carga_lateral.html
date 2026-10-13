@@ -248,7 +248,7 @@ svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
     <section class="panel">
       <h2>Sección de hormigón armado: diagrama de interacción N–M</h2>
       <p class="what"><b>Qué verifica:</b> la resistencia estructural del pilote. Para cada combinación (Nu, Mu) comprueba que el punto caiga dentro del diagrama de interacción de diseño φPn–φMn, es decir que la sección resista flexo-compresión o flexo-tracción. También verifica la cuantía mínima de armadura longitudinal y la separación de estribos del IC 103-II (6.6.2) y el corte Vu ≤ φVc.</p>
-      <p class="lead">Sección circular de diámetro D (el del pilote) con barras distribuidas en la periferia. Compatibilidad de deformaciones según CIRSOC 201: εcu = 0,003, bloque de Whitney 0,85f'c con β1, acero elastoplástico. φ varía entre 0,65 (estribos) o 0,75 (zuncho) y 0,90 según la deformación εt de la barra más traccionada. El f'c es el del panel izquierdo. Compresión positiva.</p>
+      <p class="lead">Sección circular de diámetro D (el del pilote) con barras distribuidas en la periferia. Compatibilidad de deformaciones: εcu = 0,003, bloque de Whitney 0,85f'c con β1, acero elastoplástico. El factor φ se elige abajo: IC 103-II usa φ = 0,90 constante para flexión con o sin axial (tabla 1.2, combinaciones con sismo) o φ = 1,00 si las solicitaciones salen del diseño por capacidad; CIRSOC 201 usa φ variable entre 0,65 (estribos) o 0,75 (zuncho) y 0,90 según la deformación εt de la barra más traccionada. El f'c es el del panel izquierdo. Compresión positiva.</p>
       <div class="two">
         <div>
           <div class="f"><label for="fy">fy del acero</label><input id="fy" type="number" step="10" value="420"><span class="u">MPa</span></div>
@@ -257,6 +257,7 @@ svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
           <div class="f"><label for="cov">Recubrimiento libre</label><input id="cov" type="number" step="0.5" value="7.5"><span class="u">cm</span></div>
           <div class="f"><label for="dst">Estribo / zuncho Ø</label><input id="dst" type="number" step="2" value="8"><span class="u">mm</span></div>
           <div class="f"><label for="sst">Separación estribos (zona normal)</label><input id="sst" type="number" step="1" value="15"><span class="u">cm</span></div>
+          <div class="f"><label for="phim">Factor φ según</label><select id="phim"><option value="ic">IC 103-II (sismo): φ = 0,90</option><option value="cap">IC 103-II por capacidad: φ = 1,00</option><option value="cirsoc">CIRSOC 201: φ variable</option></select><span class="u"></span></div>
           <div class="f"><label for="conf">Armadura transversal</label><select id="conf"><option value="e">Estribos</option><option value="z">Zuncho</option></select><span class="u"></span></div>
           <p class="hint">Hormigón colado contra el suelo: recubrimiento mínimo 7,5 cm.</p>
           <div class="tw"><table id="rctab"></table></div>
@@ -319,21 +320,21 @@ function drawCombos(){
   $('combos').querySelectorAll('button[data-del]').forEach(b=>b.onclick=()=>{combos.splice(+b.dataset.del,1);drawCombos();calc()});
 }
 // ---------- RC circular section ----------
-function rcSection(D,fc,fy,nb,db,cov,dst,conf){
+function rcSection(D,fc,fy,nb,db,cov,dst,conf,phim){
   const R=D/2,Ab=Math.PI*db*db/4,r=R-cov-dst-db/2,Es=2e8,ey=fy/Es,fM=fc/1000,b1=fM<=28?0.85:Math.max(0.65,0.85-0.05*(fM-28)/7);
   const bars=[];for(let i=0;i<nb;i++){const a=2*Math.PI*i/nb;bars.push({y:r*Math.cos(a),x:r*Math.sin(a)})}
   const ds=bars.map(b=>R-b.y),dt=Math.max(...ds),As=nb*Ab,Ag=Math.PI*R*R;
-  const phic=conf==='z'?0.75:0.65,kmax=conf==='z'?0.85:0.80;
+  const phiC201=conf==='z'?0.75:0.65,phiFix=phim==='ic'?0.9:phim==='cap'?1.0:null,phic=phiFix??phiC201,kmax=conf==='z'?0.85:0.80;
   const P0=0.85*fc*(Ag-As)+fy*As,Pmax=kmax*P0;
   function pt(c){
     const a=Math.min(b1*c,D);let Cc=0,yc=0;
     if(a>0){const th=Math.acos(Math.max(-1,Math.min(1,(R-a)/R))),Ac=R*R*(th-Math.sin(th)*Math.cos(th));Cc=0.85*fc*Ac;yc=Ac>0?2*R**3*Math.sin(th)**3/(3*Ac):0}
     let P=Cc,M=Cc*yc;
     ds.forEach((d,i)=>{const es=0.003*(c-d)/c;let fs=Math.max(-fy,Math.min(fy,es*Es));if(d<a)fs-=0.85*fc;P+=fs*Ab;M+=fs*Ab*(R-d)});
-    const et=0.003*(dt-c)/c,phi=et<=ey?phic:et>=0.005?0.9:phic+(0.9-phic)*(et-ey)/(0.005-ey);
+    const et=0.003*(dt-c)/c,phi=phiFix??(et<=ey?phic:et>=0.005?0.9:phic+(0.9-phic)*(et-ey)/(0.005-ey));
     return {P,M,phi,et};
   }
-  const pts=[];pts.push({P:-fy*As,M:0,phi:0.9});
+  const pts=[];pts.push({P:-fy*As,M:0,phi:phiFix??0.9});
   for(let i=0;i<=240;i++){const c=D*Math.pow(10,-3+i*(Math.log10(30)+3)/240);pts.push(pt(c))}
   pts.push({P:P0,M:0,phi:phic});
   pts.forEach(q=>{q.pP=Math.min(q.phi*q.P,phic*Pmax);q.pM=q.phi*q.M});
@@ -347,7 +348,7 @@ function phiMnAt(sec,N){ // capacity on the upper branch at given axial N (inter
 function drawRC(p,Mabs,Vabs){
   const fc=num('fc'),fy=num('fy'),nb=Math.max(3,Math.round(num('nb'))),db=num('db')/1000,cov=num('cov')/100,dst=num('dst')/1000,conf=$('conf').value;
   if(![fc,fy,db,cov,dst].every(isFinite))return;
-  const sec=rcSection(p.D,fc*1000,fy*1000,nb,db,cov,dst,conf);
+  const phim=$('phim').value,sec=rcSection(p.D,fc*1000,fy*1000,nb,db,cov,dst,conf,phim),phiT=phim==='cap'?1:0.9,phiV=phim==='ic'?0.85:phim==='cap'?1:0.75,phiTxt=phim==='ic'?'φ = 0,90 (IC 103-II, tabla 1.2, combinaciones del art. 1.3)':phim==='cap'?'φ = 1,00 (IC 103-II, tabla 1.2(a), solicitaciones por capacidad)':'φ variable 0,65/0,75 a 0,90 según εt (CIRSOC 201)';
   // section drawing
   const S=300,sc=(S-60)/p.D,cx=S/2,cy=S/2+6;let s=`<text class="ttl" x="10" y="16">${nb} Ø${num('db')} · Ø${fmt(p.D*100,0)} cm</text>`;
   s+=`<circle cx="${cx}" cy="${cy}" r="${sec.R*sc}" fill="${css('--soil-bg')}" stroke="${css('--ink')}" stroke-width="1.5"/>`;
@@ -356,18 +357,16 @@ function drawRC(p,Mabs,Vabs){
   s+=`<text x="${cx}" y="${S-6}" text-anchor="middle">rec. ${fmt(cov*100,1)} cm · ${conf==='z'?'zuncho':'estribos'} Ø${num('dst')}</text>`;
   $('rcsec').innerHTML=s;
   const AgMM=sec.Ag*1e6,rhoA=AgMM<=0.5e6?2.4/fy:AgMM>=2e6?1.2/fy:2400/(fy*Math.sqrt(2*AgMM)),caseA=AgMM<=0.5e6?'(a) 2,40/fy':AgMM>=2e6?'(b) 1,20/fy':'(c) 2400/(fy·√(2Ag))';
-  const Mauto0=p.gf*Mabs,maxRatio=Math.max(...combos.map(c=>{const M=c.M===''?Mauto0:Math.abs(c.M),cap=phiMnAt(sec,c.N);return cap&&cap>0?M/cap:Infinity}));
-  const allowD=maxRatio<=1/1.4,rhoMin=allowD?Math.min(rhoA,0.7/fy):rhoA,rhoOK=sec.rho>=rhoMin;
+  const rhoMin=rhoA,rhoOK=sec.rho>=rhoMin;
   const sMax=Math.min(p.D,12*db,0.6),sst=num('sst')/100,sOK=sst<=sMax+1e-9;
-  LAST.rho={rhoA,caseA,allowD,rhoMin,rhoOK,sMax,sst,sOK};
+  LAST.rho={rhoA,caseA,rhoMin,rhoOK,sMax,sst,sOK};
   $('rctab').innerHTML='<tr><th>Sección</th><th>Valor</th></tr>'+[
     ['As total',fmt(sec.As*1e4)+' cm²'],['Ag',fmt(sec.Ag*1e4,0)+' cm²'],['Cuantía ρt = As/Ag',fmt(sec.rho*100,3)+' %'],
     ['ρt mín IC 103-II 6.6.2.1 '+caseA,fmt(rhoA*100,3)+' %'],
-    ['ρt mín (d) 0,70/fy, si la resistencia ≥ 1,4 × la requerida',fmt(0.7/fy*100,3)+' % '+(allowD?'(aplica: uso ≤ 71 %)':'(no aplica: uso máx '+fmt(maxRatio*100,0)+' %)')],
     ['Verificación cuantía mínima',pill(rhoOK,'ρt ≥ '+fmt(rhoMin*100,3)+' %','ρt < '+fmt(rhoMin*100,3)+' %')+(rhoOK?'':' faltan '+fmt((rhoMin-sec.rho)*sec.Ag*1e4)+' cm²')],
     ['Separación estribos zona normal 6.6.2.3(c): s ≤ mín(D; 12db; 60 cm) = '+fmt(sMax*100,1)+' cm',fmt(sst*100,1)+' cm '+pill(sOK)],
     ['Radio a ejes de barras',fmt(sec.r*100,1)+' cm'],['β1',fmt(sec.b1,3)],
-    ['φPn máx (compresión)',fmt(fF(sec.phic*sec.Pmax),1)+' '+uF()],['φPn tracción pura = 0,9·As·fy',fmt(fF(0.9*sec.As*fy*1000),1)+' '+uF()],
+    ['φPn máx (compresión)',fmt(fF(sec.phic*sec.Pmax),1)+' '+uF()],['φ adoptado',phiTxt],['φPn tracción pura = φ·As·fy',fmt(fF(phiT*sec.As*fy*1000),1)+' '+uF()],
     ['φMn flexión pura (N = 0)',fmt(fF(phiMnAt(sec,0)))+' '+uM()]
   ].map(row).join('')+`<tr><td colspan="2" class="hint">IC 103-II 6.6.1: el extremo superior del pilote se arma como zona de rótula plástica de columna (long. según 2.3.5 medida desde la cara inferior del cabezal; estribos según 2.3.7.1.1(a)/2.3.7.2.1(a)) y en 3D adyacentes como zona normal de columna. Esas zonas no se calculan acá. Con superestructura dúctil (6.3), Hu debe salir del diseño por capacidad (sobrerresistencia), no hace falta superar R = 1,5.</td></tr>`;
   // combos
@@ -391,9 +390,9 @@ function drawRC(p,Mabs,Vabs){
   g+=`<text x="${ml+pw/2}" y="${H-6}" text-anchor="middle">M (${uM()})</text><text x="14" y="${mt+ph/2}" transform="rotate(-90 14 ${mt+ph/2})" text-anchor="middle">N (${uF()}) · compresión +</text>`;
   $('rcdiag').innerHTML=g;
   // shear approx (CIRSOC 201 / ACI: bw = D, d = 0,8D)
-  const d=0.8*p.D,Vc=0.17*Math.sqrt(fc)*1000*p.D*d,phiVc=0.75*Vc,Vu=p.gf*Vabs;
-  LAST.rc={sec,res,Vu,phiVc,nb,db:num('db'),cov,dst:num('dst'),conf,fy,fc};
-  $('rcv').innerHTML='<tr><th>Corte</th><th>Valor</th></tr>'+[['Vu = γf · |V| máx (Winkler)',fmt(fF(Vu))+' '+uF()],['φVc = 0,75 · 0,17√f\'c · D · 0,8D (sin efecto del axial)',fmt(fF(phiVc))+' '+uF()],
+  const d=0.8*p.D,Vc=0.17*Math.sqrt(fc)*1000*p.D*d,phiVc=phiV*Vc,Vu=p.gf*Vabs;
+  LAST.rc={sec,res,Vu,phiVc,nb,db:num('db'),cov,dst:num('dst'),conf,fy,fc,phiTxt};
+  $('rcv').innerHTML='<tr><th>Corte</th><th>Valor</th></tr>'+[['Vu = γf · |V| máx (Winkler)',fmt(fF(Vu))+' '+uF()],['φVc = '+fmt(phiV)+' · 0,17√f\'c · D · 0,8D (sin efecto del axial)',fmt(fF(phiVc))+' '+uF()],
     ['Verificación',pill(Vu<=phiVc,'Vu ≤ φVc: estribos mínimos','Vu > φVc: calcular estribos')]].map(row).join('');
 }
 function segs(id,fn){const s=$(id);s.querySelectorAll('button').forEach(b=>b.onclick=()=>{s.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));fn(b.dataset.v);calc()})}
@@ -541,7 +540,7 @@ function bromsSketch(p,br){
 }
 
 // ---------- main ----------
-const CW=['Rigidez del pilote frente al suelo: define qué método aplica.','Servicio: cuánto se corre la cabeza con H (Winkler).','Momento de diseño de la sección, con Hu (Winkler).','Falla del suelo o del pilote por carga lateral (Broms).','Máxima H que cumple resistencia (Qu/FS) y desplazamiento.','Longitud enterrada necesaria por equilibrio (Blum).'];
+const CW=['Rigidez del pilote frente al suelo: define qué método aplica.','Servicio: cuánto se corre la cabeza con H (Winkler).','Momento de diseño de la sección, con Hu (Winkler).','Falla del suelo o del pilote por carga lateral (Broms).','Compara tu H con la máxima que el pilote soporta cumpliendo resistencia del suelo y desplazamiento. Menos de 100 % cumple.','Longitud enterrada necesaria por equilibrio (Blum).'];
 function row(c){return '<tr>'+c.map((x,i)=>i?`<td class="n">${x}</td>`:`<td>${x}</td>`).join('')+'</tr>'}
 function pill(ok,t1='Cumple',t2='No cumple'){return `<span class="pill ${ok?'ok':'bad'}">${ok?t1:t2}</span>`}
 function calc(){
@@ -567,7 +566,7 @@ function calc(){
     ['Desplazamiento cabeza',fmt(x0*1000)+' mm',pill(Math.abs(x0)<=p.xadm,'≤ '+fmt(p.xadm*1000,0)+' mm','> '+fmt(p.xadm*1000,0)+' mm')+' Winkler, servicio'],
     ['Mu armado',fmt(fF(p.gf*Mabs))+' '+uM(),`con Hu = ${fmt(fF(p.gf*p.Q))} ${uF()}, a z = ${fmt(w.z[iM])} m · Vu = ${fmt(fF(p.gf*Math.max(...w.V.map(Math.abs))))} ${uF()}`],
     ['Qu Broms',fmt(fF(br.gov),1)+' '+uF(),`${br.mode} · FS = Qu/${hasVu&&p.gf===1?'Hu':'H'} = ${fmt(br.gov/p.Q)}`],
-    [hasVu&&p.gf===1?'Hu admisible':'H admisible',fmt(fF(Qadm),1)+' '+uF(),pill(p.Q<=Qadm)+` mín(Qu/FS; desplazamiento)`],
+    ['Uso lateral del pilote',fmt(p.Q/Qadm*100,0)+' %',pill(p.Q<=Qadm)+` tu H = ${fmt(fF(p.Q),1)} ${uF()} frente a lo que resiste: ${fmt(fF(Qadm),1)} ${uF()} = mín(Qu/FS = ${fmt(fF(br.gov/p.FS),1)}; por desplazamiento = ${fmt(fF(bd.Qx),1)})`],
     ['Blum t necesario',fmt(bl.t)+' m',pill(p.L>=bl.t,'L = '+fmt(p.L)+' m alcanza','L = '+fmt(p.L)+' m no alcanza')]
   ].map((c,i)=>`<div class="card"><div class="k">${c[0]}</div><div class="v">${c[1]}</div><div class="s">${c[2]}</div><div class="w">${CW[i]}</div></div>`).join('');
   // recommendation
@@ -670,7 +669,7 @@ async function buildMemoria(){
 <p>Desplazamiento de la cabeza según la fig. 11.33:</p>${cleanTable('bdef')}
 <p>Carga admisible Qadm = mín(Qu/FS; Q por desplazamiento) = ${fmt(fF(L.Qadm),1)} ${uF()} frente a Qg = ${fmt(fF(p.Q),1)} ${uF()} → ${ok(p.Q<=L.Qadm)}</p>
 <h2>6. Empotramiento necesario (Blum)</h2><pre>${$('bleq').textContent}</pre>${cleanTable('bltab')}<table class="img"><tr>${gBl.map(i=>`<td>${i}</td>`).join('')}</tr></table>
-<h2>7. Sección de hormigón armado</h2><p>Sección circular Ø${fmt(p.D*100,0)} cm con ${rc.nb} Ø${rc.db} mm, recubrimiento ${fmt(rc.cov*100,1)} cm, ${rc.conf==='z'?'zuncho':'estribos'} Ø${rc.dst} mm; f'c = ${fmt(rc.fc,0)} MPa, fy = ${fmt(rc.fy,0)} MPa. Diagrama de interacción por compatibilidad de deformaciones (εcu = 0,003, bloque rectangular 0,85f'c con β1), con φ entre ${fmt(rc.sec.phic)} y 0,90 según εt (CIRSOC 201).</p>
+<h2>7. Sección de hormigón armado</h2><p>Sección circular Ø${fmt(p.D*100,0)} cm con ${rc.nb} Ø${rc.db} mm, recubrimiento ${fmt(rc.cov*100,1)} cm, ${rc.conf==='z'?'zuncho':'estribos'} Ø${rc.dst} mm; f'c = ${fmt(rc.fc,0)} MPa, fy = ${fmt(rc.fy,0)} MPa. Diagrama de interacción por compatibilidad de deformaciones (εcu = 0,003, bloque rectangular 0,85f'c con β1), con ${rc.phiTxt}.</p>
 <table class="img"><tr><td>${gS[0]||''}</td><td>${cleanTable('rctab')}</td></tr></table>
 <p>Solicitaciones mayoradas:</p>${tb(combRows,['Combinación','Nu ('+uF()+')','Mu ('+uM()+')','φMn ('+uM()+')','Uso','Verificación'])}<p>${gD[0]||''}</p>
 <p>Corte:</p>${cleanTable('rcv')}
