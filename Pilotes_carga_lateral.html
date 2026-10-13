@@ -22,6 +22,13 @@
   --c2:#C59BD6; --grid:#28322F; color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+fieldset.sol{background:var(--accent-bg);border-radius:8px;padding:10px 10px 6px;margin-bottom:10px;border:0}
+fieldset.sol legend{color:var(--accent);float:left;width:100%}
+.solsum{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:12.5px;margin:6px 0;line-height:1.6}
+.solsum b{font-family:var(--mono);font-weight:500}
+.what{background:var(--accent-bg);border-radius:6px;padding:9px 12px;margin:8px 0 12px;font-size:13px;max-width:90ch}
+.what b{color:var(--accent)}
+.card .w{font-size:11.5px;color:var(--muted);margin-top:4px;border-top:1px dashed var(--line);padding-top:4px}
 .exp{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .exp input{padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:13px var(--sans);width:220px;max-width:100%}
 .btn{border:1px solid var(--accent);background:var(--accent);color:var(--panel);border-radius:6px;padding:6px 12px;font:500 13px var(--sans);cursor:pointer}
@@ -101,7 +108,24 @@ svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
 
 <div class="layout">
 <aside>
-  <fieldset><legend>Suelo</legend>
+  <fieldset class="sol"><legend>1 · Solicitaciones en la cabeza del pilote</legend>
+    <p class="hint" style="margin-top:0">Qué carga es la que estás cargando:</p>
+    <div class="seg" id="seg-load"><button data-v="ult" class="on">H última (sismo)</button><button data-v="serv">H de servicio</button></div>
+    <div class="f"><label for="Q" id="Qlab">Carga lateral última Hu</label><input id="Q" type="number" step="0.1"><span class="u" data-d="F"></span></div>
+    <div class="f"><label for="gf" id="gflab">Factor Hu / H servicio</label><input id="gf" type="number" step="0.05"><span class="u">γ</span></div>
+    <div class="f"><label for="e">Altura de aplicación e</label><input id="e" type="number" step="0.05"><span class="u">m</span></div>
+    <p class="hint">e = altura sobre el terreno donde actúa H (con cabeza libre equivale a un momento H·e). Con cabeza restringida se toma e = 0.</p>
+    <p class="hint">Condición de la cabeza:</p>
+    <div class="seg" id="seg-head"><button data-v="libre" class="on">Cabeza libre</button><button data-v="restr">Restringida</button></div>
+    <div id="solsum" class="solsum"></div>
+    <p class="hint">Los <b>axiales Nu</b> (compresión y tracción) se cargan en la pestaña <a href="#" id="gotoS">Sección H°A°</a>, junto con cada Mu.</p>
+    <p class="hint" id="loadhint"></p>
+  </fieldset>
+  <fieldset><legend>2 · Criterios de verificación</legend>
+    <div class="f"><label for="xadm">Desplazamiento admisible</label><input id="xadm" type="number" step="1"><span class="u">mm</span></div>
+    <div class="f"><label for="FS">FS geotécnico sobre Qu (Broms)</label><input id="FS" type="number" step="0.1"><span class="u">—</span></div>
+  </fieldset>
+  <fieldset><legend>3 · Suelo</legend>
     <div class="seg" id="seg-soil"><button data-v="arena" class="on">Arena (c = 0)</button><button data-v="arcilla">Arcilla (φ = 0)</button></div>
     <div class="f"><label for="gam">Peso unitario γ</label><input id="gam" type="number" step="0.05"><span class="u" data-d="F/m3"></span></div>
     <div class="f soilA"><label for="phi">Ángulo de fricción φ'</label><input id="phi" type="number" step="1"><span class="u">°</span></div>
@@ -111,7 +135,7 @@ svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
     <p class="hint soilA" id="nh-hint"></p>
     <p class="hint soilC" id="K-hint"></p>
   </fieldset>
-  <fieldset><legend>Pilote</legend>
+  <fieldset><legend>4 · Pilote</legend>
     <div class="f"><label for="L">Longitud empotrada L</label><input id="L" type="number" step="0.1"><span class="u">m</span></div>
     <div class="f"><label for="D">Diámetro D</label><input id="D" type="number" step="0.05"><span class="u">m</span></div>
     <div class="f"><label for="fc">f'c (para Ec)</label><input id="fc" type="number" step="1"><span class="u">MPa</span></div>
@@ -121,18 +145,7 @@ svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
     <div class="f"><label for="My">Momento resistente My</label><input id="My" type="number" step="0.5"><span class="u" data-d="F·m"></span></div>
     <p class="hint">My: momento de fluencia de la sección (Mn del hormigón armado o S·Fy del acero). Lo usa Broms para pilote largo.</p>
   </fieldset>
-  <fieldset><legend>Cargas y cabeza</legend>
-    <div class="seg" id="seg-head"><button data-v="libre" class="on">Cabeza libre</button><button data-v="restr">Restringida</button></div>
-    <div class="f"><label for="Q">Carga lateral de servicio Qg</label><input id="Q" type="number" step="0.1"><span class="u" data-d="F"></span></div>
-    <div class="f"><label for="e">Altura de aplicación e</label><input id="e" type="number" step="0.05"><span class="u">m</span></div>
-    <div class="f"><label for="xadm">Desplazamiento admisible</label><input id="xadm" type="number" step="1"><span class="u">mm</span></div>
-    <div class="f"><label for="FS">FS sobre Qu (Broms)</label><input id="FS" type="number" step="0.1"><span class="u">—</span></div>
-    <div class="f"><label for="Vu">Carga lateral mayorada Vu</label><input id="Vu" type="number" step="0.1" placeholder="opcional"><span class="u" data-d="F"></span></div>
-    <div class="f"><label for="gf">Mayoración si no hay Vu</label><input id="gf" type="number" step="0.05"><span class="u">γf</span></div>
-    <p class="hint">Qg (servicio) se usa para el desplazamiento y para el FS de Broms. Vu (mayorada) se usa para Mu y Vu del armado. Como Winkler es lineal, Mu = M(Qg)·Vu/Qg. Si dejás Vu vacío, se usa γf.</p>
-    <p class="hint">Cabeza libre con e &gt; 0 equivale a Mg = Qg·e en el terreno. Con cabeza restringida se toma e = 0.</p>
-  </fieldset>
-  <fieldset><legend>Blum</legend>
+  <fieldset><legend>5 · Blum</legend>
     <div class="f"><label for="fb">Ancho de cálculo b' = n·D</label><input id="fb" type="number" step="0.5"><span class="u">n</span></div>
     <div class="f"><label for="etap">Seguridad sobre el pasivo ηp</label><input id="etap" type="number" step="0.1"><span class="u">—</span></div>
   </fieldset>
@@ -152,6 +165,7 @@ svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
   <div id="t-w">
     <section class="panel">
       <h2>Viga sobre fundación elástica de Winkler</h2>
+      <p class="what"><b>Qué verifica:</b> el comportamiento del pilote en régimen elástico. Calcula cuánto se desplaza y gira la cabeza (verificación de servicio contra el desplazamiento admisible) y los diagramas de momento, corte y reacción del suelo en toda la longitud. Con Hu salen Mu y Vu para armar la sección.</p>
       <p class="lead">Resuelve EpIp·x'''' + k·x = 0 (ec. 11.84) por diferencias finitas con 120 tramos. En arena k = nh·z (Matlock-Reese), en arcilla k = K·D constante (Davisson-Gill). Vale para pilotes rígidos, intermedios o largos, con cabeza libre o restringida. Diagramas con la carga de servicio Qg.</p>
       <div class="plots" id="wplots"></div>
       <div class="two" style="margin-top:14px">
@@ -168,6 +182,7 @@ svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
   <div id="t-b" hidden>
     <section class="panel">
       <h2>Método de Broms: resistencia lateral última</h2>
+      <p class="what"><b>Qué verifica:</b> la falla por carga lateral. Calcula la carga horizontal Qu que agota el empuje pasivo del suelo (pilote corto) o que forma rótulas plásticas en el pilote (pilote largo), y comprueba que Qu / H ≥ FS geotécnico. Es la verificación de seguridad del suelo frente al vuelco o desplazamiento del pilote.</p>
       <p class="lead">Supone que el suelo alcanza su resistencia pasiva: 3·Kp·γ·z·D en arena, y 9·cu·D por debajo de 1,5D en arcilla. Revisa pilote corto (falla del suelo) e intermedio/largo (fluye el pilote con My). Gobierna el menor Qu. Las ecuaciones son las analíticas con las que se construyen los ábacos de las figuras 11.31 a 11.33.</p>
       <div class="two">
         <div>
@@ -186,6 +201,7 @@ svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
   <div id="t-bl" hidden>
     <section class="panel">
       <h2>Método de Blum: empotramiento necesario</h2>
+      <p class="what"><b>Qué verifica:</b> que la longitud enterrada alcance. Busca la profundidad t con la que el pasivo delante del pilote y la contrafuerza en la punta equilibran H. Si L ≥ t, el pilote tiene empotramiento suficiente. Es un control independiente de Broms para pilotes cortos en suelo granular.</p>
       <p class="lead">Método clásico alemán para pilotes y tablestacas en suelo granular. El pilote gira como cuerpo rígido. Delante actúa el pasivo γ·Kp·z·b'/ηp hasta el punto de giro t₀, y debajo de t₀ el contraempuje se reemplaza por una fuerza concentrada C. Se impone momento nulo en t₀ y se alarga 20 %: t = 1,2·t₀. Sirve para <b>dimensionar</b> L; Broms sirve para <b>verificar</b> un L dado.</p>
       <div class="two">
         <div>
@@ -231,6 +247,7 @@ svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
   <div id="t-s" hidden>
     <section class="panel">
       <h2>Sección de hormigón armado: diagrama de interacción N–M</h2>
+      <p class="what"><b>Qué verifica:</b> la resistencia estructural del pilote. Para cada combinación (Nu, Mu) comprueba que el punto caiga dentro del diagrama de interacción de diseño φPn–φMn, es decir que la sección resista flexo-compresión o flexo-tracción. También verifica la cuantía mínima de armadura longitudinal y la separación de estribos del IC 103-II (6.6.2) y el corte Vu ≤ φVc.</p>
       <p class="lead">Sección circular de diámetro D (el del pilote) con barras distribuidas en la periferia. Compatibilidad de deformaciones según CIRSOC 201: εcu = 0,003, bloque de Whitney 0,85f'c con β1, acero elastoplástico. φ varía entre 0,65 (estribos) o 0,75 (zuncho) y 0,90 según la deformación εt de la barra más traccionada. El f'c es el del panel izquierdo. Compresión positiva.</p>
       <div class="two">
         <div>
@@ -239,6 +256,7 @@ svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
           <div class="f"><label for="db">Diámetro de barra</label><select id="db"><option>10</option><option>12</option><option selected>16</option><option>20</option><option>25</option><option>32</option></select><span class="u">mm</span></div>
           <div class="f"><label for="cov">Recubrimiento libre</label><input id="cov" type="number" step="0.5" value="7.5"><span class="u">cm</span></div>
           <div class="f"><label for="dst">Estribo / zuncho Ø</label><input id="dst" type="number" step="2" value="8"><span class="u">mm</span></div>
+          <div class="f"><label for="sst">Separación estribos (zona normal)</label><input id="sst" type="number" step="1" value="15"><span class="u">cm</span></div>
           <div class="f"><label for="conf">Armadura transversal</label><select id="conf"><option value="e">Estribos</option><option value="z">Zuncho</option></select><span class="u"></span></div>
           <p class="hint">Hormigón colado contra el suelo: recubrimiento mínimo 7,5 cm.</p>
           <div class="tw"><table id="rctab"></table></div>
@@ -260,9 +278,9 @@ svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
 
 <script>
 const G=9.80665;
-let U='t', soil='arena', head='libre';
-const defs={gam:16.67,phi:30,nh:6000,cu:50,K:15000,L:2.5,D:0.9,fc:21,Eu:'',Iu:'',crk:1,My:245,Q:29.4,e:0,xadm:10,FS:2.5,gf:1.5,fb:3,etap:1.5};
-const dims={gam:'F/m3',nh:'F/m3',K:'F/m3',cu:'F/m2',My:'F·m',Q:'F',Vu:'F'};
+let U='t', soil='arena', head='libre', loadMode='ult';
+const defs={gam:16.67,phi:30,nh:6000,cu:50,K:15000,L:2.5,D:0.9,fc:21,Eu:'',Iu:'',crk:1,My:245,Q:29.4,e:0,xadm:10,FS:1.5,gf:1,fb:3,etap:1.5};
+const dims={gam:'F/m3',nh:'F/m3',K:'F/m3',cu:'F/m2',My:'F·m',Q:'F'};
 const $=id=>document.getElementById(id);
 function fac(){return U==='t'?G:1}
 function setUnits(u){
@@ -276,7 +294,8 @@ function init(){
   for(const k in defs){const v=defs[k];$(k).value=(v===''?'':(dims[k]?+(v/G).toPrecision(4):v))}
   document.querySelectorAll('aside input,aside select').forEach(el=>el.addEventListener('input',calc));
   $('u-t').onclick=()=>setUnits('t');$('u-kN').onclick=()=>setUnits('kN');
-  segs('seg-soil',v=>{soil=v});segs('seg-head',v=>{head=v});
+  $('gotoS').onclick=e=>{e.preventDefault();document.querySelector('nav.tabs button[data-t="s"]').click();document.querySelector('nav.tabs').scrollIntoView({behavior:'smooth'})};
+  segs('seg-soil',v=>{soil=v});segs('seg-head',v=>{head=v});segs('seg-load',v=>{loadMode=v;$('FS').value=v==='ult'?1.5:2.5;$('gf').value=v==='ult'?1:1.5});
   document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>{
     document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('on',x===b));
     ['w','b','bl','g','s'].forEach(t=>$('t-'+t).hidden=(t!==b.dataset.t));
@@ -336,13 +355,21 @@ function drawRC(p,Mabs,Vabs){
   sec.bars.forEach(b=>{s+=`<circle cx="${cx+b.x*sc}" cy="${cy-b.y*sc}" r="${Math.max(2.5,db/2*sc)}" fill="${css('--accent')}"/>`});
   s+=`<text x="${cx}" y="${S-6}" text-anchor="middle">rec. ${fmt(cov*100,1)} cm · ${conf==='z'?'zuncho':'estribos'} Ø${num('dst')}</text>`;
   $('rcsec').innerHTML=s;
-  const rhoOK=sec.rho>=0.005;
+  const AgMM=sec.Ag*1e6,rhoA=AgMM<=0.5e6?2.4/fy:AgMM>=2e6?1.2/fy:2400/(fy*Math.sqrt(2*AgMM)),caseA=AgMM<=0.5e6?'(a) 2,40/fy':AgMM>=2e6?'(b) 1,20/fy':'(c) 2400/(fy·√(2Ag))';
+  const Mauto0=p.gf*Mabs,maxRatio=Math.max(...combos.map(c=>{const M=c.M===''?Mauto0:Math.abs(c.M),cap=phiMnAt(sec,c.N);return cap&&cap>0?M/cap:Infinity}));
+  const allowD=maxRatio<=1/1.4,rhoMin=allowD?Math.min(rhoA,0.7/fy):rhoA,rhoOK=sec.rho>=rhoMin;
+  const sMax=Math.min(p.D,12*db,0.6),sst=num('sst')/100,sOK=sst<=sMax+1e-9;
+  LAST.rho={rhoA,caseA,allowD,rhoMin,rhoOK,sMax,sst,sOK};
   $('rctab').innerHTML='<tr><th>Sección</th><th>Valor</th></tr>'+[
-    ['As total',fmt(sec.As*1e4)+' cm²'],['Ag',fmt(sec.Ag*1e4,0)+' cm²'],['Cuantía ρ = As/Ag',fmt(sec.rho*100,2)+' % '+`<span class="pill ${rhoOK?'ok':'warn'}">${rhoOK?'≥ 0,5 %':'< 0,5 %'}</span>`],
+    ['As total',fmt(sec.As*1e4)+' cm²'],['Ag',fmt(sec.Ag*1e4,0)+' cm²'],['Cuantía ρt = As/Ag',fmt(sec.rho*100,3)+' %'],
+    ['ρt mín IC 103-II 6.6.2.1 '+caseA,fmt(rhoA*100,3)+' %'],
+    ['ρt mín (d) 0,70/fy, si la resistencia ≥ 1,4 × la requerida',fmt(0.7/fy*100,3)+' % '+(allowD?'(aplica: uso ≤ 71 %)':'(no aplica: uso máx '+fmt(maxRatio*100,0)+' %)')],
+    ['Verificación cuantía mínima',pill(rhoOK,'ρt ≥ '+fmt(rhoMin*100,3)+' %','ρt < '+fmt(rhoMin*100,3)+' %')+(rhoOK?'':' faltan '+fmt((rhoMin-sec.rho)*sec.Ag*1e4)+' cm²')],
+    ['Separación estribos zona normal 6.6.2.3(c): s ≤ mín(D; 12db; 60 cm) = '+fmt(sMax*100,1)+' cm',fmt(sst*100,1)+' cm '+pill(sOK)],
     ['Radio a ejes de barras',fmt(sec.r*100,1)+' cm'],['β1',fmt(sec.b1,3)],
     ['φPn máx (compresión)',fmt(fF(sec.phic*sec.Pmax),1)+' '+uF()],['φPn tracción pura = 0,9·As·fy',fmt(fF(0.9*sec.As*fy*1000),1)+' '+uF()],
     ['φMn flexión pura (N = 0)',fmt(fF(phiMnAt(sec,0)))+' '+uM()]
-  ].map(row).join('')+`<tr><td colspan="2" class="hint">ρ: los reglamentos piden para pilotes entre 0,4 % y 1 % según zona sísmica y tipo. Verificá el mínimo que corresponda.</td></tr>`;
+  ].map(row).join('')+`<tr><td colspan="2" class="hint">IC 103-II 6.6.1: el extremo superior del pilote se arma como zona de rótula plástica de columna (long. según 2.3.5 medida desde la cara inferior del cabezal; estribos según 2.3.7.1.1(a)/2.3.7.2.1(a)) y en 3D adyacentes como zona normal de columna. Esas zonas no se calculan acá. Con superestructura dúctil (6.3), Hu debe salir del diseño por capacidad (sobrerresistencia), no hace falta superar R = 1,5.</td></tr>`;
   // combos
   const Mauto=p.gf*Mabs,res=combos.map(c=>{const M=c.M===''?Mauto:Math.abs(c.M),cap=phiMnAt(sec,c.N);return {...c,Mu:M,cap,ratio:cap&&cap>0?M/cap:Infinity}});
   res.forEach((c,i)=>{if(!$('cr'+i))return;$('cr'+i).textContent=c.cap==null?'fuera de rango':fmt(fF(c.cap));
@@ -378,7 +405,7 @@ function inp(){
   const EI=Ec*Ig*num('crk');
   const phi=num('phi');
   return {D,L,Ec,Ig,EI,gam:num('gam')*f,phi,Kp:Math.tan((45+phi/2)*Math.PI/180)**2,nh:num('nh')*f,cu:num('cu')*f,K:num('K')*f,
-    My:num('My')*f,Q:num('Q')*f,e:head==='libre'?num('e'):0,xadm:num('xadm')/1000,FS:num('FS'),gf:num('gf'),fb:num('fb'),etap:num('etap')};
+    My:num('My')*f,Hin:num('Q')*f,Q:(loadMode==='ult'?num('Q')/num('gf'):num('Q'))*f,e:head==='libre'?num('e'):0,xadm:num('xadm')/1000,FS:num('FS'),gf:num('gf'),fb:num('fb'),etap:num('etap')};
 }
 // display helpers (internal kN)
 const fF=v=>v/fac(), uF=()=>U==='t'?'t':'kN', uM=()=>U==='t'?'t·m':'kN·m', uq=()=>U==='t'?'t/m':'kN/m';
@@ -514,6 +541,7 @@ function bromsSketch(p,br){
 }
 
 // ---------- main ----------
+const CW=['Rigidez del pilote frente al suelo: define qué método aplica.','Servicio: cuánto se corre la cabeza con H (Winkler).','Momento de diseño de la sección, con Hu (Winkler).','Falla del suelo o del pilote por carga lateral (Broms).','Máxima H que cumple resistencia (Qu/FS) y desplazamiento.','Longitud enterrada necesaria por equilibrio (Blum).'];
 function row(c){return '<tr>'+c.map((x,i)=>i?`<td class="n">${x}</td>`:`<td>${x}</td>`).join('')+'</tr>'}
 function pill(ok,t1='Cumple',t2='No cumple'){return `<span class="pill ${ok?'ok':'bad'}">${ok?t1:t2}</span>`}
 function calc(){
@@ -522,7 +550,12 @@ function calc(){
   $('nh-hint').textContent='Tabla 11.15, nh en kN/m³: arena seca o húmeda suelta 1800–2200, media 5500–7000, densa 15000–18000. Sumergida: 1000–1400 / 3500–4500 / 9000–12000.'+tf;
   $('K-hint').textContent='K en kN/m³: qu < 200 kPa → 10000–20000; 200–800 → 20000–40000; > 800 → > 40000.'+tf;
   const p=inp();if(!Object.values(p).every(v=>isFinite(v))||p.L<=0||p.D<=0||p.EI<=0)return;
-  const Vu_=num('Vu')*fac(),hasVu=isFinite(Vu_)&&Vu_>0;if(hasVu)p.gf=Vu_/p.Q;
+  const hasVu=loadMode==='ult';
+  $('Qlab').textContent=hasVu?'Carga lateral última Hu':'Carga lateral de servicio H';
+  $('gflab').textContent=hasVu?'Factor Hu / H servicio':'Mayoración Hu / H';
+  $('solsum').innerHTML=`Para el <b>armado</b> (Mu, Vu): Hu = <b>${fmt(fF(p.gf*p.Q))} ${uF()}</b><br>Para <b>desplazamiento, Broms y Blum</b>: H = <b>${fmt(fF(p.Q))} ${uF()}</b>`+(head==='libre'&&p.e>0?`<br>Momento en el terreno: H·e = <b>${fmt(fF(p.Q*p.e))} ${uM()}</b>`:'');
+  $('loadhint').innerHTML=hasVu?`Hu se usa directo para Mu y Vu del armado. Para el desplazamiento y Broms se usa Hu/γ = ${fmt(fF(p.Q))} ${uF()}. Con sismo dejá γ = 1: el desplazamiento se verifica con la propia acción sísmica (admisible típico 15–25 mm) y Broms con FS ≈ 1,5. Si Hu viene de otra combinación (1,2D+1,6L), poné γ ≈ 1,5 para volver a servicio.`
+   :`H de servicio para el desplazamiento y Broms (FS 2 a 3). El armado usa Hu = γ·H = ${fmt(fF(p.gf*p.Q))} ${uF()}.`;
   const T=Math.pow(p.EI/p.nh,0.2),R=Math.pow(p.EI/(p.K*p.D),0.25),rel=soil==='arena'?p.L/T:p.L/R,ch=soil==='arena'?'T':'R';
   const cls=rel<=2?'Rígido / corto':rel>=5?'Largo / flexible':'Intermedio';
   const w=winkler(p),br=broms(p),bd=bromsDefl(p),bl=blum(p);
@@ -532,17 +565,17 @@ function calc(){
   $('cards').innerHTML=[
     ['Clasificación',cls,`L/${ch} = ${fmt(rel)} · ${ch} = ${fmt(soil==='arena'?T:R)} m`,rel<=2?'info':rel>=5?'info':'warn'],
     ['Desplazamiento cabeza',fmt(x0*1000)+' mm',pill(Math.abs(x0)<=p.xadm,'≤ '+fmt(p.xadm*1000,0)+' mm','> '+fmt(p.xadm*1000,0)+' mm')+' Winkler, servicio'],
-    ['M máx servicio',fmt(fF(w.M[iM]))+' '+uM(),`a z = ${fmt(w.z[iM])} m · Mu = ${fmt(fF(p.gf*Mabs))} ${uM()} (${hasVu?'con Vu':'γf = '+fmt(p.gf)})`],
-    ['Qu Broms',fmt(fF(br.gov),1)+' '+uF(),`${br.mode} · FS real = ${fmt(br.gov/p.Q)}`],
-    ['Qg admisible',fmt(fF(Qadm),1)+' '+uF(),pill(p.Q<=Qadm)+` mín(Qu/FS; desplazamiento)`],
+    ['Mu armado',fmt(fF(p.gf*Mabs))+' '+uM(),`con Hu = ${fmt(fF(p.gf*p.Q))} ${uF()}, a z = ${fmt(w.z[iM])} m · Vu = ${fmt(fF(p.gf*Math.max(...w.V.map(Math.abs))))} ${uF()}`],
+    ['Qu Broms',fmt(fF(br.gov),1)+' '+uF(),`${br.mode} · FS = Qu/${hasVu&&p.gf===1?'Hu':'H'} = ${fmt(br.gov/p.Q)}`],
+    [hasVu&&p.gf===1?'Hu admisible':'H admisible',fmt(fF(Qadm),1)+' '+uF(),pill(p.Q<=Qadm)+` mín(Qu/FS; desplazamiento)`],
     ['Blum t necesario',fmt(bl.t)+' m',pill(p.L>=bl.t,'L = '+fmt(p.L)+' m alcanza','L = '+fmt(p.L)+' m no alcanza')]
-  ].map(c=>`<div class="card"><div class="k">${c[0]}</div><div class="v">${c[1]}</div><div class="s">${c[2]}</div></div>`).join('');
+  ].map((c,i)=>`<div class="card"><div class="k">${c[0]}</div><div class="v">${c[1]}</div><div class="s">${c[2]}</div><div class="w">${CW[i]}</div></div>`).join('');
   // recommendation
   let rec=`<h3>Para este pilote: ${cls.toLowerCase()} (L/${ch} = ${fmt(rel)})</h3><ul>`;
   if(rel<=2)rec+=`<li>Gira casi como cuerpo rígido. Manda el suelo: verificá rotura con <b>Broms pilote corto</b> y dimensioná el empotramiento con <b>Blum</b>${soil==='arena'?'':' (Blum es para granular; en arcilla usá Broms)'}.</li><li>La tabla 11.14 de Matlock-Reese <b>no aplica</b> (exige L ≥ 5${ch}). Para desplazamiento y Mu usá el Winkler por diferencias finitas de esta página, que vale para cualquier L.</li>`;
   else if(rel<5)rec+=`<li>Comportamiento intermedio: usá <b>Winkler</b> (esta FD o la fig. 11.29) para servicio y Mu, y <b>Broms</b> revisando corto e intermedio/largo.</li><li>Blum tiende a ser conservador acá porque supone giro rígido.</li>`;
   else rec+=`<li>Pilote largo: la longitud no aumenta la capacidad. Mandan My y la rigidez. Usá <b>Matlock-Reese / Davisson-Gill</b> (tabla 11.14) o esta FD, y <b>Broms largo</b> para la carga última.</li><li>Blum no corresponde: el pilote no gira como cuerpo rígido.</li>`;
-  rec+=`<li>Armado (${hasVu?'factor Vu/Qg':'γf'}): Mu = ${fmt(p.gf)} × ${fmt(fF(Mabs))} = <b>${fmt(fF(p.gf*Mabs))} ${uM()}</b> y Vu = ${fmt(fF(p.gf*Math.max(...w.V.map(Math.abs))))} ${uF()}, con el axial concomitante.</li></ul>`;
+  rec+=`<li>Armado con Hu = ${fmt(fF(p.gf*p.Q))} ${uF()}: Mu = ${fmt(p.gf)} × ${fmt(fF(Mabs))} = <b>${fmt(fF(p.gf*Mabs))} ${uM()}</b> y Vu = ${fmt(fF(p.gf*Math.max(...w.V.map(Math.abs))))} ${uF()}, con el axial concomitante.</li></ul>`;
   $('reco').innerHTML=rec;
   // winkler plots
   const L=p.L,c1=css('--accent'),c2=css('--bad'),c3=css('--c2'),c4=css('--soil');
@@ -625,8 +658,8 @@ async function buildMemoria(){
 <h2>1. Objeto</h2><p>Verificar el pilote de Ø${fmt(p.D*100,0)} cm y ${fmt(p.L)} m de longitud empotrada frente a la carga horizontal transmitida en su cabeza: desplazamiento en servicio, resistencia lateral del suelo, empotramiento necesario y armado de la sección de hormigón armado. Referencias: B. M. Das, <i>Fundamentos de Ingeniería de Cimentaciones</i>, 7ª ed., §11.16; CIRSOC 201.</p>
 <h2>2. Datos</h2>`+tb([
  ['Suelo',soilTxt],['Diámetro D',fmt(p.D)+' m'],['Longitud empotrada L',fmt(p.L)+' m'],['Ep',fmt(p.Ec/1000,0)+' MPa'],['Ip',fmt(p.Ig,5)+' m⁴ (factor de rigidez '+fmt(num('crk'))+')'],
- ['Ep·Ip',fmt(fF(p.EI),0)+' '+uF()+'·m²'],['Condición de cabeza',head==='libre'?'Libre':'Restringida (giro impedido)'],['Carga lateral de servicio Qg',fmt(fF(p.Q))+' '+uF()],
- ['Altura de aplicación e',fmt(p.e)+' m'],['Cargas mayoradas',L.hasVu?`Vu = ${fmt(fF(p.gf*p.Q))} ${uF()} (Vu/Qg = ${fmt(p.gf)})`:`γf = ${fmt(p.gf)}`],
+ ['Ep·Ip',fmt(fF(p.EI),0)+' '+uF()+'·m²'],['Condición de cabeza',head==='libre'?'Libre':'Restringida (giro impedido)'],['Carga lateral para desplazamiento y Broms',fmt(fF(p.Q))+' '+uF()],
+ ['Altura de aplicación e',fmt(p.e)+' m'],['Carga lateral última Hu (armado)',`${fmt(fF(p.gf*p.Q))} ${uF()}`+(L.hasVu?' (dato, sismo)':` (γ = ${fmt(p.gf)})`)],
  ['Desplazamiento admisible',fmt(p.xadm*1000,0)+' mm'],['FS sobre Qu (Broms)',fmt(p.FS)],['Momento resistente My (Broms)',fmt(fF(p.My))+' '+uM()]],['Dato','Valor'])+`
 <h2>3. Clasificación del pilote</h2><p>${soil==='arena'?`Longitud característica T = (EpIp/nh)^(1/5) = ${fmt(L.T)} m (ec. 11.90).`:`Longitud característica R = (EpIp/k)^(1/4) = ${fmt(L.R)} m, con k = K·D (ec. 11.94).`} L/${L.ch} = ${fmt(L.rel)} → <b>${L.cls}</b>. Criterio: L ≤ 2${L.ch} rígido; L ≥ 5${L.ch} largo.</p>
 <h2>4. Análisis elástico (Winkler)</h2><p>Se resuelve la ecuación de la viga sobre fundación elástica EpIp·d⁴x/dz⁴ + k·x = 0 (ec. 11.84) por diferencias finitas con 120 tramos, con k = ${soil==='arena'?'nh·z (Matlock y Reese)':'K·D constante (Davisson y Gill)'}. Resultados con la carga de servicio Qg:</p>${cleanTable('wtab')}
