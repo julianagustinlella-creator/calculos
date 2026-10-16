@@ -123,7 +123,8 @@ input[type=range]{accent-color:var(--accent);width:120px}
         • Clic en una pieza: la resalta y muestra nombre, designación, dimensiones y material.<br>
         • Doble clic: centra la cámara en la pieza.<br>
         • Casillas del árbol: mostrar/ocultar piezas o categorías.<br>
-        • Barra inferior: vistas, explosionado, corte, etiquetas, aislar selección.
+        • Barra inferior: vistas, explosionado, corte, etiquetas, aislar selección.<br>
+        • ⬇ DXF / ⬇ STL: descarga la unión en pantalla (sólo piezas visibles) en mm, con una capa por elemento, para importar en AutoCAD u otro CAD.
         </div></div>
     </div>
     <div class="tabpane" id="tab-materiales">
@@ -168,6 +169,10 @@ input[type=range]{accent-color:var(--accent);width:120px}
         <button class="btn small" id="concBtn">H° translúcido</button>
         <button class="btn small" id="isoBtn">Aislar</button>
         <button class="btn small" id="edgesBtn" class="active">Aristas</button>
+      </div>
+      <div class="grp">
+        <button class="btn small" id="dxfBtn" title="Exportar la unión visible como DXF (3DFACE, mm, una capa por elemento) para AutoCAD">⬇ DXF</button>
+        <button class="btn small" id="stlBtn" title="Exportar la unión visible como STL (malla)">⬇ STL</button>
       </div>
     </div>
     <div id="tip"></div>
@@ -55926,6 +55931,60 @@ function renderSelInfo() {
   el.innerHTML = `<div class="kv"><div>Elemento</div><div><b>${p.name}</b></div><div>Posición</div><div>${p.key}</div><div>Designación</div><div>${p.desig || '—'}</div><div>Dimensiones</div><div>${p.dims || '—'}</div><div>Material</div><div>${p.mat || '—'}</div><div>Cantidad</div><div>${qty} en la unión</div>${p.note ? `<div>Nota</div><div>${p.note}</div>` : ''}</div>`;
   document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('active', x.dataset.tab === 'datos')); document.querySelectorAll('.tabpane').forEach(x => x.classList.toggle('active', x.id === 'tab-datos'));
 }
+
+/* ---------- Exportación DXF / STL (sólo piezas visibles, coordenadas en mm, Y arriba → Z arriba en CAD) ---------- */
+function visibleTriangles(cb) {
+  B.root.updateMatrixWorld(true);
+  const v = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
+  B.parts.forEach(p => {
+    if (!p.obj.visible) return;
+    p.obj.traverse(o => {
+      if (!o.isMesh || o.userData.isEdge) return;
+      let vis = true, q = o; while (q) { if (!q.visible) vis = false; q = q.parent; } if (!vis) return;
+      const g = o.geometry, pos = g.attributes.position, idx = g.index;
+      const n = idx ? idx.count : pos.count;
+      for (let i = 0; i < n; i += 3) {
+        for (let k = 0; k < 3; k++) { const j = idx ? idx.getX(i + k) : i + k; v[k].fromBufferAttribute(pos, j).applyMatrix4(o.matrixWorld); }
+        cb(p, v);
+      }
+    });
+  });
+}
+const cad = (x, y, z) => [x, -z, y]; // three.js (Y arriba) → AutoCAD (Z arriba): X=X, Y=-Z, Z=Y
+const layerName = p => (p.key + '_' + p.name).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9_\-]+/g, '_').slice(0, 60);
+const ACI = { perfil: 8, placa: 5, conf: 9, bulon: 250, barra: 251, arm: 30, horm: 254, sold: 2, otro: 7 };
+function exportDXF() {
+  const layers = new Map(); B.parts.forEach(p => { if (p.obj.visible) layers.set(layerName(p), ACI[p.cat] || 7); });
+  const L = [];
+  L.push('0', 'SECTION', '2', 'HEADER', '9', '$ACADVER', '1', 'AC1015', '9', '$INSUNITS', '70', '4', '0', 'ENDSEC');
+  L.push('0', 'SECTION', '2', 'TABLES', '0', 'TABLE', '2', 'LAYER', '70', String(layers.size));
+  layers.forEach((c, n) => L.push('0', 'LAYER', '2', n, '70', '0', '62', String(c), '6', 'CONTINUOUS'));
+  L.push('0', 'ENDTAB', '0', 'ENDSEC', '0', 'SECTION', '2', 'ENTITIES');
+  const f = n => (Math.round(n * 1000) / 1000).toString();
+  visibleTriangles((p, v) => {
+    const ln = layerName(p); L.push('0', '3DFACE', '8', ln);
+    const P = [v[0], v[1], v[2], v[2]];
+    P.forEach((q, i) => { const c = cad(q.x, q.y, q.z); L.push(String(10 + i), f(c[0]), String(20 + i), f(c[1]), String(30 + i), f(c[2])); });
+  });
+  L.push('0', 'ENDSEC', '0', 'EOF');
+  download(new Blob([L.join('\r\n')], { type: 'application/dxf' }), `${current.id}_${current.title.split('—')[0].trim().replace(/\s+/g, '_')}.dxf`);
+}
+function exportSTL() {
+  let n = 0; visibleTriangles(() => n++);
+  const buf = new ArrayBuffer(84 + n * 50), dv = new DataView(buf); dv.setUint32(80, n, true); let o = 84;
+  const a = new THREE.Vector3(), b = new THREE.Vector3(), nn = new THREE.Vector3();
+  visibleTriangles((p, v) => {
+    a.subVectors(v[1], v[0]); b.subVectors(v[2], v[0]); nn.crossVectors(a, b).normalize();
+    const N = cad(nn.x, nn.y, nn.z); N.forEach((x, i) => dv.setFloat32(o + i * 4, x, true)); o += 12;
+    v.forEach(q => { const c = cad(q.x, q.y, q.z); c.forEach((x, i) => dv.setFloat32(o + i * 4, x, true)); o += 12; });
+    dv.setUint16(o, 0, true); o += 2;
+  });
+  download(new Blob([buf], { type: 'model/stl' }), `${current.id}_${current.title.split('—')[0].trim().replace(/\s+/g, '_')}.stl`);
+}
+function download(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); }
+document.getElementById('dxfBtn').onclick = exportDXF;
+document.getElementById('stlBtn').onclick = exportSTL;
+window.__export = { exportDXF, exportSTL, visibleTriangles };
 
 function resize() { const w = viewEl.clientWidth, h = viewEl.clientHeight; renderer.setSize(w, h); labelRenderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
 addEventListener('resize', resize); resize();
