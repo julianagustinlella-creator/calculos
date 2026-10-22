@@ -98,6 +98,12 @@ tr.gov td{background:var(--accent-bg)}
 .reco h3{margin-bottom:4px}
 .reco ul{margin:6px 0 0;padding-left:18px}
 svg text{font-family:var(--mono);font-size:10px;fill:var(--muted)}
+.layc{border:1px solid var(--line);border-radius:6px;padding:6px 8px;margin-top:6px}
+.layc .lh{display:flex;align-items:center;gap:8px;font-size:12px}.layc .lh span{color:var(--muted);font-family:var(--mono);flex:1}
+.layc .lh button{border:0;background:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px}
+.layc .lg{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;margin-top:4px}
+.lf{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--muted);min-width:0}
+.lf input,.lf select{width:100%;box-sizing:border-box;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:3px 5px;border-radius:4px;font:12px var(--mono);text-align:right}
 svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -144,8 +150,8 @@ svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
     <div class="f"><label for="FS">FS geotécnico sobre Qu (Broms)</label><input id="FS" type="number" step="0.1"><span class="u">—</span></div>
   </fieldset>
   <fieldset><legend>3 · Suelo</legend>
-    <div class="seg" id="seg-soil"><button data-v="arena" class="on">Arena (c = 0)</button><button data-v="arcilla">Arcilla (φ = 0)</button></div>
-    <div class="f"><label for="gam">Peso unitario γ</label><input id="gam" type="number" step="0.05"><span class="u" data-d="F/m3"></span></div>
+    <div class="seg" id="seg-soil"><button data-v="arena" class="on">Arena (c = 0)</button><button data-v="arcilla">Arcilla (φ = 0)</button><button data-v="capas">Estratificado</button></div>
+    <div class="f soilG"><label for="gam">Peso unitario γ</label><input id="gam" type="number" step="0.05"><span class="u" data-d="F/m3"></span></div>
     <div class="f soilA"><label for="phi">Ángulo de fricción φ'</label><input id="phi" type="number" step="1"><span class="u">°</span></div>
     <div class="f soilA"><label for="nh">nh (reacción horizontal)</label><input id="nh" type="number" step="10"><span class="u" data-d="F/m3"></span></div>
     <details class="help soilA"><summary>¿Qué es nh y cómo lo elijo?</summary>
@@ -170,6 +176,12 @@ svg .ttl{font-family:var(--cond);font-size:12px;font-weight:600;fill:var(--ink)}
     </details>
     <p class="hint soilA" id="nh-hint"></p>
     <p class="hint soilC" id="K-hint"></p>
+    <div class="soilL">
+      <p class="hint" style="margin-top:0">Capas desde la superficie. La última se extiende hasta la punta. En arena: γ, φ y nh. En arcilla: γ, cu y K.</p>
+      <div id="laytab"></div>
+      <button type="button" id="addl" class="chip" style="margin-top:6px">+ Agregar capa</button>
+      <p class="hint" id="layhint"></p>
+    </div>
   </fieldset>
   <fieldset><legend>4 · Pilote</legend>
     <div class="f"><label for="L">Longitud empotrada L</label><input id="L" type="number" step="0.1"><span class="u">m</span></div>
@@ -350,7 +362,7 @@ function setUnits(u){
   for(const k in dims){const el=$(k);if(el.value!==''){let v=parseFloat(el.value)*(old==='t'?G:1)/(U==='t'?G:1);el.value=+v.toPrecision(4)}}
   document.querySelectorAll('.u[data-d]').forEach(s=>{const F=U==='t'?'t':'kN';s.textContent=s.dataset.d.replace('F',F).replace('m3','m³').replace('m2','m²')});
   $('u-t').classList.toggle('on',U==='t');$('u-kN').classList.toggle('on',U==='kN');
-  drawCombos();calc();
+  drawCombos();drawLayers();calc();
 }
 function init(){
   for(const k in defs){const v=defs[k];$(k).value=(v===''?'':(dims[k]?+(v/G).toPrecision(4):v))}
@@ -366,9 +378,42 @@ function init(){
   });
   $('t-s').addEventListener('input',calc);$('t-s').addEventListener('change',calc);
   $('addc').onclick=()=>{combos.push({n:'Combinación '+(combos.length+1),N:0,M:''});drawCombos();calc()};
+  $('addl').onclick=()=>{const l=layers[layers.length-1];layers.push({...l});drawLayers();calc()};
   setUnits('t');
 }
 // combos in internal kN / kN·m
+// capas del suelo (unidades internas kN, m): h espesor, t arena|arcilla, g γ, phi, cu, k (nh en arena, K en arcilla)
+let layers=[{h:1.7,t:'arena',g:16.18,phi:15,cu:0,k:1000},{h:10,t:'arena',g:20.99,phi:40,cu:0,k:16500}];
+function drawLayers(){
+  const F=U==='t'?'t':'kN';let z=0;
+  const fld=(i,k,lab,val,step,dis)=>`<label class="lf"><span>${lab}</span><input id="l${k}${i}" data-i="${i}" data-k="${k}" type="number" step="${step}" value="${val}"${dis?' disabled':''}></label>`;
+  $('laytab').innerHTML=layers.map((l,i)=>{const z0=z;z+=l.h;const ar=l.t==='arena';
+    return `<div class="layc"><div class="lh"><b>Capa ${i+1}</b><span>${fmt(z0)} – ${i===layers.length-1?'punta':fmt(z)+' m'}</span><button type="button" data-ldel="${i}" aria-label="Quitar capa ${i+1}"${layers.length<2?' disabled':''}>×</button></div>
+    <div class="lg">${fld(i,'h','Espesor (m)',l.h,0.1)}<label class="lf"><span>Tipo</span><select id="lt${i}" data-i="${i}" data-k="t"><option value="arena"${ar?' selected':''}>Arena</option><option value="arcilla"${ar?'':' selected'}>Arcilla</option></select></label>
+    ${fld(i,'g','γ ('+F+'/m³)',+(l.g/fac()).toPrecision(4),0.05)}${ar?fld(i,'phi','φ (°)',l.phi,1):fld(i,'cu','cu ('+F+'/m²)',+(l.cu/fac()).toPrecision(4),0.5)}
+    ${fld(i,'k',(ar?'nh':'K')+' ('+F+'/m³)',+(l.k/fac()).toPrecision(4),10)}</div></div>`}).join('');
+  $('laytab').querySelectorAll('input,select').forEach(el=>{const h=e=>{e.stopPropagation();const l=layers[+el.dataset.i],k=el.dataset.k;
+    if(k==='t'){if(e.type!=='change')return;l.t=el.value;if(l.t==='arcilla'){l.phi=0;if(!l.cu)l.cu=50;l.k=15000}else{if(!l.phi)l.phi=30;l.cu=0;l.k=6000}drawLayers()}
+    else{const v=parseFloat(el.value);if(!isFinite(v))return;l[k]=(k==='g'||k==='cu'||k==='k')?v*fac():v}calc()};
+    el.addEventListener('input',h);el.addEventListener('change',h)});
+  $('laytab').querySelectorAll('button[data-ldel]').forEach(b=>b.onclick=()=>{layers.splice(+b.dataset.ldel,1);drawLayers();calc()});
+}
+// integración numérica (Simpson) y búsqueda de raíz de una función creciente
+function integ(f,a,b,n=240){if(b<=a)return 0;const h=(b-a)/n;let s=f(a)+f(b);for(let i=1;i<n;i++)s+=(i%2?4:2)*f(a+i*h);return s*h/3}
+function solveUp(g,target,hi0){let lo=0,hi=Math.max(hi0,0.1);for(let k=0;k<60&&g(hi)<target;k++)hi*=2;for(let k=0;k<80;k++){const m=(lo+hi)/2;if(g(m)<target)lo=m;else hi=m}return (lo+hi)/2}
+// modelo de suelo estratificado
+function soilModel(D,L,EI,bfac,etap){
+  const Ls=[];let z=0,sv=0;layers.forEach((l,i)=>{const h=Math.max(0,l.h);Ls.push({...l,z0:z,z1:i===layers.length-1?Infinity:z+h,sv0:sv,Kp:Math.tan((45+(l.t==='arena'?l.phi:0)/2)*Math.PI/180)**2});z+=h;sv+=l.g*h});
+  const lay=zz=>Ls.find(l=>zz>=l.z0&&zz<l.z1)||Ls[Ls.length-1];
+  const sv_=zz=>{const l=lay(zz);return l.sv0+l.g*(zz-l.z0)};
+  const pu=zz=>{const l=lay(zz);return l.t==='arena'?3*l.Kp*sv_(zz)*D:(zz>=1.5*D?9*l.cu*D:0)};
+  const k=zz=>{const l=lay(zz);return l.t==='arena'?l.k*zz:l.k*D};
+  const pb=zz=>{const l=lay(zz);return (l.t==='arena'?sv_(zz)*l.Kp:sv_(zz)+2*l.cu)*bfac*D/etap};
+  const S0=integ(sv_,0,L),gam=2*S0/(L*L),tanp=integ(zz=>sv_(zz)*Math.tan((lay(zz).t==='arena'?lay(zz).phi:0)*Math.PI/180),0,L)/S0,phi=Math.atan(tanp)*180/Math.PI;
+  let zr=L,nh=1;for(let it=0;it<6;it++){nh=integ(zz=>k(zz)*zz,0,zr)/(zr**3/3);const T=Math.pow(EI/nh,0.2);zr=Math.min(L,2*T)}
+  const cu=integ(zz=>lay(zz).t==='arcilla'?lay(zz).cu:0,0,L)/L,K=integ(k,0,L)/L/D;
+  return {Ls,lay,sv:sv_,pu,k,pb,gam,phi,Kp:Math.tan((45+phi/2)*Math.PI/180)**2,nh,cu,K,txt:Ls.map((l,i)=>`Capa ${i+1} (${fmt(l.z0)}–${isFinite(l.z1)?fmt(l.z1):'…'} m): ${l.t==='arena'?`arena, γ = ${fmt(fF(l.g))} ${uF()}/m³, φ = ${fmt(l.phi,0)}°, nh = ${fmt(fF(l.k),0)} ${uF()}/m³`:`arcilla, γ = ${fmt(fF(l.g))} ${uF()}/m³, cu = ${fmt(fF(l.cu))} ${uF()}/m², K = ${fmt(fF(l.k),0)} ${uF()}/m³`}`)};
+}
 let combos=[{n:'Compresión máxima',N:196,M:''},{n:'Tracción (arrancamiento)',N:-78,M:''}];
 const cin='border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:3px 5px;border-radius:4px';
 function drawCombos(){
@@ -467,6 +512,9 @@ function inp(){
   const Ig=$('Iu').value!==''?num('Iu'):Math.PI*D**4/64;
   const EI=Ec*Ig*num('crk');
   const phi=num('phi');
+  if(soil==='capas'&&D>0&&L>0&&EI>0){const S=soilModel(D,L,EI,num('fb'),num('etap'));
+    return {D,L,Ec,Ig,EI,gam:S.gam,phi:S.phi,Kp:S.Kp,nh:S.nh,cu:S.cu,K:S.K,
+    My:num('My')*f,Hin:num('Q')*f,Q:(loadMode==='ult'?num('Q')/num('gf'):num('Q'))*f,e:head==='libre'?num('e'):0,xadm:num('xadm')/1000,FS:num('FS'),gf:num('gf'),fb:num('fb'),etap:num('etap')}}
   return {D,L,Ec,Ig,EI,gam:num('gam')*f,phi,Kp:Math.tan((45+phi/2)*Math.PI/180)**2,nh:num('nh')*f,cu:num('cu')*f,K:num('K')*f,
     My:num('My')*f,Hin:num('Q')*f,Q:(loadMode==='ult'?num('Q')/num('gf'):num('Q'))*f,e:head==='libre'?num('e'):0,xadm:num('xadm')/1000,FS:num('FS'),gf:num('gf'),fb:num('fb'),etap:num('etap')};
 }
@@ -478,7 +526,7 @@ function fmt(v,d=2){if(!isFinite(v))return '—';const a=Math.abs(v);if(a!==0&&(
 function winkler(p){
   const N=120,h=p.L/N,n=N+5,EI=p.EI;
   const A=Array.from({length:n},()=>new Float64Array(n)),b=new Float64Array(n);
-  const kAt=z=>soil==='arena'?p.nh*z:p.K*p.D;
+  const kAt=z=>p.S?p.S.k(z):soil!=='arcilla'?p.nh*z:p.K*p.D;
   const idx=j=>j+2;
   for(let i=0;i<=N;i++){const r=i,z=i*h;
     A[r][idx(i-2)]+=1;A[r][idx(i-1)]+=-4;A[r][idx(i)]+=6+kAt(z)*h**4/EI;A[r][idx(i+1)]+=-4;A[r][idx(i+2)]+=1;}
@@ -501,9 +549,20 @@ function winkler(p){
 }
 
 // ---------- Broms ----------
+function bromsLayered(p,L){
+  const pu=p.S.pu,e=p.e,My=p.My,I0=(a,b)=>integ(pu,a,b),I1=(a,b)=>integ(z=>pu(z)*z,a,b),r={};
+  const fOf=H=>solveUp(f=>I0(0,f),H,L);
+  if(head==='libre'){r.short=(L*I0(0,L)-I1(0,L))/(e+L);const fl=solveUp(f=>I0(0,f)*e+I1(0,f),My,L);r.long=I0(0,fl);
+    r.gov=Math.min(r.short,r.long);r.mode=r.short<=r.long?'Corto: falla del suelo':'Largo: fluencia del pilote'}
+  else{r.short=I0(0,L);r.inter=(L*I0(0,L)-I1(0,L)+My)/L;const fl=solveUp(f=>I1(0,f),2*My,L);r.long=I0(0,fl);
+    r.gov=Math.min(r.short,r.inter,r.long);r.mode=r.gov===r.short?'Corto: falla del suelo':r.gov===r.inter?'Intermedio: rótula en la cabeza':'Largo: dos rótulas'}
+  r.f=fOf(r.gov);r.Mmax=head==='libre'?r.gov*e+I1(0,r.f):null;
+  if(head==='libre'){const fs=fOf(r.short);r.Mshort=r.short*e+I1(0,fs)}else r.Mshort=I1(0,L);
+  return r;
+}
 function broms(p,L){
-  L=L??p.L;const {D,gam,Kp,My,e,cu}=p,r={};
-  if(soil==='arena'){const g=gam*D*Kp;
+  L=L??p.L;if(p.S)return bromsLayered(p,L);const {D,gam,Kp,My,e,cu}=p,r={};
+  if(soil!=='arcilla'){const g=gam*D*Kp;
     r.short=head==='libre'?0.5*gam*D*L**3*Kp/(e+L):1.5*gam*D*L*L*Kp;
     if(head==='libre'){let Q=Math.pow(My/(0.544/Math.sqrt(g)),2/3);
       for(let i=0;i<40;i++){const s=Math.sqrt(Q/g),fv=Q*(e+0.544*s)-My,d=e+0.816*s;Q-=fv/d;if(Q<=0)Q=1e-6}
@@ -523,7 +582,7 @@ function broms(p,L){
 }
 function bromsDefl(p){
   const lin=(x,a,b,ys,yl)=>x<=a?ys:x>=b?yl:ys+(yl-ys)*(x-a)/(b-a);
-  if(soil==='arena'){const eta=Math.pow(p.nh/p.EI,0.2),eL=eta*p.L;
+  if(soil!=='arcilla'){const eta=Math.pow(p.nh/p.EI,0.2),eL=eta*p.L;
     const I=head==='libre'?lin(eL,2,4,18*(1+1.33*p.e/p.L)/eL**3,2.4/eL+1.6*p.e/p.L):lin(eL,2,4,2/eL**3,0.93/eL);
     const k=p.L/(Math.pow(p.EI,0.6)*Math.pow(p.nh,0.4));
     return {par:'ηL',val:eL,cls:eL<=2?'rígido':eL>=4?'largo':'intermedio',I,x:I*p.Q*k,Qx:p.xadm/(I*k)}}
@@ -533,7 +592,13 @@ function bromsDefl(p){
 }
 
 // ---------- Blum ----------
+function blumLayered(p){
+  const pb=p.S.pb,H=p.Q,e=head==='libre'?p.e:0,J0=z=>integ(pb,0,z),mz=z=>z*J0(z)-integ(x=>pb(x)*x,0,z);
+  const t0=solveUp(t=>mz(t)-H*(e+t),0,p.L),zm=solveUp(J0,H,p.L);
+  return {b:p.fb*p.D,a:NaN,t0,t:1.2*t0,zm,Mmax:H*(e+zm)-mz(zm),C:J0(t0)-H,pz:pb,mz};
+}
 function blum(p){
+  if(p.S)return blumLayered(p);
   const b=p.fb*p.D,a=p.gam*p.Kp*b/p.etap,H=p.Q,e=head==='libre'?p.e:0;
   let t=Math.cbrt(6*H/a)+e;for(let i=0;i<60;i++){const f=a*t**3/6-H*(e+t),d=a*t*t/2-H;t-=f/d;if(t<=0)t=0.01}
   const zm=Math.sqrt(2*H/a),Mmax=H*(e+zm)-a*zm**3/6,C=a*t*t/2-H;
@@ -586,7 +651,13 @@ function bromsSketch(p,br){
   s+=arrow(px-80,ey,px-2,ey,acc,2.5)+`<text x="${px-80}" y="${ey-6}" style="fill:${acc};font-weight:500">Qu = ${fmt(fF(br.gov),1)} ${uF()}</text>`;
   if(head!=='libre')s+=`<rect x="${px-14}" y="${gy-26}" width="${pw+28}" height="16" fill="${mut}" fill-opacity=".35"/><text x="${px+pw/2}" y="${gy-30}" text-anchor="middle">cabezal (giro impedido)</text>`;
   const short=br.mode.startsWith('Corto');
-  if(soil==='arena'){
+  if(p.S){const zE=short?p.L:Math.min(br.f,p.L),n=40;let mx=1e-9;for(let i=0;i<=n;i++)mx=Math.max(mx,p.S.pu(zE*i/n));
+    const pts=[`${px+pw},${gy}`];for(let i=0;i<=n;i++){const z=zE*i/n;pts.push(`${px+pw+p.S.pu(z)/mx*110},${Y(z)}`)}pts.push(`${px+pw},${Y(zE)}`);
+    s+=`<polygon points="${pts.join(' ')}" fill="${bad}" fill-opacity=".22" stroke="${bad}"/>`;
+    p.S.Ls.forEach(l=>{if(l.z0>0&&l.z0<p.L)s+=`<line x1="0" x2="360" y1="${Y(l.z0)}" y2="${Y(l.z0)}" stroke="${soilc}" stroke-dasharray="4 3"/><text x="4" y="${Y(l.z0)-3}">z = ${fmt(l.z0)} m</text>`});
+    if(!short)s+=`<circle cx="${px+pw/2}" cy="${Y(zE)}" r="6" fill="none" stroke="${bad}" stroke-width="2"/><text x="${px+pw+6}" y="${Y(zE)+16}" style="fill:${bad}">rótula, f = ${fmt(br.f)} m</text>`;
+    else if(head==='libre')s+=arrow(px-60,Y(p.L)-4,px-2,Y(p.L)-4,bad)+`<text x="${px-60}" y="${Y(p.L)-10}">reacción en la punta</text>`;
+  }else if(soil!=='arcilla'){
     if(short){const pmax=110;s+=`<polygon points="${px+pw},${gy} ${px+pw+pmax},${Y(p.L)} ${px+pw},${Y(p.L)}" fill="${bad}" fill-opacity=".22" stroke="${bad}"/>`;
       s+=`<text x="${px+pw+pmax-4}" y="${Y(p.L)-6}" text-anchor="end" style="fill:${bad}">3γLDKp</text>`;
       s+=head==='libre'?arrow(px-60,Y(p.L)-4,px-2,Y(p.L)-4,bad)+`<text x="${px-60}" y="${Y(p.L)-10}">reacción en la punta</text>`:'';
@@ -599,7 +670,7 @@ function bromsSketch(p,br){
     if(short&&fz<p.L)s+=`<rect x="${px-pw2}" y="${Y(fz)}" width="${pw2}" height="${Y(p.L)-Y(fz)}" fill="${bad}" fill-opacity=".22" stroke="${bad}"/><text x="${px-pw2-4}" y="${(Y(fz)+Y(p.L))/2+4}" text-anchor="end" style="fill:${bad}">9cuD</text>`;
     if(!short)s+=`<circle cx="${px+pw/2}" cy="${Y(fz)}" r="6" fill="none" stroke="${bad}" stroke-width="2"/><text x="${px+pw+pw2+4}" y="${Y(fz)+16}" style="fill:${bad}">rótula</text>`;
   }
-  s+=`<text x="8" y="16" class="ttl">${br.mode}</text><text x="8" y="32">${soil==='arena'?'Presión pasiva 3·Kp·γ·z·D':'Reacción 9·cu·D debajo de 1,5D'}</text><text x="${px+pw/2}" y="${gy+ph+22}" text-anchor="middle">L = ${fmt(p.L)} m</text>`;
+  s+=`<text x="8" y="16" class="ttl">${br.mode}</text><text x="8" y="32">${p.S?'Presión última por capas pu(z)':soil!=='arcilla'?'Presión pasiva 3·Kp·γ·z·D':'Reacción 9·cu·D debajo de 1,5D'}</text><text x="${px+pw/2}" y="${gy+ph+22}" text-anchor="middle">L = ${fmt(p.L)} m</text>`;
   $('bsk').innerHTML=s;
 }
 
@@ -667,11 +738,12 @@ const CW=['Rigidez del pilote frente al suelo: define qué método aplica.','Ser
 function row(c){return '<tr>'+c.map((x,i)=>i?`<td class="n">${x}</td>`:`<td>${x}</td>`).join('')+'</tr>'}
 function pill(ok,t1='Cumple',t2='No cumple'){return `<span class="pill ${ok?'ok':'bad'}">${ok?t1:t2}</span>`}
 function calc(){
-  document.querySelectorAll('.soilA').forEach(e=>e.hidden=soil!=='arena');document.querySelectorAll('.soilC').forEach(e=>e.hidden=soil==='arena');
+  document.querySelectorAll('.soilA').forEach(e=>e.hidden=soil!=='arena');document.querySelectorAll('.soilC').forEach(e=>e.hidden=soil!=='arcilla');document.querySelectorAll('.soilL').forEach(e=>e.hidden=soil!=='capas');document.querySelectorAll('.soilG').forEach(e=>e.hidden=soil==='capas');
   const tf=U==='t'?' (t/m³ ≈ kN/m³ ÷ 9,81)':'';
   $('nh-hint').textContent='Tabla 11.15, nh en kN/m³: arena seca o húmeda suelta 1800–2200, media 5500–7000, densa 15000–18000. Sumergida: 1000–1400 / 3500–4500 / 9000–12000.'+tf;
   $('K-hint').textContent='K en kN/m³: qu < 200 kPa → 10000–20000; 200–800 → 20000–40000; > 800 → > 40000.'+tf;
   const p=inp();if(!Object.values(p).every(v=>isFinite(v))||p.L<=0||p.D<=0||p.EI<=0)return;
+  if(soil==='capas'){p.S=soilModel(p.D,p.L,p.EI,p.fb,p.etap);$('layhint').innerHTML=`Equivalentes (solo para clasificar y para la fig. 11.33 de Broms): γ = ${fmt(fF(p.gam))} ${uF()}/m³, φ = ${fmt(p.phi,1)}°, nh = ${fmt(fF(p.nh),0)} ${uF()}/m³. Winkler, Broms, Blum y Mu se calculan capa por capa.`}
   if($('myauto').checked){const fcv=num('fc'),fyv=num('fy'),nbv=Math.max(3,Math.round(num('nb'))),dbv=num('db')/1000,cv=num('cov')/100,dsv=num('dst')/1000;
     if([fcv,fyv,dbv,cv,dsv].every(isFinite)){const sc0=rcSection(p.D,fcv*1000,fyv*1000,nbv,dbv,cv,dsv,$('conf').value,'cap');
       const Ns=combos.length?combos.map(c=>c.N):[0],cand=Ns.map(N=>({N,M:MnAt(sc0,N)})).filter(x=>x.M!=null&&x.M>0);
@@ -685,17 +757,18 @@ function calc(){
   $('solsum').innerHTML=`Para el <b>armado</b> (Mu, Vu): Hu = <b>${fmt(fF(p.gf*p.Q))} ${uF()}</b><br>Para <b>desplazamiento, Broms y Blum</b>: H = <b>${fmt(fF(p.Q))} ${uF()}</b>`+(head==='libre'&&p.e>0?`<br>Momento en el terreno: H·e = <b>${fmt(fF(p.Q*p.e))} ${uM()}</b>`:'');
   $('loadhint').innerHTML=hasVu?`Hu se usa directo para Mu y Vu del armado. Para el desplazamiento y Broms se usa Hu/γ = ${fmt(fF(p.Q))} ${uF()}. Con sismo dejá γ = 1: el desplazamiento se verifica con la propia acción sísmica (admisible típico 15–25 mm) y Broms con FS ≈ 1,5. Si Hu viene de otra combinación (1,2D+1,6L), poné γ ≈ 1,5 para volver a servicio.`
    :`H de servicio para el desplazamiento y Broms (FS 2 a 3). El armado usa Hu = γ·H = ${fmt(fF(p.gf*p.Q))} ${uF()}.`;
-  const T=Math.pow(p.EI/p.nh,0.2),R=Math.pow(p.EI/(p.K*p.D),0.25),rel=soil==='arena'?p.L/T:p.L/R,ch=soil==='arena'?'T':'R';
+  const T=Math.pow(p.EI/p.nh,0.2),R=Math.pow(p.EI/(p.K*p.D),0.25),rel=soil!=='arcilla'?p.L/T:p.L/R,ch=soil!=='arcilla'?'T':'R';
   const cls=rel<=2?'Rígido / corto':rel>=5?'Largo / flexible':'Intermedio';
   const w=winkler(p),br=broms(p),bd=bromsDefl(p),bl=blum(p);
   const Mabs=Math.max(...w.M.map(Math.abs)),iM=w.M.findIndex(m=>Math.abs(m)===Mabs);
   {const Hu=p.gf*p.Q,MuW=p.gf*Mabs,zW=w.z[iM];let Mpl=null,zPl=null;
-   if(head==='libre'){if(soil==='arena'){const f=0.82*Math.sqrt(Hu/(p.gam*p.D*p.Kp));Mpl=Hu*(p.e+0.67*f);zPl=f}else{const f=Hu/(9*p.cu*p.D);Mpl=Hu*(p.e+1.5*p.D+0.5*f);zPl=1.5*p.D+f}}
+   if(head==='libre'&&p.S){const f=solveUp(x=>integ(p.S.pu,0,x),Hu,p.L);Mpl=Hu*p.e+integ(z=>p.S.pu(z)*z,0,f);zPl=f}
+   else if(head==='libre'){if(soil!=='arcilla'){const f=0.82*Math.sqrt(Hu/(p.gam*p.D*p.Kp));Mpl=Hu*(p.e+0.67*f);zPl=f}else{const f=Hu/(9*p.cu*p.D);Mpl=Hu*(p.e+1.5*p.D+0.5*f);zPl=1.5*p.D+f}}
    const usePl=Mpl!=null&&Mpl>MuW;DES={Hu,MuW,zW,Mpl,zPl,Mu:usePl?Mpl:MuW,zMu:usePl?zPl:zW,src:usePl?'reparto plástico (Broms con Hu)':'Winkler'};}
   const x0=w.x[0],Qadm=Math.min(br.gov/p.FS,bd.Qx);
   // cards
   $('cards').innerHTML=[
-    ['Clasificación',cls,`L/${ch} = ${fmt(rel)} · ${ch} = ${fmt(soil==='arena'?T:R)} m`,rel<=2?'info':rel>=5?'info':'warn'],
+    ['Clasificación',cls,`L/${ch} = ${fmt(rel)} · ${ch} = ${fmt(soil!=='arcilla'?T:R)} m`,rel<=2?'info':rel>=5?'info':'warn'],
     ['Desplazamiento cabeza',fmt(x0*1000)+' mm',pill(Math.abs(x0)<=p.xadm,'≤ '+fmt(p.xadm*1000,0)+' mm','> '+fmt(p.xadm*1000,0)+' mm')+' Winkler, servicio'],
     ['Mu de diseño',fmt(fF(DES.Mu))+' '+uM(),`gobierna ${DES.src}, a z = ${fmt(DES.zMu)} m. Winkler ${fmt(fF(DES.MuW))}${DES.Mpl!=null?' · plástico '+fmt(fF(DES.Mpl)):''} ${uM()} · Vu = ${fmt(fF(p.gf*Math.max(...w.V.map(Math.abs))))} ${uF()}`],
     ['Qu Broms',fmt(fF(br.gov),1)+' '+uF(),`${br.mode} · FS = Qu/${hasVu&&p.gf===1?'Hu':'H'} = ${fmt(br.gov/p.Q)}`],
@@ -704,7 +777,7 @@ function calc(){
   ].map((c,i)=>`<div class="card"><div class="k">${c[0]}</div><div class="v">${c[1]}</div><div class="s">${c[2]}</div><div class="w">${CW[i]}</div></div>`).join('');
   // recommendation
   let rec=`<h3>Para este pilote: ${cls.toLowerCase()} (L/${ch} = ${fmt(rel)})</h3><ul>`;
-  if(rel<=2)rec+=`<li>Gira casi como cuerpo rígido. Manda el suelo: verificá rotura con <b>Broms pilote corto</b> y dimensioná el empotramiento con <b>Blum</b>${soil==='arena'?'':' (Blum es para granular; en arcilla usá Broms)'}.</li><li>La tabla 11.14 de Matlock-Reese <b>no aplica</b> (exige L ≥ 5${ch}). Para desplazamiento y Mu usá el Winkler por diferencias finitas de esta página, que vale para cualquier L.</li>`;
+  if(rel<=2)rec+=`<li>Gira casi como cuerpo rígido. Manda el suelo: verificá rotura con <b>Broms pilote corto</b> y dimensioná el empotramiento con <b>Blum</b>${soil!=='arcilla'?'':' (Blum es para granular; en arcilla usá Broms)'}.</li><li>La tabla 11.14 de Matlock-Reese <b>no aplica</b> (exige L ≥ 5${ch}). Para desplazamiento y Mu usá el Winkler por diferencias finitas de esta página, que vale para cualquier L.</li>`;
   else if(rel<5)rec+=`<li>Comportamiento intermedio: usá <b>Winkler</b> (esta FD o la fig. 11.29) para servicio y Mu, y <b>Broms</b> revisando corto e intermedio/largo.</li><li>Blum tiende a ser conservador acá porque supone giro rígido.</li>`;
   else rec+=`<li>Pilote largo: la longitud no aumenta la capacidad. Mandan My y la rigidez. Usá <b>Matlock-Reese / Davisson-Gill</b> (tabla 11.14) o esta FD, y <b>Broms largo</b> para la carga última.</li><li>Blum no corresponde: el pilote no gira como cuerpo rígido.</li>`;
   rec+=`<li>Armado con Hu = ${fmt(fF(p.gf*p.Q))} ${uF()}: Mu = <b>${fmt(fF(DES.Mu))} ${uM()}</b> (${DES.src}, a ${fmt(DES.zMu)} m de profundidad) y Vu = ${fmt(fF(p.gf*Math.max(...w.V.map(Math.abs))))} ${uF()}, con el axial concomitante.</li></ul>`;
@@ -715,12 +788,12 @@ function calc(){
   const izero=w.x.findIndex((v,i)=>i>0&&Math.sign(v)!==Math.sign(w.x[0]));
   $('wtab').innerHTML='<tr><th>Resultado (servicio)</th><th>Valor</th></tr>'+[
     ['Ep·Ip de cálculo',fmt(fF(p.EI),0)+' '+(U==='t'?'t·m²':'kN·m²')],
-    ['k',soil==='arena'?`nh·z = ${fmt(fF(p.nh),0)}·z`:`K·D = ${fmt(fF(p.K*p.D),0)} ${U==='t'?'t/m²':'kN/m²'}`],
+    ['k',p.S?'por capas: nh,i·z en arena, K,i·D en arcilla':soil!=='arcilla'?`nh·z = ${fmt(fF(p.nh),0)}·z`:`K·D = ${fmt(fF(p.K*p.D),0)} ${U==='t'?'t/m²':'kN/m²'}`],
     ['x cabeza',fmt(x0*1000)+' mm'],['θ cabeza',fmt(w.t[0],5)+' rad'],['x punta',fmt(w.x[w.x.length-1]*1000)+' mm'],
     ['Punto de giro (x = 0)',izero>0?fmt(w.z[izero])+' m':'no gira dentro de L'],
     ['M máx',fmt(fF(w.M[iM]))+' '+uM()+' a '+fmt(w.z[iM])+' m'],['V cabeza (control = Qg)',fmt(fF(w.V[0]))+' '+uF()],
     ['<b>Mu de diseño con Hu</b>: Winkler (elástico)',fmt(fF(DES.MuW))+' '+uM()+' a '+fmt(DES.zW)+' m'],
-    ['<b>Mu de diseño con Hu</b>: reparto plástico, f = 0,82√(Hu/γDKp), M = Hu(e+0,67f)'+(soil!=='arena'?' [arcilla: f = Hu/9cuD, M = Hu(e+1,5D+0,5f)]':''),DES.Mpl!=null?fmt(fF(DES.Mpl))+' '+uM()+' a '+fmt(DES.zPl)+' m':'solo cabeza libre'],
+    ['<b>Mu de diseño con Hu</b>: reparto plástico, f = 0,82√(Hu/γDKp), M = Hu(e+0,67f)'+(soil==='arcilla'?' [arcilla: f = Hu/9cuD, M = Hu(e+1,5D+0,5f)]':''),DES.Mpl!=null?fmt(fF(DES.Mpl))+' '+uM()+' a '+fmt(DES.zPl)+' m':'solo cabeza libre'],
     ['<b>Mu adoptado = máx</b> (gobierna '+DES.src+')','<b>'+fmt(fF(DES.Mu))+' '+uM()+'</b>'],
     ['M resistente My',fmt(fF(p.My))+' '+uM()+' '+pill(DES.Mu<=p.My,'Mu ≤ My','Mu > My')]
   ].map(row).join('');
@@ -728,7 +801,7 @@ function calc(){
   if(soil==='arena'&&head==='libre'){const xmr=(2.435*p.Q*T**3+1.623*Mg*T*T)/p.EI,mmr=0.772*p.Q*T+Mg;
     $('mrtab').innerHTML='<tr><th></th><th>Tabla 11.14</th><th>FD</th></tr>'+row(['x cabeza (mm)',fmt(xmr*1000),fmt(x0*1000)])+row(['M máx ('+uM()+')',(Mg?'≈ ':'')+fmt(fF(mmr)),fmt(fF(Math.max(...w.M)))]);
     $('mrnote').innerHTML=rel>=5?'L/T ≥ 5: la tabla es válida y debe coincidir con la FD.':`L/T = ${fmt(rel)} &lt; 5: la tabla 11.14 <b>no es válida</b>. Se muestra para ver cuánto se equivocaría. Vale la FD.`}
-  else{$('mrtab').innerHTML='';$('mrnote').textContent=soil==='arena'?'La tabla 11.14 es para cabeza libre. Con cabeza restringida usá la FD.':'En arcilla, Davisson-Gill (fig. 11.30) da coeficientes con k constante. La FD resuelve el mismo problema exactamente.'}
+  else{$('mrtab').innerHTML='';$('mrnote').textContent=soil==='capas'?'Suelo estratificado: la tabla 11.14 no aplica. Vale la FD con k(z) por capas.':soil!=='arcilla'?'La tabla 11.14 es para cabeza libre. Con cabeza restringida usá la FD.':'En arcilla, Davisson-Gill (fig. 11.30) da coeficientes con k constante. La FD resuelve el mismo problema exactamente.'}
   // broms
   const r=[];const g=x=>x===br.gov?' class="gov"':'';
   r.push(`<tr><th>Mecanismo</th><th>Qu (${uF()})</th></tr>`);
@@ -740,12 +813,12 @@ function calc(){
   r.push(row(['FS real = Qu / Qg',fmt(br.gov/p.Q)+' '+pill(br.gov/p.Q>=p.FS)]));
   if(br.Mmax!=null)r.push(row(['M máx a rotura ('+uM()+')',fmt(fF(br.Mmax))]));
   $('btab').innerHTML=r.join('');
-  $('beq').textContent=soil==='arena'?
+  $('beq').textContent=p.S?(`Presión última por capas: pu(z) = 3·Kp,i·σv(z)·D en arena; 9·cu·D en arcilla (0 hasta 1,5D)\n`+(head==='libre'?`Corto:  Qu·(e+L) = ∫₀^L pu(z)·(L − z) dz\nLargo:  ∫₀^f pu dz = Qu,   My = Qu·e + ∫₀^f pu(z)·z dz\nf = ${fmt(br.f)} m`:`Corto:       Qu = ∫₀^L pu dz\nIntermedio:  Qu·L = ∫₀^L pu·(L − z) dz + My\nLargo:       2·My = ∫₀^f pu(z)·z dz,  Qu = ∫₀^f pu dz`)):soil!=='arcilla'?
    (head==='libre'?`Kp = tan²(45+φ/2) = ${fmt(p.Kp,3)}\nCorto:  Qu = 0,5·γ·D·L³·Kp/(e+L)\nLargo:  My = Qu·(e + 0,544·√(Qu/(γ·D·Kp)))\nf = 0,82·√(Qu/(γDKp)) = ${fmt(br.f)} m   Mmáx = Qu·(e+0,67f)`
    :`Kp = ${fmt(p.Kp,3)}\nCorto:       Qu = 1,5·γ·D·L²·Kp\nIntermedio:  Qu = (0,5·γ·D·L³·Kp + My)/L\nLargo:       Qu = (2·My·√(γDKp)/0,544)^(2/3)`)
    :(head==='libre'?`f = Qu/(9·cu·D),  L = 1,5D + f + g\nCorto:  Qu·(e+1,5D+0,5f) = 2,25·cu·D·g²\nLargo:  My = Qu·(e+1,5D+0,5f)`
    :`Corto:       Qu = 9·cu·D·(L − 1,5D)\nIntermedio:  My = Qu·(1,5D+0,5f) − 2,25·cu·D·g²\nLargo:       2·My = Qu·(1,5D+0,5f)`);
-  {const sh=broms(p);const Msh=soil==='arena'?(head==='libre'?sh.short*(p.e+0.67*0.82*Math.sqrt(sh.short/(p.gam*p.D*p.Kp))):(2/3)*sh.short*p.L):(head==='libre'?sh.short*(p.e+1.5*p.D+0.5*sh.short/(9*p.cu*p.D)):null);
+  {const sh=broms(p);const Msh=p.S?sh.Mshort:soil!=='arcilla'?(head==='libre'?sh.short*(p.e+0.67*0.82*Math.sqrt(sh.short/(p.gam*p.D*p.Kp))):(2/3)*sh.short*p.L):(head==='libre'?sh.short*(p.e+1.5*p.D+0.5*sh.short/(9*p.cu*p.D)):null);
    const longGov=!br.mode.startsWith('Corto');
    $('bexp').innerHTML=`<b>Corto y largo en Broms no es lo mismo que rígido y flexible.</b> La clasificación de arriba (L/${ch} = ${fmt(rel)}, ${cls.toLowerCase()}) compara rigideces en régimen elástico y dice cómo se deforma el pilote. Broms responde otra pregunta: <b>qué se rompe primero</b> cuando la carga crece. Revisa dos mecanismos y gobierna el de menor Qu:<ul style="margin:6px 0;padding-left:18px"><li><b>Corto (falla del suelo):</b> el pilote gira entero y el suelo llega al empuje pasivo en toda la longitud. Supone que el pilote aguanta el momento que eso genera${Msh!=null?`: <b>M = ${fmt(fF(Msh))} ${uM()}</b>`:''}.</li><li><b>${br.inter!==undefined?'Intermedio o largo':'Largo'} (fluye el pilote):</b> antes de que falle el suelo, el momento llega a My = <b>${fmt(fF(p.My))} ${uM()}</b> y se forma una rótula plástica.</li></ul>`+(longGov?`<b>En este caso gobierna el pilote:</b> ${Msh!=null?`para movilizar todo el suelo haría falta M = ${fmt(fF(Msh))} ${uM()}, más que My = ${fmt(fF(p.My))} ${uM()}. `:''}La sección rompe antes que el suelo, aunque el pilote sea rígido. Para que gobierne el suelo, aumentá la armadura en la pestaña Sección H°A°${$('myauto').checked?' (My se recalcula solo)':' o revisá el valor de My'}.`:`<b>En este caso gobierna el suelo:</b> la sección resiste el momento necesario${Msh!=null?` (My = ${fmt(fF(p.My))} ≥ ${fmt(fF(Msh))} ${uM()})`:''}, así que la capacidad lateral la limita el empuje pasivo.`);}
   bromsSketch(p,br);
@@ -758,10 +831,10 @@ function calc(){
     ["Ancho de cálculo b'",fmt(bl.b)+' m'],['Kp',fmt(p.Kp,3)],['Punto de giro t₀',fmt(bl.t0)+' m'],['Empotramiento t = 1,2·t₀',fmt(bl.t)+' m'],
     ['L disponible',fmt(p.L)+' m '+pill(p.L>=bl.t)],['Contrafuerza C en t₀',fmt(fF(bl.C),1)+' '+uF()],['Prof. de M máx (V = 0)',fmt(bl.zm)+' m'],
     ['M máx (servicio)',fmt(fF(bl.Mmax))+' '+uM()],['Mu = γf·M',fmt(fF(p.gf*bl.Mmax))+' '+uM()]
-  ].map(row).join('')+(soil!=='arena'?'<tr><td colspan="2"><span class="pill warn">Atención</span> Blum se plantea para suelo granular. En arcilla los resultados no son representativos.</td></tr>':'');
-  $('bleq').textContent=`Pasivo:  e(z) = γ·Kp·b'·z/ηp\nGiro:    Qg·(e + t₀) = γ·Kp·b'·t₀³/(6·ηp)\nt = 1,2·t₀     C = γKpb't₀²/(2ηp) − Qg\nM máx:   zm = √(2·Qg·ηp/(γ·Kp·b')),   M = Qg·(e+zm) − γKpb'zm³/(6ηp)`;
+  ].map(row).join('')+(soil==='arcilla'?'<tr><td colspan="2"><span class="pill warn">Atención</span> Blum se plantea para suelo granular. En arcilla los resultados no son representativos.</td></tr>':'');
+  $('bleq').textContent=p.S?`Pasivo por capas:  e(z) = σv(z)·Kp,i·b'/ηp  (arcilla: (σv + 2·cu)·b'/ηp)\nGiro:    Qg·(e + t₀) = ∫₀^t₀ e(z)·(t₀ − z) dz\nt = 1,2·t₀     C = ∫₀^t₀ e(z) dz − Qg\nM máx:   ∫₀^zm e(z) dz = Qg,   M = Qg·(e+zm) − ∫₀^zm e(z)·(zm − z) dz`:`Pasivo:  e(z) = γ·Kp·b'·z/ηp\nGiro:    Qg·(e + t₀) = γ·Kp·b'·t₀³/(6·ηp)\nt = 1,2·t₀     C = γKpb't₀²/(2ηp) − Qg\nM máx:   zm = √(2·Qg·ηp/(γ·Kp·b')),   M = Qg·(e+zm) − γKpb'zm³/(6ηp)`;
   const zb=[],pb=[],mb=[],N=80,el=head==='libre'?p.e:0;
-  for(let i=0;i<=N;i++){const z=bl.t0*i/N;zb.push(z);pb.push(bl.a*z);mb.push(p.Q*(el+z)-bl.a*z**3/6)}
+  for(let i=0;i<=N;i++){const z=bl.t0*i/N;zb.push(z);pb.push(bl.pz?bl.pz(z):bl.a*z);mb.push(p.Q*(el+z)-(bl.mz?bl.mz(z):bl.a*z**3/6))}
   $('blplots').innerHTML=profile('Pasivo neto',uq(),zb,pb.map(fF),c4,bl.t0,(X,Y)=>`<text x="${X(0)+4}" y="${Y(bl.t0)-6}" style="fill:${css('--bad')}">C = ${fmt(fF(bl.C),1)} ${uF()} en t₀</text>`)+profile('Momento (Blum)',uM(),zb,mb.map(fF),c2,bl.t0);
   LAST={p,T,R,rel,ch,cls,w,br,bd,bl,Mabs,iM,x0,Qadm,hasVu};
   drawRC(p,Mabs,Math.max(...w.V.map(Math.abs)));
@@ -789,7 +862,7 @@ async function buildMemoria(){
   if(prevTheme===null)root.removeAttribute('data-theme');else root.setAttribute('data-theme',prevTheme);calc();
   const obra=$('obra').value||'Pilote con carga lateral',hoy=new Date().toLocaleDateString('es-AR');
   const ok=b=>b?'<b class="ok">CUMPLE</b>':'<b class="no">NO CUMPLE</b>';
-  const rc=L.rc,soilTxt=soil==='arena'?`Arena: γ = ${fmt(fF(p.gam))} ${uF()}/m³, φ' = ${fmt(p.phi,0)}°, Kp = ${fmt(p.Kp,3)}, nh = ${fmt(fF(p.nh),0)} ${uF()}/m³`:`Arcilla: γ = ${fmt(fF(p.gam))} ${uF()}/m³, cu = ${fmt(fF(p.cu))} ${uF()}/m², K = ${fmt(fF(p.K),0)} ${uF()}/m³`;
+  const rc=L.rc,soilTxt=p.S?'Estratificado. '+p.S.txt.join('; ')+`. Equivalentes para clasificar: φ = ${fmt(p.phi,1)}°, nh = ${fmt(fF(p.nh),0)} ${uF()}/m³`:soil!=='arcilla'?`Arena: γ = ${fmt(fF(p.gam))} ${uF()}/m³, φ' = ${fmt(p.phi,0)}°, Kp = ${fmt(p.Kp,3)}, nh = ${fmt(fF(p.nh),0)} ${uF()}/m³`:`Arcilla: γ = ${fmt(fF(p.gam))} ${uF()}/m³, cu = ${fmt(fF(p.cu))} ${uF()}/m², K = ${fmt(fF(p.K),0)} ${uF()}/m³`;
   const combRows=rc.res.map(c=>[c.n,fmt(fF(c.N)),fmt(fF(c.Mu)),c.cap==null?'fuera de rango':fmt(fF(c.cap)),c.cap==null?'—':fmt(c.ratio*100,0)+' %',ok(c.ratio<=1)]);
   const allOK=rc.res.every(c=>c.ratio<=1);
   let h=`<h1>Memoria de cálculo</h1><p class="sub">${obra} · Pilote con carga lateral · ${hoy}</p>
@@ -799,11 +872,11 @@ async function buildMemoria(){
  ['Ep·Ip',fmt(fF(p.EI),0)+' '+uF()+'·m²'],['Condición de cabeza',head==='libre'?'Libre':'Restringida (giro impedido)'],['Carga lateral para desplazamiento y Broms',fmt(fF(p.Q))+' '+uF()],
  ['Altura de aplicación e',fmt(p.e)+' m'],['Carga lateral última Hu (armado)',`${fmt(fF(p.gf*p.Q))} ${uF()}`+(L.hasVu?' (dato, sismo)':` (γ = ${fmt(p.gf)})`)],
  ['Desplazamiento admisible',fmt(p.xadm*1000,0)+' mm'],['FS sobre Qu (Broms)',fmt(p.FS)],['Momento resistente My (Broms)',fmt(fF(p.My))+' '+uM()]],['Dato','Valor'])+`
-<h2>3. Clasificación del pilote</h2><p>${soil==='arena'?`Longitud característica T = (EpIp/nh)^(1/5) = ${fmt(L.T)} m (ec. 11.90).`:`Longitud característica R = (EpIp/k)^(1/4) = ${fmt(L.R)} m, con k = K·D (ec. 11.94).`} L/${L.ch} = ${fmt(L.rel)} → <b>${L.cls}</b>. Criterio: L ≤ 2${L.ch} rígido; L ≥ 5${L.ch} largo.</p>
-<h2>4. Análisis elástico (Winkler)</h2><p>Se resuelve la ecuación de la viga sobre fundación elástica EpIp·d⁴x/dz⁴ + k·x = 0 (ec. 11.84) por diferencias finitas con 120 tramos, con k = ${soil==='arena'?'nh·z (Matlock y Reese)':'K·D constante (Davisson y Gill)'}. Resultados con la carga de servicio Qg:</p>${cleanTable('wtab')}
+<h2>3. Clasificación del pilote</h2><p>${soil!=='arcilla'?`Longitud característica T = (EpIp/nh)^(1/5) = ${fmt(L.T)} m (ec. 11.90).`:`Longitud característica R = (EpIp/k)^(1/4) = ${fmt(L.R)} m, con k = K·D (ec. 11.94).`} L/${L.ch} = ${fmt(L.rel)} → <b>${L.cls}</b>. Criterio: L ≤ 2${L.ch} rígido; L ≥ 5${L.ch} largo.</p>
+<h2>4. Análisis elástico (Winkler)</h2><p>Se resuelve la ecuación de la viga sobre fundación elástica EpIp·d⁴x/dz⁴ + k·x = 0 (ec. 11.84) por diferencias finitas con 120 tramos, con k = ${p.S?'k(z) por capas: nh,i·z en arena y K,i·D en arcilla':soil!=='arcilla'?'nh·z (Matlock y Reese)':'K·D constante (Davisson y Gill)'}. Resultados con la carga de servicio Qg:</p>${cleanTable('wtab')}
 <table class="img"><tr>${gW.map(i=>`<td>${i}</td>`).join('')}</tr></table>
 <p>Desplazamiento en la cabeza: ${fmt(L.x0*1000)} mm frente a ${fmt(p.xadm*1000,0)} mm admisibles → ${ok(Math.abs(L.x0)<=p.xadm)}</p>
-<h2>5. Resistencia lateral última (Broms)</h2><p>Se supone la plastificación del suelo: presión pasiva 3·Kp·γ·z·D en arena, o 9·cu·D por debajo de 1,5D en arcilla. Se revisan los mecanismos de pilote corto, intermedio y largo, y gobierna el menor.</p>
+<h2>5. Resistencia lateral última (Broms)</h2><p>Se supone la plastificación del suelo: presión pasiva 3·Kp·γ·z·D en arena, o 9·cu·D por debajo de 1,5D en arcilla${p.S?'; con suelo estratificado se toman σv y Kp de cada capa y se integra numéricamente':''}. Se revisan los mecanismos de pilote corto, intermedio y largo, y gobierna el menor.</p>
 <pre>${$('beq').textContent}</pre>${cleanTable('btab')}<p>${gBs[0]||''}</p><p>${gBc[0]||''}</p>
 <p>Desplazamiento de la cabeza según la fig. 11.33:</p>${cleanTable('bdef')}
 <p>Carga admisible Qadm = mín(Qu/FS; Q por desplazamiento) = ${fmt(fF(L.Qadm),1)} ${uF()} frente a Qg = ${fmt(fF(p.Q),1)} ${uF()} → ${ok(p.Q<=L.Qadm)}</p>
