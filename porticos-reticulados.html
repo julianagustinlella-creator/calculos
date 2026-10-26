@@ -85,10 +85,10 @@ tr[data-e]{cursor:pointer}tr[data-e]:hover td{background:rgba(0,163,196,.08)}tr.
 <div class="sm"><span class="cirl">● Tubos de la tabla CIRSOC F‑24</span> · sin marca: medidas comerciales (propiedades calculadas por geometría). L, C y 2L sin ry ni Z: no se verifican.</div></div>
 
 <div class="pn"><h3>Cargas</h3>
-<label>Horizontal H en cabeza izq. [<span class="uF">kN</span>] (→ +)<input id="qH" type="number" step="0.1" value="20"></label>
+<input id="qH" type="hidden" value="20">
 <label>Vertical repartida en viga [<span class="uF">kN</span>/m] (↓ +)<input id="qV" type="number" step="0.1" value="5"></label>
 <div class="sm">La repartida se aplica en los nudos del cordón superior (reticulada) o de la viga (alma llena).</div>
-<h4>Puntuales en cabeza de columnas [<span class="uF">kN</span>] (↓ +)</h4><div id="pts"></div>
+<h4>Cargas en cabeza de columnas [<span class="uF">kN</span>]</h4><div class="sm">H →: horizontal (positiva hacia la derecha) · P ↓: vertical (positiva hacia abajo). Podés cargar la horizontal en una sola columna o repartida en varias.</div><div id="pts"></div>
 <h4>Peso propio (acero 78,5 kN/m³)</h4>
 <label>Columnas (con cordones y celosía)<select id="ppC"><option value="1">Sí</option><option value="0">No</option></select></label>
 <label>Viga (con cordones y celosía)<select id="ppB"><option value="1">Sí</option><option value="0">No</option></select></label>
@@ -127,7 +127,7 @@ const PAT=[['pratt','Pratt (montantes + diagonales)'],['howe','Howe (montantes +
 const ROLE={cw:'Columna',cch:'Cordón columna',cd:'Diagonal columna',cm:'Montante columna',bw:'Viga',bt:'Cordón superior',bb:'Cordón inferior',bd:'Diagonal viga',bm:'Montante viga'};
 const $=id=>document.getElementById(id);
 const pick=(f,n)=>[f,Math.max(0,DB[f].findIndex(p=>p[0]==n))];
-const S={bays:[20],P:[0,0],ct:'llena',bt:'ret',tab:'mod',sc:{dm:50,m:1,n:1,v:1},CT:{},BT:{},cA:['A','A'],bA:['A'],eC:'A',eB:'A',
+const S={bays:[20],P:[0,0],Hc:[20,0],ct:'llena',bt:'ret',tab:'mod',sc:{dm:50,m:1,n:1,v:1},CT:{},BT:{},cA:['A','A'],bA:['A'],eC:'A',eB:'A',
  prof:{cw:pick('PERFIL_W','W 310 x 38,7'),cch:pick('TUBO_CUADRADO','Tubo 100 x 100 x 4,00'),cd:pick('TUBO_CUADRADO','Tubo 60 x 60 x 2,00'),cm:pick('TUBO_CUADRADO','Tubo 60 x 60 x 2,00'),
   bw:pick('PERFIL_W','W 410 x 46,1'),bt:pick('TUBO_CUADRADO','Tubo 100 x 100 x 4,00'),bb:pick('TUBO_CUADRADO','Tubo 100 x 100 x 4,00'),bd:pick('TUBO_CUADRADO','Tubo 60 x 60 x 2,00'),bm:pick('TUBO_CUADRADO','Tubo 60 x 60 x 2,00')}};
 const UF=()=>$("un").value=="t"?9.80665:1,uF=()=>$("un").value,uM=()=>$("un").value=="t"?"tm":"kNm";
@@ -139,11 +139,12 @@ function segs(){[['cT','ct'],['bT','bt']].forEach(([id,k])=>{$(id).querySelector
  $('cRet').hidden=S.ct!='ret';$('bRet').hidden=S.bt!='ret';}
 function ensure(){const nb=Math.max(1,Math.min(20,+$('nb').value||1));while(S.bays.length<nb)S.bays.push(S.bays[S.bays.length-1]||10);S.bays.length=nb;
  while(S.cA.length<nb+1)S.cA.push('A');S.cA.length=nb+1;while(S.bA.length<nb)S.bA.push('A');S.bA.length=nb;
- while(S.P.length<nb+1)S.P.push(0);S.P.length=nb+1}
+ while(S.P.length<nb+1)S.P.push(0);S.P.length=nb+1;while(S.Hc.length<nb+1)S.Hc.push(0);S.Hc.length=nb+1;$('qH').value=S.Hc[0]}
 function buildGeo(){ensure();const nb=S.bays.length;
  $('bays').innerHTML='<div class="cells">'+S.bays.map((b,i)=>`<label class="cell"><b>Luz ${i+1} [m]</b><input type="number" step="0.1" data-b="${i}" value="${b}"></label>`).join('')+'</div>';
  $('bays').querySelectorAll('[data-b]').forEach(e=>e.onchange=()=>{S.bays[e.dataset.b]=+e.value;run()});
- $('pts').innerHTML='<table class="gt"><tr>'+S.P.map((p,i)=>`<th>Col ${i+1}</th>`).join('')+'</tr><tr>'+S.P.map((p,i)=>`<td><input type="number" step="0.1" data-p="${i}" value="${p}"></td>`).join('')+'</tr></table>';
+ $('pts').innerHTML='<div style="overflow-x:auto"><table class="gt"><tr><th></th>'+S.P.map((p,i)=>`<th>Col ${i+1}</th>`).join('')+'</tr><tr><th>H →</th>'+S.Hc.map((h,i)=>`<td><input type="number" step="0.1" data-hc="${i}" value="${h}"></td>`).join('')+'</tr><tr><th>P ↓</th>'+S.P.map((p,i)=>`<td><input type="number" step="0.1" data-p="${i}" value="${p}"></td>`).join('')+'</tr></table></div>';
+ $('pts').querySelectorAll('[data-hc]').forEach(e=>e.onchange=()=>{S.Hc[e.dataset.hc]=+e.value;$('qH').value=S.Hc[0];run()});
  $('pts').querySelectorAll('[data-p]').forEach(e=>e.onchange=()=>{S.P[e.dataset.p]=+e.value;run()});}
 function visibleRoles(){const r=[];if(S.ct=='llena')r.push('cw');else r.push('cch','cd','cm');if(S.bt=='llena')r.push('bw');else r.push('bt','bb','bd','bm');return r}
 function buildProf(){let h='';for(const k of visibleRoles()){const[f,ix]=S.prof[k];
@@ -269,7 +270,7 @@ function model(){ensure();saveEd();const nb=S.bays.length,H=+$('H').value,X=[0];
    if(!info.b){const p=L/n;info.b={n,p,a:Math.atan(zb/p)*180/Math.PI,i}}}}
  const sup=[];N.forEach((n,i)=>{if(Math.abs(n.y)<1e-9)sup.push(i)});
  const F=new Array(N.length*3).fill(0),f=UF(),loads=[];
- const hn=node(colTop[0].l,H);F[hn*3]+=+$('qH').value*f;loads.push({n:hn,dir:'h',v:+$('qH').value});
+ S.Hc.forEach((h,i)=>{if(!h)return;const ns=C[i].ret?[node(colTop[i].l,H),node(colTop[i].r,H)]:[node(X[i],H)];ns.forEach(nd=>F[nd*3]+=h*f/ns.length);loads.push({n:ns[0],dir:'h',v:h})});
  const q=+$('qV').value*f;if(q)qNodes.forEach(([nd,w])=>F[nd*3+1]-=q*w);
  S.P.forEach((p,i)=>{if(!p)return;const ns=C[i].ret?[node(colTop[i].l,H),node(colTop[i].r,H)]:[node(X[i],H)];ns.forEach(nd=>F[nd*3+1]-=p*f/ns.length);loads.push({n:ns[0],dir:'v',v:p,x:X[i]})});
  const b0=B.find(x=>x.ret),c0=C.find(x=>x.ret);
@@ -424,7 +425,7 @@ ${fig('mod','Figura 1','Modelo de cálculo con cotas, uniones y cargas aplicadas
 <h2>3. Materiales</h2>
 ${tbl(['Material','Valor'],[['Acero: E',$('E').value+' MPa'],['Acero: Fy / Fu',$('vFy').value+' / '+$('vFu').value+' MPa'],...(usedC.some(c=>c.fill=='1')?[['Hormigón de relleno','H-'+[...new Set(usedC.filter(c=>c.fill=='1').map(c=>c.fc))].join(', H-')+' (Ec = 0,043·wc^1,5·√f′c, wc = 2400 kg/m³)']]:[])])}
 <h2>4. Cargas</h2>
-${tbl(['Carga','Valor'],[['Horizontal en cabeza de columna izquierda',$('qH').value+' '+u],['Repartida vertical sobre vigas',$('qV').value+' '+u+'/m'],['Puntuales en cabeza de columnas',S.P.map((p,i)=>`C${i+1}: ${p}`).join(' · ')+' '+u],['Peso propio columnas / vigas',($('ppC').value=='1'?'Sí':'No')+' / '+($('ppB').value=='1'?'Sí':'No')+' (acero 78,5 kN/m³; hormigón 24 kN/m³)']])}
+${tbl(['Carga','Valor'],[['Horizontales en cabeza de columnas',S.Hc.map((h,i)=>`C${i+1}: ${h}`).join(' · ')+' '+u],['Repartida vertical sobre vigas',$('qV').value+' '+u+'/m'],['Puntuales en cabeza de columnas',S.P.map((p,i)=>`C${i+1}: ${p}`).join(' · ')+' '+u],['Peso propio columnas / vigas',($('ppC').value=='1'?'Sí':'No')+' / '+($('ppB').value=='1'?'Sí':'No')+' (acero 78,5 kN/m³; hormigón 24 kN/m³)']])}
 <p class="sm">Las cargas se consideran ya mayoradas según la combinación que corresponda (CIRSOC 101/102). La repartida se aplica en los nudos del cordón superior (vigas reticuladas) o de la viga (alma llena).</p>
 <h2>5. Hipótesis del modelo</h2><ul>
 <li>Pórtico plano, análisis elástico lineal de primer orden (sin efecto P-Δ).</li>
@@ -457,8 +458,8 @@ ${tbl(['#','Barra','Perfil','L [m]',`N [${u}]`,`V [${u}]`,`Mi [${um}]`,`Mj [${um
 // ---------- guardar / cargar ----------
 let DBR=null,SAVED=[];const LSK='porticos_reticulados';
 const IDS=['nb','H','sup','bcon','un','E','zc','ac','pc','zb','ab','pb','bj','qH','qV','ppC','ppB','fill','fc','vFy','vFu','vU','vk','vkd','vLb','vLc','vKc','vKcv','vLbb','vN0'];
-function snapshot(){saveEd();const nm=o=>Object.fromEntries(Object.entries(o).map(([x,v])=>[x,{...v,prof:Object.fromEntries(Object.entries(v.prof).map(([k,[f,i]])=>[k,[f,DB[f][i][0]]]))}]));return{CT:nm(S.CT),BT:nm(S.BT),cA:S.cA,bA:S.bA,eC:S.eC,eB:S.eB,cMode:cMode(),bMode:bMode(),bays:S.bays,P:S.P,ct:S.ct,bt:S.bt,v:Object.fromEntries(IDS.map(i=>[i,$(i).value])),prof:Object.fromEntries(Object.entries(S.prof).map(([k,[f,i]])=>[k,[f,DB[f][i][0]]]))}}
-function restore(d){IDS.forEach(i=>{if(d.v[i]!==undefined)$(i).value=d.v[i]});S.bays=[...d.bays];S.P=[...d.P];S.ct=d.ct;S.bt=d.bt;S._u=$('un').value;
+function snapshot(){saveEd();const nm=o=>Object.fromEntries(Object.entries(o).map(([x,v])=>[x,{...v,prof:Object.fromEntries(Object.entries(v.prof).map(([k,[f,i]])=>[k,[f,DB[f][i][0]]]))}]));return{Hc:S.Hc,CT:nm(S.CT),BT:nm(S.BT),cA:S.cA,bA:S.bA,eC:S.eC,eB:S.eB,cMode:cMode(),bMode:bMode(),bays:S.bays,P:S.P,ct:S.ct,bt:S.bt,v:Object.fromEntries(IDS.map(i=>[i,$(i).value])),prof:Object.fromEntries(Object.entries(S.prof).map(([k,[f,i]])=>[k,[f,DB[f][i][0]]]))}}
+function restore(d){IDS.forEach(i=>{if(d.v[i]!==undefined)$(i).value=d.v[i]});S.bays=[...d.bays];S.P=[...d.P];S.Hc=d.Hc?[...d.Hc]:[+(d.v.qH||0)];S.ct=d.ct;S.bt=d.bt;S._u=$('un').value;
  Object.entries(d.prof).forEach(([k,[f,n]])=>{S.prof[k]=[f,Math.max(0,DB[f].findIndex(p=>p[0]==n))]});
  if(d.CT){const ix=o=>Object.fromEntries(Object.entries(o).map(([x,v])=>[x,{...v,prof:Object.fromEntries(Object.entries(v.prof).map(([k,[f,n]])=>[k,[f,Math.max(0,DB[f].findIndex(p=>p[0]==n))]]))}]));S.CT=ix(d.CT);S.BT=ix(d.BT);S.cA=[...d.cA];S.bA=[...d.bA];S.eC=d.eC;S.eB=d.eB;$('cMode').value=d.cMode;$('bMode').value=d.bMode;putC(S.CT[S.eC]);putB(S.BT[S.eB])}else{S.CT={};S.BT={};S.eC=S.eB='A';$('cMode').value=$('bMode').value='igual'}
  buildAsg();bjText();document.querySelectorAll('.uF').forEach(s=>s.textContent=S._u);segs();buildGeo();buildProf();run()}
@@ -577,7 +578,7 @@ function showSel(){const b=$('selInfo');if(S.sel==null||RS.err||!M.E[S.sel]){b.i
  $('selX').onclick=()=>{S.sel=null;draw()}}
 $('nb').onchange=()=>{buildGeo();buildAsg();run()};
 ['cMode','bMode'].forEach(id=>$(id).onchange=()=>{saveEd();buildAsg();buildProf();run()});
-$('un').onchange=()=>{const o=S._u||'kN',n=$('un').value,k=(o=='t'?9.80665:1)/(n=='t'?9.80665:1);S._u=n;['qH','qV'].forEach(i=>$(i).value=+(+$(i).value*k).toFixed(3));S.P=S.P.map(p=>+(p*k).toFixed(3));document.querySelectorAll('.uF').forEach(s=>s.textContent=n);buildGeo();run()};
+$('un').onchange=()=>{const o=S._u||'kN',n=$('un').value,k=(o=='t'?9.80665:1)/(n=='t'?9.80665:1);S._u=n;['qH','qV'].forEach(i=>$(i).value=+(+$(i).value*k).toFixed(3));S.P=S.P.map(p=>+(p*k).toFixed(3));S.Hc=S.Hc.map(h=>+(h*k).toFixed(3));document.querySelectorAll('.uF').forEach(s=>s.textContent=n);buildGeo();run()};
 $('bj').onchange=()=>{bjText();run()};
 ['fill','fc'].forEach(id=>$(id).addEventListener('change',run));
 ['H','sup','bcon','E','zc','ac','pc','zb','ab','pb','qH','qV','ppC','ppB','vFy','vFu','vU','vk','vkd','vLb','vLc','vKc','vKcv','vLbb','vN0'].forEach(id=>$(id).onchange=run);
