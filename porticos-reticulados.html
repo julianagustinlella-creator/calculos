@@ -103,6 +103,7 @@ tr[data-e]{cursor:pointer}tr[data-e]:hover td{background:rgba(0,163,196,.08)}tr.
 <label>k de columnas en el plano (pórtico desplazable)<select id="vKc"><option value="auto">Automático (nomograma, G de cada nudo)</option><option value="man">Manual</option></select></label>
 <label>k columnas manual<input id="vKcv" type="number" step="0.05" value="2"></label>
 <label>Lb columnas fuera del plano [m] (entre riostras o vigas transversales)<input id="vLc" type="number" step="0.1" value="6"></label>
+<div class="sm">Lb fuera del plano propio de cada columna (vacío = el general de arriba):</div><div id="lbc"></div>
 <label>k cordones de columna entre nudos de celosía<input id="vk" type="number" step="0.05" value="1"></label>
 <label>k diagonales y montantes<input id="vkd" type="number" step="0.05" value="1"></label>
 <label>Lb cordón superior de viga fuera del plano [m] (separación de correas)<input id="vLb" type="number" step="0.1" value="1.5"></label>
@@ -127,7 +128,7 @@ const PAT=[['pratt','Pratt (montantes + diagonales)'],['howe','Howe (montantes +
 const ROLE={cw:'Columna',cch:'Cordón columna',cd:'Diagonal columna',cm:'Montante columna',bw:'Viga',bt:'Cordón superior',bb:'Cordón inferior',bd:'Diagonal viga',bm:'Montante viga'};
 const $=id=>document.getElementById(id);
 const pick=(f,n)=>[f,Math.max(0,DB[f].findIndex(p=>p[0]==n))];
-const S={bays:[20],P:[0,0],Hc:[20,0],ct:'llena',bt:'ret',tab:'mod',sc:{dm:50,m:1,n:1,v:1},CT:{},BT:{},cA:['A','A'],bA:['A'],eC:'A',eB:'A',
+const S={bays:[20],P:[0,0],Hc:[20,0],Lbc:['',''],ct:'llena',bt:'ret',tab:'mod',sc:{dm:50,m:1,n:1,v:1},CT:{},BT:{},cA:['A','A'],bA:['A'],eC:'A',eB:'A',
  prof:{cw:pick('PERFIL_W','W 310 x 38,7'),cch:pick('TUBO_CUADRADO','Tubo 100 x 100 x 4,00'),cd:pick('TUBO_CUADRADO','Tubo 60 x 60 x 2,00'),cm:pick('TUBO_CUADRADO','Tubo 60 x 60 x 2,00'),
   bw:pick('PERFIL_W','W 410 x 46,1'),bt:pick('TUBO_CUADRADO','Tubo 100 x 100 x 4,00'),bb:pick('TUBO_CUADRADO','Tubo 100 x 100 x 4,00'),bd:pick('TUBO_CUADRADO','Tubo 60 x 60 x 2,00'),bm:pick('TUBO_CUADRADO','Tubo 60 x 60 x 2,00')}};
 const UF=()=>$("un").value=="t"?9.80665:1,uF=()=>$("un").value,uM=()=>$("un").value=="t"?"tm":"kNm";
@@ -139,11 +140,13 @@ function segs(){[['cT','ct'],['bT','bt']].forEach(([id,k])=>{$(id).querySelector
  $('cRet').hidden=S.ct!='ret';$('bRet').hidden=S.bt!='ret';}
 function ensure(){const nb=Math.max(1,Math.min(20,+$('nb').value||1));while(S.bays.length<nb)S.bays.push(S.bays[S.bays.length-1]||10);S.bays.length=nb;
  while(S.cA.length<nb+1)S.cA.push('A');S.cA.length=nb+1;while(S.bA.length<nb)S.bA.push('A');S.bA.length=nb;
- while(S.P.length<nb+1)S.P.push(0);S.P.length=nb+1;while(S.Hc.length<nb+1)S.Hc.push(0);S.Hc.length=nb+1;$('qH').value=S.Hc[0]}
+ while(S.P.length<nb+1)S.P.push(0);S.P.length=nb+1;while(S.Hc.length<nb+1)S.Hc.push(0);S.Hc.length=nb+1;while(S.Lbc.length<nb+1)S.Lbc.push('');S.Lbc.length=nb+1;$('qH').value=S.Hc[0]}
 function buildGeo(){ensure();const nb=S.bays.length;
  $('bays').innerHTML='<div class="cells">'+S.bays.map((b,i)=>`<label class="cell"><b>Luz ${i+1} [m]</b><input type="number" step="0.1" data-b="${i}" value="${b}"></label>`).join('')+'</div>';
  $('bays').querySelectorAll('[data-b]').forEach(e=>e.onchange=()=>{S.bays[e.dataset.b]=+e.value;run()});
  $('pts').innerHTML='<div style="overflow-x:auto"><table class="gt"><tr><th></th>'+S.P.map((p,i)=>`<th>Col ${i+1}</th>`).join('')+'</tr><tr><th>H →</th>'+S.Hc.map((h,i)=>`<td><input type="number" step="0.1" data-hc="${i}" value="${h}"></td>`).join('')+'</tr><tr><th>P ↓</th>'+S.P.map((p,i)=>`<td><input type="number" step="0.1" data-p="${i}" value="${p}"></td>`).join('')+'</tr></table></div>';
+ $('lbc').innerHTML='<div style="overflow-x:auto"><table class="gt"><tr>'+S.Lbc.map((v,i)=>`<th>Col ${i+1}</th>`).join('')+'</tr><tr>'+S.Lbc.map((v,i)=>`<td><input type="number" step="0.1" min="0" data-lbc="${i}" value="${v}" placeholder="${$('vLc').value}"></td>`).join('')+'</tr></table></div>';
+ $('lbc').querySelectorAll('[data-lbc]').forEach(e=>e.onchange=()=>{S.Lbc[e.dataset.lbc]=e.value===''?'':+e.value;run()});
  $('pts').querySelectorAll('[data-hc]').forEach(e=>e.onchange=()=>{S.Hc[e.dataset.hc]=+e.value;$('qH').value=S.Hc[0];run()});
  $('pts').querySelectorAll('[data-p]').forEach(e=>e.onchange=()=>{S.P[e.dataset.p]=+e.value;run()});}
 function visibleRoles(){const r=[];if(S.ct=='llena')r.push('cw');else r.push('cch','cd','cm');if(S.bt=='llena')r.push('bw');else r.push('bt','bb','bd','bm');return r}
@@ -316,6 +319,7 @@ function qFac(name,A,Fy,Es){let m=name.match(/Ø\s*([\d,]+)\s*x\s*([\d,]+)/);con
   return{Q:Aef/A,txt:tx.length?tx.join(', ')+': Qa=Aef/Ag (E.7.18)':`b/t ≤ ${lim.toFixed(1)}: compacto`}}
  return{Q:1,txt:'Q=1 (no evaluado para esta familia)'}}
 function kSway(GA,GB){if(GA>1e3&&GB>1e3)return Infinity;const f=k=>{const u=Math.PI/k;return (GA*GB*u*u-36)/(6*(GA+GB))-u/Math.tan(u)};let a=1.0001,b=60;if(f(a)*f(b)>0)return b;for(let it=0;it<80;it++){const m=(a+b)/2;f(a)*f(m)<=0?b=m:a=m}return (a+b)/2}
+function colLb(i){const v=S.Lbc[i];return (v!==''&&v!=null&&+v>0)?+v:(+$('vLc').value||M.H)}
 function colData(){const{E,N,X,H,C,B}=M,nb=X.length-1,mid=e=>(N[e.a].x+N[e.b].x)/2,ci=e=>{let b=0;X.forEach((x,i)=>{if(Math.abs(mid(e)-x)<Math.abs(mid(e)-X[b]))b=i});return b};
  const fix=$('sup').value=='fix',rig=$('bcon').value=='rig',out=[];
  const beamI=j=>{const es=E.filter(e=>/^b[wtb]$/.test(e.role)&&mid(e)>X[j]&&mid(e)<X[j+1]);if(!es.length)return 0;const Bj=B[j];
@@ -353,10 +357,10 @@ function verif(){VR=[];const CD=colData();const{E}=M,Fy=+$('vFy').value,Fu=+$('v
  let h=`<table><tr><th>#</th><th>Barra</th><th>Perfil</th><th>L [m]</th><th>Lx·k [m]</th><th>Ly·k [m]</th><th>Nu [${u}]</th><th>Mu [${um}]</th><th>λx</th><th>λy</th><th>Q</th><th>Pd [${u}]</th><th>Td [${u}]</th><th>Md [${um}]</th><th>Interacción</th><th>Estado</th></tr>`;
  E.forEach((e,i)=>{const p=e.sec.p,A=p[1],rx=p[3],ry=p[4],Zx=p[5],web=isWeb(e.role);
   const k=+$(web?'vkd':'vk').value;let Lx=e.L,Ly=e.L;
-  if(e.role=='cw'){const cd=CD.out[CD.ci(e)];Lx=H*(cd&&isFinite(cd.k)?cd.k:99)/k;Ly=Math.min(H,+$('vLc').value||H)}
+  if(e.role=='cw'){const cd=CD.out[CD.ci(e)];Lx=H*(cd&&isFinite(cd.k)?cd.k:99)/k;Ly=Math.min(H,colLb(CD.ci(e)))}
   if(e.role=='bw'){Lx=e.span;Ly=Math.min(e.span,+$('vLb').value||e.span)}
   if(!e.nudo&&e.role=='bt')Ly=Math.max(e.L,+$('vLb').value||e.L);if(!e.nudo&&e.role=='bb')Ly=Math.max(e.L,+$('vLbb').value||e.L);
-  if(e.role=='cch')Ly=Math.max(e.L,+$('vLc').value||e.L);
+  if(e.role=='cch')Ly=Math.max(e.L,colLb(CD.ci(e)));
   Lx*=k;Ly*=k;
   const row=`<td>${i+1}</td><td style="text-align:left">${ROLE[e.role]}${tyl(e)}</td><td style="text-align:left">${p[0]}</td><td>${f2(e.L)}</td><td>${f2(Lx)}</td><td>${f2(Ly)}</td>`;
   if(!ry){VR[i]={na:true};h+=`<tr class="vrow" data-e="${i}" data-ok="2" data-it="-1" style="color:var(--mu)">${row}<td colspan="10">Faltan ry o Z en la tabla: no se verifica</td></tr>`;return}
@@ -458,8 +462,8 @@ ${tbl(['#','Barra','Perfil','L [m]',`N [${u}]`,`V [${u}]`,`Mi [${um}]`,`Mj [${um
 // ---------- guardar / cargar ----------
 let DBR=null,SAVED=[];const LSK='porticos_reticulados';
 const IDS=['nb','H','sup','bcon','un','E','zc','ac','pc','zb','ab','pb','bj','qH','qV','ppC','ppB','fill','fc','vFy','vFu','vU','vk','vkd','vLb','vLc','vKc','vKcv','vLbb','vN0'];
-function snapshot(){saveEd();const nm=o=>Object.fromEntries(Object.entries(o).map(([x,v])=>[x,{...v,prof:Object.fromEntries(Object.entries(v.prof).map(([k,[f,i]])=>[k,[f,DB[f][i][0]]]))}]));return{Hc:S.Hc,CT:nm(S.CT),BT:nm(S.BT),cA:S.cA,bA:S.bA,eC:S.eC,eB:S.eB,cMode:cMode(),bMode:bMode(),bays:S.bays,P:S.P,ct:S.ct,bt:S.bt,v:Object.fromEntries(IDS.map(i=>[i,$(i).value])),prof:Object.fromEntries(Object.entries(S.prof).map(([k,[f,i]])=>[k,[f,DB[f][i][0]]]))}}
-function restore(d){IDS.forEach(i=>{if(d.v[i]!==undefined)$(i).value=d.v[i]});S.bays=[...d.bays];S.P=[...d.P];S.Hc=d.Hc?[...d.Hc]:[+(d.v.qH||0)];S.ct=d.ct;S.bt=d.bt;S._u=$('un').value;
+function snapshot(){saveEd();const nm=o=>Object.fromEntries(Object.entries(o).map(([x,v])=>[x,{...v,prof:Object.fromEntries(Object.entries(v.prof).map(([k,[f,i]])=>[k,[f,DB[f][i][0]]]))}]));return{Lbc:S.Lbc,Hc:S.Hc,CT:nm(S.CT),BT:nm(S.BT),cA:S.cA,bA:S.bA,eC:S.eC,eB:S.eB,cMode:cMode(),bMode:bMode(),bays:S.bays,P:S.P,ct:S.ct,bt:S.bt,v:Object.fromEntries(IDS.map(i=>[i,$(i).value])),prof:Object.fromEntries(Object.entries(S.prof).map(([k,[f,i]])=>[k,[f,DB[f][i][0]]]))}}
+function restore(d){IDS.forEach(i=>{if(d.v[i]!==undefined)$(i).value=d.v[i]});S.bays=[...d.bays];S.P=[...d.P];S.Hc=d.Hc?[...d.Hc]:[+(d.v.qH||0)];S.Lbc=d.Lbc?[...d.Lbc]:[];S.ct=d.ct;S.bt=d.bt;S._u=$('un').value;
  Object.entries(d.prof).forEach(([k,[f,n]])=>{S.prof[k]=[f,Math.max(0,DB[f].findIndex(p=>p[0]==n))]});
  if(d.CT){const ix=o=>Object.fromEntries(Object.entries(o).map(([x,v])=>[x,{...v,prof:Object.fromEntries(Object.entries(v.prof).map(([k,[f,n]])=>[k,[f,Math.max(0,DB[f].findIndex(p=>p[0]==n))]]))}]));S.CT=ix(d.CT);S.BT=ix(d.BT);S.cA=[...d.cA];S.bA=[...d.bA];S.eC=d.eC;S.eB=d.eB;$('cMode').value=d.cMode;$('bMode').value=d.bMode;putC(S.CT[S.eC]);putB(S.BT[S.eB])}else{S.CT={};S.BT={};S.eC=S.eB='A';$('cMode').value=$('bMode').value='igual'}
  buildAsg();bjText();document.querySelectorAll('.uF').forEach(s=>s.textContent=S._u);segs();buildGeo();buildProf();run()}
@@ -581,6 +585,7 @@ $('nb').onchange=()=>{buildGeo();buildAsg();run()};
 $('un').onchange=()=>{const o=S._u||'kN',n=$('un').value,k=(o=='t'?9.80665:1)/(n=='t'?9.80665:1);S._u=n;['qH','qV'].forEach(i=>$(i).value=+(+$(i).value*k).toFixed(3));S.P=S.P.map(p=>+(p*k).toFixed(3));S.Hc=S.Hc.map(h=>+(h*k).toFixed(3));document.querySelectorAll('.uF').forEach(s=>s.textContent=n);buildGeo();run()};
 $('bj').onchange=()=>{bjText();run()};
 ['fill','fc'].forEach(id=>$(id).addEventListener('change',run));
+$('vLc').addEventListener('change',()=>document.querySelectorAll('[data-lbc]').forEach(e=>e.placeholder=$('vLc').value));
 ['H','sup','bcon','E','zc','ac','pc','zb','ab','pb','qH','qV','ppC','ppB','vFy','vFu','vU','vk','vkd','vLb','vLc','vKc','vKcv','vLbb','vN0'].forEach(id=>$(id).onchange=run);
 window.onresize=draw;
 $('memBtn').onclick=memoria;
