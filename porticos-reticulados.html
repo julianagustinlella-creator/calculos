@@ -48,6 +48,9 @@ tr[data-e]{cursor:pointer}tr[data-e]:hover td{background:rgba(0,163,196,.08)}tr.
 <div class="pn"><h3>Geometría</h3>
 <label>Nº de vanos<input id="nb" type="number" min="1" max="20" value="1"></label>
 <div id="bays"></div>
+<label>Voladizo izquierdo [m] (0 = sin voladizo)<input id="Lvl" type="number" min="0" step="0.1" value="0"></label>
+<label>Voladizo derecho [m] (0 = sin voladizo)<input id="Lvr" type="number" min="0" step="0.1" value="0"></label>
+<div class="sm">El voladizo usa el mismo tipo de viga que el vano vecino (alma llena o reticulada, con su z, celosía y perfiles) y siempre queda empotrado a la columna. Recibe la misma carga repartida q.</div>
 <label>Altura de columnas H [m]<input id="H" type="number" step="0.1" value="6"></label>
 <label>Apoyos<select id="sup"><option value="pin">Articulados</option><option value="fix">Empotrados</option></select></label>
 <label>Unión viga–columna (viga de alma llena)<select id="bcon"><option value="rig">Rígida</option><option value="pin">Articulada</option></select></label>
@@ -239,7 +242,8 @@ function model(){ensure();saveEd();const nb=S.bays.length,H=+$('H').value,X=[0];
  // columnas
  const colTop=[];
  for(let i=0;i<=nb;i++){const{c,ret,zc}=C[i];
-  const cut=new Set([0,H]);[i-1,i].forEach(j=>{if(j>=0&&j<nb&&B[j].ret&&!B[j].art&&B[j].yb>0)cut.add(+B[j].yb.toFixed(6))});const cuts=[...cut].sort((a,b)=>a-b);
+  const cut=new Set([0,H]);[i-1,i].forEach(j=>{if(j>=0&&j<nb&&B[j].ret&&!B[j].art&&B[j].yb>0)cut.add(+B[j].yb.toFixed(6))});
+  if(i==0&&(+$('Lvl').value||0)>0&&B[0].ret)cut.add(+B[0].yb.toFixed(6));if(i==nb&&(+$('Lvr').value||0)>0&&B[nb-1].ret)cut.add(+B[nb-1].yb.toFixed(6));const cuts=[...cut].sort((a,b)=>a-b);
   if(!ret){for(let k=0;k<cuts.length-1;k++)add({a:node(X[i],cuts[k]),b:node(X[i],cuts[k+1]),role:'cw',Lcol:H},c);colTop.push({l:X[i],r:X[i]})}
   else{const hs=[0];
    for(let s=0;s<cuts.length-1;s++){const len=cuts[s+1]-cuts[s],n=nPan(len,zc,c.ac);for(let k=1;k<=n;k++)hs.push(cuts[s]+len*k/n)}
@@ -271,13 +275,26 @@ function model(){ensure();saveEd();const nb=S.bays.length,H=+$('H').value,X=[0];
    for(let k=e0;k<E.length;k++){E[k].cf=b;E[k].pk=b.prof[E[k].role]}
    T.forEach((nd,k)=>qNodes.push([nd,(k==0||k==n?0.5:1)*L/n]));
    if(!info.b){const p=L/n;info.b={n,p,a:Math.atan(zb/p)*180/Math.PI,i}}}}
+ // voladizos en los extremos (mismo tipo de viga que el vano vecino, siempre empotrados)
+ const cant=[];
+ [['l',+$('Lvl').value||0],['r',+$('Lvr').value||0]].forEach(([side,Lv])=>{if(Lv<=0)return;const bi=side=='l'?0:nb-1,{b,ret,zb,yb}=B[bi],dir=side=='l'?-1:1,x0=side=='l'?colTop[0].l:colTop[nb].r;
+  if(!ret){const n=6,ns=[...Array(n+1)].map((_,k)=>node(x0+dir*Lv*k/n,H));
+   for(let k=0;k<n;k++)add({a:ns[k],b:ns[k+1],role:'bw',span:Lv,cant:side},b);
+   ns.forEach((nd,k)=>qNodes.push([nd,(k==0||k==n?0.5:1)*Lv/n]))}
+  else{const n=nPan(Lv,zb,b.ab),T=[],Bc=[];for(let k=0;k<=n;k++){T.push(node(x0+dir*Lv*k/n,H));Bc.push(node(x0+dir*Lv*k/n,yb))}
+   for(let k=0;k<n;k++){add({a:T[k],b:T[k+1],role:'bt',cant:side},b);add({a:Bc[k],b:Bc[k+1],role:'bb',cant:side},b)}
+   const e0=E.length;lace(T,Bc,b.pb,false,E,'b',[true,false]);
+   if(!['pratt','howe','warrenm','x','vier'].includes(b.pb))E.push({a:T[n],b:Bc[n],role:'bm',ri:true,rj:true});
+   for(let k=e0;k<E.length;k++){E[k].cf=b;E[k].pk=b.prof[E[k].role];E[k].cant=side}
+   T.forEach((nd,k)=>qNodes.push([nd,(k==0||k==n?0.5:1)*Lv/n]))}
+  cant.push({a:Math.min(x0,x0+dir*Lv),b:Math.max(x0,x0+dir*Lv),L:Lv,side})});
  const sup=[];N.forEach((n,i)=>{if(Math.abs(n.y)<1e-9)sup.push(i)});
  const F=new Array(N.length*3).fill(0),f=UF(),loads=[];
  S.Hc.forEach((h,i)=>{if(!h)return;const ns=C[i].ret?[node(colTop[i].l,H),node(colTop[i].r,H)]:[node(X[i],H)];ns.forEach(nd=>F[nd*3]+=h*f/ns.length);loads.push({n:ns[0],dir:'h',v:h})});
  const q=+$('qV').value*f;if(q)qNodes.forEach(([nd,w])=>F[nd*3+1]-=q*w);
  S.P.forEach((p,i)=>{if(!p)return;const ns=C[i].ret?[node(colTop[i].l,H),node(colTop[i].r,H)]:[node(X[i],H)];ns.forEach(nd=>F[nd*3+1]-=p*f/ns.length);loads.push({n:ns[0],dir:'v',v:p,x:X[i]})});
  const b0=B.find(x=>x.ret),c0=C.find(x=>x.ret);
- return{N,E,sup,F,X,H,C,B,colTop,zc:c0?c0.zc:0,zb:b0?b0.zb:0,yb:b0?b0.yb:H,cret:!!c0,bret:!!b0,info,loads,qNodes,q:+$('qV').value,key,node}}
+ return{cant,N,E,sup,F,X,H,C,B,colTop,zc:c0?c0.zc:0,zb:b0?b0.zb:0,yb:b0?b0.yb:H,cret:!!c0,bret:!!b0,info,loads,qNodes,q:+$('qV').value,key,node}}
 function kloc(EA,EI,L,ri,rj){const a=EA/L,b=12*EI/L**3,c=6*EI/L**2,d=4*EI/L,e=2*EI/L;
  let k=[[a,0,0,-a,0,0],[0,b,c,0,-b,c],[0,c,d,0,-c,e],[-a,0,0,a,0,0],[0,-b,-c,0,b,-c],[0,c,e,0,-c,d]];
  for(const r of [ri?2:-1,rj?5:-1])if(r>=0){const p=k[r][r];if(p<=0)continue;const row=k[r].slice();k=k.map((ri_,i)=>ri_.map((v,j)=>v-row[i]*row[j]/p))}
@@ -461,7 +478,7 @@ ${tbl(['#','Barra','Perfil','L [m]',`N [${u}]`,`V [${u}]`,`Mi [${um}]`,`Mj [${um
 
 // ---------- guardar / cargar ----------
 let DBR=null,SAVED=[];const LSK='porticos_reticulados';
-const IDS=['nb','H','sup','bcon','un','E','zc','ac','pc','zb','ab','pb','bj','qH','qV','ppC','ppB','fill','fc','vFy','vFu','vU','vk','vkd','vLb','vLc','vKc','vKcv','vLbb','vN0'];
+const IDS=['Lvl','Lvr','nb','H','sup','bcon','un','E','zc','ac','pc','zb','ab','pb','bj','qH','qV','ppC','ppB','fill','fc','vFy','vFu','vU','vk','vkd','vLb','vLc','vKc','vKcv','vLbb','vN0'];
 function snapshot(){saveEd();const nm=o=>Object.fromEntries(Object.entries(o).map(([x,v])=>[x,{...v,prof:Object.fromEntries(Object.entries(v.prof).map(([k,[f,i]])=>[k,[f,DB[f][i][0]]]))}]));return{Lbc:S.Lbc,Hc:S.Hc,CT:nm(S.CT),BT:nm(S.BT),cA:S.cA,bA:S.bA,eC:S.eC,eB:S.eB,cMode:cMode(),bMode:bMode(),bays:S.bays,P:S.P,ct:S.ct,bt:S.bt,v:Object.fromEntries(IDS.map(i=>[i,$(i).value])),prof:Object.fromEntries(Object.entries(S.prof).map(([k,[f,i]])=>[k,[f,DB[f][i][0]]]))}}
 function restore(d){IDS.forEach(i=>{if(d.v[i]!==undefined)$(i).value=d.v[i]});S.bays=[...d.bays];S.P=[...d.P];S.Hc=d.Hc?[...d.Hc]:[+(d.v.qH||0)];S.Lbc=d.Lbc?[...d.Lbc]:[];S.ct=d.ct;S.bt=d.bt;S._u=$('un').value;
  Object.entries(d.prof).forEach(([k,[f,n]])=>{S.prof[k]=[f,Math.max(0,DB[f].findIndex(p=>p[0]==n))]});
@@ -493,7 +510,7 @@ const TABS=[['mod','Modelo'],['n','Axiles N'],['m','Momentos M'],['v','Cortes V'
 function tabs(){$('tabs').innerHTML=TABS.map(([k,n])=>`<button class="${S.tab==k?'on':''}" data-k="${k}">${n}</button>`).join('');
  $('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.tab=b.dataset.k;tabs();draw()})}
 const isWeb=r=>/[cb][dm]$/.test(r),isCol=r=>r[0]=='c';
-function tyl(e){if(e.nudo)return ' (en nudo con columna)'+tyl0(e);return tyl0(e)}
+function tyl(e){if(e.nudo)return ' (en nudo con columna)'+tyl0(e);if(e.cant)return ' (voladizo '+(e.cant=='l'?'izq.':'der.')+')'+tyl0(e);return tyl0(e)}
 function tyl0(e){const c=e.role[0]=='c';if((c?cMode():bMode())!='dist')return '';const T=c?S.CT:S.BT,k=Object.keys(T).find(x=>T[x]===e.cf);return k?` (${k})`:''}
 function draw(){const svg=$('svg'),W=svg.clientWidth||900,Hs=620,{N,E,X}=M,H=M.H;
  const xmin=Math.min(...N.map(n=>n.x)),xmax=Math.max(...N.map(n=>n.x)),Lx=xmax-xmin,pad=80,sc=Math.min((W-2*pad)/Lx,(Hs-2*pad-30)/H);
@@ -538,7 +555,7 @@ function draw(){const svg=$('svg'),W=svg.clientWidth||900,Hs=620,{N,E,X}=M,H=M.H
  const OR='#e67e22';M.loads.forEach(l=>{const n=N[l.n],x=px(n.x),y=py(n.y);if(!l.v)return;
   if(l.dir=='h'){const d=l.v>0?1:-1;s+=`<line x1="${x-d*55}" y1="${y}" x2="${x-d*6}" y2="${y}" stroke="${OR}" stroke-width="2.5" marker-end="url(#ar)"/><text x="${x-d*55}" y="${y-6}" font-size="11" fill="${OR}" text-anchor="middle">${l.v} ${uF()}</text>`}
   else{const xx=px(l.x);s+=`<line x1="${xx}" y1="${y-45}" x2="${xx}" y2="${y-6}" stroke="${OR}" stroke-width="2" marker-end="url(#ar)"/><text x="${xx+4}" y="${y-36}" font-size="11" fill="${OR}">${l.v} ${uF()}</text>`}});
- if(M.q){X.slice(0,-1).forEach((x0,i)=>{const a=px(M.colTop[i].r),b=px(M.colTop[i+1].l),y=py(H)-28;s+=`<rect x="${a}" y="${y-8}" width="${b-a}" height="8" fill="${OR}" fill-opacity=".18" stroke="${OR}" stroke-width=".8"/>`;
+ if(M.q){[...X.slice(0,-1).map((x0,i)=>[M.colTop[i].r,M.colTop[i+1].l]),...(M.cant||[]).map(c=>[c.a,c.b])].forEach(([xa,xb])=>{const a=px(xa),b=px(xb),y=py(H)-28;s+=`<rect x="${a}" y="${y-8}" width="${b-a}" height="8" fill="${OR}" fill-opacity=".18" stroke="${OR}" stroke-width=".8"/>`;
   for(let k=0;k<=8;k++){const xx=a+(b-a)*k/8;s+=`<line x1="${xx}" y1="${y}" x2="${xx}" y2="${y+20}" stroke="${OR}" stroke-width="1" marker-end="url(#ar)"/>`}
   s+=`<text x="${(a+b)/2}" y="${y-12}" text-anchor="middle" font-size="11" fill="${OR}">q = ${M.q} ${uF()}/m</text>`})}
  // cotas (gris)
@@ -586,7 +603,7 @@ $('un').onchange=()=>{const o=S._u||'kN',n=$('un').value,k=(o=='t'?9.80665:1)/(n
 $('bj').onchange=()=>{bjText();run()};
 ['fill','fc'].forEach(id=>$(id).addEventListener('change',run));
 $('vLc').addEventListener('change',()=>document.querySelectorAll('[data-lbc]').forEach(e=>e.placeholder=$('vLc').value));
-['H','sup','bcon','E','zc','ac','pc','zb','ab','pb','qH','qV','ppC','ppB','vFy','vFu','vU','vk','vkd','vLb','vLc','vKc','vKcv','vLbb','vN0'].forEach(id=>$(id).onchange=run);
+['Lvl','Lvr','H','sup','bcon','E','zc','ac','pc','zb','ab','pb','qH','qV','ppC','ppB','vFy','vFu','vU','vk','vkd','vLb','vLc','vKc','vKcv','vLbb','vN0'].forEach(id=>$(id).onchange=run);
 window.onresize=draw;
 $('memBtn').onclick=memoria;
 bjText();segs();buildGeo();saveEd();buildAsg();buildProf();tabs();run();initSave();requestAnimationFrame(draw);
