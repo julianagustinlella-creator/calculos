@@ -306,7 +306,7 @@ function model(){ensure();saveEd();const nb=S.bays.length,H=+$('H').value,X=[0];
  const F=new Array(N.length*3).fill(0),f=UF(),loads=[];
  S.Hc.forEach((h,i)=>{if(!h)return;const ns=C[i].ret?[node(colTop[i].l,H),node(colTop[i].r,H)]:[node(X[i],H)];ns.forEach(nd=>F[nd*3]+=h*f/ns.length);loads.push({n:ns[0],dir:'h',v:h})});
  const q=+$('qV').value*f;if(q)qNodes.forEach(([nd,w])=>F[nd*3+1]-=q*w);
- {const tops=[...new Set(qNodes.map(x=>x[0]))].sort((a,b)=>N[a].x-N[b].x);info.pvOut=[];
+ {const tops=[...new Set([...qNodes.map(x=>x[0]),...colTop.flatMap(c=>[node(c.l,H),node(c.r,H)])])].sort((a,b)=>N[a].x-N[b].x);info.pvOut=[];
   S.Pv.forEach(({x,P})=>{if(!P)return;const xs=tops.map(i=>N[i].x);if(!tops.length||x<xs[0]-1e-6||x>xs[xs.length-1]+1e-6){info.pvOut.push(x);return}
    let k=0;while(k<xs.length-2&&xs[k+1]<x)k++;const a=tops[k],b=tops[Math.min(k+1,tops.length-1)],L=N[b].x-N[a].x,r=L>1e-9?(x-N[a].x)/L:0;
    F[a*3+1]-=P*f*(1-r);F[b*3+1]-=P*f*r;loads.push({n:a,dir:'v',v:P,x})})}
