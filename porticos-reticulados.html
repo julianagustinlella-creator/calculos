@@ -249,8 +249,8 @@ function posL(a,b,n){const p=[...Array(n+1)].map((_,k)=>a+(b-a)*k/n);S.Pv.forEac
 function model(){ensure();saveEd();const nb=S.bays.length,H=+$('H').value,X=[0];S.bays.forEach(b=>X.push(X[X.length-1]+b));
  const N=[],key={};const node=(x,y)=>{const k=x.toFixed(4)+','+y.toFixed(4);if(key[k]!==undefined)return key[k];N.push({x,y});return key[k]=N.length-1};
  const E=[],info={};const rig=$('bcon').value=='rig';
- const B=[...Array(nb)].map((_,i)=>{const b=bcfg(i),ret=b.bt=='ret';return{b,ret,art:ret&&b.bj=='art',zb:ret?b.zb:0,yb:H-(ret?b.zb:0)}});
- const C=[...Array(nb+1)].map((_,i)=>{const c=ccfg(i),ret=c.ct=='ret';return{c,ret,zc:ret?c.zc:0}});
+ const B=[...Array(nb)].map((_,i)=>{const b=bcfg(i);b._k=bMode()=='igual'?S.eB:(S.bA[i]||'A');const ret=b.bt=='ret';return{b,ret,art:ret&&b.bj=='art',zb:ret?b.zb:0,yb:H-(ret?b.zb:0)}});
+ const C=[...Array(nb+1)].map((_,i)=>{const c=ccfg(i);c._k=cMode()=='igual'?S.eC:(S.cA[i]||'A');const ret=c.ct=='ret';return{c,ret,zc:ret?c.zc:0}});
  const add=(o,cf)=>{o.cf=cf;o.pk=cf.prof[o.role];E.push(o)};
  // columnas
  const colTop=[];
@@ -534,7 +534,7 @@ function tabs(){$('tabs').innerHTML=TABS.map(([k,n])=>`<button class="${S.tab==k
  $('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{S.tab=b.dataset.k;tabs();draw()})}
 const isWeb=r=>/[cb][dm]$/.test(r),isCol=r=>r[0]=='c';
 function tyl(e){if(e.nudo)return ' (en nudo con columna)'+tyl0(e);if(e.cant)return ' (voladizo '+(e.cant=='l'?'izq.':'der.')+')'+tyl0(e);return tyl0(e)}
-function tyl0(e){const c=e.role[0]=='c';if((c?cMode():bMode())!='dist')return '';const T=c?S.CT:S.BT,k=Object.keys(T).find(x=>T[x]===e.cf);return k?` (${k})`:''}
+function tyl0(e){const c=e.role[0]=='c';if((c?cMode():bMode())!='dist')return '';const k=e.cf&&e.cf._k;return k?` (${k})`:''}
 function draw(){const svg=$('svg'),W=svg.clientWidth||900,Hs=620,{N,E,X}=M,H=M.H;
  const xmin=Math.min(...N.map(n=>n.x)),xmax=Math.max(...N.map(n=>n.x)),Lx=xmax-xmin,pad=80,sc=Math.min((W-2*pad)/Lx,(Hs-2*pad-30)/H);
  const ox=(W-Lx*sc)/2-xmin*sc,oy=Hs-pad-30,px=x=>ox+x*sc,py=y=>oy-y*sc;
@@ -589,8 +589,8 @@ function draw(){const svg=$('svg'),W=svg.clientWidth||900,Hs=620,{N,E,X}=M,H=M.H
   c+=`<line x1="${xd}" y1="${py(0)}" x2="${xd}" y2="${py(H)}" stroke="${G}"/>`+tk(xd,py(0))+tk(xd,py(H))+`<text x="${xd+6}" y="${py(H/2)}" font-size="11" fill="${G}">H = ${f2(H,2)} m</text>`;
   if(M.bret){const x2=xd+52;c+=`<line x1="${x2}" y1="${py(M.yb)}" x2="${x2}" y2="${py(H)}" stroke="${G}"/>`+tk(x2,py(M.yb))+tk(x2,py(H))+`<text x="${x2+5}" y="${py(H-M.zb/2)+4}" font-size="10.5" fill="${G}">z = ${f2(M.zb,2)} m</text>`}
   if(M.cret){const y2=py(H)-50,a=px(X[0]-M.zc/2),b=px(X[0]+M.zc/2);c+=`<line x1="${a}" y1="${y2}" x2="${b}" y2="${y2}" stroke="${G}"/>`+tk(a,y2)+tk(b,y2)+`<text x="${(a+b)/2}" y="${y2-5}" text-anchor="middle" font-size="10.5" fill="${G}">z = ${f2(M.zc,2)} m</text>`}
-  if(cMode()=='dist')M.C.forEach((cc,i)=>{const k=Object.keys(S.CT).find(x=>S.CT[x]===cc.c);c+=`<text x="${px(X[i])}" y="${py(0)+30}" text-anchor="middle" font-size="12" font-weight="700" fill="#334">${k}</text>`});
-  if(bMode()=='dist')M.B.forEach((bb,i)=>{const k=Object.keys(S.BT).find(x=>S.BT[x]===bb.b);c+=`<text x="${px((X[i]+X[i+1])/2)}" y="${py(bb.yb)+16}" text-anchor="middle" font-size="12" font-weight="700" fill="#5a4bb5">${k}</text>`});
+  if(cMode()=='dist')M.C.forEach((cc,i)=>{const k=cc.c._k||'A';c+=`<text x="${px(X[i])}" y="${py(0)+30}" text-anchor="middle" font-size="12" font-weight="700" fill="#334">${k}</text>`});
+  if(bMode()=='dist')M.B.forEach((bb,i)=>{const k=bb.b._k||'A';c+=`<text x="${px((X[i]+X[i+1])/2)}" y="${py(bb.yb)+16}" text-anchor="middle" font-size="12" font-weight="700" fill="#5a4bb5">${k}</text>`});
   if(kind=='mod'&&M.bret)X.forEach((x,i)=>{const xx=px(x),yy=py(H)-14;c+=`<text x="${xx}" y="${yy}" text-anchor="middle" font-size="10.5" fill="#c77a00">${(()=>{const L=i>0?M.B[i-1]:null,Rr=i<M.B.length?M.B[i]:null,v=[L,Rr].filter(x=>x&&x.ret).map(x=>x.art?'articulado':'empotrado');return [...new Set(v)].join(' / ')})()}</text>`});
   if(kind=='mod'){const m1=M.info.b,m2=M.info.c;let t=[];if(m1)t.push(`Viga: ${m1.n} paneles de ${f2(m1.p)} m · α = ${f2(m1.a,1)}°`);if(m2)t.push(`Columna: ${m2.n} paneles de ${f2(m2.p)} m · α = ${f2(m2.a,1)}°`);
    t.forEach((x,i)=>c+=`<text x="12" y="${20+i*15}" font-size="11" fill="${G}">${x}</text>`)}
