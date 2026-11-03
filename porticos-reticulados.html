@@ -115,6 +115,7 @@ tr[data-e]{cursor:pointer}tr[data-e]:hover td{background:rgba(0,163,196,.08)}tr.
 <label>k diagonales y montantes<input id="vkd" type="number" step="0.05" value="1"></label>
 <label>Lb cordón superior de viga fuera del plano [m] (separación de correas)<input id="vLb" type="number" step="0.1" value="1.5"></label>
 <label>Lb cordón inferior de viga fuera del plano [m] (separación de puntales o riostras)<input id="vLbb" type="number" step="0.1" value="5"></label>
+<div class="sm">Lb fuera del plano propio de cada tramo de viga (vacío = el general de arriba). En vigas de alma llena se usa la fila del cordón superior:</div><div id="lbv"></div>
 <label>Planos de celosía en columnas reticuladas n0<input id="vN0" type="number" step="1" min="1" max="2" value="1"></label>
 <div class="sm">Columnas: k en el plano por nomograma de pórtico desplazable (G = Σ(EI/L) columnas / Σ(EI/L) vigas; base empotrada G = 1, articulada G = 10; columna reticulada con sus dos apoyos G = 1). Viga reticulada: I = At·Ab/(At+Ab)·z²; viga articulada no aporta. Columnas reticuladas: además, pandeo global como barra armada del Grupo IV (E.6.3.1). El análisis es de primer orden: el segundo orden queda cubierto por k y por E.6.3.1. El cordón inferior de viga usa su propio Lb (compresión por succión o junto a la columna). φc=0,85 · φt=0,9/0,75 · φb=0,9 · interacción H.1 · λ≤200 · Q por pandeo local en tubos (E.7).</div></div>
 </div>
@@ -135,7 +136,7 @@ const PAT=[['pratt','Pratt (montantes + diagonales)'],['howe','Howe (montantes +
 const ROLE={cw:'Columna',cch:'Cordón columna',cd:'Diagonal columna',cm:'Montante columna',bw:'Viga',bt:'Cordón superior',bb:'Cordón inferior',bd:'Diagonal viga',bm:'Montante viga'};
 const $=id=>document.getElementById(id);
 const pick=(f,n)=>[f,Math.max(0,DB[f].findIndex(p=>p[0]==n))];
-const S={Pv:[],bays:[20],P:[0,0],Hc:[20,0],Lbc:['',''],ct:'llena',bt:'ret',tab:'mod',sc:{dm:50,m:1,n:1,v:1},CT:{},BT:{},cA:['A','A'],bA:['A'],eC:'A',eB:'A',
+const S={LbV:{},Pv:[],bays:[20],P:[0,0],Hc:[20,0],Lbc:['',''],ct:'llena',bt:'ret',tab:'mod',sc:{dm:50,m:1,n:1,v:1},CT:{},BT:{},cA:['A','A'],bA:['A'],eC:'A',eB:'A',
  prof:{cw:pick('PERFIL_W','W 310 x 38,7'),cch:pick('TUBO_CUADRADO','Tubo 100 x 100 x 4,00'),cd:pick('TUBO_CUADRADO','Tubo 60 x 60 x 2,00'),cm:pick('TUBO_CUADRADO','Tubo 60 x 60 x 2,00'),
   bw:pick('PERFIL_W','W 410 x 46,1'),bt:pick('TUBO_CUADRADO','Tubo 100 x 100 x 4,00'),bb:pick('TUBO_CUADRADO','Tubo 100 x 100 x 4,00'),bd:pick('TUBO_CUADRADO','Tubo 60 x 60 x 2,00'),bm:pick('TUBO_CUADRADO','Tubo 60 x 60 x 2,00')}};
 const UF=()=>$("un").value=="t"?9.80665:1,uF=()=>$("un").value,uM=()=>$("un").value=="t"?"tm":"kNm";
@@ -274,7 +275,7 @@ function model(){ensure();saveEd();const nb=S.bays.length,H=+$('H').value,X=[0];
    colTop.push({l:xl,r:xr})}}
  // vigas
  const qNodes=[];
- for(let i=0;i<nb;i++){const{b,ret,art,zb,yb}=B[i],xs=colTop[i].r,xe=colTop[i+1].l,L=xe-xs;
+ for(let i=0;i<nb;i++){const{b,ret,art,zb,yb}=B[i],xs=colTop[i].r,xe=colTop[i+1].l,L=xe-xs;const eB0=E.length;
   if(!ret){const xp=posL(xs,xe,10),n=xp.length-1,ns=xp.map(x=>node(x,H));
    for(let k=0;k<n;k++)add({a:ns[k],b:ns[k+1],role:'bw',span:L,ri:k==0&&!rig,rj:k==n-1&&!rig},b);
    ns.forEach((nd,k)=>qNodes.push([nd,((k<n?xp[k+1]:xp[k])-(k>0?xp[k-1]:xp[k]))/2]))}
@@ -286,7 +287,8 @@ function model(){ensure();saveEd();const nb=S.bays.length,H=+$('H').value,X=[0];
     if(!has(T[0],Bc[1]))E.push({a:T[0],b:Bc[1],role:'bd',ri:true,rj:true});if(!has(T[n],Bc[n-1]))E.push({a:T[n],b:Bc[n-1],role:'bd',ri:true,rj:true})}
    for(let k=e0;k<E.length;k++){E[k].cf=b;E[k].pk=b.prof[E[k].role]}
    T.forEach((nd,k)=>qNodes.push([nd,(k==0||k==n?0.5:1)*L/n]));
-   if(!info.b){const p=L/n;info.b={n,p,a:Math.atan(zb/p)*180/Math.PI,i}}}}
+   if(!info.b){const p=L/n;info.b={n,p,a:Math.atan(zb/p)*180/Math.PI,i}}}
+  for(let k=eB0;k<E.length;k++)if(E[k].bay===undefined)E[k].bay=i}
  // voladizos en los extremos (mismo tipo de viga que el vano vecino, siempre empotrados)
  const cant=[];
  [['l',+$('Lvl').value||0],['r',+$('Lvr').value||0]].forEach(([side,Lv])=>{if(Lv<=0)return;const bi=side=='l'?0:nb-1,{b,ret,zb,yb}=B[bi],dir=side=='l'?-1:1,x0=side=='l'?colTop[0].l:colTop[nb].r;
@@ -352,6 +354,11 @@ function qFac(name,A,Fy,Es){let m=name.match(/Ø\s*([\d,]+)\s*x\s*([\d,]+)/);con
   return{Q:Aef/A,txt:tx.length?tx.join(', ')+': Qa=Aef/Ag (E.7.18)':`b/t ≤ ${lim.toFixed(1)}: compacto`}}
  return{Q:1,txt:'Q=1 (no evaluado para esta familia)'}}
 function kSway(GA,GB){if(GA>1e3&&GB>1e3)return Infinity;const f=k=>{const u=Math.PI/k;return (GA*GB*u*u-36)/(6*(GA+GB))-u/Math.tan(u)};let a=1.0001,b=60;if(f(a)*f(b)>0)return b;for(let it=0;it<80;it++){const m=(a+b)/2;f(a)*f(m)<=0?b=m:a=m}return (a+b)/2}
+function lbV(e,w){const k=e.cant||(e.bay!==undefined?String(e.bay):null),o=k!=null?S.LbV[k]:null,v=o?o[w]:'';return (v!==''&&v!=null&&+v>0)?+v:(+$(w=='t'?'vLb':'vLbb').value||e.L)}
+function buildLbv(){const box=$('lbv');if(!box)return;const nb=S.bays.length,ks=[...((+$('Lvl').value||0)>0?[['l','Vol. izq.']]:[]),...S.bays.map((b,i)=>[String(i),'Vano '+(i+1)]),...((+$('Lvr').value||0)>0?[['r','Vol. der.']]:[])];
+ const v=(k,w)=>S.LbV[k]&&S.LbV[k][w]!==undefined?S.LbV[k][w]:'';
+ box.innerHTML='<div style="overflow-x:auto"><table class="gt"><tr><th></th>'+ks.map(([k,n])=>`<th>${n}</th>`).join('')+'</tr>'+[['t','C. sup.'],['b','C. inf.']].map(([w,n])=>`<tr><th>${n}</th>`+ks.map(([k])=>`<td><input type="number" step="0.1" min="0" data-lbv="${k},${w}" value="${v(k,w)}" placeholder="${$(w=='t'?'vLb':'vLbb').value}"></td>`).join('')+'</tr>').join('')+'</table></div>';
+ box.querySelectorAll('[data-lbv]').forEach(e=>e.onchange=()=>{const[k,w]=e.dataset.lbv.split(',');S.LbV[k]=S.LbV[k]||{};S.LbV[k][w]=e.value===''?'':+e.value;run()})}
 function colLb(i){const v=S.Lbc[i];return (v!==''&&v!=null&&+v>0)?+v:(+$('vLc').value||M.H)}
 function colData(){const{E,N,X,H,C,B}=M,nb=X.length-1,mid=e=>(N[e.a].x+N[e.b].x)/2,ci=e=>{let b=0;X.forEach((x,i)=>{if(Math.abs(mid(e)-x)<Math.abs(mid(e)-X[b]))b=i});return b};
  const fix=$('sup').value=='fix',rig=$('bcon').value=='rig',out=[];
@@ -391,21 +398,21 @@ function verif(){VR=[];const CD=colData();const{E}=M,Fy=+$('vFy').value,Fu=+$('v
  E.forEach((e,i)=>{const p=e.sec.p,A=p[1],rx=p[3],ry=p[4],Zx=p[5],web=isWeb(e.role);
   const k=+$(web?'vkd':'vk').value;let Lx=e.L,Ly=e.L;
   if(e.role=='cw'){const cd=CD.out[CD.ci(e)];Lx=H*(cd&&isFinite(cd.k)?cd.k:99)/k;Ly=Math.min(H,colLb(CD.ci(e)))}
-  if(e.role=='bw'){Lx=e.span;Ly=Math.min(e.span,+$('vLb').value||e.span)}
-  if(!e.nudo&&e.role=='bt')Ly=Math.max(e.L,+$('vLb').value||e.L);if(!e.nudo&&e.role=='bb')Ly=Math.max(e.L,+$('vLbb').value||e.L);
+  if(e.role=='bw'){Lx=e.span;Ly=Math.min(e.span,lbV(e,'t'))}
+  if(!e.nudo&&e.role=='bt')Ly=Math.max(e.L,lbV(e,'t'));if(!e.nudo&&e.role=='bb')Ly=Math.max(e.L,lbV(e,'b'));
   if(e.role=='cch')Ly=Math.max(e.L,colLb(CD.ci(e)));
   Lx*=k;Ly*=k;
   const row=`<td>${i+1}</td><td style="text-align:left">${ROLE[e.role]}${tyl(e)}</td><td style="text-align:left">${p[0]}</td><td>${f2(e.L)}</td><td>${f2(Lx)}</td><td>${f2(Ly)}</td>`;
-  if(!ry){VR[i]={na:true};h+=`<tr class="vrow" data-e="${i}" data-ok="2" data-it="-1" style="color:var(--mu)">${row}<td colspan="10">Faltan ry o Z en la tabla: no se verifica</td></tr>`;return}
+  if(!ry){VR[i]={na:true,Lx,Ly};h+=`<tr class="vrow" data-e="${i}" data-ok="2" data-it="-1" style="color:var(--mu)">${row}<td colspan="10">Faltan ry o Z en la tabla: no se verifica</td></tr>`;return}
   const Nk=e.N*toKN,Mk=Math.max(Math.abs(e.M1),Math.abs(e.M2))*toKN;
   if(e.comp){const c=e.comp,Pex=Math.PI**2*c.EIx/(Lx*Lx),Pey=Math.PI**2*c.EIy/(Ly*Ly),Pe=Math.min(Pex,Pey),ra=c.Pno/Pe,Pn=ra<=2.25?c.Pno*Math.pow(0.658,ra):0.877*Pe;
-   const Pd=0.75*Pn,Td=c.Td,Md=0.9*c.Mn,rr=Nk<0?-Nk/Pd:Nk/Td,mm=Mk/Md,it=rr>=0.2?rr+8/9*mm:rr/2+mm,good=it<=1&&!c.bad;VR[i]={it,good,Pd,Td,Md};good?nOk++:nNo++;if(!worst||it>worst.it)worst={it,i};sum(e,p[0]+' + H-'+e.cf.fc,it,good);
+   const Pd=0.75*Pn,Td=c.Td,Md=0.9*c.Mn,rr=Nk<0?-Nk/Pd:Nk/Td,mm=Mk/Md,it=rr>=0.2?rr+8/9*mm:rr/2+mm,good=it<=1&&!c.bad;VR[i]={it,good,Pd,Td,Md,Lx,Ly};good?nOk++:nNo++;if(!worst||it>worst.it)worst={it,i};sum(e,p[0]+' + H-'+e.cf.fc,it,good);
    const o=v=>v/toKN;compRows.push({i,name:p[0]+' + H-'+e.cf.fc,c,Pex,Pey,Pn,it});
    h+=`<tr class="vrow" data-e="${i}" data-ok="${good?1:0}" data-it="${it}" style="background:rgba(122,122,122,.10)">${row.replace(p[0],p[0]+' + H-'+e.cf.fc)}<td style="color:${Nk>=0?'var(--t)':'var(--c)'}">${f2(o(Nk))}</td><td>${f2(o(Mk))}</td><td colspan="2" title="Pe = π²·EIeff/(KL)², eje más débil">Pe = ${f2(o(Pe),0)}</td><td title="Clase a compresión, Tabla I1.1a">${c.cls}</td><td>${f2(o(Pd))}</td><td>${f2(o(Td))}</td><td>${f2(o(Md))}</td><td style="color:${it>1?'var(--c)':'inherit'};font-weight:600">${f2(it,2)}</td><td>${ok(good)}</td></tr>`;return}
   const lx=Lx*100/rx,ly=Ly*100/ry,lc=Math.max(lx,ly)/Math.PI*Math.sqrt(Fy/Es),q=qFac(p[0],A,Fy,Es),Q=q.Q,lq=lc*Math.sqrt(Q);
   const Fcr=lq<=1.5?Q*Math.pow(0.658,lq*lq)*Fy:0.877*Fy/(lc*lc),Pd=0.85*Fcr*A/10,Td=Math.min(0.9*Fy*A,0.75*Fu*U*A)/10,Md=Zx?0.9*Fy*Zx/1000:0;
   const r=Nk<0?-Nk/Pd:Nk/Td,mm=Md?Mk/Md:(Mk>1e-6?Infinity:0),it=r>=0.2?r+8/9*mm:r/2+mm,esb=Math.max(lx,ly)<=200||Nk>=0;
-  const good=esb&&it<=1&&!q.bad;VR[i]={it,good,Pd,Td,Md,esb};good?nOk++:nNo++;if(!worst||it>worst.it)worst={it,i};sum(e,p[0],it,good);
+  const good=esb&&it<=1&&!q.bad;VR[i]={it,good,Pd,Td,Md,esb,Lx,Ly,lx,ly};good?nOk++:nNo++;if(!worst||it>worst.it)worst={it,i};sum(e,p[0],it,good);
   const o=v=>v/toKN;
   h+=`<tr class="vrow" data-e="${i}" data-ok="${good?1:0}" data-it="${it}">${row}<td style="color:${Nk>=0?'var(--t)':'var(--c)'}">${f2(o(Nk))}</td><td>${f2(o(Mk))}</td><td>${f2(lx,0)}</td><td style="color:${Math.max(lx,ly)>200&&Nk<0?'var(--c)':'inherit'}">${f2(ly,0)}</td><td title="${q.txt}">${f2(Q,3)}</td><td>${f2(o(Pd))}</td><td>${f2(o(Td))}</td><td>${Md?f2(o(Md)):'—'}</td><td style="color:${it>1?'var(--c)':'inherit'};font-weight:600">${f2(it,2)}</td><td>${ok(good)}</td></tr>`});
 let det='';if(compRows.length){const o=v=>v/toKN,u2=uF(),seen=new Set(),rows=compRows.sort((a,b)=>b.it-a.it).filter(x=>{const k=x.name;if(seen.has(k))return false;seen.add(k);return true});
@@ -495,8 +502,8 @@ ${tbl(['#','Barra','Perfil','L [m]',`N [${u}]`,`V [${u}]`,`Mi [${um}]`,`Mj [${um
 // ---------- guardar / cargar ----------
 let DBR=null,SAVED=[];const LSK='porticos_reticulados';
 const IDS=['Lvl','Lvr','nb','H','sup','bcon','un','E','zc','ac','pc','zb','ab','pb','bj','qH','qV','ppC','ppB','fill','fc','vFy','vFu','vU','vk','vkd','vLb','vLc','vKc','vKcv','vLbb','vN0'];
-function snapshot(){saveEd();const nm=o=>Object.fromEntries(Object.entries(o).map(([x,v])=>[x,{...v,prof:Object.fromEntries(Object.entries(v.prof).map(([k,[f,i]])=>[k,[f,DB[f][i][0]]]))}]));return{Pv:S.Pv,Lbc:S.Lbc,Hc:S.Hc,CT:nm(S.CT),BT:nm(S.BT),cA:S.cA,bA:S.bA,eC:S.eC,eB:S.eB,cMode:cMode(),bMode:bMode(),bays:S.bays,P:S.P,ct:S.ct,bt:S.bt,v:Object.fromEntries(IDS.map(i=>[i,$(i).value])),prof:Object.fromEntries(Object.entries(S.prof).map(([k,[f,i]])=>[k,[f,DB[f][i][0]]]))}}
-function restore(d){IDS.forEach(i=>{if(d.v[i]!==undefined)$(i).value=d.v[i]});S.bays=[...d.bays];S.P=[...d.P];S.Hc=d.Hc?[...d.Hc]:[+(d.v.qH||0)];S.Pv=d.Pv?d.Pv.map(c=>({...c})):[];S.Lbc=d.Lbc?[...d.Lbc]:[];S.ct=d.ct;S.bt=d.bt;S._u=$('un').value;
+function snapshot(){saveEd();const nm=o=>Object.fromEntries(Object.entries(o).map(([x,v])=>[x,{...v,prof:Object.fromEntries(Object.entries(v.prof).map(([k,[f,i]])=>[k,[f,DB[f][i][0]]]))}]));return{LbV:S.LbV,Pv:S.Pv,Lbc:S.Lbc,Hc:S.Hc,CT:nm(S.CT),BT:nm(S.BT),cA:S.cA,bA:S.bA,eC:S.eC,eB:S.eB,cMode:cMode(),bMode:bMode(),bays:S.bays,P:S.P,ct:S.ct,bt:S.bt,v:Object.fromEntries(IDS.map(i=>[i,$(i).value])),prof:Object.fromEntries(Object.entries(S.prof).map(([k,[f,i]])=>[k,[f,DB[f][i][0]]]))}}
+function restore(d){IDS.forEach(i=>{if(d.v[i]!==undefined)$(i).value=d.v[i]});S.bays=[...d.bays];S.P=[...d.P];S.Hc=d.Hc?[...d.Hc]:[+(d.v.qH||0)];S.Pv=d.Pv?d.Pv.map(c=>({...c})):[];S.LbV=d.LbV?JSON.parse(JSON.stringify(d.LbV)):{};S.Lbc=d.Lbc?[...d.Lbc]:[];S.ct=d.ct;S.bt=d.bt;S._u=$('un').value;
  Object.entries(d.prof).forEach(([k,[f,n]])=>{S.prof[k]=[f,Math.max(0,DB[f].findIndex(p=>p[0]==n))]});
  if(d.CT){const ix=o=>Object.fromEntries(Object.entries(o).map(([x,v])=>[x,{...v,prof:Object.fromEntries(Object.entries(v.prof).map(([k,[f,n]])=>[k,[f,Math.max(0,DB[f].findIndex(p=>p[0]==n))]]))}]));S.CT=ix(d.CT);S.BT=ix(d.BT);S.cA=[...d.cA];S.bA=[...d.bA];S.eC=d.eC;S.eB=d.eB;$('cMode').value=d.cMode;$('bMode').value=d.bMode;putC(S.CT[S.eC]);putB(S.BT[S.eB])}else{S.CT={};S.BT={};S.eC=S.eB='A';$('cMode').value=$('bMode').value='igual'}
  buildAsg();bjText();document.querySelectorAll('.uF').forEach(s=>s.textContent=S._u);segs();buildGeo();buildProf();run()}
@@ -518,7 +525,7 @@ async function initSave(){try{SAVED=JSON.parse(localStorage.getItem(LSK)||'[]')}
 
 // ---------- dibujo ----------
 let M,RS;
-function run(){fillInfo();M=model();if(M.info.pvOut&&M.info.pvOut.length)setTimeout(()=>{$('stat').innerHTML+=`<div class="msg err">Cargas puntuales fuera de las vigas (no se aplicaron): x = ${M.info.pvOut.join(', ')} m</div>`},0);RS=M.info.err?{err:M.info.err}:solve(M);VR=[];if(!RS.err){try{verif()}catch(x){}}if(S.sel!=null&&(!M.E[S.sel]||RS.err))S.sel=null;
+function run(){fillInfo();buildLbv();M=model();if(M.info.pvOut&&M.info.pvOut.length)setTimeout(()=>{$('stat').innerHTML+=`<div class="msg err">Cargas puntuales fuera de las vigas (no se aplicaron): x = ${M.info.pvOut.join(', ')} m</div>`},0);RS=M.info.err?{err:M.info.err}:solve(M);VR=[];if(!RS.err){try{verif()}catch(x){}}if(S.sel!=null&&(!M.E[S.sel]||RS.err))S.sel=null;
  $('cInfo').textContent=M.info.c?`${M.info.c.n} paneles · panel real ${f2(M.info.c.p)} m · α real ${f2(M.info.c.a,1)}° (col. 1)`:'';
  $('bInfo').textContent=M.info.b?`${M.info.b.n} paneles · panel real ${f2(M.info.b.p)} m · α real ${f2(M.info.b.a,1)}° (vano 1)`:'';
  draw()}
@@ -609,7 +616,7 @@ function selectE(i,from){S.sel=(S.sel===i&&from=='svg')?null:i;S._scrollRow=from
 function showSel(){const b=$('selInfo');if(S.sel==null||RS.err||!M.E[S.sel]){b.innerHTML='';return}const e=M.E[S.sel],N=M.N,u=uF(),um=uM(),v=VR[S.sel],toKN=UF();
  const kv=(k,x)=>`<span class="kv"><span>${k}</span>${x}</span>`,nn=i=>`(${f2(N[i].x)}; ${f2(N[i].y)})`;
  let ver='';if(v){ver=v.na?kv('Verificación','sin datos de ry/Z'):kv('Interacción',`<b style="color:${v.good?'var(--t)':'var(--c)'}">${f2(v.it,2)} ${v.good?'OK':'NO verifica'}</b>`)+kv(`Pd [${u}]`,f2(v.Pd/toKN))+kv(`Td [${u}]`,f2(v.Td/toKN))+(v.Md?kv(`Md [${um}]`,f2(v.Md/toKN)):'')}
- b.innerHTML=`<b class="t">Barra ${S.sel+1} · ${ROLE[e.role]}${tyl(e)}</b>`+kv('Perfil',e.sec.name+(e.comp?' + H-'+e.cf.fc:''))+kv('L',f2(e.L)+' m')+kv('Nudos',nn(e.a)+' → '+nn(e.b))+
+ b.innerHTML=`<b class="t">Barra ${S.sel+1} · ${ROLE[e.role]}${tyl(e)}</b>`+kv('Perfil',e.sec.name+(e.comp?' + H-'+e.cf.fc:''))+kv('L',f2(e.L)+' m')+(()=>{const p=e.sec.p;return kv('A',p[1]+' cm²')+kv('Ix',p[2]+' cm⁴')+kv('rx / ry',p[3]+' / '+(p[4]??'—')+' cm')+kv('Zx',(p[5]??'—')+' cm³')})()+(v&&v.Lx!==undefined?kv('Pandeo en el plano k·Lx',f2(v.Lx)+' m'+(v.lx!==undefined?' (λx = '+f2(v.lx,0)+')':''))+kv('Pandeo fuera del plano k·Ly',f2(v.Ly)+' m'+(v.ly!==undefined?' (λy = '+f2(v.ly,0)+')':'')):'')+kv('Nudos',nn(e.a)+' → '+nn(e.b))+
   kv(`N [${u}]`,`<b style="color:${e.N>=0?'var(--t)':'var(--c)'}">${f2(e.N)} ${e.N>=0?'(tracción)':'(compresión)'}</b>`)+kv(`V [${u}]`,f2(e.V))+kv(`Mi / Mj [${um}]`,f2(e.M1)+' / '+f2(e.M2))+kv('σ = N/A',f2(e.N*toKN/e.sec.A/1e3,1)+' MPa')+ver+
   `<button class="bt l" id="selX">Cerrar</button>`;
  $('selX').onclick=()=>{S.sel=null;draw()}}
