@@ -81,6 +81,8 @@ tr[data-e]{cursor:pointer}tr[data-e]:hover td{background:rgba(0,163,196,.08)}tr.
 <label>Ángulo diagonal–cordón α [°]<input id="ab" type="number" step="1" value="45"></label>
 <label>Tipo de celosía<select id="pb"></select></label>
 <label>Unión viga–columna<select id="bj"><option value="emp">Empotrada: los dos cordones unidos a la columna</option><option value="art">Articulada: solo apoya el cordón superior</option></select></label>
+<label>Diagonales del nudo viga–columna (panel de columna entre cordones de viga)<select id="nD"><option value="c">Igual a diagonales de columna</option><option value="b">Igual a diagonales de viga</option></select></label>
+<label>Cordones horizontales del nudo<select id="nC"><option value="b">Igual a cordones de viga (continuos)</option><option value="c">Igual a montantes de columna</option></select></label>
 <div class="msg" id="bjTxt" style="background:var(--bg);font-size:12px;line-height:1.45"></div>
 <div class="sm" id="bInfo"></div></div></div>
 
@@ -270,7 +272,10 @@ function model(){ensure();saveEd();const nb=S.bays.length,H=+$('H').value,X=[0];
     for(const j of adj){if(Math.abs(y-H)<1e-6){bj=B[j];role='bt';break}if(!B[j].art&&Math.abs(y-B[j].yb)<1e-6){bj=B[j];role='bb';break}}
     if(!bj)return;let e=E.slice(e0).find(x=>(x.a==Lc[k]&&x.b==Rc[k])||(x.a==Rc[k]&&x.b==Lc[k]));
     if(!e){e={a:Lc[k],b:Rc[k]};E.push(e)}
+    if($('nC').value=='c'){e.role='cm';e.cf=c;e.pk=c.prof.cm;e.ri=false;e.rj=false;e.nudo=true;return}
     e.role=role;e.cf=bj.b;e.pk=bj.b.prof[role];e.ri=false;e.rj=false;e.nudo=true})
+   if($('nD').value=='b')adj.forEach(j=>{if(B[j].art)return;const y0=B[j].yb-1e-6,y1=H+1e-6;
+    E.slice(e0).forEach(x=>{if(x.role!='cd'||x.nudo)return;const ya=N[x.a].y,yb2=N[x.b].y;if(ya>=y0&&ya<=y1&&yb2>=y0&&yb2<=y1){x.role='bd';x.cf=B[j].b;x.pk=B[j].b.prof.bd;x.nudo=true}})})
    if(!info.c){const p=hs[1]-hs[0];info.c={n:hs.length-1,p,a:Math.atan(zc/p)*180/Math.PI,i}}
    colTop.push({l:xl,r:xr})}}
  // vigas
@@ -501,7 +506,7 @@ ${tbl(['#','Barra','Perfil','L [m]',`N [${u}]`,`V [${u}]`,`Mi [${um}]`,`Mj [${um
 
 // ---------- guardar / cargar ----------
 let DBR=null,SAVED=[];const LSK='porticos_reticulados';
-const IDS=['Lvl','Lvr','nb','H','sup','bcon','un','E','zc','ac','pc','zb','ab','pb','bj','qH','qV','ppC','ppB','fill','fc','vFy','vFu','vU','vk','vkd','vLb','vLc','vKc','vKcv','vLbb','vN0'];
+const IDS=['nD','nC','Lvl','Lvr','nb','H','sup','bcon','un','E','zc','ac','pc','zb','ab','pb','bj','qH','qV','ppC','ppB','fill','fc','vFy','vFu','vU','vk','vkd','vLb','vLc','vKc','vKcv','vLbb','vN0'];
 function snapshot(){saveEd();const nm=o=>Object.fromEntries(Object.entries(o).map(([x,v])=>[x,{...v,prof:Object.fromEntries(Object.entries(v.prof).map(([k,[f,i]])=>[k,[f,DB[f][i][0]]]))}]));return{LbV:S.LbV,Pv:S.Pv,Lbc:S.Lbc,Hc:S.Hc,CT:nm(S.CT),BT:nm(S.BT),cA:S.cA,bA:S.bA,eC:S.eC,eB:S.eB,cMode:cMode(),bMode:bMode(),bays:S.bays,P:S.P,ct:S.ct,bt:S.bt,v:Object.fromEntries(IDS.map(i=>[i,$(i).value])),prof:Object.fromEntries(Object.entries(S.prof).map(([k,[f,i]])=>[k,[f,DB[f][i][0]]]))}}
 function restore(d){IDS.forEach(i=>{if(d.v[i]!==undefined)$(i).value=d.v[i]});S.bays=[...d.bays];S.P=[...d.P];S.Hc=d.Hc?[...d.Hc]:[+(d.v.qH||0)];S.Pv=d.Pv?d.Pv.map(c=>({...c})):[];S.LbV=d.LbV?JSON.parse(JSON.stringify(d.LbV)):{};S.Lbc=d.Lbc?[...d.Lbc]:[];S.ct=d.ct;S.bt=d.bt;S._u=$('un').value;
  Object.entries(d.prof).forEach(([k,[f,n]])=>{S.prof[k]=[f,Math.max(0,DB[f].findIndex(p=>p[0]==n))]});
@@ -628,7 +633,7 @@ $('un').onchange=()=>{const o=S._u||'kN',n=$('un').value,k=(o=='t'?9.80665:1)/(n
 $('bj').onchange=()=>{bjText();run()};
 ['fill','fc'].forEach(id=>$(id).addEventListener('change',run));
 $('vLc').addEventListener('change',()=>document.querySelectorAll('[data-lbc]').forEach(e=>e.placeholder=$('vLc').value));
-['Lvl','Lvr','H','sup','bcon','E','zc','ac','pc','zb','ab','pb','qH','qV','ppC','ppB','vFy','vFu','vU','vk','vkd','vLb','vLc','vKc','vKcv','vLbb','vN0'].forEach(id=>$(id).onchange=run);
+['nD','nC','Lvl','Lvr','H','sup','bcon','E','zc','ac','pc','zb','ab','pb','qH','qV','ppC','ppB','vFy','vFu','vU','vk','vkd','vLb','vLc','vKc','vKcv','vLbb','vN0'].forEach(id=>$(id).onchange=run);
 window.onresize=draw;
 $('memBtn').onclick=memoria;
 bjText();segs();buildGeo();saveEd();buildAsg();buildProf();tabs();run();initSave();requestAnimationFrame(draw);
