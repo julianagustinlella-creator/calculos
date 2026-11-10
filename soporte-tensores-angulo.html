@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Soporte de tensores con ángulo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: hoja de cálculo de ingeniería — panel de datos a la izquierda, esquema + resultados a la derecha; en móvil se apila. */
+:root{
+  --bg:#f3f1ec; --paper:#ffffff; --ink:#1d2430; --muted:#5a6473; --line:#cfd4dc;
+  --steel:#2c5f8a; --steel-soft:#dbe7f1; --hot:#c8541c; --hot-soft:#f8e2d6;
+  --ok:#2e7d4f; --warn:#b7791f; --bad:#b3261e;
+  --sans:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#171b21; --paper:#1f252d; --ink:#e7eaef; --muted:#9aa4b2; --line:#39424e;
+  --steel:#7fb0d8; --steel-soft:#24354a; --hot:#f08a56; --hot-soft:#4a2b1c;
+  --ok:#5fc08a; --warn:#e0a63a; --bad:#f07a73; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#171b21; --paper:#1f252d; --ink:#e7eaef; --muted:#9aa4b2; --line:#39424e;
+  --steel:#7fb0d8; --steel-soft:#24354a; --hot:#f08a56; --hot-soft:#4a2b1c;
+  --ok:#5fc08a; --warn:#e0a63a; --bad:#f07a73; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--sans);
+  padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{font-size:clamp(22px,3vw,30px);line-height:1.1;margin:0;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 10px;font-weight:600}
+h3{font-size:15px;margin:0 0 6px;font-weight:600}
+p{margin:0 0 8px;max-width:68ch}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:18px}
+header{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:baseline;border-bottom:2px solid var(--steel);padding-bottom:10px}
+header .sub{color:var(--muted)}
+.grid{display:grid;grid-template-columns:minmax(280px,360px) minmax(0,1fr);gap:18px}
+@media (max-width:820px){.grid{grid-template-columns:1fr}}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:14px 16px;min-width:0}
+.field{display:grid;grid-template-columns:1fr 112px;gap:6px 10px;align-items:center;padding:5px 0;border-bottom:1px dashed var(--line)}
+.field:last-child{border-bottom:0}
+.field label{font-size:14px}
+.field small{display:block;color:var(--muted);font-size:12px;line-height:1.3}
+input,select{font:14px var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:5px 7px;width:100%;min-width:0}
+input:focus,select:focus{outline:2px solid var(--steel);outline-offset:1px}
+select{font-family:var(--sans)}
+.unit{font:12px var(--mono);color:var(--muted)}
+.seg{display:flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.seg button{flex:1;border:0;background:var(--bg);color:var(--ink);font:600 13px var(--sans);padding:6px 4px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--steel);color:#fff}
+.seg button:focus-visible{outline:2px solid var(--hot);outline-offset:-2px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:560px){.row2{grid-template-columns:1fr}}
+svg{width:100%;height:auto;display:block;max-width:100%}
+.svgbox{overflow-x:auto}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted);margin-top:6px}
+.legend span::before{content:"";display:inline-block;width:22px;height:0;border-top:3px solid;margin-right:6px;vertical-align:middle}
+.legend .neg::before{border-color:var(--steel);border-top-style:dashed}
+.legend .pos::before{border-color:var(--hot)}
+.legend .free::before{border-color:var(--muted);border-top-style:dotted;border-top-width:2px}
+.verdict{display:grid;grid-template-columns:1fr auto;gap:4px 14px;align-items:center;padding:12px 14px;border-radius:6px;border:1px solid var(--line);background:var(--steel-soft)}
+.verdict.bad{background:var(--hot-soft)}
+.verdict .big{font:600 30px/1 var(--mono);font-variant-numeric:tabular-nums}
+.verdict .tag{font:700 13px var(--sans);text-transform:uppercase;letter-spacing:.06em;padding:4px 10px;border-radius:999px;color:#fff;background:var(--ok)}
+.verdict.bad .tag{background:var(--bad)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;min-width:90px}
+.bar i{display:block;height:100%;background:var(--ok)}
+.bar i.warn{background:var(--warn)}.bar i.bad{background:var(--bad)}
+.tbox{overflow-x:auto}
+.steps{font:13px/1.5 var(--mono);white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:10px 12px;overflow-x:auto}
+.ref li{margin-bottom:6px}
+.ref ul{padding-left:18px;margin:0}
+.note{font-size:13px;color:var(--muted)}
+.mech-pill{display:inline-block;font:500 12px var(--mono);padding:2px 8px;border-radius:999px;background:var(--hot-soft);color:var(--hot);margin-left:6px}
+@media (prefers-reduced-motion:no-preference){.bar i{transition:width .25s ease}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Soporte de tensores de cubierta con perfil ángulo</h1>
+  <div class="sub">Flexión del ala agujereada por líneas de fluencia · soldadura · tensor · CIRSOC 301-2018</div>
+</header>
+
+<div class="grid">
+<!-- ===== DATOS ===== -->
+<div class="card">
+  <h2>Datos</h2>
+  <div class="field"><label for="perfil">Perfil ángulo<small>alas iguales, pulgadas</small></label><select id="perfil"></select></div>
+  <div class="field"><label>Disposición<small>simple: 1 ángulo · doble: 2 en "C"</small></label>
+    <div class="seg" id="segN"><button type="button" data-n="1" aria-pressed="false">Simple</button><button type="button" data-n="2" aria-pressed="true">Doble</button></div></div>
+  <div class="field"><label for="Tu">Tracción mayorada del tensor Tu<small>dato de la cubierta, t</small></label><input id="Tu" type="number" step="0.1" min="0" value="11.7"></div>
+  <div class="field"><label for="acero">Acero del perfil</label><select id="acero"><option value="2.4">F-24 (fy 240 MPa)</option><option value="3.55">F-36 (fy 355 MPa)</option></select></div>
+  <div class="field"><label for="Lp">Largo de la pieza Lp<small>altura del alma, mm</small></label><input id="Lp" type="number" step="1" min="20" value="76"></div>
+  <div class="field"><label for="dT">Diámetro del tensor Ø<small>barra ADN 420, mm</small></label><select id="dT"><option>12</option><option>16</option><option>20</option><option selected>25</option><option>32</option></select></div>
+  <div class="field"><label for="Dar">Apoyo rígido (tuerca entre caras)<small>mm · por defecto la tuerca de la barra · 0 = carga puntual</small></label><input id="Dar" type="number" step="1" min="0" value="36"></div>
+  <div class="field"><label for="y0">Altura del agujero y₀<small>desde la soldadura a la placa, mm</small></label><input id="y0" type="number" step="1" min="5" value="38"></div>
+  <div class="field"><label for="phi">φ flexión y corte<small>CIRSOC 301 B.3.3 · fluencia</small></label><input id="phi" type="number" step="0.05" min="0.5" max="1" value="0.9"></div>
+  <h2 style="margin-top:14px">Soldadura a la placa</h2>
+  <div class="field"><label for="w">Lado del filete<small>mm</small></label><select id="w"><option>3</option><option selected>4</option><option>5</option><option>6</option><option>8</option></select></div>
+  <div class="field"><label for="Fexx">Electrodo F<sub>EXX</sub><small>t/cm² · E70XX = 4,8</small></label><input id="Fexx" type="number" step="0.1" value="4.8"></div>
+  <div class="field"><label for="Lw">Longitud soldada total<small>mm · vacío = bordes inferiores de todas las alas</small></label><input id="Lw" type="number" step="1" min="0" placeholder="auto"></div>
+</div>
+
+<!-- ===== ESQUEMA + RESULTADOS ===== -->
+<div style="display:grid;gap:18px;min-width:0">
+  <div class="verdict" id="verdict">
+    <div><div class="note">Flexión del ala agujereada · Tu / φPn</div><div class="big" id="vRatio">—</div></div>
+    <div class="tag" id="vTag">—</div>
+    <div class="note" id="vText" style="grid-column:1/-1"></div>
+  </div>
+
+  <div class="card">
+    <h2>Mecanismo de resistencia <span class="mech-pill" id="mechName"></span></h2>
+    <div class="row2">
+      <div>
+        <h3>Planta del detalle</h3>
+        <div class="svgbox"><svg id="svgPlan" viewBox="0 0 360 300" role="img" aria-label="Planta del soporte"></svg></div>
+      </div>
+      <div>
+        <h3>Alma agujereada · líneas de fluencia</h3>
+        <div class="svgbox"><svg id="svgMech" viewBox="0 0 360 300" role="img" aria-label="Mecanismo de líneas de fluencia"></svg></div>
+        <div class="legend"><span class="neg">línea negativa (borde empotrado)</span><span class="pos">línea positiva</span><span class="free">borde libre</span></div>
+      </div>
+    </div>
+    <p class="note" id="mechText" style="margin-top:10px"></p>
+  </div>
+
+  <div class="card">
+    <h2>Verificaciones</h2>
+    <div class="tbox"><table id="tab">
+      <thead><tr><th>Estado límite</th><th>Referencia</th><th style="text-align:right">Solicitación</th><th style="text-align:right">φRn</th><th style="text-align:right">Utiliz.</th><th></th></tr></thead>
+      <tbody></tbody></table></div>
+  </div>
+
+  <div class="card">
+    <h2>Desarrollo del cálculo del ala (punto 1)</h2>
+    <div class="steps" id="steps"></div>
+  </div>
+
+  <div class="card">
+    <h2>Sensibilidad a la altura del agujero y₀</h2>
+    <div class="svgbox"><svg id="svgY0" viewBox="0 0 720 240" role="img" aria-label="φPn en función de y0"></svg></div>
+    <p class="note">φPn del ala para el perfil y la disposición elegidos, variando y₀ entre r + 5 mm y H − r − 5 mm. La línea punteada es Tu.</p>
+  </div>
+
+  <div class="card ref">
+    <h2>Base normativa y método</h2>
+    <ul>
+      <li><b>CIRSOC 301-2018</b>, Reglamento Argentino de Estructuras de Acero para Edificios: método LRFD, art. B.3.3 (φ = 0,90 para estados límites de fluencia); art. J.2.4 soldaduras de filete (φ = 0,75; F<sub>w</sub> = 0,60·F<sub>EXX</sub> sobre la garganta 0,707·w); art. J.4.2 fluencia por corte de elementos (0,60·F<sub>y</sub>); Cap. D tracción de barras (φ<sub>t</sub> = 0,90 sobre A<sub>g</sub>·F<sub>y</sub>) y art. J.3.6 barras roscadas (F<sub>n</sub> = 0,75·F<sub>u</sub> sobre el área bruta).</li>
+      <li><b>Flexión del ala</b>: el CIRSOC 301 no da una fórmula cerrada para una chapa cargada fuera de su plano; se aplica la <b>teoría de líneas de fluencia</b> (Johansen, teorema cinemático) con el método de las proyecciones, el mismo que usan la AISC Steel Design Guide 1 para placas de base y la EN 1993-1-8 para T-stubs. Momento plástico por unidad de longitud m = F<sub>y</sub>·t²/4. Es una <b>cota superior</b> de la carga última: se evalúan los mecanismos compatibles con los bordes empotrados y se toma el menor; por eso se afecta con φ = 0,90 y conviene no apurar la utilización.</li>
+      <li><b>Bordes</b>: el ala con el agujero queda empotrada en su borde inferior (soldadura a la placa) y en la arista con el ala en plano, que trabaja como rigidizador. Con perfil doble en "C" las dos aristas quedan empotradas y el alma tiene 3 bordes fijos; con perfil simple, 2 bordes fijos y 2 libres. El borde superior es siempre libre.</li>
+      <li><b>Apoyo rígido</b>: la tuerca se toma como un disco rígido de diámetro igual a su medida entre caras (M24: 36 mm); las líneas de fluencia nacen en su borde y la rotación de cada región se mide desde su eje hasta el borde del disco. Una arandela común no es rígida y no se cuenta; una arandela gruesa (e ≥ t/2) sí puede ingresarse. Con D = 0 se obtiene el caso de carga puntual, muy conservador. Las luces del alma se miden entre caras internas de las alas en plano (se descuenta t por cada arista empotrada).</li>
+      <li><b>Aceros</b>: perfiles F-24 / F-36 (IRAM-IAS U 500-503); tensor ADN 420 (IRAM-IAS U 500-528: F<sub>y</sub> = 420 MPa, F<sub>u</sub> = 500 MPa).</li>
+    </ul>
+  </div>
+</div>
+</div>
+</div>
+
+<script>
+// ---------- tabla de perfiles ángulo (alas iguales) a [mm], t [mm], kg/m ----------
+const PERF=[
+["L 1\" x 1/8\"",25.4,3.2,1.19],["L 1\" x 3/16\"",25.4,4.8,1.73],["L 1\" x 1/4\"",25.4,6.4,2.22],
+["L 1 1/4\" x 1/8\"",31.8,3.2,1.50],["L 1 1/4\" x 3/16\"",31.8,4.8,2.20],["L 1 1/4\" x 1/4\"",31.8,6.4,2.86],
+["L 1 1/2\" x 1/8\"",38.1,3.2,1.83],["L 1 1/2\" x 3/16\"",38.1,4.8,2.68],["L 1 1/2\" x 1/4\"",38.1,6.4,3.48],
+["L 2\" x 1/8\"",50.8,3.2,2.46],["L 2\" x 3/16\"",50.8,4.8,3.63],["L 2\" x 1/4\"",50.8,6.4,4.75],["L 2\" x 5/16\"",50.8,7.9,5.83],["L 2\" x 3/8\"",50.8,9.5,6.85],
+["L 2 1/2\" x 3/16\"",63.5,4.8,4.57],["L 2 1/2\" x 1/4\"",63.5,6.4,6.10],["L 2 1/2\" x 5/16\"",63.5,7.9,7.44],["L 2 1/2\" x 3/8\"",63.5,9.5,8.78],
+["L 3\" x 1/4\"",76.2,6.4,7.29],["L 3\" x 5/16\"",76.2,7.9,9.08],["L 3\" x 3/8\"",76.2,9.5,10.71],["L 3\" x 1/2\"",76.2,12.7,13.99],
+["L 3 1/2\" x 1/4\"",88.9,6.4,8.63],["L 3 1/2\" x 5/16\"",88.9,7.9,10.71],["L 3 1/2\" x 3/8\"",88.9,9.5,12.65],["L 3 1/2\" x 1/2\"",88.9,12.7,16.52],
+["L 4\" x 1/4\"",101.6,6.4,9.82],["L 4\" x 5/16\"",101.6,7.9,12.20],["L 4\" x 3/8\"",101.6,9.5,14.58],["L 4\" x 1/2\"",101.6,12.7,19.05],
+["L 5\" x 3/8\"",127,9.5,18.30],["L 5\" x 1/2\"",127,12.7,24.11],["L 6\" x 3/8\"",152.4,9.5,22.17],["L 6\" x 1/2\"",152.4,12.7,29.17]];
+const $=id=>document.getElementById(id);
+const sel=$('perfil');PERF.forEach((p,i)=>{const o=document.createElement('option');o.value=i;o.textContent=`${p[0]}  (${p[1]}×${p[2]} mm)`;sel.appendChild(o)});
+sel.value=21; // L 3" x 1/2"
+let N=2;
+$('segN').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{N=+b.dataset.n;$('segN').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));run()}));
+let lpTouched=false,y0Touched=false,darTouched=false;
+$('Lp').addEventListener('input',()=>lpTouched=true);$('y0').addEventListener('input',()=>y0Touched=true);$('Dar').addEventListener('input',()=>darTouched=true);
+document.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',run));
+const f1=x=>x.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:1});
+const f2=x=>x.toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const f0=x=>x.toLocaleString('es-AR',{maximumFractionDigits:0});
+
+// ---------- mecanismos (longitudes en cm, m en t·cm/cm, trabajo por δ unitario = carga última) ----------
+// Alma: ancho B, alto H, borde inferior y=0 empotrado; x=0 empotrado; x=B empotrado si doble; y=H libre.
+function mechDoble(B,H,x0,y0,rw,m){
+  const L1=Math.hypot(x0,y0),u1=[x0/L1,y0/L1];
+  const L2=Math.hypot(B-x0,y0),u2=[(B-x0)/L2,y0/L2];
+  const tB=1/(y0-rw),tL=1/(x0-rw),tR=1/(B-x0-rw);
+  if(!(tB>0&&tL>0&&tR>0))return null;
+  const WB=m*tB*(B+(x0-rw*u1[0])+((B-x0)-rw*u2[0]));
+  const WL=m*tL*(H+(y0-rw*u1[1])+(H-y0-rw));
+  const WR=m*tR*(H+(y0-rw*u2[1])+(H-y0-rw));
+  return {P:WB+WL+WR,name:'3 bordes empotrados: diagonales a las esquinas inferiores + línea vertical al borde libre',
+    lines:[['pos',0,0,x0,y0],['pos',B,0,x0,y0],['pos',x0,y0,x0,H]],neg:[['b'],['l'],['r']],parts:{WB,WL,WR},rot:{tB,tL,tR}};
+}
+function mechSimple(B,H,x0,y0,rw,m){
+  // S1: una sola línea por el origen y el disco, prolongada hasta el borde libre
+  const L1=Math.hypot(x0,y0),u=[x0/L1,y0/L1];
+  const s=Math.min((B-x0)/u[0],(H-y0)/u[1]);
+  const tB=1/(y0-rw),tL=1/(x0-rw);
+  if(!(tB>0&&tL>0))return null;
+  const WB1=m*tB*(B+(x0-rw*u[0])+(s-rw)*u[0]), WL1=m*tL*(H+(y0-rw*u[1])+(s-rw)*u[1]);
+  const S1={P:WB1+WL1,name:'2 bordes empotrados: una línea desde la esquina empotrada por el agujero hasta el borde libre',
+    lines:[['pos',0,0,x0,y0],['pos',x0,y0,x0+s*u[0],y0+s*u[1]]],neg:[['b'],['l']],parts:{WB:WB1,WL:WL1},rot:{tB,tL}};
+  // S2: diagonales a ambas esquinas inferiores + vertical; región derecha gira sobre el borde libre (sin línea negativa)
+  const L2=Math.hypot(B-x0,y0),u2=[(B-x0)/L2,y0/L2],tR=1/(B-x0-rw);
+  if(tR>0){
+    const WB=m*tB*(B+(x0-rw*u[0])+((B-x0)-rw*u2[0])), WL=m*tL*(H+(y0-rw*u[1])+(H-y0-rw)), WR=m*tR*((y0-rw*u2[1])+(H-y0-rw));
+    const S2={P:WB+WL+WR,name:'2 bordes empotrados: diagonales a las esquinas inferiores + línea vertical',
+      lines:[['pos',0,0,x0,y0],['pos',B,0,x0,y0],['pos',x0,y0,x0,H]],neg:[['b'],['l']],parts:{WB,WL,WR},rot:{tB,tL,tR}};
+    if(S2.P<S1.P)return S2;
+  }
+  return S1;
+}
+
+function run(){
+  const p=PERF[+sel.value],a=p[1],t=p[2];
+  if(!lpTouched)$('Lp').value=Math.round(a);
+  if(!y0Touched)$('y0').value=Math.round((+$('Lp').value)/2);
+  const dT=+$('dT').value;const NUT={12:18,16:24,20:30,25:36,32:46};if(!darTouched)$('Dar').value=NUT[dT]||Math.round(1.5*dT);
+  const Tu=+$('Tu').value||0,fy=+$('acero').value,Lp=+$('Lp').value,Dar=+$('Dar').value,y0mm=+$('y0').value,phi=+$('phi').value;
+  const wmm=+$('w').value,Fexx=+$('Fexx').value;
+  const B=(N===2?2*a-2*t:a-t)/10,H=Lp/10,x0=(N===2?a-t:a/2-t)/10,y0=y0mm/10,rw=Dar/20; // luces libres entre caras internas de las alas en plano
+  const m=fy*(t/10)**2/4;
+  const mech=N===2?mechDoble(B,H,x0,y0,rw,m):mechSimple(B,H,x0,y0,rw,m);
+  const mech0=N===2?mechDoble(B,H,x0,y0,0,m):mechSimple(B,H,x0,y0,0,m);
+  const tb=$('tab').tBodies[0];tb.innerHTML='';
+  const rows=[];
+  function addRow(name,ref,S,R,note){const r=S/R;rows.push([name,ref,S,R,r,note])}
+  if(!mech){$('vRatio').textContent='—';$('vTag').textContent='Geometría inválida';$('verdict').classList.add('bad');
+    $('vText').textContent='La arandela queda sobre un borde empotrado o fuera del alma: reducí D_ar o corregí y₀.';$('steps').textContent='';return}
+  const Pu=mech.P,phiPn=phi*Pu;
+  addRow('Flexión del ala agujereada (líneas de fluencia)','CIRSOC 301 B.3.3 · teoría de líneas de fluencia',Tu,phiPn,`m = ${f2(m)} t·cm/cm · Pu = ${f1(Pu)} t`);
+  // ala en plano: corte
+  const nLeg=N,Vleg=Tu/nLeg,phiV=phi*0.6*fy*H*(t/10);
+  addRow(`Corte del ala en plano (rigidizador), ${nLeg} ala${nLeg>1?'s':''}`,'CIRSOC 301 J.4.2 · 0,60·Fy·Ag',Vleg,phiV,`V por ala = Tu/${nLeg} (conservador)`);
+  // soldadura
+  const LwAuto=N===2?4*a:2*a,Lw=(+$('Lw').value)||LwAuto;$('Lw').placeholder=`auto ${Math.round(LwAuto)}`;
+  const te=0.707*wmm/10,phiRw=0.75*0.6*Fexx*te*(Lw/10);
+  addRow('Soldadura de filete a la placa','CIRSOC 301 J.2.4 · φ 0,75 · 0,60·FEXX·0,707·w·L',Tu,phiRw,`w = ${wmm} mm · L = ${Math.round(Lw)} mm`);
+  // tensor
+  const Ag=Math.PI*(dT/10)**2/4,phiTy=0.9*Ag*4.2,phiTr=0.75*0.75*Ag*5.0;
+  addRow(`Tensor Ø${dT} ADN 420 · fluencia`,'CIRSOC 301 D.2 · φt 0,90·Ag·Fy',Tu,phiTy,`Ag = ${f2(Ag)} cm²`);
+  addRow(`Tensor Ø${dT} · rotura en la rosca`,'CIRSOC 301 J.3.6 · φ 0,75 · 0,75·Fu·Ag',Tu,phiTr,'Fu = 500 MPa · rosca tallada sobre la barra');
+  rows.forEach(([n,ref,S,R,r,note])=>{
+    const tr=document.createElement('tr');const cls=r<=0.9?'':r<=1?'warn':'bad';
+    tr.innerHTML=`<td>${n}<br><span class="note">${note}</span></td><td class="note">${ref}</td><td class="n">${f1(S)} t</td><td class="n">${f1(R)} t</td><td class="n">${f2(r)}</td><td><div class="bar"><i class="${cls}" style="width:${Math.min(100,r*100)}%"></i></div></td>`;
+    tb.appendChild(tr)});
+  // veredicto
+  const r=Tu/phiPn,v=$('verdict');v.classList.toggle('bad',r>1);$('vRatio').textContent=f2(r);
+  $('vTag').textContent=r<=1?'Verifica':'No verifica';
+  $('vText').textContent=`Pu = ${f1(Pu)} t (cota superior del mecanismo) · φPn = ${f1(phiPn)} t · con carga puntual (Dar = 0) Pu = ${f1(mech0?mech0.P:0)} t. `+(r>0.85&&r<=1?'Margen ajustado para una cota superior: conviene subir espesor o rigidizar.':'');
+  $('mechName').textContent=N===2?'perfil doble':'perfil simple';$('mechText').textContent=mech.name+'. Cada región rígida gira alrededor de su borde empotrado; el trabajo interno es m × rotación × proyección de sus líneas de fluencia sobre el eje de giro. Las líneas nacen en el borde de la arandela.';
+  // pasos (desarrollo del punto 1)
+  const P=mech.parts,Rt=mech.rot;
+  let s='';
+  s+=`PASO 1 · Geometría del alma (ala con el agujero)
+`;
+  s+=`  Perfil ${p[0]}: ala a = ${a} mm, espesor t = ${t} mm, largo de pieza Lp = ${f0(H*10)} mm
+`;
+  s+=`  Luz libre entre caras internas de las alas en plano: B = ${N===2?'2a − 2t':'a − t'} = ${f1(B*10)} mm
+`;
+  s+=`  Altura del alma H = Lp = ${f0(H*10)} mm · agujero en x₀ = ${f0(x0*10)} mm (desde la arista empotrada), y₀ = ${f0(y0*10)} mm (desde la placa)
+`;
+  s+=`  Apoyo rígido (tuerca): D = ${f0(rw*20)} mm → r = ${f0(rw*10)} mm
+`;
+  s+=`  Bordes: inferior EMPOTRADO (soldadura a PL1) · izquierdo EMPOTRADO (arista) · derecho ${N===2?'EMPOTRADO (arista del 2º ángulo)':'LIBRE'} · superior LIBRE
+
+`;
+  s+=`PASO 2 · Momento plástico de la chapa por unidad de longitud (CIRSOC 301 B.3.3, acero F-${fy===2.4?'24':'36'})
+`;
+  s+=`  m = Fy·t²/4 = ${f2(fy)} t/cm² × (${f2(t/10)} cm)² / 4 = ${f2(m)} t·cm/cm
+
+`;
+  s+=`PASO 3 · Mecanismo (teorema cinemático). Se impone un descenso δ = 1 en la tuerca.
+`;
+  s+=`  ${mech.name}.
+`;
+  s+=`  Cada región rígida gira sobre su borde empotrado; su rotación es δ dividido la distancia del eje al borde de la tuerca:
+`;
+  s+=`  θ_inf = 1/(y₀ − r) = 1/${f2(y0-rw)} cm = ${f2(Rt.tB)} rad/cm   ← por eso bajar el agujero (menor y₀) aumenta la capacidad
+`;
+  s+=`  θ_izq = 1/(x₀ − r) = 1/${f2(x0-rw)} cm = ${f2(Rt.tL)} rad/cm
+`;
+  if(Rt.tR)s+=`  θ_der = 1/(B − x₀ − r) = 1/${f2(B-x0-rw)} cm = ${f2(Rt.tR)} rad/cm${N===1?'  (borde libre: la región gira pero no hay línea negativa en ese borde)':''}
+`;
+  s+=`
+PASO 4 · Trabajo interno de cada región = m × θ × Σ(proyección de sus líneas de fluencia sobre su eje de giro)
+`;
+  s+=`  Las líneas negativas son los bordes empotrados completos; las positivas son las diagonales y la vertical, recortadas en el borde de la tuerca.
+`;
+  s+=`  W_inf = ${f2(P.WB)} t   (eje: borde soldado, longitud B = ${f1(B*10)} mm + proyecciones de las diagonales)
+`;
+  s+=`  W_izq = ${f2(P.WL)} t   (eje: arista, longitud H + proyecciones de diagonal y vertical)
+`;
+  if(P.WR!==undefined)s+=`  W_der = ${f2(P.WR)} t
+`;
+  s+=`
+PASO 5 · Equilibrio de trabajos: Pu × δ = ΣW  →  Pu = ${f2(Pu)} t  (cota superior del mecanismo)
+`;
+  s+=`  Con carga puntual (r = 0) el mismo mecanismo da Pu = ${f1(mech0?mech0.P:0)} t.
+
+`;
+  s+=`PASO 6 · Resistencia de diseño y verificación
+`;
+  s+=`  φPn = ${f2(phi)} × ${f2(Pu)} = ${f2(phiPn)} t   →   Tu/φPn = ${f1(Tu)}/${f1(phiPn)} = ${f2(r)}  ${r<=1?'CUMPLE':'NO CUMPLE'}`;
+  $('steps').textContent=s;
+  drawMech(B,H,x0,y0,rw,dT/20,mech);drawPlan(a,t,Lp,dT,Dar);drawY0(B,H,x0,rw,m,phi,Tu,y0);
+}
+
+// ---------- dibujos ----------
+function drawY0(B,H,x0,rw,m,phi,Tu,y0cur){
+  const svg=$('svgY0');const css=getComputedStyle(document.documentElement);
+  const steel=css.getPropertyValue('--steel').trim(),hot=css.getPropertyValue('--hot').trim(),muted=css.getPropertyValue('--muted').trim(),ink=css.getPropertyValue('--ink').trim(),line=css.getPropertyValue('--line').trim();
+  const pts=[];const yMin=rw+0.5,yMax=H-rw-0.5;if(yMax<=yMin){svg.innerHTML='';return}
+  for(let i=0;i<=40;i++){const y=yMin+(yMax-yMin)*i/40;const mm=N===2?mechDoble(B,H,x0,y,rw,m):mechSimple(B,H,x0,y,rw,m);if(mm)pts.push([y,phi*mm.P])}
+  if(!pts.length){svg.innerHTML='';return}
+  const W=720,Hs=240,L=56,R=16,T=16,Bm=40;const vmax=Math.max(Tu*1.2,...pts.map(p=>p[1]).filter(v=>isFinite(v)&&v<Tu*4),Tu*1.2);
+  const X=y=>L+(y-yMin)/(yMax-yMin)*(W-L-R),Y=v=>T+(1-Math.min(v,vmax)/vmax)*(Hs-T-Bm);
+  let o='';
+  for(let k=0;k<=4;k++){const v=vmax*k/4;o+=`<line x1="${L}" y1="${Y(v)}" x2="${W-R}" y2="${Y(v)}" stroke="${line}" stroke-width="1"/><text x="${L-6}" y="${Y(v)+4}" font-size="11" text-anchor="end" fill="${muted}" font-family="IBM Plex Mono,monospace">${v.toFixed(0)}</text>`}
+  for(let k=0;k<=5;k++){const y=yMin+(yMax-yMin)*k/5;o+=`<text x="${X(y)}" y="${Hs-Bm+16}" font-size="11" text-anchor="middle" fill="${muted}" font-family="IBM Plex Mono,monospace">${Math.round(y*10)}</text>`}
+  o+=`<text x="${(L+W-R)/2}" y="${Hs-6}" font-size="11" text-anchor="middle" fill="${muted}">y₀ · altura del agujero desde la placa (mm)</text>`;
+  o+=`<text transform="translate(12,${(T+Hs-Bm)/2}) rotate(-90)" font-size="11" text-anchor="middle" fill="${muted}">φPn (t)</text>`;
+  o+=`<line x1="${L}" y1="${Y(Tu)}" x2="${W-R}" y2="${Y(Tu)}" stroke="${hot}" stroke-width="1.5" stroke-dasharray="6 4"/><text x="${W-R-4}" y="${Y(Tu)-5}" font-size="11" text-anchor="end" fill="${hot}" font-family="IBM Plex Mono,monospace">Tu = ${Tu.toFixed(1)} t</text>`;
+  o+=`<polyline fill="none" stroke="${steel}" stroke-width="2.5" points="${pts.map(p=>X(p[0])+','+Y(p[1])).join(' ')}"/>`;
+  const cur=N===2?mechDoble(B,H,x0,y0cur,rw,m):mechSimple(B,H,x0,y0cur,rw,m);
+  if(cur&&y0cur>=yMin&&y0cur<=yMax)o+=`<circle cx="${X(y0cur)}" cy="${Y(phi*cur.P)}" r="5" fill="${ink}"/><text x="${X(y0cur)+8}" y="${Y(phi*cur.P)-8}" font-size="11" fill="${ink}" font-family="IBM Plex Mono,monospace">y₀ = ${Math.round(y0cur*10)} → ${(phi*cur.P).toFixed(1)} t</text>`;
+  svg.innerHTML=o;
+}
+function drawMech(B,H,x0,y0,rw,rh,mech){
+  const svg=$('svgMech');const W=360,Hs=300,pad=44;const sc=Math.min((W-2*pad)/B,(Hs-2*pad)/H);
+  const X=x=>pad+x*sc,Y=y=>Hs-pad-y*sc;const css=getComputedStyle(document.documentElement);
+  const steel=css.getPropertyValue('--steel').trim(),hot=css.getPropertyValue('--hot').trim(),muted=css.getPropertyValue('--muted').trim(),ink=css.getPropertyValue('--ink').trim(),soft=css.getPropertyValue('--steel-soft').trim();
+  let o='';
+  o+=`<rect x="${X(0)}" y="${Y(H)}" width="${B*sc}" height="${H*sc}" fill="${soft}" stroke="${ink}" stroke-width="1"/>`;
+  // bordes
+  const hatch=(x1,y1,x2,y2,side)=>{let h='';const n=Math.round(Math.hypot(x2-x1,y2-y1)/9);for(let i=0;i<=n;i++){const t=i/n,px=x1+(x2-x1)*t,py=y1+(y2-y1)*t;const dx=side==='b'?-5:side==='l'?-6:6,dy=side==='b'?7:5;h+=`<line x1="${px}" y1="${py}" x2="${px+dx}" y2="${py+dy}" stroke="${steel}" stroke-width="1"/>`}return h};
+  const negs=mech.neg.map(n=>n[0]);
+  if(negs.includes('b'))o+=`<line x1="${X(0)}" y1="${Y(0)}" x2="${X(B)}" y2="${Y(0)}" stroke="${steel}" stroke-width="3.5" stroke-dasharray="7 4"/>`+hatch(X(0),Y(0),X(B),Y(0),'b');
+  if(negs.includes('l'))o+=`<line x1="${X(0)}" y1="${Y(0)}" x2="${X(0)}" y2="${Y(H)}" stroke="${steel}" stroke-width="3.5" stroke-dasharray="7 4"/>`+hatch(X(0),Y(0),X(0),Y(H),'l');
+  if(negs.includes('r'))o+=`<line x1="${X(B)}" y1="${Y(0)}" x2="${X(B)}" y2="${Y(H)}" stroke="${steel}" stroke-width="3.5" stroke-dasharray="7 4"/>`+hatch(X(B),Y(0),X(B),Y(H),'r');
+  else o+=`<line x1="${X(B)}" y1="${Y(0)}" x2="${X(B)}" y2="${Y(H)}" stroke="${muted}" stroke-width="2" stroke-dasharray="2 4"/>`;
+  o+=`<line x1="${X(0)}" y1="${Y(H)}" x2="${X(B)}" y2="${Y(H)}" stroke="${muted}" stroke-width="2" stroke-dasharray="2 4"/>`;
+  // líneas positivas recortadas en el disco
+  mech.lines.forEach(([k,x1,y1,x2,y2])=>{
+    let a=[x1,y1],b=[x2,y2];const trim=(p,q)=>{const d=Math.hypot(q[0]-p[0],q[1]-p[1]);if(d<1e-9)return p;const u=[(q[0]-p[0])/d,(q[1]-p[1])/d];return [p[0]+u[0]*rw,p[1]+u[1]*rw]};
+    if(Math.hypot(a[0]-x0,a[1]-y0)<1e-9)a=trim([x0,y0],b);if(Math.hypot(b[0]-x0,b[1]-y0)<1e-9)b=trim([x0,y0],a);
+    o+=`<line x1="${X(a[0])}" y1="${Y(a[1])}" x2="${X(b[0])}" y2="${Y(b[1])}" stroke="${hot}" stroke-width="3" stroke-linecap="round"/>`});
+  // arandela + agujero
+  if(rw>0)o+=`<circle cx="${X(x0)}" cy="${Y(y0)}" r="${rw*sc}" fill="${hot}" fill-opacity=".18" stroke="${hot}" stroke-width="1.5"/>`;
+  o+=`<circle cx="${X(x0)}" cy="${Y(y0)}" r="${Math.max(2,rh*sc)}" fill="none" stroke="${ink}" stroke-width="1.2"/>`;
+  o+=`<circle cx="${X(x0)}" cy="${Y(y0)}" r="3" fill="${ink}"/>`;
+  // Tu saliendo del plano (símbolo ⊙)
+  o+=`<text x="${X(x0)+rw*sc+8}" y="${Y(y0)-6}" font-size="12" font-family="IBM Plex Mono,monospace" fill="${ink}">Tu ⊙</text>`;
+  // cotas
+  const f=v=>Math.round(v*10);
+  o+=`<text x="${(X(0)+X(B))/2}" y="${Hs-8}" font-size="11" text-anchor="middle" fill="${muted}" font-family="IBM Plex Mono,monospace">B = ${f(B)} mm (luz libre) · borde soldado a la placa</text>`;
+  o+=`<text transform="translate(${12},${(Y(0)+Y(H))/2}) rotate(-90)" font-size="11" text-anchor="middle" fill="${muted}" font-family="IBM Plex Mono,monospace">H = Lp = ${f(H)} mm</text>`;
+  o+=`<text x="${(X(0)+X(B))/2}" y="${Y(H)-8}" font-size="11" text-anchor="middle" fill="${muted}" font-family="IBM Plex Mono,monospace">borde libre</text>`;
+  o+=`<text transform="translate(${X(0)-26},${(Y(0)+Y(H))/2}) rotate(-90)" font-size="10" text-anchor="middle" fill="${steel}">arista (ala en plano)</text>`;
+  if(negs.includes('r'))o+=`<text transform="translate(${X(B)+28},${(Y(0)+Y(H))/2}) rotate(90)" font-size="10" text-anchor="middle" fill="${steel}">arista (ala en plano)</text>`;
+  else o+=`<text transform="translate(${X(B)+14},${(Y(0)+Y(H))/2}) rotate(90)" font-size="10" text-anchor="middle" fill="${muted}">libre</text>`;
+  svg.innerHTML=o;
+}
+function drawPlan(a,t,Lp,dT,Dar){
+  const svg=$('svgPlan');const W=360,Hs=300;const css=getComputedStyle(document.documentElement);
+  const steel=css.getPropertyValue('--steel').trim(),hot=css.getPropertyValue('--hot').trim(),muted=css.getPropertyValue('--muted').trim(),ink=css.getPropertyValue('--ink').trim(),paper=css.getPropertyValue('--paper').trim();
+  const Bmm=N===2?2*a:a;const sc=Math.min(200/(Bmm+2*a),1.6);const cx=W/2,cy=150;
+  let o='';
+  // placa PL1 (fondo)
+  o+=`<rect x="20" y="40" width="${W-40}" height="220" fill="none" stroke="${muted}" stroke-dasharray="4 3"/>`;
+  o+=`<text x="26" y="56" font-size="11" fill="${muted}">Placa PL1 (planta)</text>`;
+  // tensor: eje horizontal, pasa por el alma (vertical en planta = línea gruesa)
+  const webX=cx-(Bmm*sc)/2,webY=cy-t*sc/2;
+  o+=`<line x1="30" y1="${cy}" x2="${W-30}" y2="${cy}" stroke="${hot}" stroke-width="${Math.max(3,dT*sc*0.6)}" stroke-linecap="round" opacity=".9"/>`;
+  o+=`<text x="34" y="${cy-10}" font-size="11" fill="${hot}">tensor Ø${dT} → Tu</text>`;
+  // alma (ala agujereada) en planta: barra horizontal de ancho B y espesor t, perpendicular al tensor sería vertical...
+  // Representamos: tensor vertical atraviesa el alma horizontal.
+  o='';
+  o+=`<rect x="20" y="40" width="${W-40}" height="220" fill="none" stroke="${muted}" stroke-dasharray="4 3"/>`;
+  o+=`<text x="26" y="56" font-size="11" fill="${muted}">Placa PL1 · vista en planta</text>`;
+  // tensor vertical
+  o+=`<line x1="${cx}" y1="62" x2="${cx}" y2="${Hs-44}" stroke="${hot}" stroke-width="${Math.max(3,dT*sc*0.6)}" stroke-linecap="round" opacity=".9"/>`;
+  o+=`<polygon points="${cx-6},${Hs-52} ${cx+6},${Hs-52} ${cx},${Hs-40}" fill="${hot}"/>`;
+  o+=`<text x="${cx+10}" y="${Hs-46}" font-size="11" fill="${hot}">Tu (tensor Ø${dT})</text>`;
+  // alma horizontal (ala agujereada) de ancho B, espesor t
+  const bx=cx-Bmm*sc/2,by=cy-t*sc/2;
+  o+=`<rect x="${bx}" y="${by}" width="${Bmm*sc}" height="${t*sc}" fill="${steel}" stroke="${ink}" stroke-width=".8"/>`;
+  // alas en plano (rigidizadores) hacia abajo (lado de la tuerca)
+  const legs=N===2?[bx,bx+Bmm*sc-t*sc]:[bx];
+  legs.forEach(x=>{o+=`<rect x="${x}" y="${by}" width="${t*sc}" height="${a*sc}" fill="${steel}" stroke="${ink}" stroke-width=".8"/>`});
+  // tuerca + arandela del lado de las alas
+  o+=`<rect x="${cx-Dar*sc/2}" y="${by+t*sc}" width="${Dar*sc}" height="${Math.max(3,4*sc)}" fill="${ink}"/>`;
+  o+=`<rect x="${cx-dT*0.8*sc}" y="${by+t*sc+Math.max(3,4*sc)}" width="${dT*1.6*sc}" height="${dT*0.8*sc}" fill="${paper}" stroke="${ink}"/>`;
+  o+=`<text x="${cx+Dar*sc/2+6}" y="${by+t*sc+12}" font-size="10.5" fill="${ink}">tuerca ${Dar} e/c + arandela</text>`;
+  // soldaduras a la placa (triángulos)
+  o+=`<text x="${bx}" y="${by-8}" font-size="10.5" fill="${muted}">ala agujereada (alma) B = ${Math.round(Bmm)} mm · soldada a la placa</text>`;
+  legs.forEach((x,i)=>{o+=`<text x="${x+(N===2&&i===1?-4:t*sc+4)}" y="${by+a*sc+2}" font-size="10.5" fill="${muted}" text-anchor="${N===2&&i===1?'end':'start'}">ala en plano ${Math.round(a)} mm</text>`});
+  o+=`<text x="${W-26}" y="${Hs-12}" font-size="11" text-anchor="end" fill="${muted}">${N===2?'perfil doble en "C"':'perfil simple en "L"'} · Lp = ${Math.round(Lp)} mm de alto</text>`;
+  svg.innerHTML=o;
+}
+run();
+new MutationObserver(run).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+if(window.matchMedia)window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',run);
+</script>
+</body>
+</html>
