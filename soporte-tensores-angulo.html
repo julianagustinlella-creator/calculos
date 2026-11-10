@@ -53,6 +53,8 @@ select{font-family:var(--sans)}
 @media (max-width:560px){.row2{grid-template-columns:1fr}}
 svg{width:100%;height:auto;display:block;max-width:100%}
 .svgbox{overflow-x:auto}
+.callouts{margin:8px 0 0;padding-left:0;list-style:none;display:grid;gap:3px;font-size:12.5px;color:var(--muted)}
+.callouts b{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--steel);color:#fff;font:600 11px var(--mono);margin-right:6px}
 .legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted);margin-top:6px}
 .legend span::before{content:"";display:inline-block;width:22px;height:0;border-top:3px solid;margin-right:6px;vertical-align:middle}
 .legend .neg::before{border-color:var(--steel);border-top-style:dashed}
@@ -97,7 +99,7 @@ td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;
   <div class="field"><label for="acero">Acero del perfil</label><select id="acero"><option value="2.4">F-24 (fy 240 MPa)</option><option value="3.55">F-36 (fy 355 MPa)</option></select></div>
   <div class="field"><label for="Lp">Largo de la pieza Lp<small>altura del alma, mm</small></label><input id="Lp" type="number" step="1" min="20" value="76"></div>
   <div class="field"><label for="dT">Diámetro del tensor Ø<small>barra ADN 420, mm</small></label><select id="dT"><option>12</option><option>16</option><option>20</option><option selected>25</option><option>32</option></select></div>
-  <div class="field"><label for="Dar">Apoyo rígido (tuerca entre caras)<small>mm · por defecto la tuerca de la barra · 0 = carga puntual</small></label><input id="Dar" type="number" step="1" min="0" value="36"></div>
+  <div class="field"><label for="Dar">Ancho de la tuerca entre caras<small>mm · se completa solo según el Ø del tensor (tuerca M24 → 36). Es la zona rígida bajo la tuerca; 0 = no contarla (carga puntual)</small></label><input id="Dar" type="number" step="1" min="0" value="36"></div>
   <div class="field"><label for="y0">Altura del agujero y₀<small>desde la soldadura a la placa, mm</small></label><input id="y0" type="number" step="1" min="5" value="38"></div>
   <div class="field"><label for="phi">φ flexión y corte<small>CIRSOC 301 B.3.3 · fluencia</small></label><input id="phi" type="number" step="0.05" min="0.5" max="1" value="0.9"></div>
   <h2 style="margin-top:14px">Soldadura a la placa</h2>
@@ -119,7 +121,8 @@ td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;
     <div class="row2">
       <div>
         <h3>Planta del detalle</h3>
-        <div class="svgbox"><svg id="svgPlan" viewBox="0 0 360 300" role="img" aria-label="Planta del soporte"></svg></div>
+        <div class="svgbox"><svg id="svgPlan" viewBox="0 0 360 320" role="img" aria-label="Planta del soporte"></svg></div>
+        <ol class="callouts" id="planLegend"></ol>
       </div>
       <div>
         <h3>Alma agujereada · líneas de fluencia</h3>
@@ -256,7 +259,7 @@ function run(){
   const r=Tu/phiPn,v=$('verdict');v.classList.toggle('bad',r>1);$('vRatio').textContent=f2(r);
   $('vTag').textContent=r<=1?'Verifica':'No verifica';
   $('vText').textContent=`Pu = ${f1(Pu)} t (cota superior del mecanismo) · φPn = ${f1(phiPn)} t · con carga puntual (Dar = 0) Pu = ${f1(mech0?mech0.P:0)} t. `+(r>0.85&&r<=1?'Margen ajustado para una cota superior: conviene subir espesor o rigidizar.':'');
-  $('mechName').textContent=N===2?'perfil doble':'perfil simple';$('mechText').textContent=mech.name+'. Cada región rígida gira alrededor de su borde empotrado; el trabajo interno es m × rotación × proyección de sus líneas de fluencia sobre el eje de giro. Las líneas nacen en el borde de la arandela.';
+  $('mechName').textContent=N===2?'perfil doble':'perfil simple';$('mechText').textContent=mech.name+'. Cada región rígida gira alrededor de su borde empotrado; el trabajo interno es m × rotación × proyección de sus líneas de fluencia sobre el eje de giro. Las líneas nacen en el borde de la tuerca (radio r).';
   // pasos (desarrollo del punto 1)
   const P=mech.parts,Rt=mech.rot;
   let s='';
@@ -335,8 +338,8 @@ function drawY0(B,H,x0,rw,m,phi,Tu,y0cur){
   svg.innerHTML=o;
 }
 function drawMech(B,H,x0,y0,rw,rh,mech){
-  const svg=$('svgMech');const W=360,Hs=300,pad=44;const sc=Math.min((W-2*pad)/B,(Hs-2*pad)/H);
-  const X=x=>pad+x*sc,Y=y=>Hs-pad-y*sc;const css=getComputedStyle(document.documentElement);
+  const svg=$('svgMech');const W=360,Hs=300,pad=50;const sc=Math.min((W-2*pad)/B,(Hs-2*pad)/H);
+  const X=x=>pad+x*sc,Y=y=>Hs-pad-8-y*sc;const css=getComputedStyle(document.documentElement);
   const steel=css.getPropertyValue('--steel').trim(),hot=css.getPropertyValue('--hot').trim(),muted=css.getPropertyValue('--muted').trim(),ink=css.getPropertyValue('--ink').trim(),soft=css.getPropertyValue('--steel-soft').trim();
   let o='';
   o+=`<rect x="${X(0)}" y="${Y(H)}" width="${B*sc}" height="${H*sc}" fill="${soft}" stroke="${ink}" stroke-width="1"/>`;
@@ -360,51 +363,64 @@ function drawMech(B,H,x0,y0,rw,rh,mech){
   // Tu saliendo del plano (símbolo ⊙)
   o+=`<text x="${X(x0)+rw*sc+8}" y="${Y(y0)-6}" font-size="12" font-family="IBM Plex Mono,monospace" fill="${ink}">Tu ⊙</text>`;
   // cotas
-  const f=v=>Math.round(v*10);
-  o+=`<text x="${(X(0)+X(B))/2}" y="${Hs-8}" font-size="11" text-anchor="middle" fill="${muted}" font-family="IBM Plex Mono,monospace">B = ${f(B)} mm (luz libre) · borde soldado a la placa</text>`;
-  o+=`<text transform="translate(${12},${(Y(0)+Y(H))/2}) rotate(-90)" font-size="11" text-anchor="middle" fill="${muted}" font-family="IBM Plex Mono,monospace">H = Lp = ${f(H)} mm</text>`;
-  o+=`<text x="${(X(0)+X(B))/2}" y="${Y(H)-8}" font-size="11" text-anchor="middle" fill="${muted}" font-family="IBM Plex Mono,monospace">borde libre</text>`;
-  o+=`<text transform="translate(${X(0)-26},${(Y(0)+Y(H))/2}) rotate(-90)" font-size="10" text-anchor="middle" fill="${steel}">arista (ala en plano)</text>`;
-  if(negs.includes('r'))o+=`<text transform="translate(${X(B)+28},${(Y(0)+Y(H))/2}) rotate(90)" font-size="10" text-anchor="middle" fill="${steel}">arista (ala en plano)</text>`;
-  else o+=`<text transform="translate(${X(B)+14},${(Y(0)+Y(H))/2}) rotate(90)" font-size="10" text-anchor="middle" fill="${muted}">libre</text>`;
+  const f=v=>Math.round(v*10);const mono='font-family="IBM Plex Mono,monospace"';
+  const dimH=(x1,x2,yy,txt,below)=>`<line x1="${x1}" y1="${yy}" x2="${x2}" y2="${yy}" stroke="${ink}" stroke-width=".8"/><line x1="${x1}" y1="${yy-3}" x2="${x1}" y2="${yy+3}" stroke="${ink}" stroke-width=".8"/><line x1="${x2}" y1="${yy-3}" x2="${x2}" y2="${yy+3}" stroke="${ink}" stroke-width=".8"/><text x="${(x1+x2)/2}" y="${yy+(below?11:-4)}" font-size="10" text-anchor="middle" fill="${ink}" ${mono}>${txt}</text>`;
+  const dimV=(y1,y2,xx,txt,left)=>`<line x1="${xx}" y1="${y1}" x2="${xx}" y2="${y2}" stroke="${ink}" stroke-width=".8"/><line x1="${xx-3}" y1="${y1}" x2="${xx+3}" y2="${y1}" stroke="${ink}" stroke-width=".8"/><line x1="${xx-3}" y1="${y2}" x2="${xx+3}" y2="${y2}" stroke="${ink}" stroke-width=".8"/><text transform="translate(${xx+(left?-4:11)},${(y1+y2)/2}) rotate(-90)" font-size="10" text-anchor="middle" fill="${ink}" ${mono}>${txt}</text>`;
+  o+=dimH(X(0),X(B),Y(0)+22,`B (luz libre) = ${f(B)} mm`,true);
+  o+=dimH(X(0),X(x0),Y(0)+34,`x₀ = ${f(x0)}`,true);
+  o+=dimV(Y(0),Y(H),X(0)-30,`H = Lp = ${f(H)} mm`,true);
+  o+=dimV(Y(0),Y(y0),X(B)+16,`y₀ = ${f(y0)}`,false);
+  if(rw>0)o+=dimH(X(x0),X(x0+rw),Y(y0)-rw*sc-6,`r = ${f(rw)}`,false);
+  o+=`<text x="${(X(0)+X(B))/2}" y="${Y(H)-8}" font-size="10.5" text-anchor="middle" fill="${muted}">borde superior libre</text>`;
+  o+=`<text x="${(X(0)+X(B))/2}" y="${Y(0)+12}" font-size="10" text-anchor="middle" fill="${steel}">borde inferior: soldadura a la placa (empotrado)</text>`;
+  o+=`<text transform="translate(${X(0)-12},${(Y(0)+Y(H))/2}) rotate(-90)" font-size="9.5" text-anchor="middle" fill="${steel}">arista con ala en plano</text>`;
+  if(negs.includes('r'))o+=`<text transform="translate(${X(B)+34},${(Y(0)+Y(H))/2}) rotate(90)" font-size="9.5" text-anchor="middle" fill="${steel}">arista con ala en plano</text>`;
+  else o+=`<text transform="translate(${X(B)+34},${(Y(0)+Y(H))/2}) rotate(90)" font-size="9.5" text-anchor="middle" fill="${muted}">borde libre</text>`;
   svg.innerHTML=o;
 }
 function drawPlan(a,t,Lp,dT,Dar){
-  const svg=$('svgPlan');const W=360,Hs=300;const css=getComputedStyle(document.documentElement);
-  const steel=css.getPropertyValue('--steel').trim(),hot=css.getPropertyValue('--hot').trim(),muted=css.getPropertyValue('--muted').trim(),ink=css.getPropertyValue('--ink').trim(),paper=css.getPropertyValue('--paper').trim();
-  const Bmm=N===2?2*a:a;const sc=Math.min(200/(Bmm+2*a),1.6);const cx=W/2,cy=150;
+  const svg=$('svgPlan');const W=360,Hs=320;const css=getComputedStyle(document.documentElement);
+  const steel=css.getPropertyValue('--steel').trim(),hot=css.getPropertyValue('--hot').trim(),muted=css.getPropertyValue('--muted').trim(),ink=css.getPropertyValue('--ink').trim(),paper=css.getPropertyValue('--paper').trim(),soft=css.getPropertyValue('--steel-soft').trim();
+  const Bmm=N===2?2*a:a;const sc=Math.min(170/Bmm,110/a,1.5);const cx=W/2,cy=118;
+  const bx=cx-Bmm*sc/2,by=cy-t*sc/2,bw=Bmm*sc,bt=Math.max(3,t*sc);
+  const legs=N===2?[bx,bx+bw-bt]:[bx];
+  const nutW=Dar*sc,nutH=Math.max(4,0.8*dT*sc),washH=Math.max(2,3*sc);
+  const mono='font-family="IBM Plex Mono,monospace"';
+  const dim=(x1,y1,x2,y2,txt,off,vert)=>{
+    let o=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${ink}" stroke-width=".8"/>`;
+    if(vert){o+=`<line x1="${x1-3}" y1="${y1}" x2="${x1+3}" y2="${y1}" stroke="${ink}" stroke-width=".8"/><line x1="${x2-3}" y1="${y2}" x2="${x2+3}" y2="${y2}" stroke="${ink}" stroke-width=".8"/>`;
+      o+=`<text transform="translate(${x1+off},${(y1+y2)/2}) rotate(-90)" font-size="10" text-anchor="middle" fill="${ink}" ${mono}>${txt}</text>`}
+    else{o+=`<line x1="${x1}" y1="${y1-3}" x2="${x1}" y2="${y1+3}" stroke="${ink}" stroke-width=".8"/><line x1="${x2}" y1="${y2-3}" x2="${x2}" y2="${y2+3}" stroke="${ink}" stroke-width=".8"/>`;
+      o+=`<text x="${(x1+x2)/2}" y="${y1+off}" font-size="10" text-anchor="middle" fill="${ink}" ${mono}>${txt}</text>`}
+    return o};
+  const callout=(n,x,y,tx,ty)=>`<line x1="${x}" y1="${y}" x2="${tx}" y2="${ty}" stroke="${muted}" stroke-width=".8"/><circle cx="${tx}" cy="${ty}" r="8" fill="${steel}"/><text x="${tx}" y="${ty+3.5}" font-size="10" font-weight="600" text-anchor="middle" fill="#fff" ${mono}>${n}</text>`;
   let o='';
-  // placa PL1 (fondo)
-  o+=`<rect x="20" y="40" width="${W-40}" height="220" fill="none" stroke="${muted}" stroke-dasharray="4 3"/>`;
-  o+=`<text x="26" y="56" font-size="11" fill="${muted}">Placa PL1 (planta)</text>`;
-  // tensor: eje horizontal, pasa por el alma (vertical en planta = línea gruesa)
-  const webX=cx-(Bmm*sc)/2,webY=cy-t*sc/2;
-  o+=`<line x1="30" y1="${cy}" x2="${W-30}" y2="${cy}" stroke="${hot}" stroke-width="${Math.max(3,dT*sc*0.6)}" stroke-linecap="round" opacity=".9"/>`;
-  o+=`<text x="34" y="${cy-10}" font-size="11" fill="${hot}">tensor Ø${dT} → Tu</text>`;
-  // alma (ala agujereada) en planta: barra horizontal de ancho B y espesor t, perpendicular al tensor sería vertical...
-  // Representamos: tensor vertical atraviesa el alma horizontal.
-  o='';
-  o+=`<rect x="20" y="40" width="${W-40}" height="220" fill="none" stroke="${muted}" stroke-dasharray="4 3"/>`;
-  o+=`<text x="26" y="56" font-size="11" fill="${muted}">Placa PL1 · vista en planta</text>`;
-  // tensor vertical
-  o+=`<line x1="${cx}" y1="62" x2="${cx}" y2="${Hs-44}" stroke="${hot}" stroke-width="${Math.max(3,dT*sc*0.6)}" stroke-linecap="round" opacity=".9"/>`;
-  o+=`<polygon points="${cx-6},${Hs-52} ${cx+6},${Hs-52} ${cx},${Hs-40}" fill="${hot}"/>`;
-  o+=`<text x="${cx+10}" y="${Hs-46}" font-size="11" fill="${hot}">Tu (tensor Ø${dT})</text>`;
-  // alma horizontal (ala agujereada) de ancho B, espesor t
-  const bx=cx-Bmm*sc/2,by=cy-t*sc/2;
-  o+=`<rect x="${bx}" y="${by}" width="${Bmm*sc}" height="${t*sc}" fill="${steel}" stroke="${ink}" stroke-width=".8"/>`;
-  // alas en plano (rigidizadores) hacia abajo (lado de la tuerca)
-  const legs=N===2?[bx,bx+Bmm*sc-t*sc]:[bx];
-  legs.forEach(x=>{o+=`<rect x="${x}" y="${by}" width="${t*sc}" height="${a*sc}" fill="${steel}" stroke="${ink}" stroke-width=".8"/>`});
-  // tuerca + arandela del lado de las alas
-  o+=`<rect x="${cx-Dar*sc/2}" y="${by+t*sc}" width="${Dar*sc}" height="${Math.max(3,4*sc)}" fill="${ink}"/>`;
-  o+=`<rect x="${cx-dT*0.8*sc}" y="${by+t*sc+Math.max(3,4*sc)}" width="${dT*1.6*sc}" height="${dT*0.8*sc}" fill="${paper}" stroke="${ink}"/>`;
-  o+=`<text x="${cx+Dar*sc/2+6}" y="${by+t*sc+12}" font-size="10.5" fill="${ink}">tuerca ${Dar} e/c + arandela</text>`;
-  // soldaduras a la placa (triángulos)
-  o+=`<text x="${bx}" y="${by-8}" font-size="10.5" fill="${muted}">ala agujereada (alma) B = ${Math.round(Bmm)} mm · soldada a la placa</text>`;
-  legs.forEach((x,i)=>{o+=`<text x="${x+(N===2&&i===1?-4:t*sc+4)}" y="${by+a*sc+2}" font-size="10.5" fill="${muted}" text-anchor="${N===2&&i===1?'end':'start'}">ala en plano ${Math.round(a)} mm</text>`});
-  o+=`<text x="${W-26}" y="${Hs-12}" font-size="11" text-anchor="end" fill="${muted}">${N===2?'perfil doble en "C"':'perfil simple en "L"'} · Lp = ${Math.round(Lp)} mm de alto</text>`;
+  o+=`<rect x="22" y="40" width="${W-44}" height="${Hs-110}" fill="${soft}" fill-opacity=".45" stroke="${muted}" stroke-dasharray="4 3"/>`;
+  o+=`<line x1="${cx}" y1="48" x2="${cx}" y2="${Hs-78}" stroke="${hot}" stroke-width="${Math.max(3,dT*sc*0.5)}" stroke-linecap="round" opacity=".9"/>`;
+  o+=`<polygon points="${cx-6},${Hs-86} ${cx+6},${Hs-86} ${cx},${Hs-74}" fill="${hot}"/>`;
+  o+=`<rect x="${bx}" y="${by}" width="${bw}" height="${bt}" fill="${steel}" stroke="${ink}" stroke-width=".8"/>`;
+  legs.forEach(x=>{o+=`<rect x="${x}" y="${by}" width="${bt}" height="${a*sc}" fill="${steel}" stroke="${ink}" stroke-width=".8"/>`});
+  o+=`<rect x="${cx-nutW/2-3}" y="${by+bt}" width="${nutW+6}" height="${washH}" fill="${ink}"/>`;
+  o+=`<rect x="${cx-nutW/2}" y="${by+bt+washH}" width="${nutW}" height="${nutH}" fill="${paper}" stroke="${ink}"/>`;
+  o+=dim(bx,by-14,bx+bw,by-14,`B total = ${Math.round(Bmm)} mm (${N===2?'2 alas':'1 ala'} de ${Math.round(a)})`,-4,false);
+  if(N===2)o+=dim(bx+bt,by+a*sc+12,bx+bw-bt,by+a*sc+12,`luz libre = ${Math.round(Bmm-2*t)} mm`,12,false);
+  else o+=dim(bx+bt,by+a*sc+12,bx+bw,by+a*sc+12,`luz libre = ${Math.round(a-t)} mm`,12,false);
+  const xr=legs[legs.length-1]+bt;o+=dim(xr+14,by,xr+14,by+a*sc,`a = ${Math.round(a)}`,12,true);
+  o+=dim(cx-nutW/2,by+bt+washH+nutH+8,cx+nutW/2,by+bt+washH+nutH+8,`e/c = ${Dar}`,11,false);
+  o+=`<text x="${bx-4}" y="${by+bt/2+3.5}" font-size="10" text-anchor="end" fill="${ink}" ${mono}>t = ${t}</text>`;
+  o+=callout(1,bx+bw*0.25,by,bx+bw*0.25,by-34);
+  o+=callout(2,legs[0]+bt/2,by+a*sc*0.65,legs[0]-26,by+a*sc*0.65);
+  o+=callout(3,cx+nutW/2,by+bt+washH+nutH/2,cx+nutW/2+34,by+bt+washH+nutH/2+8);
+  o+=callout(4,cx,Hs-100,cx+30,Hs-96);
+  o+=callout(5,W-30,52,W-30,52);
+  o+=`<text x="${W-26}" y="${Hs-6}" font-size="11" text-anchor="end" fill="${muted}">${N===2?'perfil doble en "C"':'perfil simple en "L"'} · vista en planta · Lp = ${Math.round(Lp)} mm de alto</text>`;
   svg.innerHTML=o;
+  $('planLegend').innerHTML=[
+    `<li><b>1</b>Ala agujereada ("alma"): ala vertical del ángulo que atraviesa el tensor; es la que flexiona. Ancho total B = ${Math.round(Bmm)} mm, espesor t = ${t} mm, alto Lp = ${Math.round(Lp)} mm.</li>`,
+    `<li><b>2</b>Ala en plano (rigidizador): el otro ala, paralela al tensor, soldada a la placa por su borde inferior; empotra la arista del alma.${N===2?' Con perfil doble hay una en cada extremo.':''}</li>`,
+    `<li><b>3</b>Tuerca + arandela: apoyo del tensor sobre el alma. El ancho entre caras (e/c = ${Dar} mm) se toma como disco rígido; las líneas de fluencia nacen en su borde.</li>`,
+    `<li><b>4</b>Tensor Ø${dT} ADN 420 con tracción mayorada Tu, perpendicular al alma.</li>`,
+    `<li><b>5</b>Placa PL1 de la viga reticulada, sobre la que se suelda el conjunto.</li>`].join('');
 }
 run();
 new MutationObserver(run).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
