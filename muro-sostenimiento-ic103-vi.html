@@ -265,7 +265,7 @@ code{font-size:12.5px;background:var(--bg);padding:0 3px;border-radius:3px}
 <tr><th>Armadura</th><th>Qué acero cuenta</th><th>Contra qué sección</th><th>Artículo (CIRSOC 201-25 = ACI 318-25)</th></tr>
 <tr><td><b>P1</b>, vertical cara del relleno</td><td>Solo esa cara (la traccionada), barra más refuerzo</td><td>Espesor total, en la sección más gruesa de cada tramo</td><td><span class="ref">7.6.1.1</span></td></tr>
 <tr><td><b>P2</b>, vertical cara del frente</td><td>No se verifica: no tiene mínima propia</td><td>—</td><td>—</td></tr>
-<tr><td><b>P3</b>, horizontal de la pantalla</td><td>Suma de las dos caras</td><td>Espesor total medio de la pantalla</td><td><span class="ref">7.6.4.1 → 24.4.3.2</span></td></tr>
+<tr><td><b>P3</b>, horizontal de la pantalla</td><td>Suma de las dos caras</td><td>Espesor medio de cada tramo: promedio entre el espesor de abajo y el de arriba del tramo</td><td><span class="ref">7.6.4.1 → 24.4.3.2</span></td></tr>
 <tr><td><b>Z1</b>, talón superior</td><td>Solo la capa superior (la traccionada), barra más refuerzo</td><td>Espesor total junto a la pantalla</td><td><span class="ref">13.3.2.1 → 7.6.1.1</span></td></tr>
 <tr><td><b>Z2</b>, puntera inferior</td><td>Solo la capa inferior (la traccionada), barra más refuerzo</td><td>Espesor total junto a la pantalla</td><td><span class="ref">13.3.2.1 → 7.6.1.1</span></td></tr>
 <tr><td><b>Z3</b>, longitudinal de la zapata</td><td>Suma de las dos capas</td><td>Espesor total medio de la zapata</td><td><span class="ref">24.4.3.2</span></td></tr>
@@ -377,7 +377,9 @@ const FA=[
   ["v3d","Tramo 3 — barra: Ø","mm",12],["v3s","Tramo 3 — barra: separación","mm",150],
   ["v3rd","Tramo 3 — refuerzo: Ø (0 = sin refuerzo)","mm",0],["v3rs","Tramo 3 — refuerzo: separación","mm",150]]],
  ["P2 · Pantalla: vertical, cara del frente",[["ved","Ø","mm",10],["ves","Separación","mm",200]]],
- ["P3 · Pantalla: horizontal, en cada cara",[["dh","Ø","mm",10],["sh","Separación","mm",200]]],
+ ["P3 · Pantalla: horizontal, en cada cara",[["dh","Tramo 1 (desde la zapata): Ø","mm",12],["sh","Tramo 1: separación","mm",200],
+  ["hh1","ALTURA DEL CAMBIO de tramo 1 a tramo 2, desde la cara superior de la zapata (0 = sin cambio)","m",2.5],
+  ["dh2","Tramo 2 (hasta la corona): Ø","mm",10],["sh2","Tramo 2: separación","mm",200]]],
  ["Z1 · Talón: superior (principal)",[["hcrit","Criterio para el Mu del talón","",["A","A · Convencional (más conservador)"],[["A","A · Convencional (más conservador)"],["B","B · Limitado por el equilibrio del nudo"]]],["ct","Recubrimiento superior","mm",50],["dt","Barra: Ø","mm",16],["st","Barra: separación","mm",125],
   ["dtr","Refuerzo: Ø (0 = sin refuerzo)","mm",0],["str","Refuerzo: separación","mm",125]]],
  ["Z2 · Puntera: inferior (principal)",[["cb","Recubrimiento inferior (contra terreno)","mm",75],["db","Barra: Ø","mm",12],["sb","Barra: separación","mm",200],
@@ -771,8 +773,10 @@ function drawRebar(el,p,A,S,TR,RH){
   g+=lead(X(xb(zm)),Y(p.H5+zm),xr-4,Y(p.H5+zm)-5,"--f2")+txt(xr,Y(p.H5+zm),`P1 · tramo ${T.k}: ${T.desc}`,"--f2","start",`cuantía ρ = ${fx(T.As/(1000*T.hmax)*100,2)} % · de ${fx(z0)} a ${fx(z1c)} m`,"vertical · cara del relleno")}
  // rótulos
  const xl=X(0)-18;
- g+=lead(xl+4,Y(H*0.8)-5,X(p.B1+cv),Y(H*0.8)-5,"--f1")+txt(xl,Y(H*0.8),`P2: Ø${p.ved} c/${p.ves}`,"--f1","end",`cuantía ρ = ${RH.p2}`,"vertical · cara del frente");
- g+=lead(xl+4,Y(H*0.5)-5,X(p.B1+cv+0.07),Y(H*0.5)-5,"--f3")+txt(xl,Y(H*0.5),`P3: Ø${p.dh} c/${p.sh}`,"--f3","end",`cuantía ρ = ${RH.p3} (2 caras)`,"horizontal · en cada cara");
+ g+=lead(xl+4,Y(H*0.965)-5,X(p.B1+cv),Y(H*0.965)-5,"--f1")+txt(xl,Y(H*0.965),`P2: Ø${p.ved} c/${p.ves}`,"--f1","end",`cuantía ρ = ${RH.p2}`,"vertical · cara del frente");
+ RH.p3.forEach(T=>{const yy=Math.max(Y(p.H5+(T.z0+T.z1)/2),Y(H*0.965)+62);
+  g+=lead(xl+4,yy-5,X(p.B1+cv+0.07),yy-5,"--f3")+txt(xl,yy,`P3${RH.p3.length>1?" · tramo "+T.k:""}: Ø${T.d} c/${T.sp}`,"--f3","end",`cuantía ρ = ${fx(T.As/(1000*T.hmed)*100,2)} % (2 caras)`,`horizontal · de ${fx(T.z0)} a ${fx(T.z1)} m`);
+  if(T.k>1)g+=`<line x1="${xl-150}" y1="${Y(p.H5+T.z0)}" x2="${X(G.xs)}" y2="${Y(p.H5+T.z0)}" stroke="${c('--f3')}" stroke-width="1.4" stroke-dasharray="2 4"/><text x="${xl}" y="${Y(p.H5+T.z0)-5}" text-anchor="end" style="fill:${c('--f3')};font-size:12.5px;font-weight:600">cambio de P3 a ${fx(T.z0)} m</text>`});
  const xz=G.xs+p.B3*0.55;
  g+=lead(X(B-0.06),Y(p.H4-cv),X(B)+12,Y(p.H4-cv)-14,"--f5")+txt(X(B)+16,Y(p.H4-cv)-12,`Z1: ${RH.z1d}`,"--f5","start",`cuantía ρ = ${RH.z1}`,"talón · arriba");
  g+=txt(X(0),Y(0)+24+kd,`Z2: ${RH.z2d}`,"--f4","start",`cuantía ρ = ${RH.z2}`,"puntera y base · abajo");
@@ -873,7 +877,9 @@ function run(){
   S.cap.forEach((q,i)=>{if(q.k!==k)return;T.db=q.db;T.sp=q.sp;T.rd=q.rd;T.rs=q.rs;T.desc=bd(q.db,q.sp,q.rd,q.rs);T.As=q.As;T.hmax=Math.max(T.hmax,q.h);T.hmin=Math.min(T.hmin,q.h);
    if(env[i]>0.05){const r=q.phiMn/env[i];if(r<T.r){T.r=r;T.rz=S.Hp-q.s;T.Mu=env[i];T.Mn=q.phiMn}}});
   T.okR=T.As>=1.8*T.hmax-1e-6;T.okS=Math.min(T.sp,T.rd>0&&T.rs>0?T.rs:1e9)<=Math.min(3*T.hmin,300);T.okM=T.r>=1;TR.push(T)}
- const Ash=2*Ab(p.dh)*1000/p.sh,hm=(p.B2+p.B4)/2*1000;
+ const hm=(p.B2+p.B4)/2*1000,tz=z=>(p.B4+(p.B2-p.B4)*(S.Hp-z)/S.Hp)*1000,hc3=(p.hh1>0&&p.hh1<S.Hp)?p.hh1:0;
+ const HT=(hc3?[[0,hc3,p.dh,p.sh],[hc3,S.Hp,p.dh2,p.sh2]]:[[0,S.Hp,p.dh,p.sh]]).map(([z0,z1,d,sp],i)=>{const h0=tz(z0),h1=tz(z1),hmed=(h0+h1)/2,As=sp>0?2*Ab(d)*1000/sp:0,smax=Math.min(5*h1,450);
+  return{k:i+1,z0,z1,d,sp,h0,h1,hmed,As,smax,okR:As>=1.8*hmed-1e-6,okS:sp<=smax}});
  $("#stemTab").innerHTML=`<h3>Armadura vertical P1, por tramos</h3>
  <table><tr><th>Tramo</th><th>Alturas desde la zapata</th><th>Armadura</th><th>As colocada</th><th>Cuantía ρ (en el espesor mayor del tramo)</th><th>Mínima 0,18 % <span class="ref">7.6.1.1</span></th><th>Separación ≤ 300 mm <span class="ref">7.7.2.3</span></th><th>Sección más exigida: Mu / φMn</th><th>Flexión</th></tr>
  ${TR.map(T=>`<tr><td><b>Tramo ${T.k}</b></td><td>de ${fx(T.z0)} a ${fx(T.z1)} m</td><td>${T.desc}</td><td class="n">${fx(T.As,0)} mm²/m</td><td class="n">${fx(T.As/(1000*T.hmax)*100,3)} % (h = ${fx(T.hmax,0)} mm)</td><td>${okng(T.okR)}</td><td>${okng(T.okS)}</td>
@@ -881,8 +887,7 @@ function run(){
  <h3>Resto de la pantalla</h3>
  <table><tr><th>Verificación</th><th>Valor</th><th>Requisito</th><th></th></tr>
  <tr><td>Corte: menor φVc/Vu (a ${fx(worstV.i!=null?S.Hp-S.cap[worstV.i].s:0,2)} m de la zapata)</td><td class="n">${fx(worstV.r,2)}</td><td>V<sub>c</sub> = 0,17√f'c·b·d, φ = 0,75 <span class="ref">13.3.6.1.1</span></td><td>${okng(worstV.r>=1)}</td></tr>
- <tr><td>P3 horizontal (2 caras): ${fx(Ash,0)} mm²/m sobre el espesor medio de ${fx(hm,0)} mm</td><td class="n">${fx(Ash/(1000*hm)*100,3)} %</td><td>≥ 0,18 %; separación ≤ ${fx(Math.min(5*top.h,450),0)} mm <span class="ref">7.6.4.1 → 24.4.3.2/3</span></td><td>${okng(Ash/(1000*hm)>=0.0018-1e-9&&p.sh<=Math.min(5*top.h,450))}</td></tr>
- <tr><td>P3 horizontal en la base (h = ${fx(b0.h,0)} mm)</td><td class="n">${fx(Ash/(1000*b0.h)*100,3)} %</td><td>Referencia: en la base conviene cumplir el 0,18 % sobre el espesor real</td><td>${Ash/(1000*b0.h)>=0.0018?'<span class="ok">OK</span>':'<span class="wn">Revisar</span>'}</td></tr>
+ ${HT.map(T=>`<tr><td>P3 horizontal, tramo ${T.k} (de ${fx(T.z0)} a ${fx(T.z1)} m): Ø${T.d} c/${T.sp} en 2 caras = ${fx(T.As,0)} mm²/m. Espesor medio = (${fx(T.h0,0)} + ${fx(T.h1,0)}) / 2 = ${fx(T.hmed,0)} mm</td><td class="n">${fx(T.As/(1000*T.hmed)*100,3)} %</td><td>≥ 0,18 %; separación ≤ ${fx(T.smax,0)} mm <span class="ref">7.6.4.1 → 24.4.3.2/3</span></td><td>${okng(T.okR&&T.okS)}</td></tr>`).join("")}
  </table><p class="note">La curva verde de φMn tiene un escalón en cada altura de cambio. La altura de cambio es donde deja de contarse la barra de abajo, así que el empalme con la barra de arriba va por encima de esa altura. Cargas sobre la pantalla: Coulomb con δ = 2/3 φ (hormigón contra suelo), componente horizontal. En sismo, la presión de PAE se reparte de modo que su resultante quede a ${A.rTxt} de la altura de la pantalla (IC-103 VI 11.6.5.3 y C11.6.5.3), y solo cuenta la inercia de la pantalla.</p>`;
 
  // zapata
@@ -937,11 +942,11 @@ function run(){
   const hH=hcap[hcap.length-1].h,hT=tcap[tcap.length-1].h,Ase=p.ves>0?Ab(p.ved)*1000/p.ves:0,Asl=p.sl>0?2*Ab(p.dl)*1000/p.sl:0,hF=G.cf.A/B*1000;
   $("#rho0").innerHTML=TR.map(T=>rl(`Tramo ${T.k} (de ${fx(T.z0)} a ${fx(T.z1)} m), ${T.desc}`,T.As,T.hmax)).join("<br>")+nt("La pantalla es de espesor variable: la cuantía de cada tramo se calcula con su sección más gruesa (la de abajo), que es la que más armadura pide. Si cumple ahí, cumple en todo el tramo. Mínima de flexión 0,0018·Ag (CIRSOC 201-25 / ACI 318-25, 7.6.1.1). El tramo 3 solo se usa si su altura de cambio es mayor que la del tramo 2.");
   $("#rho1").innerHTML=rl(`Ø${p.ved} c/${p.ves}`,Ase,hm,false)+nt("Cara comprimida: armadura constructiva, sin mínima propia. Cuantía sobre el espesor medio.");
-  $("#rho2").innerHTML=rl(`Ø${p.dh} c/${p.sh} en 2 caras`,Ash,hm)+nt(`Contracción y temperatura: 0,0018 del área bruta (24.4.3.2). Con espesor variable, área bruta = espesor medio × altura, por eso se usa el espesor medio (${fx(hm,0)} mm). En la base (h = ${fx(b0.h,0)} mm) da ${fx(Ash/(1000*b0.h)*100,3)} %: si querés cumplir también ahí, cerrá la separación en la parte baja.`);
+  $("#rho2").innerHTML=HT.map(T=>rl(`Tramo ${T.k} (de ${fx(T.z0)} a ${fx(T.z1)} m), Ø${T.d} c/${T.sp} en 2 caras`,T.As,T.hmed)+`<br><span class="note">Espesor abajo ${fx(T.h0,0)} mm, arriba ${fx(T.h1,0)} mm → medio ${fx(T.hmed,0)} mm. Cotas desde el fondo de la zapata: de +${fx(T.z0+p.H5)} a +${fx(T.z1+p.H5)} m.</span>`).join("<br>")+nt("Contracción y temperatura: 0,0018 del área bruta, sumando las dos caras (24.4.3.2). En cada tramo se usa su espesor medio: el promedio entre el espesor de abajo y el de arriba de ese tramo. La altura del cambio se mide desde la cara superior de la zapata, igual que en P1.");
   $("#rho3").innerHTML=rl(heelD,heelAs,hH)+nt("Mínima de flexión 0,18 % con el espesor junto a la pantalla, que es la sección más gruesa del talón (13.3.2.1 → 7.6.1.1).");
   $("#rho4").innerHTML=rl(toeD,toeAs,hT)+nt("Mínima de flexión 0,18 % con el espesor junto a la pantalla (13.3.2.1 → 7.6.1.1).");
   $("#rho5").innerHTML=rl(`Ø${p.dl} c/${p.sl} en 2 capas`,Asl,hF)+nt("Sí: la mínima de la longitudinal es 0,18 % (0,0018·Ag, contracción y temperatura, 24.4.3.2), sumando las dos capas. Se calcula sobre el espesor medio de la zapata, porque Ag es el área de toda la sección.");
-  drawRebar($("#rebSvg"),p,A,S,TR,{p2:pc(Ase,hm),p3:pc(Ash,hm),z1:pc(heelAs,hH),z2:pc(toeAs,hT),z3:pc(Asl,hF),z1d:heelD,z2d:toeD});}
+  drawRebar($("#rebSvg"),p,A,S,TR,{p2:pc(Ase,hm),p3:HT,z1:pc(heelAs,hH),z2:pc(toeAs,hT),z3:pc(Asl,hF),z1d:heelD,z2d:toeD});}
  $("#toeTab").innerHTML=ftab(Fz.toe,tcap,toeAs,toeD,"inferior",Math.min(p.sb,p.dbr>0&&p.sbr>0?p.sbr:1e9),"d")+`<p class="note">Corte de la puntera a la distancia d de la cara de la pantalla. Si B1 &lt; d, la sección crítica cae fuera de la puntera y Vu = 0.</p>`;
 }
 run();
