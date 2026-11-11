@@ -15,6 +15,11 @@ header h1{margin:0;font-size:18px}header p{margin:2px 0 0;color:var(--mu);font-s
 nav{display:flex;gap:4px;flex-wrap:wrap;padding:8px 16px;background:var(--card);border-bottom:1px solid var(--ln);position:sticky;top:0;z-index:5}
 nav button{border:1px solid var(--ln);background:transparent;color:var(--tx);padding:6px 12px;border-radius:6px;cursor:pointer;font:inherit}
 nav button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+#pm{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 16px;background:var(--card);border-bottom:1px solid var(--ln);font-size:13px}
+#pm input,#pm select{padding:4px 6px;border:1px solid var(--ln);border-radius:4px;background:var(--bg);color:var(--tx);font:inherit}
+#pm input{width:170px}#pm select{max-width:260px}
+#pm button{border:1px solid var(--ln);background:transparent;color:var(--tx);padding:4px 10px;border-radius:6px;cursor:pointer;font:inherit}
+#pm button.pri{background:var(--ac);color:#fff;border-color:var(--ac)}
 main{max-width:1200px;margin:0 auto;padding:16px}
 section.tab{display:none}section.tab.on{display:block}
 .card{background:var(--card);border:1px solid var(--ln);border-radius:8px;padding:14px 16px;margin-bottom:14px;overflow-x:auto}
@@ -57,6 +62,17 @@ code{font-size:12.5px;background:var(--bg);padding:0 3px;border-radius:3px}
 <button data-t="arm">4 · Armaduras</button>
 <button data-t="rev">5 · Revisión de la planilla</button>
 </nav>
+<div id="pm">
+ <label>Proyecto <input id="pmProj" placeholder="p. ej. CL-043 ETRSU"></label>
+ <label>Muro <input id="pmWall" placeholder="p. ej. M1 H=6,50"></label>
+ <button id="pmSave" class="pri">Guardar</button>
+ <label>Abrir <select id="pmSel"></select></label>
+ <button id="pmNew">Nuevo</button>
+ <button id="pmDel">Eliminar</button>
+ <button id="pmExp">Exportar todo</button>
+ <button id="pmImp">Importar</button><input id="pmFile" type="file" accept=".json,application/json" hidden>
+ <span id="pmMsg" class="note"></span>
+</div>
 <main>
 
 <!-- ======================= TEORÍA ======================= -->
@@ -307,8 +323,8 @@ const F=[
  ["Fundación",[["ftype","Tipo de apoyo","",["S","Suelo"],[["S","Suelo"],["R","Roca"]]],
   ["sadm","σadm del estudio (10 t/m² = 1 kg/cm²)","t/m²",40],["FSq","FS adoptado para qn = FS·σadm","",3.5],
   ["mumode","μ base–suelo: cómo se obtiene","",["A","Automático: tan(2/3·φ relleno)"],[["A","Automático: tan(2/3·φ relleno)"],["M","Manual (p. ej. el del estudio)"]]],
-  ["mu","μ base–suelo","",0.418],["gf","γ suelo del frente","t/m³",2.1],
-  ["pas","Empuje pasivo frente a la puntera","",["0","No considerar"],[["0","No considerar"],["1","Considerar (Rankine, prof. H3)"]]],["phif","φ suelo del frente (pasivo)","°",34]]],
+  ["mu","μ base–suelo","",0.418],["gf","γ del suelo delante de la puntera (lado opuesto al relleno)","t/m³",2.1],
+  ["pas","Empuje pasivo del suelo delante de la puntera","",["0","No considerar"],[["0","No considerar"],["1","Considerar (Rankine, prof. H3)"]]],["phif","φ del suelo delante de la puntera (solo para el pasivo)","°",34]]],
  ["Sismo — IC-103 VI",[["zona","Zona sísmica (IC-103 I, Anexo A)","",["2","2"],[["1","1"],["2","2"],["3","3"],["4","4"]]],
   ["sitio","Clase de sitio (Tabla 3.10.3.1-1)","",["A","A"],[["A","A"],["B","B"],["C","C"],["D","D"],["E","E"]]],
   ["desp","Desplazamiento admitido (11.6.5.2.2 / 11.6.5.4)","",["0","Nulo: kh = kh0"],[["0","Nulo: kh = kh0"],["1","25–50 mm: kh = 0,5 kh0"]]],
@@ -665,6 +681,48 @@ function run(){
  $("#toeTab").innerHTML=ftab(Fz.toe,tcap,toeAs,p.db,"inferior",p.sb,"d")+`<p class="note">Corte de la puntera a la distancia d de la cara de la pantalla. Si B1 &lt; d, la sección crítica cae fuera de la puntera y Vu = 0.</p>`;
 }
 run();
+
+/* ---------- proyectos y muros guardados ---------- */
+const PM_KEY="muroIC103.v1";
+const getVals=()=>{const d={};ALL.forEach(([id])=>d[id]=$("#i_"+id).value);return d};
+const setVals=d=>{ALL.forEach(([id])=>{if(d[id]!=null)$("#i_"+id).value=d[id]});run()};
+const DEF=getVals();
+let PM={items:[],cur:null},pmOK=true;
+try{const r=localStorage.getItem(PM_KEY);if(r)PM=JSON.parse(r)}catch(e){pmOK=false}
+const pmMsg=t=>{$("#pmMsg").textContent=t};
+const pmStore=()=>{try{localStorage.setItem(PM_KEY,JSON.stringify(PM));return true}catch(e){pmOK=false;pmMsg("Este navegador no permite guardar acá: usá Exportar.");return false}};
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
+function pmList(){
+ const by={};PM.items.forEach(it=>(by[it.proj]=by[it.proj]||[]).push(it));
+ $("#pmSel").innerHTML='<option value="">— elegir —</option>'+Object.keys(by).sort().map(k=>`<optgroup label="${esc(k)}">${by[k].sort((a,b)=>a.wall.localeCompare(b.wall)).map(it=>`<option value="${it.id}" ${it.id===PM.cur?"selected":""}>${esc(it.wall)}</option>`).join("")}</optgroup>`).join("");
+}
+function pmOpen(id){const it=PM.items.find(x=>x.id===id);if(!it)return;PM.cur=id;$("#pmProj").value=it.proj;$("#pmWall").value=it.wall;setVals(it.data);pmStore();pmList();pmMsg("Abierto: "+it.proj+" / "+it.wall)}
+$("#pmSave").onclick=()=>{
+ const proj=$("#pmProj").value.trim()||"Sin proyecto",wall=$("#pmWall").value.trim();
+ if(!wall){pmMsg("Poné un nombre al muro para guardarlo.");$("#pmWall").focus();return}
+ let it=PM.items.find(x=>x.proj===proj&&x.wall===wall);
+ if(it)it.data=getVals();else{it={id:"m"+Date.now().toString(36),proj,wall,data:getVals()};PM.items.push(it)}
+ it.t=new Date().toISOString();PM.cur=it.id;$("#pmProj").value=proj;
+ if(pmStore()){pmList();pmMsg("Guardado: "+proj+" / "+wall)}
+};
+$("#pmSel").onchange=e=>{if(e.target.value)pmOpen(e.target.value)};
+$("#pmNew").onclick=()=>{PM.cur=null;$("#pmWall").value="";setVals(DEF);pmStore();pmList();pmMsg("Muro nuevo con los valores iniciales. El proyecto se mantiene: poné el nombre del muro y Guardar.")};
+$("#pmDel").onclick=()=>{const it=PM.items.find(x=>x.id===PM.cur);if(!it){pmMsg("No hay un muro guardado abierto.");return}
+ if(!confirm("¿Eliminar «"+it.proj+" / "+it.wall+"»? No se puede deshacer."))return;
+ PM.items=PM.items.filter(x=>x!==it);PM.cur=null;pmStore();pmList();pmMsg("Eliminado: "+it.proj+" / "+it.wall)};
+$("#pmExp").onclick=()=>{if(!PM.items.length){pmMsg("No hay muros guardados para exportar.");return}
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify({app:"muro-ic103-vi",items:PM.items},null,1)],{type:"application/json"}));
+ a.download="muros-guardados-"+new Date().toISOString().slice(0,10)+".json";a.click();URL.revokeObjectURL(a.href);pmMsg("Exportados "+PM.items.length+" muros.")};
+$("#pmImp").onclick=()=>$("#pmFile").click();
+$("#pmFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();
+ rd.onload=()=>{try{const d=JSON.parse(rd.result);if(d.app!=="muro-ic103-vi"||!Array.isArray(d.items))throw 0;let n=0;
+   d.items.forEach(x=>{if(!x||!x.wall||!x.data)return;const proj=String(x.proj||"Sin proyecto"),wall=String(x.wall);
+    const old=PM.items.find(y=>y.proj===proj&&y.wall===wall);if(old){old.data=x.data;old.t=x.t}else PM.items.push({id:"m"+Date.now().toString(36)+n,proj,wall,data:x.data,t:x.t});n++});
+   pmStore();pmList();pmMsg("Importados "+n+" muros (los de igual nombre se reemplazaron).")}
+  catch(err){pmMsg("El archivo no es una exportación de esta calculadora.")}
+  e.target.value=""};rd.readAsText(f)};
+pmList();
+if(PM.cur&&PM.items.some(x=>x.id===PM.cur))pmOpen(PM.cur);else if(!pmOK)pmMsg("Este navegador no permite guardar acá: usá Exportar.");
 </script>
 </body>
 </html>
