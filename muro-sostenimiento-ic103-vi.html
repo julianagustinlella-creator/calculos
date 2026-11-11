@@ -50,6 +50,7 @@ svg.plt text{font-size:12px}
 .chk h4{margin:0 0 6px;font-size:14.5px;display:flex;justify-content:space-between;gap:8px}
 .chk td{border-bottom:1px dashed var(--ln)}
 .chk .res{font-weight:700;margin-top:8px;font-size:14px}
+.rho{font-size:12.5px;line-height:1.55;margin-top:6px;padding:6px 8px;background:var(--bg);border-radius:5px}
 .pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;border:1px solid var(--ln)}
 ol.find li{margin-bottom:8px}
 code{font-size:12.5px;background:var(--bg);padding:0 3px;border-radius:3px}
@@ -66,7 +67,6 @@ code{font-size:12.5px;background:var(--bg);padding:0 3px;border-radius:3px}
 <button data-t="dat">2 · Datos</button>
 <button data-t="ver">3 · Verificación</button>
 <button data-t="arm">4 · Armaduras</button>
-<button data-t="rev">5 · Revisión de la planilla</button>
 </nav>
 <div id="pm">
  <label>Proyecto <input id="pmProj" placeholder="p. ej. CL-043 ETRSU"></label>
@@ -252,53 +252,15 @@ code{font-size:12.5px;background:var(--bg);padding:0 3px;border-radius:3px}
 <section class="tab" id="arm">
 <div class="card">
 <h2>Armaduras propuestas</h2>
-<p class="note">Cargá la armadura y se verifica en toda la altura de la pantalla y en el talón y la puntera. b = 1,00 m. La barra adicional de la pantalla se corta a la altura indicada medida desde la cara superior de la zapata, sin descontar la longitud de anclaje: bajarla esa longitud en el detalle.</p>
-<div class="grid" id="formArm"></div>
+<p class="note">El esquema muestra dónde va cada armadura, con el mismo color y la misma sigla (P1, P2, P3, Z1, Z2, Z3) que su grupo de datos. Al cargar un diámetro o una separación se actualizan el esquema, la cuantía colocada y si cumple la mínima. b = 1,00 m de muro.</p>
+<div class="cmb"><div><svg id="rebSvg"></svg><p class="note">Las líneas son barras en el plano del dibujo. Los puntos son barras que corren a lo largo del muro (perpendiculares al dibujo). Las líneas de trazos marcan las alturas donde cambia la armadura vertical P1.</p></div>
+<div class="grid" id="formArm" style="grid-template-columns:1fr"></div></div>
 </div>
 <div class="card"><h2>Pantalla</h2><div class="cmb"><div id="stemPlotM"></div><div id="stemPlotV"></div></div><div id="stemTab"></div></div>
 <div class="card"><h2>Talón (armadura superior)</h2><div class="cmb"><div id="heelPlot"></div><div id="heelTab"></div></div></div>
 <div class="card"><h2>Puntera (armadura inferior)</h2><div class="cmb"><div id="toePlot"></div><div id="toeTab"></div></div></div>
 </section>
 
-<!-- ======================= REVISIÓN ======================= -->
-<section class="tab" id="rev">
-<div class="card">
-<h2>Revisión de la planilla Excel</h2>
-<p>Hojas: «Combinaciones de carga», «Empujes», «M1 H=5,70m» y «Capac. de Carga ELU». Valores en t y m, como en la planilla.</p>
-<h3>Errores que cambian resultados</h3>
-<ol class="find">
-<li><b>Área de suelo sobre el talón (A3) mal calculada.</b> En <code>F42</code>, <code>F64</code>, <code>F86</code> y <code>F110</code> falta un paréntesis: <code>(H−H5) + (H−H4)·B3/2 + …</code> en lugar de <code>((H−H5) + (H−H4))·B3/2 + …</code>. Da <b>16,70 m²</b> y el valor real es <b>20,04 m²</b>: faltan unos 7,0 t/m de peso estabilizante (−17 % del suelo). El centro de gravedad (<code>I42</code>) también se toma en el centro del talón, sin la cuña sobre la cara inclinada.</li>
-<li><b>Suelo sobre la puntera (A4).</b> <code>F44 = B1·H − B1·((H−H5)+(H−H2))/2 = B1·(H2+H5)/2</code>: es el área del hormigón de la puntera (0,18 m²), que ya está en A2. El suelo real es B1·H3 − B1·(H2+H5)/2; como H3 = 0,50 &lt; H5 = 0,70, no hay suelo sobre la puntera. Se cuenta dos veces 0,38 t/m.</li>
-<li><b>EE-I con 100 % PAE + 50 % PIR:</b> <code>G87 = 0,5</code> reduce a la mitad la componente vertical de PAE. En ese caso PAE va al 100 %. Solo con este error la planilla da deslizamiento 0,97 («No verifica»). Con 1,0 da 1,03, y con A3 corregido el margen es mayor.</li>
-<li><b>Resistencia I a:</b> la sobrecarga tiene factor 0 (<code>G45</code> → <code>G48</code>), lo que también anula su <i>empuje horizontal</i>. Solo se anula la carga vertical sobre el talón (estabilizante). El empuje horizontal de la sobrecarga es desestabilizante y va con 1,75.</li>
-<li><b>Empuje sobre el plano virtual con δ = 2/3 φ</b> (<code>Empujes!H49</code>). En el plano vertical que pasa por el talón el contacto es suelo contra suelo: δ = β = 0. Con δ = 22,7° el empuje horizontal es Ka·cos δ = 0,235. Con Rankine, 0,283 (<b>+21 %</b>), y además desaparece la componente vertical de 4,35 t/m que la planilla toma como estabilizante. En la pantalla (hormigón contra suelo) sí vale δ = 2/3 φ.</li>
-<li><b>Pantalla en sismo:</b> <code>E142</code> y <code>E151</code> suman la inercia del suelo sobre el talón (Hp·B3·γ) al momento de la pantalla. Ese suelo no empuja la pantalla; solo cuenta su inercia propia. Mu sísmico sale muy sobrestimado (55,4 tm/m).</li>
-<li><b>Armadura de la pantalla:</b> Ø8 c/25 da Md/Mu = 0,09 (<code>L149</code>), así que no verifica (o es un valor de prueba). Además falta la verificación a corte (CIRSOC 201-25, 13.3.6.1.1).</li>
-<li><b>Zarpa (talón y puntera):</b> la sección está con <code>#REF!</code> (<code>F182</code>, <code>F183</code>) y marcada «NO APLICAR». El talón, con 3,15 m de vuelo bajo 6 m de relleno, suele ser lo que gobierna y no puede tomarse igual que la pantalla.</li>
-<li><b>Excentricidad en roca:</b> <code>M87</code> y <code>M111</code> apuntan a <code>D58</code> y <code>D81</code> (vacías) en lugar de <code>D15</code>. Si se elige «Roca», el límite da 0.</li>
-<li><b>Factor del suelo (EV):</b> en Resistencia I el suelo sobre el talón y la puntera lleva el factor del hormigón: <code>G42</code>/<code>G44</code> = 0,90 y <code>G64</code>/<code>G66</code> = 1,25. Según el título de cada combinación corresponde EV = 1,00 y 1,35.</li>
-</ol>
-<h3>Criterios a revisar o documentar</h3>
-<ol class="find" start="11">
-<li><b>Zona 2 y sitio A:</b> Neuquén capital (dpto. Confluencia) es <b>Zona 1</b> (IC-103 Parte I, Anexo A). El sitio A (roca dura, Vs &gt; 1500 m/s) no surge del estudio. kh0 resulta: Zona 1-B = 0,168; Zona 1-C = 0,16; Zona 1-A = 0,132. La planilla usa 0,228 (Zona 2-A), del lado seguro pero sin justificar.</li>
-<li><b>PAE a 0,5 H para muro «Importante»</b> (<code>Empujes!H79</code>): es correcto. Lo respalda el comentario C11.6.5.3 del IC-103 VI (0,4h a 0,5h para muros cuya falla tiene alto impacto). Conviene citarlo en la memoria.</li>
-<li><b>Sobrecarga q = 0,2 t/m² (2 t/m²):</b> es muy baja para una playa de camiones. El modelo 3D usa 20 t/m². Ver AASHTO 3.11.6.4 (altura equivalente de suelo para tránsito vehicular).</li>
-<li><b>Capacidad portante:</b> σu = 40 × 3,5 = 140 t/m², pero el estudio no informa el FS: es un supuesto. los factores 0,4 (sin sismo) y 0,7 (con sismo) de <code>D21</code> y <code>E21</code> no están en el reglamento. El CIRSOC 804-3 da φb = 0,55 (Tabla 11.5.7-1) y 0,80 con sismo (11.5.8), aplicados a la resistencia nominal. Los de la planilla son más conservadores. </li>
-<li><b>Excentricidad sísmica:</b> se usa siempre B/3. El IC-103 VI 11.6.5.1 permite interpolar entre 2/3 y 8/10 según γEQ; con γEQ = 0,25 da e ≤ 0,35 B. La planilla queda del lado seguro.</li>
-<li><b>Rozamiento μ = tan(2/3·34°) = 0,418</b> usa el φ del relleno. El estudio da μ = 0,45 (φ = 39° del conglomerado). Del lado seguro.</li>
-<li><b>Cuantías mínimas</b> 0,0012 vertical / 0,0020 horizontal: son de tabiques (Tabla 11.6.1). Para muros en voladizo corresponden 0,0018 Ag de flexión (7.6.1.1) y 0,0018 de contracción y temperatura (24.4.3.2). Separación máxima de la principal: 3h y 300 mm (CIRSOC 7.7.2.3).</li>
-<li><b>Detalles menores:</b> la componente vertical del empuje en RI-b va con 1,35 (factor de EV); es EH y va con 1,50. PIR se aplica a H/2 en vez de en el baricentro de las masas (diferencia chica). <code>L138</code> divide el recubrimiento por 100 dos veces (no se usa). La combinación de Servicio I está definida pero no calculada; sirve para comparar directamente con la σadm del estudio.</li>
-</ol>
-<h3>Sobre las combinaciones</h3>
-<p>La estructura es correcta: RI-a (mínimos estabilizantes) para deslizamiento y excentricidad, RI-b (máximos) para capacidad portante y diseño, los dos casos de Evento Extremo I del IC-103 VI 11.6.5.1 (incluido el «no menos que Pa» del segundo, bien resuelto en <code>J114</code>/<code>Q120</code>) y γp = 1,0 en sismo. Hay que corregir lo siguiente:</p>
-<ul>
-<li>la sobrecarga horizontal en RI-a (1,75);</li>
-<li>el factor de Paev en EE-I a (1,0);</li>
-<li>la componente vertical de EH en RI-b (1,50).</li>
-</ul>
-<p>γEQ = 0,25 sobre la sobrecarga es una decisión válida del proyecto, porque el IC-103 VI no fija ese valor.</p>
-</div>
-</section>
 </main>
 
 <script>
@@ -348,12 +310,19 @@ const F=[
   ["gEQ","γEQ sobre la sobrecarga","",0.25]]]
 ];
 const FA=[
- ["Pantalla — cara interna (vertical, tracción)",[["cs","Recubrimiento pantalla","mm",50],["d1","Ø barra corrida","mm",16],["s1","Separación barra corrida","mm",150],
-  ["d2","Ø barra adicional (0 = no)","mm",16],["s2","Separación adicional","mm",150],["hc","Altura de corte de la adicional (desde la zapata)","m",2.5]]],
- ["Pantalla — horizontal (cada cara)",[["dh","Ø horizontal","mm",10],["sh","Separación horizontal","mm",200]]],
- ["Talón — armadura superior",[["ct","Recubrimiento superior","mm",50],["dt","Ø","mm",16],["st","Separación","mm",125]]],
- ["Puntera — armadura inferior",[["cb","Recubrimiento inferior (contra terreno)","mm",75],["db","Ø","mm",12],["sb","Separación","mm",200]]]
+ ["P1 · Pantalla: vertical, cara del relleno (tracción)",[["cs","Recubrimiento de la pantalla","mm",50],
+  ["v1d","Tramo 1 (desde la zapata): Ø","mm",20],["v1s","Tramo 1: separación","mm",150],
+  ["vh1","Altura donde cambia al tramo 2 (0 = no cambia)","m",2.5],
+  ["v2d","Tramo 2: Ø","mm",16],["v2s","Tramo 2: separación","mm",150],
+  ["vh2","Altura donde cambia al tramo 3 (0 = no cambia)","m",0],
+  ["v3d","Tramo 3: Ø","mm",12],["v3s","Tramo 3: separación","mm",150]]],
+ ["P2 · Pantalla: vertical, cara del frente",[["ved","Ø","mm",10],["ves","Separación","mm",200]]],
+ ["P3 · Pantalla: horizontal, en cada cara",[["dh","Ø","mm",10],["sh","Separación","mm",200]]],
+ ["Z1 · Talón: superior (principal)",[["ct","Recubrimiento superior","mm",50],["dt","Ø","mm",16],["st","Separación","mm",125]]],
+ ["Z2 · Puntera: inferior (principal)",[["cb","Recubrimiento inferior (contra terreno)","mm",75],["db","Ø","mm",12],["sb","Separación","mm",200]]],
+ ["Z3 · Zapata: longitudinal, arriba y abajo (paralela al muro)",[["dl","Ø","mm",10],["sl","Separación","mm",200]]]
 ];
+const RC=["--f2","--f1","--f3","--f5","--f4","--wn"];
 function buildForm(groups,el){
  el.innerHTML=groups.map(([t,items])=>`<div class="fg"><h3>${t}</h3>${items.map(([id,l,u,dv,opts])=>{
   if(opts) return `<label>${l}<select id="i_${id}">${opts.map(([v,tx])=>`<option value="${v}" ${v===dv[0]?"selected":""}>${tx}</option>`).join("")}</select><span class="u"></span></label>`;
@@ -368,6 +337,7 @@ $("#form").insertAdjacentHTML("beforeend",`<div class="fg" style="grid-column:1/
 <tr><td>Resistencia pasiva en el deslizamiento, φep (solo si se considera el pasivo)</td><td><b>0,50</b> <span class="ref">AASHTO Tabla 10.5.5.2.2-1 †</span></td><td><b>1,00</b> <span class="ref">CIRSOC 804-3, 11.5.8</span></td></tr>
 </table>
 <p class="note">Se aplican a la resistencia <b>nominal</b> (de rotura) qn, no a la admisible: se compara la presión mayorada con φb·qn. El CIRSOC 804-3 (julio 2020) es la versión argentina del capítulo 11 de la AASHTO LRFD, al que remite el IC-103 VI 11.6.5.1. El φep = 0,50 es del capítulo 10 (fundaciones), que en el CIRSOC 804 está «en preparación»: es el valor de la AASHTO y no lo pude cotejar.</p></div>`);buildForm(FA,$("#formArm"));
+[...$("#formArm").children].forEach((g,i)=>{g.style.borderLeft=`5px solid var(${RC[i]})`;g.style.paddingLeft="10px";g.insertAdjacentHTML("beforeend",`<div class="rho" id="rho${i}"></div>`)});
 const ALL=[...F,...FA].flatMap(g=>g[1]);
 $("#i_ftype").closest("label").insertAdjacentHTML("afterend",'<p class="note" id="ftNote" style="margin:2px 0 8px;padding:6px 8px;border-left:3px solid var(--ac);background:var(--bg)"></p>');
 function diagTxt(c,p,A){
@@ -513,12 +483,15 @@ function stem(p,A){
  ];
  cases.forEach(c=>{c.s=[];c.V=[];c.M=[];let V=0,M=0,pp=c.p(0);
   for(let i=0;i<=n;i++){const s=i*ds;if(i>0){const pn=c.p(s);const Vn=V+(pp+pn)/2*ds;M+=(V+Vn)/2*ds;V=Vn;pp=pn}c.s.push(s);c.V.push(V);c.M.push(M)}});
- // capacidad
- const cap=[];for(let i=0;i<=n;i++){const s=i*ds,h=t(s)*1000,d=h-p.cs-p.d1/2;
-  const As=Ab(p.d1)*1000/p.s1+((p.d2>0&&Hp-s<=p.hc)?Ab(p.d2)*1000/p.s2:0);
+// capacidad por tramos
+ const cuts=[0];if(p.vh1>0&&p.vh1<Hp){cuts.push(p.vh1);if(p.vh2>p.vh1&&p.vh2<Hp)cuts.push(p.vh2)}cuts.push(Hp);
+ const TB={1:[p.v1d,p.v1s],2:[p.v2d,p.v2s],3:[p.v3d,p.v3s]};
+ const tr=z=>{let k=1;while(k<cuts.length-1&&z>=cuts[k]-1e-9)k++;return k};
+ const cap=[];for(let i=0;i<=n;i++){const s=i*ds,h=t(s)*1000,k=tr(Hp-s),[db,sp]=TB[k],d=h-p.cs-db/2;
+  const As=sp>0?Ab(db)*1000/sp:0;
   const f=flex(As,d,p.fc,p.fy),Vc=0.75*0.17*Math.sqrt(p.fc)*1000*d/1000/G0;
-  cap.push({s,h,d,As,phiMn:f.phiMn,phi:f.phi,phiVc:Vc,Asmin:0.0018*1000*h})}
- return{cases,cap,Hp,t};
+  cap.push({s,h,d,As,k,db,sp,phiMn:f.phiMn,phi:f.phi,phiVc:Vc,Asmin:0.0018*1000*h})}
+ return{cases,cap,Hp,t,cuts,TB};
 }
 
 /* ---------- talón y puntera ---------- */
@@ -624,6 +597,42 @@ function plot(series,o){ // o:{xl,yl,vert,u}  vert: el valor va en x y la altura
  return `<svg viewBox="0 0 ${w} ${h}" class="plt">${g}${labs}</svg><div style="display:flex;flex-wrap:wrap;margin-top:4px">${leg}</div>`;
 }
 
+/* ---------- esquema de armaduras ---------- */
+function drawRebar(el,p,A,S){
+ const{G,H,B}=A,W=620,Hh=500,padL=150,padB=82,sc=Math.min((W-padL-215)/B,(Hh-padB-28)/H),c=v=>css(v);
+ const X=x=>padL+x*sc,Y=y=>Hh-padB-y*sc,cv=0.07,Hp=G.Hp,kd=G.key?p.dk*sc+4:0;
+ const poly=P=>`<polygon points="${P.map(([x,y])=>X(x)+","+Y(y)).join(" ")}" fill="${c('--conc')}" fill-opacity=".35" stroke="${c('--mu')}"/>`;
+ const line=(pts,col,w=3)=>`<polyline points="${pts.map(([x,y])=>X(x)+","+Y(y)).join(" ")}" fill="none" stroke="${c(col)}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+ const txt=(x,y,t,col,anc="start",sub="")=>`<text text-anchor="${anc}" style="fill:${c(col)};font-weight:700;font-size:12px;paint-order:stroke;stroke:${c('--card')};stroke-width:3.5px"><tspan x="${x}" y="${y}">${t}</tspan>${sub?`<tspan x="${x}" y="${y+13}" style="font-weight:500">${sub}</tspan>`:""}</text>`;
+ const lead=(x1,y1,x2,y2,col)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c(col)}" stroke-width=".9"/>`;
+ const dots=(P,col)=>P.map(([x,y])=>`<circle cx="${X(x)}" cy="${Y(y)}" r="2.6" fill="${c(col)}"/>`).join("");
+ const xb=z=>G.xs-(p.B2-p.B4)*z/Hp-cv, yt=x=>x<=p.B1?p.H2+(p.H5-p.H2)*x/p.B1:x>=G.xs?p.H5+(p.H4-p.H5)*(x-G.xs)/p.B3:p.H5;
+ let g=poly(G.foot)+poly(G.stem)+(G.key?poly(G.key):"");
+ // Z3 y P3 (puntos)
+ const z3=[],p3=[];for(let x=0.22;x<B-0.1;x+=0.42){z3.push([x,cv+0.09],[x,yt(x)-cv-0.07])}
+ for(let z=0.35;z<Hp-0.1;z+=0.45){p3.push([p.B1+cv+0.06,p.H5+z],[xb(z)-0.06,p.H5+z])}
+ g+=dots(z3,"--wn")+dots(p3,"--f3");
+ // Z2, Z1, P2
+ g+=line([[0.06,cv+0.02],[B-0.06,cv+0.02]],"--f4",2+p.db/8);
+ g+=line([[p.B1+0.12,p.H5-cv],[G.xs,p.H5-cv],[B-0.06,p.H4-cv]],"--f5",2+p.dt/8);
+ g+=line([[p.B1+cv,0.14],[p.B1+cv,H-0.05]],"--f1",2+p.ved/8);
+ // P1 por tramos
+ const cu=S.cuts,xr=X(G.xs)+16;
+ for(let i=0;i<cu.length-1;i++){const z0=cu[i],z1=cu[i+1],k=i+1,[db,sp]=S.TB[k],zm=(z0+z1)/2;
+  const pts=[[xb(z0),p.H5+z0],[xb(z1)+(z1>=Hp?0:0),p.H5+Math.min(z1,Hp-0.05)]];if(i===0)pts.unshift([xb(0)-0.4,0.14],[xb(0),0.14]);
+  g+=line(pts,"--f2",2+db/8);
+  if(i>0)g+=`<line x1="${X(p.B1)-8}" y1="${Y(p.H5+z0)}" x2="${xr-4}" y2="${Y(p.H5+z0)}" stroke="${c('--f2')}" stroke-dasharray="5 3"/><text x="${xr}" y="${Y(p.H5+z0)+4}" style="fill:${c('--f2')}">cambio a ${fx(z0)} m de la zapata</text>`;
+  g+=lead(X(xb(zm)),Y(p.H5+zm),xr-3,Y(p.H5+zm)-4,"--f2")+txt(xr,Y(p.H5+zm),`P1 · tramo ${k}: Ø${db} c/${sp}`,"--f2","start",`de ${fx(z0)} a ${fx(z1)} m · cara del relleno`)}
+ // rótulos
+ const xl=X(0)-14;
+ g+=lead(xl+3,Y(H*0.78)-4,X(p.B1+cv),Y(H*0.78)-4,"--f1")+txt(xl,Y(H*0.78),`P2: Ø${p.ved} c/${p.ves}`,"--f1","end","vertical · cara del frente");
+ g+=lead(xl+3,Y(H*0.5)-4,X(p.B1+cv+0.06),Y(H*0.5)-4,"--f3")+txt(xl,Y(H*0.5),`P3: Ø${p.dh} c/${p.sh}`,"--f3","end","horizontal · en cada cara");
+ g+=lead(X(G.xs+p.B3*0.55),Y(yt(G.xs+p.B3*0.55)-cv),X(G.xs+p.B3*0.55)+10,Y(p.H5)-24,"--f5")+txt(X(G.xs+p.B3*0.55)+12,Y(p.H5)-26,`Z1: Ø${p.dt} c/${p.st}`,"--f5","start","talón · arriba");
+ g+=txt(X(0),Y(0)+18+kd,`Z2: Ø${p.db} c/${p.sb}`,"--f4","start","puntera y base · abajo");
+ g+=txt(X(0),Y(0)+48+kd,`Z3: Ø${p.dl} c/${p.sl}`,"--wn","start","longitudinal (puntos) · arriba y abajo");
+ el.setAttribute("viewBox",`0 0 ${W} ${Hh+kd}`);el.innerHTML=g;
+}
+
 /* ---------- verificaciones paso a paso ---------- */
 function checks(c,p,A){
  const B=A.B,ae=Math.abs(c.e),rock=p.ftype==="R",R=a=>`<span class="ref">${a}</span>`;
@@ -710,21 +719,23 @@ function run(){
  $("#stemPlotV").innerHTML="<h3>Corte Vu y φVc (t/m)</h3>"+plot([
   ...S.cases.map(c=>({x:c.V,y:hgt,col:c.col,lab:c.n})),
   {x:S.cap.map(k=>k.phiVc),y:hgt,col:"--ok",dash:"6 3",lab:"φVc = 0,75·0,17√f'c·b·d",wd:2.5}],{xl:"V (t/m)",yl:"Altura sobre la zapata (m)",vert:true,u:"t/m",capAt:s=>s.x.length-1});
- let worst={r:1e9},worstV={r:1e9};S.cap.forEach((k,i)=>{if(env[i]>0.05){const r=k.phiMn/env[i];if(r<worst.r)worst={r,i}}if(envV[i]>0.05){const r=k.phiVc/envV[i];if(r<worstV.r)worstV={r,i}}});
+ let worstV={r:1e9};S.cap.forEach((k,i)=>{if(envV[i]>0.05){const r=k.phiVc/envV[i];if(r<worstV.r)worstV={r,i}}});
  const b0=S.cap[S.cap.length-1],top=S.cap[0];
- const AsminFail=S.cap.filter(k=>k.As<k.Asmin);
- const smax=Math.min(3*b0.h,300);
+ const TR=[];for(let k=1;k<S.cuts.length;k++){const T={k,z0:S.cuts[k-1],z1:S.cuts[k],r:1e9,rz:S.cuts[k-1],hmax:0,hmin:1e9};
+  S.cap.forEach((q,i)=>{if(q.k!==k)return;T.db=q.db;T.sp=q.sp;T.As=q.As;T.hmax=Math.max(T.hmax,q.h);T.hmin=Math.min(T.hmin,q.h);
+   if(env[i]>0.05){const r=q.phiMn/env[i];if(r<T.r){T.r=r;T.rz=S.Hp-q.s;T.Mu=env[i];T.Mn=q.phiMn}}});
+  T.okR=T.As>=1.8*T.hmax-1e-6;T.okS=T.sp<=Math.min(3*T.hmin,300);T.okM=T.r>=1;TR.push(T)}
  const Ash=2*Ab(p.dh)*1000/p.sh,hm=(p.B2+p.B4)/2*1000;
- const wi=worst.i!=null?S.cap[worst.i]:b0;
- $("#stemTab").innerHTML=`<table><tr><th>Verificación</th><th>Valor</th><th>Requisito</th><th></th></tr>
- <tr><td>Base de pantalla: Mu (envolvente) / φMn</td><td class="n">${fx(env[env.length-1],2)} / ${fx(b0.phiMn,2)} t·m/m</td><td>φ = ${fx(b0.phi,2)} <span class="ref">21.2.2</span></td><td>${okng(b0.phiMn>=env[env.length-1])}</td></tr>
- <tr><td>Sección más exigida: altura ${fx(S.Hp-wi.s,2)} m</td><td class="n">φMn/Mu = ${fx(worst.r,2)}</td><td>≥ 1 en toda la altura <span class="ref">13.3.6.3</span></td><td>${okng(worst.r>=1)}</td></tr>
- <tr><td>Corte: menor φVc/Vu (en ${fx(worstV.i!=null?S.Hp-S.cap[worstV.i].s:0,2)} m)</td><td class="n">${fx(worstV.r,2)}</td><td>V<sub>c</sub> = 0,17√f'c·b·d, φ = 0,75 <span class="ref">13.3.6.1.1</span></td><td>${okng(worstV.r>=1)}</td></tr>
- <tr><td>As base / As,mín = 0,0018·Ag</td><td class="n">${fx(b0.As,0)} / ${fx(b0.Asmin,0)} mm²/m</td><td><span class="ref">7.6.1.1</span>${AsminFail.length?` — no cumple en ${fx(S.Hp-AsminFail[0].s,2)} m hacia ${fx(S.Hp-AsminFail[AsminFail.length-1].s,2)} m`:""}</td><td>${okng(!AsminFail.length)}</td></tr>
- <tr><td>Separación de la principal</td><td class="n">${fx(p.s1,0)} mm</td><td>≤ menor de 3h y 300 mm = ${fx(smax,0)} <span class="ref">CIRSOC 201-25 7.7.2.3</span></td><td>${okng(p.s1<=smax&&(p.d2<=0||p.s2<=smax))}</td></tr>
- <tr><td>Horizontal (2 caras): ρ = ${fx(Ash,0)} mm²/m / h medio ${fx(hm,0)} mm</td><td class="n">${fx(Ash/(1000*hm)*1000,2)} ‰</td><td>≥ 1,8 ‰; sep. ≤ ${fx(Math.min(5*top.h,450),0)} mm <span class="ref">7.6.4.1 → 24.4.3.2/3</span></td><td>${okng(Ash/(1000*hm)>=0.0018-1e-9&&p.sh<=Math.min(5*top.h,450))}</td></tr>
- <tr><td>Horizontal en la base (h = ${fx(b0.h,0)} mm)</td><td class="n">${fx(Ash/(1000*b0.h)*1000,2)} ‰</td><td>Referencia: en la base conviene cumplir el 1,8 ‰ sobre el espesor real</td><td>${Ash/(1000*b0.h)>=0.0018?'<span class="ok">OK</span>':'<span class="wn">Revisar</span>'}</td></tr>
- </table><p class="note">Cargas sobre la pantalla: Coulomb con δ = 2/3 φ (hormigón contra suelo), componente horizontal. En sismo, la presión de PAE sobre la pantalla se reparte de modo que su resultante quede a ${A.rTxt} de la altura de la pantalla (IC-103 VI 11.6.5.3 y C11.6.5.3), y solo cuenta la inercia de la pantalla, aplicada en su baricentro (no la del suelo sobre el talón). El ${p.d2>0?`Ø${p.d2} c/${p.s2} adicional`:"refuerzo"} se corta a ${fx(p.hc)} m (escalón en la curva φMn).</p>`;
+ $("#stemTab").innerHTML=`<h3>Armadura vertical P1, por tramos</h3>
+ <table><tr><th>Tramo</th><th>Alturas desde la zapata</th><th>Armadura</th><th>As colocada</th><th>Cuantía ρ (en el espesor mayor del tramo)</th><th>Mínima 0,18 % <span class="ref">7.6.1.1</span></th><th>Separación ≤ 300 mm <span class="ref">7.7.2.3</span></th><th>Sección más exigida: Mu / φMn</th><th>Flexión</th></tr>
+ ${TR.map(T=>`<tr><td><b>Tramo ${T.k}</b></td><td>de ${fx(T.z0)} a ${fx(T.z1)} m</td><td>Ø${T.db} c/${T.sp}</td><td class="n">${fx(T.As,0)} mm²/m</td><td class="n">${fx(T.As/(1000*T.hmax)*100,3)} % (h = ${fx(T.hmax,0)} mm)</td><td>${okng(T.okR)}</td><td>${okng(T.okS)}</td>
+  <td class="n">${T.Mu==null?"—":`${fx(T.Mu,2)} / ${fx(T.Mn,2)} t·m/m a ${fx(T.rz)} m`}</td><td>${T.Mu==null?"—":okng(T.okM)+` <span class="note">${fx(T.r,2)}</span>`}</td></tr>`).join("")}</table>
+ <h3>Resto de la pantalla</h3>
+ <table><tr><th>Verificación</th><th>Valor</th><th>Requisito</th><th></th></tr>
+ <tr><td>Corte: menor φVc/Vu (a ${fx(worstV.i!=null?S.Hp-S.cap[worstV.i].s:0,2)} m de la zapata)</td><td class="n">${fx(worstV.r,2)}</td><td>V<sub>c</sub> = 0,17√f'c·b·d, φ = 0,75 <span class="ref">13.3.6.1.1</span></td><td>${okng(worstV.r>=1)}</td></tr>
+ <tr><td>P3 horizontal (2 caras): ${fx(Ash,0)} mm²/m sobre el espesor medio de ${fx(hm,0)} mm</td><td class="n">${fx(Ash/(1000*hm)*100,3)} %</td><td>≥ 0,18 %; separación ≤ ${fx(Math.min(5*top.h,450),0)} mm <span class="ref">7.6.4.1 → 24.4.3.2/3</span></td><td>${okng(Ash/(1000*hm)>=0.0018-1e-9&&p.sh<=Math.min(5*top.h,450))}</td></tr>
+ <tr><td>P3 horizontal en la base (h = ${fx(b0.h,0)} mm)</td><td class="n">${fx(Ash/(1000*b0.h)*100,3)} %</td><td>Referencia: en la base conviene cumplir el 0,18 % sobre el espesor real</td><td>${Ash/(1000*b0.h)>=0.0018?'<span class="ok">OK</span>':'<span class="wn">Revisar</span>'}</td></tr>
+ </table><p class="note">La curva verde de φMn tiene un escalón en cada altura de cambio. La altura de cambio es donde deja de contarse la barra de abajo, así que el empalme con la barra de arriba va por encima de esa altura. Cargas sobre la pantalla: Coulomb con δ = 2/3 φ (hormigón contra suelo), componente horizontal. En sismo, la presión de PAE se reparte de modo que su resultante quede a ${A.rTxt} de la altura de la pantalla (IC-103 VI 11.6.5.3 y C11.6.5.3), y solo cuenta la inercia de la pantalla.</p>`;
 
  // zapata
  const Fz=footing(p,A);const cols={RIa:"--f4",RIb:"--f1",EEa:"--f2",EEb:"--f3"};
@@ -751,6 +762,17 @@ function run(){
   <tr><td>Separación ≤ menor de 3h y 300 mm = ${fx(smx,0)} mm <span class="ref">CIRSOC 201-25 7.7.2.3</span></td><td>${okng(s<=smx)}</td></tr>
   <tr><td colspan="2" class="note">φVc = 0,75·0,66·λs·ρw<sup>1/3</sup>·√f'c·b·d, con λs = √(2/(1 + d/254)) ≤ 1 y sin armadura de corte <span class="ref">22.5.5.1, Tabla 22.5.5.1, 22.5.5.1.3</span>. En la otra cara colocar la armadura de contracción y temperatura (0,0018 Ag total, <span class="ref">24.4.3.2</span>).</td></tr></table>`};
  $("#heelTab").innerHTML=ftab(Fz.heel,hcap,heelAs,p.dt,"superior",p.st,"face")+`<p class="note">El talón se carga con el suelo, el peso propio, la sobrecarga y la componente vertical del empuje en el extremo, menos la presión de contacto lineal de cada combinación. Corte en la cara: el apoyo no comprime la zona del talón.</p>`;
+{const mk=ok=>ok?'<b class="ok">✔ cumple la mínima</b>':'<b class="ng">✘ no llega a la mínima</b>';
+  const rl=(t,As,h,need=true)=>`<b>${t}</b>: As = ${fx(As,0)} mm²/m · cuantía ρ = ${fx(As/(1000*h)*100,3)} % (h = ${fx(h,0)} mm)`+(need?` · mínima 0,18 % = ${fx(1.8*h,0)} mm²/m ${mk(As>=1.8*h-1e-6)}`:"");
+  const nt=t=>`<br><span class="note">${t}</span>`;
+  const hH=hcap[hcap.length-1].h,hT=tcap[tcap.length-1].h,Ase=p.ves>0?Ab(p.ved)*1000/p.ves:0,Asl=p.sl>0?2*Ab(p.dl)*1000/p.sl:0,hF=G.cf.A/B*1000;
+  $("#rho0").innerHTML=TR.map(T=>rl(`Tramo ${T.k} (de ${fx(T.z0)} a ${fx(T.z1)} m), Ø${T.db} c/${T.sp}`,T.As,T.hmax)).join("<br>")+nt("Mínima de flexión 0,0018·Ag, con el espesor mayor de cada tramo (CIRSOC 201-25 / ACI 318-25, 7.6.1.1). Si vh2 ≤ vh1, el tramo 3 no se usa.");
+  $("#rho1").innerHTML=rl(`Ø${p.ved} c/${p.ves}`,Ase,hm,false)+nt("Cara comprimida: armadura constructiva, sin mínima propia. Sostiene la horizontal y controla la fisuración del frente.");
+  $("#rho2").innerHTML=rl(`Ø${p.dh} c/${p.sh} en 2 caras`,Ash,hm)+nt(`Contracción y temperatura, sobre el espesor medio (24.4.3.2). En la base (h = ${fx(b0.h,0)} mm) da ${fx(Ash/(1000*b0.h)*100,3)} %.`);
+  $("#rho3").innerHTML=rl(`Ø${p.dt} c/${p.st}`,heelAs,hH)+nt("Mínima de flexión en la sección junto a la pantalla (13.3.2.1 → 7.6.1.1).");
+  $("#rho4").innerHTML=rl(`Ø${p.db} c/${p.sb}`,toeAs,hT)+nt("Mínima de flexión en la sección junto a la pantalla (13.3.2.1 → 7.6.1.1).");
+  $("#rho5").innerHTML=rl(`Ø${p.dl} c/${p.sl} en 2 capas`,Asl,hF)+nt("Contracción y temperatura, sobre el espesor medio de la zapata (24.4.3.2).");
+  drawRebar($("#rebSvg"),p,A,S);}
  $("#toeTab").innerHTML=ftab(Fz.toe,tcap,toeAs,p.db,"inferior",p.sb,"d")+`<p class="note">Corte de la puntera a la distancia d de la cara de la pantalla. Si B1 &lt; d, la sección crítica cae fuera de la puntera y Vu = 0.</p>`;
 }
 run();
