@@ -90,8 +90,9 @@ code{font-size:12.5px;background:var(--bg);padding:0 3px;border-radius:3px}
 <tr><td>Empuje sísmico activo (M-O) y pasivo</td><td>IC-103 Parte VI</td><td>11.6.5.3, 11.6.5.5</td></tr>
 <tr><td>PAE + PIR, excentricidad sísmica</td><td>IC-103 Parte VI</td><td>11.6.5.1</td></tr>
 <tr><td>Factores de carga y combinaciones</td><td>AASHTO LRFD 2012 (vía IC-103 VI 11.6.5.1)</td><td>Tablas 3.4.1-1 y 3.4.1-2 <span class="unv">†</span></td></tr>
-<tr><td>Excentricidad estática, capacidad portante, deslizamiento</td><td>AASHTO LRFD 2012</td><td>11.6.3.2, 11.6.3.3, 10.6.3.4 <span class="unv">†</span></td></tr>
-<tr><td>Factores de resistencia</td><td>AASHTO LRFD 2012</td><td>Tabla 11.5.7-1, art. 11.5.8 <span class="unv">†</span></td></tr>
+<tr><td>Excentricidad estática, capacidad portante, deslizamiento</td><td>CIRSOC 804-3 (julio 2020), capítulo 11 de la AASHTO en versión argentina</td><td>11.6.3.3, 11.6.3.2, 11.6.3.6</td></tr>
+<tr><td>Factores de resistencia</td><td>CIRSOC 804-3 (julio 2020)</td><td>Tabla 11.5.7-1 (resistencia), 11.5.8 (evento extremo)</td></tr>
+<tr><td>Resistencia pasiva</td><td>CIRSOC 804-3</td><td>11.6.3.5: se omite, salvo base por debajo de socavación o perturbaciones</td></tr>
 <tr><td>Diseño de pantalla, talón y puntera</td><td>CIRSOC 201-2025 / ACI 318-25</td><td>11.1.4, 13.3.6, 13.3.2.1, Cap. 7, 21.2, 22.2, 22.5</td></tr>
 </table>
 </div>
@@ -147,7 +148,7 @@ code{font-size:12.5px;background:var(--bg);padding:0 3px;border-radius:3px}
 <tr><td>Empuje de la sobrecarga (LS)</td><td>H/2</td><td>Presión constante Ka·q en toda la altura <span class="ref">AASHTO 3.11.6.1 <span class="unv">†</span></span> <span class="ref">IC-103 VI 11.6.5.3</span></td></tr>
 <tr><td>Empuje total sísmico PAE</td><td>h/3; hasta 0,4h–0,5h si la falla tiene alto impacto (elegible en Datos)</td><td><span class="ref">IC-103 VI 11.6.5.3</span> <span class="ref">C11.6.5.3</span></td></tr>
 <tr><td>Inercia PIR</td><td>Baricentro del conjunto de masas: muro más suelo sobre el talón</td><td><span class="ref">IC-103 VI 11.6.5.1, Fig. 11.6.5.1-1</span></td></tr>
-<tr><td>Reacción del suelo R</td><td>x<sub>R</sub> = (ΣM estabilizante − ΣM volcador) / ΣV desde la puntera; e = B/2 − x<sub>R</sub></td><td>Equilibrio <span class="ref">AASHTO 11.6.3.2 <span class="unv">†</span></span></td></tr>
+<tr><td>Reacción del suelo R</td><td>x<sub>R</sub> = (ΣM estabilizante − ΣM volcador) / ΣV desde la puntera; e = B/2 − x<sub>R</sub></td><td>Equilibrio <span class="ref">CIRSOC 804-3, 11.6.3.2</span></td></tr>
 </table>
 </div>
 
@@ -188,10 +189,10 @@ code{font-size:12.5px;background:var(--bg);padding:0 3px;border-radius:3px}
 <h2>5. Verificaciones de estabilidad externa</h2>
 <table>
 <tr><th>Verificación</th><th>Resistencia I</th><th>Evento Extremo I</th></tr>
-<tr><td>Excentricidad (en lugar del vuelco)</td><td>Suelo: e ≤ B/3 (dos tercios centrales). Roca: e ≤ 0,45 B <span class="ref">AASHTO 11.6.3.3 <span class="unv">†</span></span></td><td>Suelo y roca: dos tercios centrales si γEQ = 0, ocho décimos si γEQ = 1, interpolando en el medio <span class="ref">IC-103 VI 11.6.5.1</span></td></tr>
-<tr><td>Capacidad portante</td><td>Suelo: q = V/(B − 2e) ≤ φb·qn (Meyerhof). Roca: distribución lineal <span class="ref">AASHTO 11.6.3.2 <span class="unv">†</span></span></td><td>Igual, con φ de Evento Extremo</td></tr>
-<tr><td>Deslizamiento</td><td>φτ·μ·V + φep·Ep ≥ ΣH <span class="ref">AASHTO 10.6.3.4 <span class="unv">†</span></span></td><td>Igual, con φ de Evento Extremo</td></tr>
-<tr><td>Factores φ</td><td>Muros de gravedad y semigravedad: φb = 0,55; φτ = 1,0; φep = 0,50 <span class="ref">AASHTO Tabla 11.5.7-1 <span class="unv">†</span></span></td><td>φ = 1,0 <span class="ref">AASHTO 11.5.8 <span class="unv">†</span></span></td></tr>
+<tr><td>Excentricidad (en lugar del vuelco)</td><td>Suelo: e ≤ B/3 (dos tercios centrales). Roca: e ≤ 0,45 B <span class="ref">CIRSOC 804-3, 11.6.3.3</span></td><td>Suelo y roca: dos tercios centrales si γEQ = 0, ocho décimos si γEQ = 1, interpolando en el medio <span class="ref">IC-103 VI 11.6.5.1</span></td></tr>
+<tr><td>Capacidad portante</td><td>Suelo: q = V/(B − 2e) ≤ φb·qn (Meyerhof). Roca: distribución lineal <span class="ref">CIRSOC 804-3, 11.6.3.2</span></td><td>Igual, con φ de Evento Extremo</td></tr>
+<tr><td>Deslizamiento</td><td>φτ·μ·V + φep·Ep ≥ ΣH <span class="ref">CIRSOC 804-3, 11.6.3.6 → 10.6.3.4 <span class="unv">†</span></span></td><td>Igual, con φ de Evento Extremo</td></tr>
+<tr><td>Factores φ</td><td>Muros de gravedad y semigravedad: φb = 0,55; φτ = 1,0. Pasivo: φep = 0,50 <span class="unv">†</span> <span class="ref">CIRSOC 804-3, Tabla 11.5.7-1</span></td><td>φ = 1,0, salvo capacidad de carga: φb = 0,80 <span class="ref">CIRSOC 804-3, 11.5.8</span></td></tr>
 </table>
 <p><b>qn (resistencia nominal):</b> el estudio solo informa la tensión admisible. Si el geotécnico no da la carga de rotura, se toma qn = FS · σadm, adoptando un FS y dejándolo escrito como supuesto. Es más seguro pedirle al geotécnico la carga de rotura.</p>
 </div>
@@ -270,7 +271,7 @@ code{font-size:12.5px;background:var(--bg);padding:0 3px;border-radius:3px}
 <li><b>Zona 2 y sitio A:</b> Neuquén capital (dpto. Confluencia) es <b>Zona 1</b> (IC-103 Parte I, Anexo A). El sitio A (roca dura, Vs &gt; 1500 m/s) no surge del estudio. kh0 resulta: Zona 1-B = 0,168; Zona 1-C = 0,16; Zona 1-A = 0,132. La planilla usa 0,228 (Zona 2-A), del lado seguro pero sin justificar.</li>
 <li><b>PAE a 0,5 H para muro «Importante»</b> (<code>Empujes!H79</code>): es correcto. Lo respalda el comentario C11.6.5.3 del IC-103 VI (0,4h a 0,5h para muros cuya falla tiene alto impacto). Conviene citarlo en la memoria.</li>
 <li><b>Sobrecarga q = 0,2 t/m² (2 t/m²):</b> es muy baja para una playa de camiones. El modelo 3D usa 20 t/m². Ver AASHTO 3.11.6.4 (altura equivalente de suelo para tránsito vehicular).</li>
-<li><b>Capacidad portante:</b> σu = 40 × 3,5 = 140 t/m², pero el estudio no informa el FS: es un supuesto. φb = 0,4 (RI) y 0,7 (EE) no son los de la AASHTO (0,55 y 1,0 <span class="unv">†</span>); son más conservadores. La hoja «Capac. de Carga ELU» es de otra obra (pilotes, φ = 32°, B = 1,2 m) y no está vinculada.</li>
+<li><b>Capacidad portante:</b> σu = 40 × 3,5 = 140 t/m², pero el estudio no informa el FS: es un supuesto. los factores 0,4 (sin sismo) y 0,7 (con sismo) de <code>D21</code> y <code>E21</code> no están en el reglamento. El CIRSOC 804-3 da φb = 0,55 (Tabla 11.5.7-1) y 0,80 con sismo (11.5.8), aplicados a la resistencia nominal. Los de la planilla son más conservadores. </li>
 <li><b>Excentricidad sísmica:</b> se usa siempre B/3. El IC-103 VI 11.6.5.1 permite interpolar entre 2/3 y 8/10 según γEQ; con γEQ = 0,25 da e ≤ 0,35 B. La planilla queda del lado seguro.</li>
 <li><b>Rozamiento μ = tan(2/3·34°) = 0,418</b> usa el φ del relleno. El estudio da μ = 0,45 (φ = 39° del conglomerado). Del lado seguro.</li>
 <li><b>Cuantías mínimas</b> 0,0012 vertical / 0,0020 horizontal: son de tabiques (Tabla 11.6.1). Para muros en voladizo corresponden 0,0018 Ag de flexión (7.6.1.1) y 0,0018 de contracción y temperatura (24.4.3.2). Separación máxima de la principal: 3h y 300 mm (CIRSOC 7.7.2.3).</li>
@@ -330,9 +331,7 @@ const F=[
   ["desp","Desplazamiento admitido (11.6.5.2.2 / 11.6.5.4)","",["0","Nulo: kh = kh0"],[["0","Nulo: kh = kh0"],["1","25–50 mm: kh = 0,5 kh0"]]],
   ["kv","kv (11.6.5.2.1: normalmente 0)","",0],
   ["rAE","Altura de la resultante PAE (11.6.5.3 y C11.6.5.3)","",["0.5","0,5·H — falla de alto impacto"],[["0.3333","H/3 — muro de rutina"],["0.4","0,4·H — intermedio"],["0.5","0,5·H — falla de alto impacto"]]],
-  ["gEQ","γEQ sobre la sobrecarga","",0.25]]],
- ["Factores de resistencia",[["phb","φb portante — Resistencia","",0.55],["pht","φτ deslizamiento — Resistencia","",1.0],["phe","φep pasivo — Resistencia","",0.5],
-  ["phbE","φb portante — Ev. Extremo","",1.0],["phtE","φτ deslizamiento — Ev. Extremo","",1.0],["pheE","φep pasivo — Ev. Extremo","",1.0]]]
+  ["gEQ","γEQ sobre la sobrecarga","",0.25]]]
 ];
 const FA=[
  ["Pantalla — cara interna (vertical, tracción)",[["cs","Recubrimiento pantalla","mm",50],["d1","Ø barra corrida","mm",16],["s1","Separación barra corrida","mm",150],
@@ -346,7 +345,15 @@ function buildForm(groups,el){
   if(opts) return `<label>${l}<select id="i_${id}">${opts.map(([v,tx])=>`<option value="${v}" ${v===dv[0]?"selected":""}>${tx}</option>`).join("")}</select><span class="u"></span></label>`;
   return `<label>${l}<input id="i_${id}" type="number" step="any" value="${dv}"><span class="u">${u}</span></label>`}).join("")}</div>`).join("");
 }
-buildForm(F,$("#form"));buildForm(FA,$("#formArm"));
+const PHI={R:{b:0.55,t:1.0,e:0.5},E:{b:0.8,t:1.0,e:1.0}};
+buildForm(F,$("#form"));
+$("#form").insertAdjacentHTML("beforeend",`<div class="fg" style="grid-column:1/-1"><h3>Factores de resistencia (fijos: los da el reglamento)</h3>
+<table><tr><th>Verificación</th><th>Resistencia I (sin sismo)</th><th>Evento Extremo I (con sismo)</th></tr>
+<tr><td>Capacidad de carga, φb — muros de gravedad y semigravedad</td><td><b>0,55</b> <span class="ref">CIRSOC 804-3, Tabla 11.5.7-1</span></td><td><b>0,80</b> <span class="ref">CIRSOC 804-3, 11.5.8</span></td></tr>
+<tr><td>Deslizamiento, φτ</td><td><b>1,00</b> <span class="ref">CIRSOC 804-3, Tabla 11.5.7-1</span></td><td><b>1,00</b> <span class="ref">CIRSOC 804-3, 11.5.8</span></td></tr>
+<tr><td>Resistencia pasiva en el deslizamiento, φep (solo si se considera el pasivo)</td><td><b>0,50</b> <span class="ref">AASHTO Tabla 10.5.5.2.2-1 †</span></td><td><b>1,00</b> <span class="ref">CIRSOC 804-3, 11.5.8</span></td></tr>
+</table>
+<p class="note">Se aplican a la resistencia <b>nominal</b> (de rotura) qn, no a la admisible: se compara la presión mayorada con φb·qn. El CIRSOC 804-3 (julio 2020) es la versión argentina del capítulo 11 de la AASHTO LRFD, al que remite el IC-103 VI 11.6.5.1. El φep = 0,50 es del capítulo 10 (fundaciones), que en el CIRSOC 804 está «en preparación»: es el valor de la AASHTO y no lo pude cotejar.</p></div>`);buildForm(FA,$("#formArm"));
 const ALL=[...F,...FA].flatMap(g=>g[1]);
 function read(){const p={};ALL.forEach(([id,,,dv,opts])=>{const e=$("#i_"+id);p[id]=opts?e.value:parseFloat(e.value)||0});return p}
 document.addEventListener("input",e=>{if(e.target.id&&e.target.id.startsWith("i_"))run()});
@@ -434,7 +441,7 @@ function analyze(p){
   if(c.st==="R")c.elim=rock?0.45*B:B/3;
   else if(c.st==="E")c.elim=B/2*(2/3+Math.min(Math.max(p.gEQ,0),1)*(0.8-2/3));
   else c.elim=B/6;
-  const ph=c.st==="E"?{b:p.phbE,t:p.phtE,e:p.pheE}:{b:p.phb,t:p.pht,e:p.phe};
+  const ph=c.st==="E"?PHI.E:PHI.R;
   c.ph=ph;
   // contacto lineal
   const ae=Math.abs(e);
@@ -619,10 +626,10 @@ function run(){
  <table style="margin-top:8px">
  <tr><td>Momento respecto de la puntera: estabilizante / volcador</td><td class="n">${fx(c.Mv,2)} / ${fx(c.Mh,2)} t·m/m</td><td></td></tr>
  <tr><td>Reacción del suelo: x<sub>R</sub> = (ΣM estab. − ΣM volc.)/ΣV desde la puntera · e = B/2 − x<sub>R</sub></td><td class="n">${fx(c.xR)} · ${fx(c.e)} m</td><td></td></tr>
- <tr><td>Límite de e ${c.st==="E"?`(γEQ = ${fx(p.gEQ,2)}) <span class="ref">IC-103 VI 11.6.5.1</span>`:c.st==="R"?`<span class="ref">AASHTO 11.6.3.3 †</span>`:"(B/6, recomendado)"}</td><td class="n">${fx(c.elim)} m</td><td>${okng(c.okE)}</td></tr>
+ <tr><td>Límite de e ${c.st==="E"?`(γEQ = ${fx(p.gEQ,2)}) <span class="ref">IC-103 VI 11.6.5.1</span>`:c.st==="R"?`<span class="ref">CIRSOC 804-3, 11.6.3.3</span>`:"(B/6, recomendado)"}</td><td class="n">${fx(c.elim)} m</td><td>${okng(c.okE)}</td></tr>
  ${c.st==="S"?`<tr><td>qmáx / qmín (lineal) vs σadm</td><td class="n">${fx(c.lin.qmax,1)} / ${fx(c.lin.qmin,1)} · ${fx(p.sadm,1)} t/m²</td><td>${okng(c.okB)}</td></tr>`:
- `<tr><td>${p.ftype==="S"?"q Meyerhof = V/(B − 2e)":"qmáx lineal"} vs φb·qn = ${fx(c.ph.b,2)}·${fx(A.qn,1)} <span class="ref">AASHTO 11.6.3.2 †</span></td><td class="n">${fx(c.qd,1)} / ${fx(c.Rb,1)} t/m²</td><td>${okng(c.okB)}</td></tr>
- <tr><td>Deslizamiento (μ = ${fx(p.mu,3)}): φτ·μ·V + φep·Ep = ${fx(c.ph.t,2)}·${fx(p.mu,3)}·${fx(c.V,2)} + ${fx(c.ph.e,2)}·${fx(A.Ep,2)} <span class="ref">AASHTO 10.6.3.4 †</span></td><td class="n">${fx(c.Rr,2)} / ${fx(c.Hs,2)} t</td><td>${okng(c.okD)}</td></tr>`}
+ `<tr><td>${p.ftype==="S"?"q Meyerhof = V/(B − 2e)":"qmáx lineal"} vs φb·qn = ${fx(c.ph.b,2)}·${fx(A.qn,1)} <span class="ref">CIRSOC 804-3, 11.6.3.2</span></td><td class="n">${fx(c.qd,1)} / ${fx(c.Rb,1)} t/m²</td><td>${okng(c.okB)}</td></tr>
+ <tr><td>Deslizamiento (μ = ${fx(p.mu,3)}): φτ·μ·V + φep·Ep = ${fx(c.ph.t,2)}·${fx(p.mu,3)}·${fx(c.V,2)} + ${fx(c.ph.e,2)}·${fx(A.Ep,2)} <span class="ref">CIRSOC 804-3, 11.6.3.6 → 10.6.3.4 †</span></td><td class="n">${fx(c.Rr,2)} / ${fx(c.Hs,2)} t</td><td>${okng(c.okD)}</td></tr>`}
  </table></div></div></div>`).join("");
  A.C.forEach(c=>drawWall($("#sv_"+c.id),p,A,c));
 
