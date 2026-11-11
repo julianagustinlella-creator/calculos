@@ -25,7 +25,7 @@ section.tab{display:none}section.tab.on{display:block}
 .card{background:var(--card);border:1px solid var(--ln);border-radius:8px;padding:14px 16px;margin-bottom:14px;overflow-x:auto}
 .cmb>*,.grid>*{min-width:0}.cmb>div{overflow-x:auto}
 h2{font-size:17px;margin:0 0 8px}h3{font-size:15px;margin:14px 0 6px}
-.ref{display:inline-block;font-size:11.5px;color:var(--ac);border:1px solid var(--ln);border-radius:4px;padding:0 5px;margin-left:4px;white-space:nowrap}
+.ref{display:inline-block;max-width:100%;font-size:11.5px;color:var(--ac);border:1px solid var(--ln);border-radius:4px;padding:0 5px;margin-left:4px;white-space:normal}
 .unv{color:var(--wn)}
 table{border-collapse:collapse;width:100%;font-size:13px}
 th,td{border-bottom:1px solid var(--ln);padding:4px 6px;text-align:left;vertical-align:top}
@@ -42,7 +42,7 @@ svg{max-width:100%;height:auto;display:block}
 svg text{fill:var(--tx);font:11px system-ui,sans-serif}
 svg.plt text{font-size:12px}
 .cmb{display:grid;grid-template-columns:minmax(280px,1fr) minmax(280px,1.1fr);gap:14px}
-#combos .cmb{grid-template-columns:1fr}#combos .cmb>svg{max-width:640px;margin:0 auto}
+#combos .cmb{grid-template-columns:1fr}#combos .cmb>div>svg{max-width:640px;margin:0 auto}
 @media (max-width:760px){.cmb{grid-template-columns:1fr}.fg label{grid-template-columns:1fr 80px 46px}}
 .chks{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;margin-top:14px}
 .chk{border:1px solid var(--ln);border-left:5px solid var(--ok);border-radius:6px;padding:10px 12px;background:var(--bg)}
@@ -369,6 +369,14 @@ $("#form").insertAdjacentHTML("beforeend",`<div class="fg" style="grid-column:1/
 </table>
 <p class="note">Se aplican a la resistencia <b>nominal</b> (de rotura) qn, no a la admisible: se compara la presión mayorada con φb·qn. El CIRSOC 804-3 (julio 2020) es la versión argentina del capítulo 11 de la AASHTO LRFD, al que remite el IC-103 VI 11.6.5.1. El φep = 0,50 es del capítulo 10 (fundaciones), que en el CIRSOC 804 está «en preparación»: es el valor de la AASHTO y no lo pude cotejar.</p></div>`);buildForm(FA,$("#formArm"));
 const ALL=[...F,...FA].flatMap(g=>g[1]);
+$("#i_ftype").closest("label").insertAdjacentHTML("afterend",'<p class="note" id="ftNote" style="margin:2px 0 8px;padding:6px 8px;border-left:3px solid var(--ac);background:var(--bg)"></p>');
+function diagTxt(c,p,A){
+ const B=A.B,ae=Math.abs(c.e),rS='<span class="ref">CIRSOC 804-3 (2020), art. 11.6.3.2 «Capacidad portante», ec. 11.6.3.2-1 y Fig. 11.6.3.2-1</span>',rR='<span class="ref">CIRSOC 804-3 (2020), art. 11.6.3.2 «Capacidad portante», ec. 11.6.3.2-2 a 11.6.3.2-5 y Fig. 11.6.3.2-2</span>';
+ if(c.out)return "La resultante cae fuera de la base: no hay diagrama de presiones posible.";
+ if(p.ftype==="S")return `<b>Diagrama rectangular</b> porque el apoyo elegido es <b>suelo</b>: método del área efectiva ${rS}. La presión es uniforme, q = ΣV / B' = ${fx(c.V,2)} / ${fx(B-2*ae)} = ${fx(c.qeq,1)} t/m², sobre el ancho efectivo B' = B − 2e = ${fx(B-2*ae)} m, centrado en la reacción R.`;
+ return ae<=B/6?`<b>Diagrama trapecial</b> porque el apoyo elegido es <b>roca</b>: distribución lineal ${rR}. Como e = ${fx(ae)} m ≤ B/6 = ${fx(B/6)} m, toda la base está comprimida: q<sub>máx</sub> = ${fx(c.lin.qmax,1)} t/m² en la puntera y q<sub>mín</sub> = ${fx(c.lin.qmin,1)} t/m² en el talón.`:
+  `<b>Diagrama triangular</b> porque el apoyo elegido es <b>roca</b>: distribución lineal ${rR}. Como e = ${fx(ae)} m > B/6 = ${fx(B/6)} m, parte de la base se despega: quedan comprimidos ${fx(c.lin.Lc)} m desde la puntera, con q<sub>máx</sub> = ${fx(c.lin.qmax,1)} t/m².`;
+}
 function read(){const p={};ALL.forEach(([id,,,dv,opts])=>{const e=$("#i_"+id);p[id]=opts?e.value:parseFloat(e.value)||0});return p}
 document.addEventListener("input",e=>{if(e.target.id&&e.target.id.startsWith("i_"))run()});
 document.addEventListener("change",e=>{if(e.target.id&&e.target.id.startsWith("i_"))run()});
@@ -658,6 +666,9 @@ function checks(c,p,A){
 function run(){
  const p=read();{const e=$("#i_mu");if(p.mumode==="A"){p.mu=Math.tan(2/3*R(p.phi));e.value=p.mu.toFixed(3);e.disabled=true}else e.disabled=false}
  const A=analyze(p),{G,H,B}=A;
+ $("#ftNote").innerHTML=p.ftype==="S"?'Con <b>suelo</b>, la presión de contacto se calcula con el <b>método del área efectiva</b>: un rectángulo de presión uniforme q = ΣV / (B − 2e) sobre el ancho B\' = B − 2e. <span class="ref">CIRSOC 804-3 (2020), art. 11.6.3.2 «Capacidad portante», ec. 11.6.3.2-1 y Fig. 11.6.3.2-1</span>':
+  'Con <b>roca</b>, la presión de contacto se calcula con <b>distribución lineal</b>: trapecio si e ≤ B/6, triángulo si e > B/6 (parte de la base se despega). <span class="ref">CIRSOC 804-3 (2020), art. 11.6.3.2 «Capacidad portante», ec. 11.6.3.2-2 a 11.6.3.2-5 y Fig. 11.6.3.2-2</span>';
+ $("#ftNote").innerHTML+=' La reacción cae en el mismo punto con los dos diagramas; cambia la presión máxima. El diagrama lo fija el reglamento según el apoyo.';
  drawWall($("#geoSvg"),p,A,null);
  $("#deriv").innerHTML=(A.errs.length?`<p class="ng">${A.errs.join("<br>")}</p>`:"")+`<table>
  <tr><th>Parámetro</th><th>Valor</th><th>Origen</th></tr>
@@ -681,7 +692,7 @@ function run(){
  <td class="n">${c.st==="S"?"—":fx(c.Rr,2)+" / "+fx(c.Hs,2)}</td><td>${c.st==="S"?"—":okng(c.okD)+` <span class="note">${fx(c.Rr/c.Hs,2)}</span>`}</td></tr>`).join("")+`</table>
  <p class="note">Los números chicos son el cociente resistencia/solicitación (≥ 1 verifica). En Servicio I la excentricidad se compara con B/6 (núcleo central, criterio recomendado, no exigido) y la presión de contacto, sin mayorar, con la σadm del estudio.</p>`;
  // combos
- $("#combos").innerHTML=A.C.map(c=>`<div class="card"><h2>${c.t}</h2><p class="formula">${c.f}</p><div class="cmb"><svg id="sv_${c.id}"></svg><div>
+ $("#combos").innerHTML=A.C.map(c=>`<div class="card"><h2>${c.t}</h2><p class="formula">${c.f}</p><div class="cmb"><div><svg id="sv_${c.id}"></svg><p class="note" style="max-width:640px;margin:6px auto 0;padding:6px 8px;border-left:3px solid var(--f4);background:var(--bg)"><b>Presión del suelo.</b> ${diagTxt(c,p,A)} El punto rojo marca la reacción R y la barra roja, el tramo donde puede caer según el límite de excentricidad.</p></div><div>
  <table><tr><th>Carga</th><th>V (t)</th><th>x (m)</th><th>H (t)</th><th>y (m)</th><th>Ubicación de la resultante: en base a qué</th></tr>${c.L.map(l=>`<tr><td>${l.n}</td><td class="n">${l.V?fx(l.V,2):""}</td><td class="n">${l.V?fx(l.x):""}</td><td class="n">${l.Hh?fx(l.Hh,2):""}</td><td class="n">${l.Hh?fx(l.y):""}</td><td class="note">${l.b}</td></tr>`).join("")}
  <tr><th>Σ</th><th class="n">${fx(c.V,2)}</th><th></th><th class="n">${fx(c.Hs,2)}</th><th></th><th class="note">x desde el borde de la puntera; y desde el plano de fundación</th></tr></table>
  </div></div>${checks(c,p,A)}</div>`).join("");
