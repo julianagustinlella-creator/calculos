@@ -258,6 +258,26 @@ code{font-size:12.5px;background:var(--bg);padding:0 3px;border-radius:3px}
 <p class="note" style="max-width:920px;margin:6px auto 12px">Las líneas son barras en el plano del dibujo; la línea fina paralela es el refuerzo, si lo hay. Los puntos son barras que corren a lo largo del muro (perpendiculares al dibujo). Las líneas de trazos marcan las alturas donde cambia la armadura vertical P1: esas alturas las elegís vos en el grupo P1 («ALTURA DEL CAMBIO»). Cada rótulo indica la cuantía ρ que se está colocando.</p>
 <div class="grid" id="formArm"></div>
 </div>
+<div class="card">
+<h2>Criterio de cuantía mínima</h2>
+<p>Se usa <b>0,18 %</b> para todas las armaduras (0,0018·A<sub>g</sub>), pero no se compara igual en todos los casos. En la armadura de <b>flexión</b> cuenta solo la cara traccionada. En la de <b>contracción y temperatura</b> cuenta la suma de las dos caras. En los dos casos el porcentaje es sobre la sección total: espesor completo por 1 m de ancho.</p>
+<table>
+<tr><th>Armadura</th><th>Qué acero cuenta</th><th>Contra qué sección</th><th>Artículo (CIRSOC 201-25 = ACI 318-25)</th></tr>
+<tr><td><b>P1</b>, vertical cara del relleno</td><td>Solo esa cara (la traccionada), barra más refuerzo</td><td>Espesor total, en la sección más gruesa de cada tramo</td><td><span class="ref">7.6.1.1</span></td></tr>
+<tr><td><b>P2</b>, vertical cara del frente</td><td>No se verifica: no tiene mínima propia</td><td>—</td><td>—</td></tr>
+<tr><td><b>P3</b>, horizontal de la pantalla</td><td>Suma de las dos caras</td><td>Espesor total medio de la pantalla</td><td><span class="ref">7.6.4.1 → 24.4.3.2</span></td></tr>
+<tr><td><b>Z1</b>, talón superior</td><td>Solo la capa superior (la traccionada), barra más refuerzo</td><td>Espesor total junto a la pantalla</td><td><span class="ref">13.3.2.1 → 7.6.1.1</span></td></tr>
+<tr><td><b>Z2</b>, puntera inferior</td><td>Solo la capa inferior (la traccionada), barra más refuerzo</td><td>Espesor total junto a la pantalla</td><td><span class="ref">13.3.2.1 → 7.6.1.1</span></td></tr>
+<tr><td><b>Z3</b>, longitudinal de la zapata</td><td>Suma de las dos capas</td><td>Espesor total medio de la zapata</td><td><span class="ref">24.4.3.2</span></td></tr>
+</table>
+<ul>
+<li><b>P2 no suma para P1.</b> La mínima de flexión se le pide a la armadura traccionada sola, así que P1 tiene que llegar al 0,18 % por su cuenta. Lo mismo vale para Z1 y Z2.</li>
+<li><b>En P3 y Z3 el 0,18 % se reparte entre las dos caras.</b> Por ejemplo, con 500 mm de espesor medio hacen falta 900 mm²/m en total, o sea 450 mm²/m por cara.</li>
+<li><b>Espesor variable.</b> En P1 se toma la sección más gruesa de cada tramo, que es la que más armadura pide. En P3 y Z3 se toma el espesor medio, porque A<sub>g</sub> es el área de toda la sección.</li>
+</ul>
+<p class="note"><b>Reglamento de puentes.</b> El CIRSOC 804-3, art. 11.6.1.5.1, manda diseñar la armadura por temperatura y contracción de muros según el art. 5.10.8 del CIRSOC 802, y el art. 11.6.4 remite al Capítulo 5 del CIRSOC 802 para el diseño estructural. Esta calculadora usa el CIRSOC 201-25, que también cubre muros de contención en voladizo (art. 13.3.6). Para un muro largo, la fórmula del 5.10.8 (A<sub>s</sub> ≥ 0,75·b·h / [2·(b + h)·f<sub>y</sub>] por cara, entre 233 y 1270 mm²/m) da 0,179 % sumando las dos caras con f<sub>y</sub> = 420 MPa: prácticamente el mismo 0,18 %. Solo cambia en secciones de más de 1,4 m o de menos de 260 mm de espesor. La fórmula y sus límites son de la AASHTO 5.10.8 y no se cotejaron contra el texto del CIRSOC 802: verificarlos antes de citarlos.</p>
+<p class="note"><b>Ligaduras entre las dos mallas de la pantalla.</b> No son obligatorias: la pantalla se diseña como losa en una dirección (11.1.4 → 13.3.6.1 → Cap. 7), y el arriostramiento de barras verticales solo se exige si trabajan a compresión con cuantía mayor al 1 % (CIRSOC 201-25, 11.7.4.1; ACI 318-25, 11.7.5.1). Se colocan como armadura constructiva, para mantener las mallas en posición. Serían obligatorias si el corte no verificara con el hormigón solo (7.6.3.1).</p>
+</div>
 <div class="card"><h2>Pantalla</h2><div class="cmb"><div id="stemPlotM"></div><div id="stemPlotV"></div></div><div id="stemTab"></div></div>
 <div class="card"><h2>Talón (armadura superior)</h2><div class="cmb"><div id="heelPlot"></div><div id="heelTab"></div></div></div>
 <div class="card"><h2>Puntera (armadura inferior)</h2><div class="cmb"><div id="toePlot"></div><div id="toeTab"></div></div></div>
