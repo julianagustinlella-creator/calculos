@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Muro en voladizo IC-103 VI</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--tx:#1d2330;--mu:#5b6475;--ln:#d9dde4;--ac:#1f5fbf;--ok:#1b7f3a;--ng:#b3261e;--wn:#9a6700;--conc:#c9ccd2;--soil:#d8c49a;--soil2:#efe3c4;--f1:#1f5fbf;--f2:#c2410c;--f3:#7c3aed;--f4:#0f766e;--f5:#be185d}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171c;--card:#1c2027;--tx:#e6e9ee;--mu:#9aa3b2;--ln:#2e3440;--ac:#6ea8ff;--ok:#4cc276;--ng:#ff7a70;--wn:#e3b341;--conc:#59606b;--soil:#7a6a45;--soil2:#4a412c;--f1:#6ea8ff;--f2:#fb923c;--f3:#b794f6;--f4:#2dd4bf;--f5:#f472b6}}
+:root[data-theme="dark"]{--bg:#14171c;--card:#1c2027;--tx:#e6e9ee;--mu:#9aa3b2;--ln:#2e3440;--ac:#6ea8ff;--ok:#4cc276;--ng:#ff7a70;--wn:#e3b341;--conc:#59606b;--soil:#7a6a45;--soil2:#4a412c;--f1:#6ea8ff;--f2:#fb923c;--f3:#b794f6;--f4:#2dd4bf;--f5:#f472b6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 system-ui,Segoe UI,Roboto,Arial,sans-serif}
+header{padding:14px 16px;border-bottom:1px solid var(--ln);background:var(--card)}
+header h1{margin:0;font-size:18px}header p{margin:2px 0 0;color:var(--mu);font-size:13px}
+nav{display:flex;gap:4px;flex-wrap:wrap;padding:8px 16px;background:var(--card);border-bottom:1px solid var(--ln);position:sticky;top:0;z-index:5}
+nav button{border:1px solid var(--ln);background:transparent;color:var(--tx);padding:6px 12px;border-radius:6px;cursor:pointer;font:inherit}
+nav button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+main{max-width:1200px;margin:0 auto;padding:16px}
+section.tab{display:none}section.tab.on{display:block}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:8px;padding:14px 16px;margin-bottom:14px;overflow-x:auto}
+.cmb>*,.grid>*{min-width:0}.cmb>div{overflow-x:auto}
+h2{font-size:17px;margin:0 0 8px}h3{font-size:15px;margin:14px 0 6px}
+.ref{display:inline-block;font-size:11.5px;color:var(--ac);border:1px solid var(--ln);border-radius:4px;padding:0 5px;margin-left:4px;white-space:nowrap}
+.unv{color:var(--wn)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border-bottom:1px solid var(--ln);padding:4px 6px;text-align:left;vertical-align:top}
+th{color:var(--mu);font-weight:600}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.fg label{display:grid;grid-template-columns:1fr 92px 54px;gap:6px;align-items:center;padding:2px 0;font-size:13px}
+.fg input,.fg select{width:100%;padding:3px 5px;border:1px solid var(--ln);border-radius:4px;background:var(--bg);color:var(--tx);font:inherit;text-align:right}
+.fg select{text-align:left}
+.fg .u{color:var(--mu);font-size:12px}
+.ok{color:var(--ok);font-weight:600}.ng{color:var(--ng);font-weight:600}.wn{color:var(--wn);font-weight:600}
+.note{color:var(--mu);font-size:12.5px}
+svg{max-width:100%;height:auto;display:block}
+svg text{fill:var(--tx);font:11px system-ui,sans-serif}
+svg.plt text{font-size:12px}
+.cmb{display:grid;grid-template-columns:minmax(280px,1fr) minmax(280px,1.1fr);gap:14px}
+#combos .cmb{grid-template-columns:1fr}#combos .cmb>svg{max-width:640px;margin:0 auto}
+@media (max-width:760px){.cmb{grid-template-columns:1fr}.fg label{grid-template-columns:1fr 80px 46px}}
+.pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;border:1px solid var(--ln)}
+ol.find li{margin-bottom:8px}
+code{font-size:12.5px;background:var(--bg);padding:0 3px;border-radius:3px}
+.formula{font-family:Cambria,Georgia,serif;font-size:14.5px;background:var(--bg);padding:6px 10px;border-radius:6px;margin:6px 0;overflow-x:auto}
+</style>
+</head>
+<body>
+<header>
+<h1>Muro de sostenimiento en voladizo — INPRES-CIRSOC 103 Parte VI (2020) + CIRSOC 201-2025 / ACI 318-25</h1>
+<p>CIVETEC · Por metro lineal de muro · Unidades: t, m, t/m² (hormigón y acero en MPa) · Las citas entre recuadros indican el artículo del reglamento. <span class="unv">†</span> = valor de AASHTO LRFD 2012 citado por el IC-103 VI que no está transcripto en su texto (verificar en la AASHTO).</p>
+</header>
+<nav id="nav">
+<button data-t="teo" class="on">1 · Teoría</button>
+<button data-t="dat">2 · Datos</button>
+<button data-t="ver">3 · Verificación</button>
+<button data-t="arm">4 · Armaduras</button>
+<button data-t="rev">5 · Revisión de la planilla</button>
+</nav>
+<main>
+
+<!-- ======================= TEORÍA ======================= -->
+<section class="tab on" id="teo">
+<div class="card">
+<h2>1. Marco normativo</h2>
+<p>El <b>INPRES-CIRSOC 103 Parte VI (julio 2020)</b> es la edición vigente del reglamento sísmico de puentes de hormigón armado y es la que trae el diseño sísmico de muros (Capítulo 11, art. 11.6.5). Respeta la numeración de la <b>AASHTO LRFD 2012</b>, que es su documento base (lo dice el propio reglamento en su presentación). Todo lo que no es sísmico (empujes estáticos, factores de carga, factores de resistencia, capacidad portante) lo remite a artículos de la AASHTO LRFD 2012.</p>
+<p>La AASHTO publicó ediciones posteriores (la 9.ª de 2020 y la 10.ª de 2024) con cambios en el capítulo 11, pero el IC-103 VI no fue actualizado: <b>el reglamento argentino exige la versión de la AASHTO que cita (2012)</b>. Esta herramienta sigue el IC-103 VI 2020 y, para lo que él remite, la AASHTO LRFD 2012.</p>
+<p>Para el hormigón armado se usa el <b>CIRSOC 201-2025</b>, que adopta el ACI 318 con la misma numeración. Se verificó cada artículo citado contra el <b>ACI 318-25</b> (SI). Cuando los dos difieren, se indica.</p>
+<table>
+<tr><th>Tema</th><th>Reglamento</th><th>Artículo</th></tr>
+<tr><td>Zona sísmica de la localidad</td><td>INPRES-CIRSOC 103 Parte I (2018)</td><td>Anexo A art. 2.2</td></tr>
+<tr><td>PGA, As, clases de sitio</td><td>IC-103 Parte VI (2020)</td><td>3.10.2.1, 3.10.3.1, 3.10.4.1</td></tr>
+<tr><td>Coeficiente sísmico kh, kv</td><td>IC-103 Parte VI</td><td>11.6.5.2.1, 11.6.5.2.2, 11.6.5.4</td></tr>
+<tr><td>Empuje sísmico activo (M-O) y pasivo</td><td>IC-103 Parte VI</td><td>11.6.5.3, 11.6.5.5</td></tr>
+<tr><td>PAE + PIR, excentricidad sísmica</td><td>IC-103 Parte VI</td><td>11.6.5.1</td></tr>
+<tr><td>Factores de carga y combinaciones</td><td>AASHTO LRFD 2012 (vía IC-103 VI 11.6.5.1)</td><td>Tablas 3.4.1-1 y 3.4.1-2 <span class="unv">†</span></td></tr>
+<tr><td>Excentricidad estática, capacidad portante, deslizamiento</td><td>AASHTO LRFD 2012</td><td>11.6.3.2, 11.6.3.3, 10.6.3.4 <span class="unv">†</span></td></tr>
+<tr><td>Factores de resistencia</td><td>AASHTO LRFD 2012</td><td>Tabla 11.5.7-1, art. 11.5.8 <span class="unv">†</span></td></tr>
+<tr><td>Diseño de pantalla, talón y puntera</td><td>CIRSOC 201-2025 / ACI 318-25</td><td>11.1.4, 13.3.6, 13.3.2.1, Cap. 7, 21.2, 22.2, 22.5</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>2. De dónde sale el coeficiente sísmico</h2>
+<h3>2.1 Zona sísmica <span class="ref">IC-103 Parte I, Anexo A art. 2.2</span></h3>
+<p>La zona se lee del listado por departamento. Neuquén capital está en el departamento <b>Confluencia → Zona 1</b>. Otros departamentos de Neuquén: Añelo, Zapala, Picún Leufú → Zona 1; Minas, Chos Malal, Aluminé, Lácar, Los Lagos → Zona 2.</p>
+<h3>2.2 Clase de sitio <span class="ref">IC-103 VI, Tabla 3.10.3.1-1</span></h3>
+<p>Se clasifica por la velocidad de onda de corte media en los 30 m superiores (Vsm) o, si no se tiene, por el SPT o la resistencia no drenada:</p>
+<table>
+<tr><th>Sitio</th><th>Descripción</th><th>Vsm (m/s)</th></tr>
+<tr><td>SA</td><td>Roca dura superficial, poco meteorizada</td><td class="n">&gt; 1500</td></tr>
+<tr><td>SB</td><td>Roca dura con capa de suelo denso o roca meteorizada &lt; 3 m</td><td class="n">760–1500</td></tr>
+<tr><td>SC</td><td>Roca blanda o meteorizada; gravas/arenas muy densas; cohesivo muy duro</td><td class="n">360–760</td></tr>
+<tr><td>SD</td><td>Gravas/arenas de densidad media; cohesivo consistente</td><td class="n">180–360</td></tr>
+<tr><td>SE</td><td>Cohesivo blando</td><td class="n">&lt; 180</td></tr>
+<tr><td>SF</td><td>Suelos inestables (turba, arcillas muy plásticas): estudio especial</td><td>—</td></tr>
+</table>
+<p class="note">Para esta obra, el estudio de BEHA describe un conglomerado con rechazo al SPT (N &gt; 50) debajo de 0,30 m de limo arenoso. Sin medir Vs, lo razonable es SB o SC. SA (roca dura con Vs &gt; 1500 m/s) no se puede justificar con ese estudio.</p>
+<h3>2.3 Aceleración As <span class="ref">IC-103 VI, Tabla 3.10.4.1-1</span></h3>
+<p>Es la aceleración máxima del terreno ya ajustada por el sitio, para un período de retorno de unos 1000 años (7 % de excedencia en 75 años, art. 3.10.1).</p>
+<table id="tAs"></table>
+<h3>2.4 Coeficiente kh0 (desplazamiento nulo) <span class="ref">IC-103 VI 11.6.5.2.1</span></h3>
+<div class="formula">k<sub>h0</sub> = A<sub>s</sub> &nbsp;&nbsp;·&nbsp;&nbsp; para sitios A y B: k<sub>h0</sub> = 1,2 · A<sub>s</sub></div>
+<p>El 1,2 en roca cubre la amplificación de la aceleración dentro de la masa del muro. El coeficiente se toma en la superficie del terreno original y se considera actuando en la base. <b>kv = 0</b> salvo campo cercano a una falla o aceleraciones verticales altas concurrentes (11.6.5.2.1).</p>
+<h3>2.5 ¿Se permite desplazamiento? <span class="ref">IC-103 VI 11.6.5.2.2 y 11.6.5.4</span></h3>
+<table>
+<tr><th>Decisión</th><th>kh</th><th>Qué implica</th></tr>
+<tr><td><b>El muro puede desplazarse 25–50 mm</b> y la Autoridad de Aplicación lo acepta</td><td class="n">0,5 · kh0</td><td>Se puede reducir sin hacer análisis de deformaciones (Newmark). La reducción también vale para la estabilidad global. Hay que confirmar que ese corrimiento no daña nada apoyado sobre el muro o detrás de él: pisos, fundaciones de la nave, cañerías, juntas.</td></tr>
+<tr><td><b>El muro no se desplaza o no debe plastificar</b> (estribos, muros que sostienen estructuras sensibles, muros vinculados)</td><td class="n">1,0 · kh0</td><td>No se corrige por desplazamiento (se supone nulo). Sí se puede corregir por dispersión de ondas (11.6.5.2.2). Empujes alrededor de un 60 % mayores y fundación más grande.</td></tr>
+</table>
+<p>Para muros de más de 20 m hace falta un análisis dinámico. Por debajo, el análisis pseudoestático es aceptable (11.6.5.2.2). La altura h se mide desde el fondo del talón hasta el terreno sobre el talón.</p>
+<h3>2.6 «Importancia» del muro <span class="ref">IC-103 VI C11.6.5.3, 3.10.5 y 3.10.2</span></h3>
+<p>El IC-103 VI no tiene un factor de importancia para muros. La importancia entra por dos lados:</p>
+<ul>
+<li><b>Ubicación de la resultante sísmica</b> (Comentarios C11.6.5.3): la resultante del empuje total (estático más sísmico) va a h/3, pero «puede considerarse una ubicación algo más alta (0,4h a 0,5h)», sobre todo en muros cuya falla tiene un impacto alto. De ahí sale la distinción «de rutina / importante» de la planilla.</li>
+<li><b>Desempeño exigido:</b> la clasificación operacional (3.10.5) es de puentes, pero la Autoridad de Aplicación puede pedir un estudio de peligrosidad del sitio con menor probabilidad de excedencia (3.10.2).</li>
+</ul>
+<table>
+<tr><th>Elección</th><th>Muro «de rutina»</th><th>Muro «importante»</th><th>Efecto</th></tr>
+<tr><td>Desplazamiento admitido</td><td>25–50 mm → kh = 0,5 kh0 <span class="ref">11.6.5.2.2</span></td><td>Nulo → kh = kh0 <span class="ref">11.6.5.4</span></td><td>Duplica el incremento sísmico del empuje y PIR</td></tr>
+<tr><td>Altura de la resultante PAE</td><td>h/3 <span class="ref">11.6.5.3</span></td><td>0,4h a 0,5h <span class="ref">C11.6.5.3</span></td><td>Momento volcador sísmico hasta +50 %</td></tr>
+<tr><td>Peligrosidad</td><td>Procedimiento general (tablas)</td><td>Puede pedirse estudio de sitio <span class="ref">3.10.2.2</span></td><td>As propio del sitio</td></tr>
+</table>
+<p class="note">Para muros que no pueden plastificar (estribos integrales, muros arriostrados), el comentario C11.6.5.4 indica que la resultante puede quedar por encima de h/2.</p>
+<h3>2.7 Dónde se aplica cada resultante</h3>
+<table>
+<tr><th>Fuerza</th><th>Ubicación</th><th>En base a qué</th></tr>
+<tr><td>Peso de pantalla y zapata (DC)</td><td>Baricentro de cada área de hormigón</td><td>Geometría de la sección</td></tr>
+<tr><td>Suelo sobre el talón y la puntera (EV)</td><td>Baricentro del área de suelo (trapecio sobre el talón más la cuña sobre la cara inclinada)</td><td>Geometría de la sección</td></tr>
+<tr><td>Empuje activo estático (EH)</td><td>H/3 sobre la base, en el plano vertical del talón</td><td>Presión triangular Ka·γ·z <span class="ref">AASHTO 3.11.5.1 <span class="unv">†</span></span></td></tr>
+<tr><td>Empuje de la sobrecarga (LS)</td><td>H/2</td><td>Presión constante Ka·q en toda la altura <span class="ref">AASHTO 3.11.6.1 <span class="unv">†</span></span> <span class="ref">IC-103 VI 11.6.5.3</span></td></tr>
+<tr><td>Empuje total sísmico PAE</td><td>h/3; hasta 0,4h–0,5h si la falla tiene alto impacto (elegible en Datos)</td><td><span class="ref">IC-103 VI 11.6.5.3</span> <span class="ref">C11.6.5.3</span></td></tr>
+<tr><td>Inercia PIR</td><td>Baricentro del conjunto de masas: muro más suelo sobre el talón</td><td><span class="ref">IC-103 VI 11.6.5.1, Fig. 11.6.5.1-1</span></td></tr>
+<tr><td>Reacción del suelo R</td><td>x<sub>R</sub> = (ΣM estabilizante − ΣM volcador) / ΣV desde la puntera; e = B/2 − x<sub>R</sub></td><td>Equilibrio <span class="ref">AASHTO 11.6.3.2 <span class="unv">†</span></span></td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>3. Empujes</h2>
+<h3>3.1 Estático</h3>
+<p>Para muros en voladizo con talón, el empuje para la estabilidad externa se calcula sobre el <b>plano vertical que pasa por el extremo del talón</b>. El suelo entre la pantalla y ese plano se suma como peso (EV). Como ese plano es de suelo contra suelo, la fricción del plano es δ = β (inclinación del relleno): con relleno horizontal, δ = 0 y Ka es el de Rankine <span class="ref">AASHTO 3.11.5.3 <span class="unv">†</span></span>. Para la <b>pantalla</b> (hormigón contra suelo) sí se puede usar δ = 2/3 φ con la fórmula de Coulomb.</p>
+<div class="formula">K<sub>a</sub> (Rankine) = tan²(45° − φ/2) &nbsp;&nbsp;·&nbsp;&nbsp; P<sub>a</sub> = ½ K<sub>a</sub> γ H² en H/3 &nbsp;&nbsp;·&nbsp;&nbsp; sobrecarga: K<sub>a</sub> q H en H/2</div>
+<h3>3.2 Sísmico activo — Mononobe-Okabe <span class="ref">IC-103 VI 11.6.5.3 y A11.3.1</span></h3>
+<div class="formula">θ = arctan[k<sub>h</sub>/(1 − k<sub>v</sub>)] &nbsp;·&nbsp; K<sub>AE</sub> = cos²(φ − θ − β) / {cos θ cos²β cos(δ + β + θ) [1 + √(sen(φ + δ) sen(φ − θ − i) / (cos(δ + β + θ) cos(i − β)))]²}<br>P<sub>AE</sub> = ½ γ h² K<sub>AE</sub> &nbsp;(11.6.5.3-2)</div>
+<p>Se puede aplicar si el relleno es uniforme, granular y no saturado dentro de una cuña 3H:1V desde el talón, y si <b>φ ≥ i + θ</b> (11.6.5.3-1). Si no se cumple, se usa el método GLE (equilibrio límite generalizado).</p>
+<p><b>Punto de aplicación:</b> P<sub>AE</sub> ya incluye la parte estática. El 11.6.5.3 pide la misma distribución que la presión estática, con la resultante <b>no más abajo de H/3</b>. El comentario C11.6.5.3 aclara que la práctica anterior (incremento sísmico a 0,6h, Seed y Whitman) fue reemplazada: las investigaciones recientes ubican la resultante total en h/3, y admite subirla a 0,4h–0,5h en muros cuya falla tiene alto impacto. Con sobrecarga, su empuje se reparte en toda la altura h.</p>
+<h3>3.3 Pasivo <span class="ref">IC-103 VI 11.6.5.5</span></h3>
+<p>No se puede usar M-O para el pasivo: se usa el método de la espiral logarítmica con δ = 2/3 φ. Si el empotramiento es menor de 1,50 m, se calcula con los métodos estáticos. En esta herramienta el pasivo es opcional y por defecto no se cuenta, como hace la planilla en la práctica.</p>
+<h3>3.4 Inercia del muro y no concurrencia <span class="ref">IC-103 VI 11.6.5.1</span></h3>
+<div class="formula">P<sub>IR</sub> = k<sub>h</sub> (W<sub>w</sub> + W<sub>s</sub>) &nbsp;(11.6.5.1-1) &nbsp;&nbsp;·&nbsp;&nbsp; W<sub>w</sub> = peso del muro; W<sub>s</sub> = suelo inmediatamente sobre el talón</div>
+<p>Como PAE y PIR no son simultáneos, hay que verificar dos casos y quedarse con el peor:</p>
+<ul><li><b>EE-I a:</b> 100 % PAE + 50 % PIR</li>
+<li><b>EE-I b:</b> 50 % PAE (pero no menos que el empuje activo estático) + 100 % PIR</li></ul>
+<p>Para la <b>pantalla</b> se usa solo la inercia de la pantalla. El suelo sobre el talón no empuja la pantalla: su inercia actúa sobre el conjunto para la estabilidad externa.</p>
+</div>
+
+<div class="card">
+<h2>4. Combinaciones de carga</h2>
+<p>El IC-103 VI 11.6.5.1 remite a la estabilidad externa de la AASHTO con el estado límite de <b>Evento Extremo I</b>. Factores de la AASHTO LRFD 2012, Tablas 3.4.1-1 y 3.4.1-2 <span class="unv">†</span>:</p>
+<table>
+<tr><th>Combinación</th><th>DC</th><th>EV</th><th>EH (activo)</th><th>LS sobrecarga</th><th>EQ</th><th>Para qué</th></tr>
+<tr><td>Resistencia I a (mín.)</td><td class="n">0,90</td><td class="n">1,00</td><td class="n">1,50</td><td class="n">1,75 horizontal · 0 vertical sobre el talón</td><td class="n">—</td><td>Deslizamiento y excentricidad: las cargas estabilizantes con su mínimo y las desestabilizantes con su máximo</td></tr>
+<tr><td>Resistencia I b (máx.)</td><td class="n">1,25</td><td class="n">1,35</td><td class="n">1,50</td><td class="n">1,75</td><td class="n">—</td><td>Capacidad portante y diseño estructural</td></tr>
+<tr><td>Evento Extremo I a</td><td class="n">1,00</td><td class="n">1,00</td><td>incluido en PAE</td><td class="n">γEQ</td><td>100 % PAE + 50 % PIR</td><td>Todo</td></tr>
+<tr><td>Evento Extremo I b</td><td class="n">1,00</td><td class="n">1,00</td><td>incluido en PAE</td><td class="n">γEQ</td><td>máx(50 % PAE; Pa) + 100 % PIR</td><td>Todo</td></tr>
+<tr><td>Servicio I</td><td class="n">1,00</td><td class="n">1,00</td><td class="n">1,00</td><td class="n">1,00</td><td class="n">—</td><td>Comparar con la σadm del estudio y controlar asentamientos</td></tr>
+</table>
+<p class="note">La componente vertical del empuje activo es parte de EH. En RI-a se toma con 1,00 porque estabiliza; en RI-b, con 1,50 para que la carga vertical sea máxima. Para muros, el IC-103 VI y la AASHTO 11.5.8 llevan las cargas permanentes con γp = 1,0 en Evento Extremo <span class="unv">†</span>. γEQ, que afecta a la sobrecarga, lo fija el proyecto; el IC-103 VI no da un valor. Lo usual es entre 0 y 0,5.</p>
+</div>
+
+<div class="card">
+<h2>5. Verificaciones de estabilidad externa</h2>
+<table>
+<tr><th>Verificación</th><th>Resistencia I</th><th>Evento Extremo I</th></tr>
+<tr><td>Excentricidad (en lugar del vuelco)</td><td>Suelo: e ≤ B/3 (dos tercios centrales). Roca: e ≤ 0,45 B <span class="ref">AASHTO 11.6.3.3 <span class="unv">†</span></span></td><td>Suelo y roca: dos tercios centrales si γEQ = 0, ocho décimos si γEQ = 1, interpolando en el medio <span class="ref">IC-103 VI 11.6.5.1</span></td></tr>
+<tr><td>Capacidad portante</td><td>Suelo: q = V/(B − 2e) ≤ φb·qn (Meyerhof). Roca: distribución lineal <span class="ref">AASHTO 11.6.3.2 <span class="unv">†</span></span></td><td>Igual, con φ de Evento Extremo</td></tr>
+<tr><td>Deslizamiento</td><td>φτ·μ·V + φep·Ep ≥ ΣH <span class="ref">AASHTO 10.6.3.4 <span class="unv">†</span></span></td><td>Igual, con φ de Evento Extremo</td></tr>
+<tr><td>Factores φ</td><td>Muros de gravedad y semigravedad: φb = 0,55; φτ = 1,0; φep = 0,50 <span class="ref">AASHTO Tabla 11.5.7-1 <span class="unv">†</span></span></td><td>φ = 1,0 <span class="ref">AASHTO 11.5.8 <span class="unv">†</span></span></td></tr>
+</table>
+<p><b>qn (resistencia nominal):</b> el estudio solo informa la tensión admisible. Si el geotécnico no da la carga de rotura, se toma qn = FS · σadm, adoptando un FS y dejándolo escrito como supuesto. Es más seguro pedirle al geotécnico la carga de rotura.</p>
+</div>
+
+<div class="card">
+<h2>6. Hormigón armado <span class="ref">CIRSOC 201-2025 = ACI 318-25</span></h2>
+<table>
+<tr><th>Tema</th><th>Requisito</th><th>Artículo</th></tr>
+<tr><td>Qué capítulo aplica</td><td>Los muros de contención en voladizo se diseñan según el Cap. 13, <b>no</b> según el Cap. 11 de tabiques</td><td>11.1.4</td></tr>
+<tr><td>Pantalla</td><td>Losa en una dirección (Cap. 7). En espesor variable, M y V se verifican en toda la altura</td><td>13.3.6.1, 13.3.6.3</td></tr>
+<tr><td>Corte en la pantalla</td><td>V<sub>c</sub> = 0,17 √f'c · b · d, con φ = 0,75</td><td>13.3.6.1.1; Tabla 21.2.1</td></tr>
+<tr><td>Cuantía mínima de flexión</td><td>A<sub>s,mín</sub> = 0,0018 A<sub>g</sub></td><td>7.6.1.1</td></tr>
+<tr><td>Contracción y temperatura (horizontal)</td><td>ρ ≥ 0,0018 sobre A<sub>g</sub>; separación ≤ menor de 5h y 450 mm</td><td>7.6.4.1 → 24.4.3.2, 24.4.3.3</td></tr>
+<tr><td>Separación de la armadura principal</td><td>CIRSOC 201-25: menor de 3h y <b>300 mm</b> (ACI 318-25: 450 mm)</td><td>7.7.2.3</td></tr>
+<tr><td>Talón y puntera</td><td>Fundación en una dirección → Cap. 7; corte según la Tabla 22.5.5.1 con efecto de tamaño λs</td><td>13.3.2.1; 22.5.5.1</td></tr>
+<tr><td>φ de flexión</td><td>0,90 si εt ≥ 0,005; transición lineal hasta 0,65</td><td>21.2.2</td></tr>
+<tr><td>Bloque de tensiones</td><td>0,85 f'c; β1 = 0,85 para f'c ≤ 28 MPa</td><td>22.2.2.4</td></tr>
+<tr><td>Recubrimiento</td><td>Hormigonado contra el terreno: 75 mm. Expuesto al terreno o a la intemperie: 50 mm (barras Ø ≥ 16 mm)</td><td>20.5.1.3.1</td></tr>
+</table>
+<p class="note">Las cuantías 0,0012 (vertical) y 0,0020 (horizontal) son de la Tabla 11.6.1 para tabiques y <b>no corresponden</b> a muros de contención en voladizo desde el ACI 318-14. La vertical mínima pasa a ser 0,0018 Ag.</p>
+</div>
+</section>
+
+<!-- ======================= DATOS ======================= -->
+<section class="tab" id="dat">
+<div class="card">
+<h2>Ingreso de datos</h2>
+<p class="note">Todos los campos son editables: el cálculo, los esquemas y los diagramas se actualizan al cambiar cualquier dato. Fuerzas en t/m, momentos en t·m/m, presiones en t/m², pesos unitarios en t/m³. Los valores iniciales son los de la planilla (Muro 1, H = 6,50 m).</p>
+<div class="cmb">
+<div><svg id="geoSvg" viewBox="0 0 420 420" aria-label="Esquema de cotas"></svg>
+<p class="note">Igual que el esquema de la planilla: H = H1 + H3; B = B1 + B2 + B3. La cara frontal de la pantalla es vertical y la trasera, inclinada.</p></div>
+<div class="grid" id="form"></div>
+</div>
+</div>
+</section>
+
+<!-- ======================= VERIFICACIÓN ======================= -->
+<section class="tab" id="ver">
+<div class="card"><h2>Parámetros derivados</h2><div id="deriv"></div></div>
+<div class="card"><h2>Resumen de estabilidad</h2><div id="summary"></div></div>
+<div id="combos"></div>
+</section>
+
+<!-- ======================= ARMADURAS ======================= -->
+<section class="tab" id="arm">
+<div class="card">
+<h2>Armaduras propuestas</h2>
+<p class="note">Cargá la armadura y se verifica en toda la altura de la pantalla y en el talón y la puntera. b = 1,00 m. La barra adicional de la pantalla se corta a la altura indicada medida desde la cara superior de la zapata, sin descontar la longitud de anclaje: bajarla esa longitud en el detalle.</p>
+<div class="grid" id="formArm"></div>
+</div>
+<div class="card"><h2>Pantalla</h2><div class="cmb"><div id="stemPlotM"></div><div id="stemPlotV"></div></div><div id="stemTab"></div></div>
+<div class="card"><h2>Talón (armadura superior)</h2><div class="cmb"><div id="heelPlot"></div><div id="heelTab"></div></div></div>
+<div class="card"><h2>Puntera (armadura inferior)</h2><div class="cmb"><div id="toePlot"></div><div id="toeTab"></div></div></div>
+</section>
+
+<!-- ======================= REVISIÓN ======================= -->
+<section class="tab" id="rev">
+<div class="card">
+<h2>Revisión de la planilla Excel</h2>
+<p>Hojas: «Combinaciones de carga», «Empujes», «M1 H=5,70m» y «Capac. de Carga ELU». Valores en t y m, como en la planilla.</p>
+<h3>Errores que cambian resultados</h3>
+<ol class="find">
+<li><b>Área de suelo sobre el talón (A3) mal calculada.</b> En <code>F42</code>, <code>F64</code>, <code>F86</code> y <code>F110</code> falta un paréntesis: <code>(H−H5) + (H−H4)·B3/2 + …</code> en lugar de <code>((H−H5) + (H−H4))·B3/2 + …</code>. Da <b>16,70 m²</b> y el valor real es <b>20,04 m²</b>: faltan unos 7,0 t/m de peso estabilizante (−17 % del suelo). El centro de gravedad (<code>I42</code>) también se toma en el centro del talón, sin la cuña sobre la cara inclinada.</li>
+<li><b>Suelo sobre la puntera (A4).</b> <code>F44 = B1·H − B1·((H−H5)+(H−H2))/2 = B1·(H2+H5)/2</code>: es el área del hormigón de la puntera (0,18 m²), que ya está en A2. El suelo real es B1·H3 − B1·(H2+H5)/2; como H3 = 0,50 &lt; H5 = 0,70, no hay suelo sobre la puntera. Se cuenta dos veces 0,38 t/m.</li>
+<li><b>EE-I con 100 % PAE + 50 % PIR:</b> <code>G87 = 0,5</code> reduce a la mitad la componente vertical de PAE. En ese caso PAE va al 100 %. Solo con este error la planilla da deslizamiento 0,97 («No verifica»). Con 1,0 da 1,03, y con A3 corregido el margen es mayor.</li>
+<li><b>Resistencia I a:</b> la sobrecarga tiene factor 0 (<code>G45</code> → <code>G48</code>), lo que también anula su <i>empuje horizontal</i>. Solo se anula la carga vertical sobre el talón (estabilizante). El empuje horizontal de la sobrecarga es desestabilizante y va con 1,75.</li>
+<li><b>Empuje sobre el plano virtual con δ = 2/3 φ</b> (<code>Empujes!H49</code>). En el plano vertical que pasa por el talón el contacto es suelo contra suelo: δ = β = 0. Con δ = 22,7° el empuje horizontal es Ka·cos δ = 0,235. Con Rankine, 0,283 (<b>+21 %</b>), y además desaparece la componente vertical de 4,35 t/m que la planilla toma como estabilizante. En la pantalla (hormigón contra suelo) sí vale δ = 2/3 φ.</li>
+<li><b>Pantalla en sismo:</b> <code>E142</code> y <code>E151</code> suman la inercia del suelo sobre el talón (Hp·B3·γ) al momento de la pantalla. Ese suelo no empuja la pantalla; solo cuenta su inercia propia. Mu sísmico sale muy sobrestimado (55,4 tm/m).</li>
+<li><b>Armadura de la pantalla:</b> Ø8 c/25 da Md/Mu = 0,09 (<code>L149</code>), así que no verifica (o es un valor de prueba). Además falta la verificación a corte (CIRSOC 201-25, 13.3.6.1.1).</li>
+<li><b>Zarpa (talón y puntera):</b> la sección está con <code>#REF!</code> (<code>F182</code>, <code>F183</code>) y marcada «NO APLICAR». El talón, con 3,15 m de vuelo bajo 6 m de relleno, suele ser lo que gobierna y no puede tomarse igual que la pantalla.</li>
+<li><b>Excentricidad en roca:</b> <code>M87</code> y <code>M111</code> apuntan a <code>D58</code> y <code>D81</code> (vacías) en lugar de <code>D15</code>. Si se elige «Roca», el límite da 0.</li>
+<li><b>Factor del suelo (EV):</b> en Resistencia I el suelo sobre el talón y la puntera lleva el factor del hormigón: <code>G42</code>/<code>G44</code> = 0,90 y <code>G64</code>/<code>G66</code> = 1,25. Según el título de cada combinación corresponde EV = 1,00 y 1,35.</li>
+</ol>
+<h3>Criterios a revisar o documentar</h3>
+<ol class="find" start="11">
+<li><b>Zona 2 y sitio A:</b> Neuquén capital (dpto. Confluencia) es <b>Zona 1</b> (IC-103 Parte I, Anexo A). El sitio A (roca dura, Vs &gt; 1500 m/s) no surge del estudio. kh0 resulta: Zona 1-B = 0,168; Zona 1-C = 0,16; Zona 1-A = 0,132. La planilla usa 0,228 (Zona 2-A), del lado seguro pero sin justificar.</li>
+<li><b>PAE a 0,5 H para muro «Importante»</b> (<code>Empujes!H79</code>): es correcto. Lo respalda el comentario C11.6.5.3 del IC-103 VI (0,4h a 0,5h para muros cuya falla tiene alto impacto). Conviene citarlo en la memoria.</li>
+<li><b>Sobrecarga q = 0,2 t/m² (2 t/m²):</b> es muy baja para una playa de camiones. El modelo 3D usa 20 t/m². Ver AASHTO 3.11.6.4 (altura equivalente de suelo para tránsito vehicular).</li>
+<li><b>Capacidad portante:</b> σu = 40 × 3,5 = 140 t/m², pero el estudio no informa el FS: es un supuesto. φb = 0,4 (RI) y 0,7 (EE) no son los de la AASHTO (0,55 y 1,0 <span class="unv">†</span>); son más conservadores. La hoja «Capac. de Carga ELU» es de otra obra (pilotes, φ = 32°, B = 1,2 m) y no está vinculada.</li>
+<li><b>Excentricidad sísmica:</b> se usa siempre B/3. El IC-103 VI 11.6.5.1 permite interpolar entre 2/3 y 8/10 según γEQ; con γEQ = 0,25 da e ≤ 0,35 B. La planilla queda del lado seguro.</li>
+<li><b>Rozamiento μ = tan(2/3·34°) = 0,418</b> usa el φ del relleno. El estudio da μ = 0,45 (φ = 39° del conglomerado). Del lado seguro.</li>
+<li><b>Cuantías mínimas</b> 0,0012 vertical / 0,0020 horizontal: son de tabiques (Tabla 11.6.1). Para muros en voladizo corresponden 0,0018 Ag de flexión (7.6.1.1) y 0,0018 de contracción y temperatura (24.4.3.2). Separación máxima de la principal: 3h y 300 mm (CIRSOC 7.7.2.3).</li>
+<li><b>Detalles menores:</b> la componente vertical del empuje en RI-b va con 1,35 (factor de EV); es EH y va con 1,50. PIR se aplica a H/2 en vez de en el baricentro de las masas (diferencia chica). <code>L138</code> divide el recubrimiento por 100 dos veces (no se usa). La combinación de Servicio I está definida pero no calculada; sirve para comparar directamente con la σadm del estudio.</li>
+</ol>
+<h3>Sobre las combinaciones</h3>
+<p>La estructura es correcta: RI-a (mínimos estabilizantes) para deslizamiento y excentricidad, RI-b (máximos) para capacidad portante y diseño, los dos casos de Evento Extremo I del IC-103 VI 11.6.5.1 (incluido el «no menos que Pa» del segundo, bien resuelto en <code>J114</code>/<code>Q120</code>) y γp = 1,0 en sismo. Hay que corregir lo siguiente:</p>
+<ul>
+<li>la sobrecarga horizontal en RI-a (1,75);</li>
+<li>el factor de Paev en EE-I a (1,0);</li>
+<li>la componente vertical de EH en RI-b (1,50).</li>
+</ul>
+<p>γEQ = 0,25 sobre la sobrecarga es una decisión válida del proyecto, porque el IC-103 VI no fija ese valor.</p>
+</div>
+</section>
+</main>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s);
+const R=d=>d*Math.PI/180, D=r=>r*180/Math.PI;
+const fx=(v,n=2)=>(v==null||!isFinite(v))?"—":v.toLocaleString("es-AR",{minimumFractionDigits:n,maximumFractionDigits:n});
+const okng=(c)=>c?'<span class="ok">Verifica</span>':'<span class="ng">No verifica</span>';
+
+/* ---------- tabs ---------- */
+document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>{
+ document.querySelectorAll("#nav button").forEach(x=>x.classList.toggle("on",x===b));
+ document.querySelectorAll("section.tab").forEach(s=>s.classList.toggle("on",s.id===b.dataset.t));
+ try{localStorage.setItem("muroTab",b.dataset.t)}catch(e){}
+});
+try{const t=localStorage.getItem("muroTab");if(t){const b=document.querySelector(`#nav button[data-t="${t}"]`);b&&b.click()}}catch(e){}
+
+/* ---------- tabla As ---------- */
+const AS={A:[0.11,0.19,0.26,0.35],B:[0.14,0.24,0.33,0.44],C:[0.16,0.28,0.35,0.44],D:[0.21,0.32,0.38,0.47],E:[0.30,0.36,0.37,0.40]};
+const SD1={A:[0.07,0.13,0.20,0.30],B:[0.09,0.17,0.25,0.37],C:[0.15,0.27,0.38,0.53],D:[0.21,0.36,0.47,0.62],E:[0.31,0.55,0.74,0.94]};
+$("#tAs").innerHTML="<tr><th>Sitio</th><th>Zona 1</th><th>Zona 2</th><th>Zona 3</th><th>Zona 4</th></tr>"+
+ Object.keys(AS).map(k=>`<tr><td>${k}</td>${AS[k].map(v=>`<td class="n">${fx(v,2)}</td>`).join("")}</tr>`).join("");
+
+/* ---------- datos ---------- */
+const F=[
+ ["Geometría",[
+  ["H1","H1 — pantalla libre sobre el terreno del frente","m",6.0],["H2","H2 — espesor de zapata en el borde de la puntera","m",0.5],
+  ["H3","H3 — tapada frente a la puntera","m",0.5],["H4","H4 — espesor de zapata en el borde del talón","m",0.5],
+  ["H5","H5 — espesor de zapata bajo la pantalla","m",0.7],["B1","B1 — puntera","m",0.3],["B2","B2 — pantalla en la base","m",0.75],
+  ["B3","B3 — talón","m",3.15],["B4","B4 — pantalla en la corona","m",0.25]]],
+ ["Materiales",[["gc","γ hormigón","t/m³",2.4],["fc","f'c","MPa",20],["fy","fy","MPa",420]]],
+ ["Relleno y sobrecarga",[["g","γ relleno","t/m³",2.1],["phi","φ relleno","°",34],
+  ["dmode","δ en el plano virtual del talón","",["R","δ = 0 Rankine (recomendado)"],[["R","δ = 0 Rankine (recomendado)"],["C","δ = 2/3 φ Coulomb"]]],
+  ["q","Sobrecarga en la plataforma","t/m²",0.2]]],
+ ["Fundación",[["ftype","Tipo de apoyo","",["S","Suelo"],[["S","Suelo"],["R","Roca"]]],
+  ["sadm","σadm del estudio (10 t/m² = 1 kg/cm²)","t/m²",40],["FSq","FS adoptado para qn = FS·σadm","",3.5],
+  ["mumode","μ base–suelo: cómo se obtiene","",["A","Automático: tan(2/3·φ relleno)"],[["A","Automático: tan(2/3·φ relleno)"],["M","Manual (p. ej. el del estudio)"]]],
+  ["mu","μ base–suelo","",0.418],["gf","γ suelo del frente","t/m³",2.1],
+  ["pas","Empuje pasivo frente a la puntera","",["0","No considerar"],[["0","No considerar"],["1","Considerar (Rankine, prof. H3)"]]],["phif","φ suelo del frente (pasivo)","°",34]]],
+ ["Sismo — IC-103 VI",[["zona","Zona sísmica (IC-103 I, Anexo A)","",["2","2"],[["1","1"],["2","2"],["3","3"],["4","4"]]],
+  ["sitio","Clase de sitio (Tabla 3.10.3.1-1)","",["A","A"],[["A","A"],["B","B"],["C","C"],["D","D"],["E","E"]]],
+  ["desp","Desplazamiento admitido (11.6.5.2.2 / 11.6.5.4)","",["0","Nulo: kh = kh0"],[["0","Nulo: kh = kh0"],["1","25–50 mm: kh = 0,5 kh0"]]],
+  ["kv","kv (11.6.5.2.1: normalmente 0)","",0],
+  ["rAE","Altura de la resultante PAE (11.6.5.3 y C11.6.5.3)","",["0.5","0,5·H — falla de alto impacto"],[["0.3333","H/3 — muro de rutina"],["0.4","0,4·H — intermedio"],["0.5","0,5·H — falla de alto impacto"]]],
+  ["gEQ","γEQ sobre la sobrecarga","",0.25]]],
+ ["Factores de resistencia",[["phb","φb portante — Resistencia","",0.55],["pht","φτ deslizamiento — Resistencia","",1.0],["phe","φep pasivo — Resistencia","",0.5],
+  ["phbE","φb portante — Ev. Extremo","",1.0],["phtE","φτ deslizamiento — Ev. Extremo","",1.0],["pheE","φep pasivo — Ev. Extremo","",1.0]]]
+];
+const FA=[
+ ["Pantalla — cara interna (vertical, tracción)",[["cs","Recubrimiento pantalla","mm",50],["d1","Ø barra corrida","mm",16],["s1","Separación barra corrida","mm",150],
+  ["d2","Ø barra adicional (0 = no)","mm",16],["s2","Separación adicional","mm",150],["hc","Altura de corte de la adicional (desde la zapata)","m",2.5]]],
+ ["Pantalla — horizontal (cada cara)",[["dh","Ø horizontal","mm",10],["sh","Separación horizontal","mm",200]]],
+ ["Talón — armadura superior",[["ct","Recubrimiento superior","mm",50],["dt","Ø","mm",16],["st","Separación","mm",125]]],
+ ["Puntera — armadura inferior",[["cb","Recubrimiento inferior (contra terreno)","mm",75],["db","Ø","mm",12],["sb","Separación","mm",200]]]
+];
+function buildForm(groups,el){
+ el.innerHTML=groups.map(([t,items])=>`<div class="fg"><h3>${t}</h3>${items.map(([id,l,u,dv,opts])=>{
+  if(opts) return `<label>${l}<select id="i_${id}">${opts.map(([v,tx])=>`<option value="${v}" ${v===dv[0]?"selected":""}>${tx}</option>`).join("")}</select><span class="u"></span></label>`;
+  return `<label>${l}<input id="i_${id}" type="number" step="any" value="${dv}"><span class="u">${u}</span></label>`}).join("")}</div>`).join("");
+}
+buildForm(F,$("#form"));buildForm(FA,$("#formArm"));
+const ALL=[...F,...FA].flatMap(g=>g[1]);
+function read(){const p={};ALL.forEach(([id,,,dv,opts])=>{const e=$("#i_"+id);p[id]=opts?e.value:parseFloat(e.value)||0});return p}
+document.addEventListener("input",e=>{if(e.target.id&&e.target.id.startsWith("i_"))run()});
+document.addEventListener("change",e=>{if(e.target.id&&e.target.id.startsWith("i_"))run()});
+
+/* ---------- geometría ---------- */
+function areaC(P){let A=0,cx=0,cy=0;for(let i=0;i<P.length;i++){const[x1,y1]=P[i],[x2,y2]=P[(i+1)%P.length],c=x1*y2-x2*y1;A+=c;cx+=(x1+x2)*c;cy+=(y1+y2)*c}A/=2;return Math.abs(A)<1e-12?{A:0,x:0,y:0}:{A:Math.abs(A),x:cx/(6*A),y:cy/(6*A)}}
+function clipY(P,ym){const o=[];for(let i=0;i<P.length;i++){const a=P[i],b=P[(i+1)%P.length],ia=a[1]<=ym,ib=b[1]<=ym;if(ia)o.push(a);if(ia!==ib){const t=(ym-a[1])/(b[1]-a[1]);o.push([a[0]+t*(b[0]-a[0]),ym])}}return o}
+function geom(p){
+ const H=p.H1+p.H3,B=p.B1+p.B2+p.B3,xs=p.B1+p.B2;
+ const foot=[[0,0],[B,0],[B,p.H4],[xs,p.H5],[p.B1,p.H5],[0,p.H2]];
+ const stem=[[p.B1,p.H5],[xs,p.H5],[p.B1+p.B4,H],[p.B1,H]];
+ const soil=[[xs,p.H5],[B,p.H4],[B,H],[p.B1+p.B4,H]];
+ const toe=clipY([[0,p.H2],[p.B1,p.H5],[p.B1,99],[0,99]],p.H3);
+ return{H,B,xs,Hp:H-p.H5,foot,stem,soil,toe,cf:areaC(foot),cs:areaC(stem),ca:areaC(soil),ct:toe.length>2?areaC(toe):{A:0,x:0,y:0}};
+}
+
+/* ---------- empujes ---------- */
+function Kcoul(phi,del,beta=0,i=0){return Math.cos(phi-beta)**2/(Math.cos(beta)**2*Math.cos(del+beta)*(1+Math.sqrt(Math.sin(phi+del)*Math.sin(phi-i)/(Math.cos(del+beta)*Math.cos(i-beta))))**2)}
+function Kmo(phi,del,th,beta=0,i=0){if(phi-th-i<0)return NaN;return Math.cos(phi-th-beta)**2/(Math.cos(th)*Math.cos(beta)**2*Math.cos(del+beta+th)*(1+Math.sqrt(Math.sin(phi+del)*Math.sin(phi-th-i)/(Math.cos(del+beta+th)*Math.cos(i-beta))))**2)}
+
+function analyze(p){
+ const G=geom(p),{H,B}=G,phi=R(p.phi);
+ const errs=[];
+ if(p.B4>p.B2)errs.push("B4 no puede superar B2.");
+ if(p.H5<Math.max(p.H2,p.H4)*0.999)errs.push("H5 menor que el espesor de borde: revisar.");
+ const dv=p.dmode==="C"?2/3*phi:0;          // plano virtual
+ const dw=2/3*phi;                           // pantalla
+ const Ka=Kcoul(phi,dv), Kw=Kcoul(phi,dw);
+ const As=AS[p.sitio][+p.zona-1], kh0=(p.sitio==="A"||p.sitio==="B")?1.2*As:As;
+ const kh=p.desp==="1"?0.5*kh0:kh0, kv=p.kv, th=Math.atan(kh/(1-kv));
+ const KAE=Kmo(phi,dv,th), KAEw=Kmo(phi,dw,th);
+ const rAE=p.rAE==="0.3333"?1/3:parseFloat(p.rAE), rTxt=p.rAE==="0.3333"?"H/3":fx(rAE,1)+"·H";
+ if(!isFinite(KAE))errs.push("φ < i + θ: no se puede aplicar M-O (11.6.5.3-1). Usar GLE.");
+ const qn=p.FSq*p.sadm, Kp=Math.tan(R(45+p.phif/2))**2, Dp=p.H3, Ep=p.pas==="1"?0.5*Kp*p.gf*Dp*Dp:0;
+ const Wst=G.cs.A*p.gc, Wft=G.cf.A*p.gc, Wso=G.ca.A*p.g, Wto=G.ct.A*p.gf;
+ const Pa=0.5*Ka*p.g*H*H, PAE=0.5*KAE*p.g*H*H*(1-kv);
+ const LsW=B-(p.B1+p.B4);  // ancho de sobrecarga sobre talón+cuña
+ const Wpir=Wst+Wft+Wso, yPir=(Wst*G.cs.y+Wft*G.cf.y+Wso*G.ca.y)/Wpir, xPir=(Wst*G.cs.x+Wft*G.cf.x+Wso*G.ca.x)/Wpir;
+ const D0={rTxt,xPir,G,H,B,Ka,Kw,As,kh0,kh,th,KAE,KAEw,rAE,qn,Kp,Ep,Dp,Wst,Wft,Wso,Wto,Pa,PAE,dv,dw,LsW,Wpir,yPir,errs,SD1:SD1[p.sitio][+p.zona-1]};
+
+ function loads(c){
+  const L=[];const add=(n,V,x,Hh,y,k,b)=>L.push({n,V,x,Hh,y,k,b});
+  const rAASH=a=>`<span class="ref">AASHTO ${a} †</span>`, rIC=a=>`<span class="ref">IC-103 VI ${a}</span>`;
+  add("Pantalla (DC)",c.DC*Wst,G.cs.x,0,G.cs.y,"w","Baricentro del área A1 (trapecio de la pantalla)");
+  add("Zapata (DC)",c.DC*Wft,G.cf.x,0,G.cf.y,"w","Baricentro del área A2 (polígono de la zapata)");
+  add("Suelo s/talón (EV)",c.EV*Wso,G.ca.x,0,G.ca.y,"s","Baricentro del área A3 (trapecio sobre el talón + cuña sobre la cara inclinada)");
+  if(Wto>0)add("Suelo s/puntera (EV)",c.EV*Wto,G.ct.x,0,G.ct.y,"s","Baricentro del área A4");
+  const bLSh="H/2: presión constante K·q en toda la altura "+rAASH("3.11.6.1")+" "+rIC("11.6.5.3");
+  const bLSv="Centro del ancho cargado detrás de la pantalla (talón + cuña): x = B − L/2";
+  const bV="Sobre el plano vertical del talón: x = B";
+  if(!c.eq){
+   add("Empuje activo EH (h)",0,B,c.EHh*Pa*Math.cos(dv),H/3,"e","H/3 sobre la base: presión triangular Ka·γ·z "+rAASH("3.11.5.1"));
+   if(dv>0)add("Empuje activo EH (v)",c.EHv*Pa*Math.sin(dv),B,0,0,"ev",bV);
+   add("Empuje sobrecarga LS (h)",0,B,c.LSh*Ka*p.q*H*Math.cos(dv),H/2,"l",bLSh);
+   if(dv>0)add("Empuje sobrecarga LS (v)",c.LSh*Ka*p.q*H*Math.sin(dv),B,0,0,"ev",bV);
+   if(c.LSv)add("Sobrecarga s/talón LS (v)",c.LSv*p.q*LsW,B-LsW/2,0,H,"l",bLSv);
+  }else{
+   let P=c.fAE*PAE, y=rAE*H, nm=`${c.fAE*100}% PAE`, K=KAE*c.fAE;
+   let b=`${rTxt} sobre la base, elegido en Datos: ${rIC("11.6.5.3")} (igual distribución que la estática, no menos de H/3) y ${rIC("C11.6.5.3")} (0,4h–0,5h si la falla tiene alto impacto)`;
+   if(c.fAE<1 && P*Math.cos(dv)<Pa*Math.cos(dv)){P=Pa;y=H/3;nm="Pa (≥ 50% PAE)";K=Ka;
+    b="H/3: gobierna el empuje activo estático, de presión triangular "+rIC("11.6.5.1")+" "+rAASH("3.11.5.1")}
+   add(nm+" (h)",0,B,P*Math.cos(dv),y,"e",b);
+   if(dv>0)add(nm+" (v)",P*Math.sin(dv),B,0,0,"ev",bV);
+   add("Sobrecarga sísmica (h)",0,B,p.gEQ*K*p.q*H*Math.cos(dv),H/2,"l",bLSh);
+   if(p.gEQ>0)add("Sobrecarga s/talón (v)",p.gEQ*p.q*LsW,B-LsW/2,0,H,"l",bLSv);
+   add(`${c.fIR*100}% PIR`,0,xPir,c.fIR*kh*Wpir,yPir,"i","Baricentro del conjunto de masas Ww + Ws (pantalla, zapata y suelo sobre el talón) "+rIC("11.6.5.1, Fig. 11.6.5.1-1"));
+  }
+  return L;
+ }
+ const C=[
+  {id:"RIa",t:"Resistencia I a — deslizamiento y excentricidad",f:"0,90 DC + 1,00 EV + 1,50 EH + 1,75 LS(h)",DC:.9,EV:1,EHh:1.5,EHv:1,LSh:1.75,LSv:0,st:"R"},
+  {id:"RIb",t:"Resistencia I b — capacidad portante y diseño",f:"1,25 DC + 1,35 EV + 1,50 EH + 1,75 LS",DC:1.25,EV:1.35,EHh:1.5,EHv:1.5,LSh:1.75,LSv:1.75,st:"R"},
+  {id:"EEa",t:"Evento Extremo I a — 100% PAE + 50% PIR",f:"1,0 DC + 1,0 EV + 1,0 PAE + 0,5 PIR + γEQ LS",DC:1,EV:1,eq:1,fAE:1,fIR:.5,st:"E"},
+  {id:"EEb",t:"Evento Extremo I b — 50% PAE (≥ Pa) + 100% PIR",f:"1,0 DC + 1,0 EV + máx(0,5 PAE; Pa) + 1,0 PIR + γEQ LS",DC:1,EV:1,eq:1,fAE:.5,fIR:1,st:"E"},
+  {id:"SI",t:"Servicio I — tensiones de contacto vs σadm",f:"1,0 DC + 1,0 EV + 1,0 EH + 1,0 LS",DC:1,EV:1,EHh:1,EHv:1,LSh:1,LSv:1,st:"S"}
+ ];
+ C.forEach(c=>{
+  c.L=loads(c);
+  const V=c.L.reduce((a,l)=>a+l.V,0), Hs=c.L.reduce((a,l)=>a+l.Hh,0);
+  const Mv=c.L.reduce((a,l)=>a+l.V*l.x,0), Mh=c.L.reduce((a,l)=>a+l.Hh*l.y,0);
+  const xR=(Mv-Mh)/V, e=B/2-xR;
+  c.V=V;c.Hs=Hs;c.Mv=Mv;c.Mh=Mh;c.xR=xR;c.e=e;
+  const rock=p.ftype==="R";
+  if(c.st==="R")c.elim=rock?0.45*B:B/3;
+  else if(c.st==="E")c.elim=B/2*(2/3+Math.min(Math.max(p.gEQ,0),1)*(0.8-2/3));
+  else c.elim=B/6;
+  const ph=c.st==="E"?{b:p.phbE,t:p.phtE,e:p.pheE}:{b:p.phb,t:p.pht,e:p.phe};
+  c.ph=ph;
+  // contacto lineal
+  const ae=Math.abs(e);
+  c.out=ae>=B/2-1e-6;
+  c.lin=c.out?{qmax:Infinity,qmin:0,Lc:0}:ae<=B/6?{qmax:V/B*(1+6*ae/B),qmin:V/B*(1-6*ae/B),Lc:B}:{qmax:2*V/(3*(B/2-ae)),qmin:0,Lc:3*(B/2-ae)};
+  c.qeq=c.out?Infinity:V/(B-2*ae);
+  c.qd=rock?c.lin.qmax:c.qeq;
+  c.Rb=ph.b*qn;
+  c.Rr=ph.t*p.mu*V+ph.e*Ep;
+  c.okE=ae<=c.elim; c.okB=c.qd<=c.Rb; c.okD=c.Rr>=Hs;
+  if(c.st==="S"){c.okB=c.lin.qmax<=p.sadm}
+ });
+ D0.C=C;
+ return D0;
+}
+
+/* ---------- distribución de contacto ---------- */
+function qAt(c,B,x){const{V,e}=c,ae=Math.abs(e);
+ if(ae<=B/6)return V/B+12*V*e*(B/2-x)/B**3;
+ const Lc=3*(B/2-ae);const xx=e>=0?x:B-x;return xx<Lc?2*V/Lc*(1-xx/Lc):0}
+
+/* ---------- hormigón ---------- */
+function flex(As,d,fc,fy){ // As mm2/m, d mm -> t·m/m
+ if(As<=0||d<=0)return{phiMn:0,phi:0.9,et:0};
+ const b=1000,a=As*fy/(0.85*fc*b),b1=fc<=28?0.85:Math.max(0.65,0.85-0.05*(fc-28)/7),c=a/b1,et=0.003*(d-c)/c,ety=fy/200000;
+ let phi=et>=0.005?0.9:et<=ety?0.65:0.65+0.25*(et-ety)/(0.005-ety);
+ return{phiMn:phi*As*fy*(d-a/2)/1e6/G0,phi,et};
+}
+const Ab=d=>Math.PI*d*d/4, G0=9.80665;
+
+/* ---------- pantalla ---------- */
+function stem(p,A){
+ const{G,Kw,KAEw,dw,kh,rAE}=A,Hp=G.Hp,aT=Math.min(1,Math.max(0,(0.5-rAE)*6)),n=120,ds=Hp/n,Kwh=Kw*Math.cos(dw),KAEh=KAEw*Math.cos(dw);
+ const t=s=>p.B4+(p.B2-p.B4)*s/Hp;
+ const cases=[
+  {id:"RIb",n:"RI b: 1,5 EH + 1,75 LS",col:"--f1",p:s=>1.5*Kwh*p.g*s+1.75*Kwh*p.q},
+  {id:"EEa",n:"EE a: PAE + 0,5 PIR",col:"--f2",p:s=>KAEh*p.g*(aT*s+(1-aT)*Hp/2)+p.gEQ*KAEh*p.q+0.5*kh*p.gc*t(s)},
+  {id:"EEb",n:"EE b: máx(0,5 PAE; Pa) + PIR",col:"--f3",p:s=>{const use=0.5*KAEh>=Kwh;
+    const e=use?0.5*KAEh*p.g*(aT*s+(1-aT)*Hp/2):Kwh*p.g*s;return e+p.gEQ*(use?0.5*KAEh:Kwh)*p.q+kh*p.gc*t(s)}}
+ ];
+ cases.forEach(c=>{c.s=[];c.V=[];c.M=[];let V=0,M=0,pp=c.p(0);
+  for(let i=0;i<=n;i++){const s=i*ds;if(i>0){const pn=c.p(s);const Vn=V+(pp+pn)/2*ds;M+=(V+Vn)/2*ds;V=Vn;pp=pn}c.s.push(s);c.V.push(V);c.M.push(M)}});
+ // capacidad
+ const cap=[];for(let i=0;i<=n;i++){const s=i*ds,h=t(s)*1000,d=h-p.cs-p.d1/2;
+  const As=Ab(p.d1)*1000/p.s1+((p.d2>0&&Hp-s<=p.hc)?Ab(p.d2)*1000/p.s2:0);
+  const f=flex(As,d,p.fc,p.fy),Vc=0.75*0.17*Math.sqrt(p.fc)*1000*d/1000/G0;
+  cap.push({s,h,d,As,phiMn:f.phiMn,phi:f.phi,phiVc:Vc,Asmin:0.0018*1000*h})}
+ return{cases,cap,Hp,t};
+}
+
+/* ---------- talón y puntera ---------- */
+function footing(p,A){
+ const{G,B}=A,xs=G.xs,n=80;
+ const ytop=x=>x<=p.B1?p.H2+(p.H5-p.H2)*x/p.B1:x>=xs?p.H5+(p.H4-p.H5)*(x-xs)/p.B3:p.H5;
+ const heel=[],toe=[];
+ A.C.filter(c=>c.id!=="SI").forEach(c=>{
+  const DC=c.DC,EV=c.EV,LSv=c.eq?p.gEQ:c.LSv;
+  const Pv=c.L.filter(l=>l.k==="ev").reduce((a,l)=>a+l.V,0);
+  // talón: w neto hacia abajo
+  const hx=[],hM=[],hV=[];const dx=p.B3/n;
+  for(let i=0;i<=n;i++){ // sección a distancia u del borde libre hacia la pantalla
+   const u=i*dx;let V=Pv,M=Pv*u;
+   for(let j=0;j<i;j++){const xm=B-(j+0.5)*dx,arm=u-(j+0.5)*dx;
+    const w=DC*p.gc*ytop(xm)+EV*p.g*(A.H-ytop(xm))+LSv*p.q-qAt(c,B,xm);V+=w*dx;M+=w*dx*arm}
+   hx.push(B-u);hV.push(V);hM.push(M)}
+  heel.push({id:c.id,t:c.t,x:hx,M:hM,V:hV});
+  const tx=[],tM=[],tV=[];const dt=p.B1/n;
+  for(let i=0;i<=n;i++){const u=i*dt;let V=0,M=0;
+   for(let j=0;j<i;j++){const xm=(j+0.5)*dt,arm=u-xm;const yt=ytop(xm);
+    const w=qAt(c,B,xm)-DC*p.gc*yt-EV*p.gf*Math.max(0,p.H3-yt);V+=w*dt;M+=w*dt*arm}
+   tx.push(u);tV.push(V);tM.push(M)}
+  toe.push({id:c.id,t:c.t,x:tx,M:tM,V:tV});
+ });
+ return{heel,toe,ytop};
+}
+function vcFoot(fc,d,As){const rho=As/(1000*d),ls=Math.min(1,Math.sqrt(2/(1+d/254)));
+ let Vc=0.66*ls*Math.cbrt(rho)*Math.sqrt(fc)*1000*d/1000;Vc=Math.min(Vc,0.42*Math.sqrt(fc)*d);return{phiVc:0.75*Vc/G0,ls}}
+
+/* ---------- dibujo ---------- */
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function drawWall(svgEl,p,A,c,opt={}){
+ const{G,H,B}=A,W=c?600:440,Hh=440,pad=46,sc=Math.min((W-2*pad-(c?230:60))/(B+1.2),(Hh-2*pad-30)/(H+0.6));
+ const X=x=>pad+40+x*sc,Y=y=>Hh-pad-y*sc;
+ const poly=(P,f,s="")=>`<polygon points="${P.map(([x,y])=>X(x)+","+Y(y)).join(" ")}" fill="${f}" stroke="${css('--mu')}" stroke-width="1" ${s}/>`;
+ let g=`<defs><pattern id="h${svgEl.id}" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="${css('--soil2')}"/><line x1="0" y1="0" x2="0" y2="7" stroke="${css('--soil')}" stroke-width="2"/></pattern>
+ <marker id="a${svgEl.id}" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="context-stroke"/></marker></defs>`;
+ g+=poly(G.soil,`url(#h${svgEl.id})`);
+ if(G.toe.length>2)g+=poly(G.toe,`url(#h${svgEl.id})`);
+ g+=poly(G.foot,css('--conc'))+poly(G.stem,css('--conc'));
+ g+=`<line x1="${X(-0.6)}" y1="${Y(p.H3)}" x2="${X(0)}" y2="${Y(p.H3)}" stroke="${css('--mu')}"/>`;
+ g+=`<line x1="${X(B)}" y1="${Y(0)}" x2="${X(B)}" y2="${Y(H)}" stroke="${css('--mu')}" stroke-dasharray="4 3"/>`;
+ if(!c){ // cotas
+  const dim=(x1,y1,x2,y2,t,dx=0,dy=0)=>`<line x1="${X(x1)+dx}" y1="${Y(y1)+dy}" x2="${X(x2)+dx}" y2="${Y(y2)+dy}" stroke="${css('--ac')}" marker-end="url(#a${svgEl.id})" marker-start="url(#a${svgEl.id})"/><text x="${(X(x1)+X(x2))/2+dx+(dy?0:4)}" y="${(Y(y1)+Y(y2))/2+dy+(dy?-3:4)}" ${dy?'text-anchor="middle"':''}>${t}</text>`;
+  g+=dim(0,0,0,H,"H = "+fx(H),-34,0)+dim(0,p.H3,0,H,"H1",-14,0)+dim(B,0,B,p.H4,"H4",14,0)+dim(p.B1,0,p.B1,p.H5,"H5",8,0);
+  g+=dim(0,0,p.B1,0,"B1",0,16)+dim(p.B1,0,G.xs,0,"B2",0,16)+dim(G.xs,0,B,0,"B3",0,16)+dim(0,0,B,0,"B = "+fx(B),0,32)+dim(p.B1,H,p.B1+p.B4,H,"B4",0,-10);
+  g+=`<text x="${X(G.ca.x)}" y="${Y(G.ca.y)}">A3</text><text x="${X(G.cs.x)-6}" y="${Y(G.cs.y)}">A1</text><text x="${X(B/2)}" y="${Y(p.H4/2)}">A2</text>`;
+  svgEl.setAttribute("viewBox",`0 0 ${W} ${Hh}`);svgEl.innerHTML=g;return;
+ }
+ const fmax=Math.max(...c.L.map(l=>Math.max(l.V,l.Hh)));const ls=f=>12+48*Math.sqrt(f/fmax);
+ const colOf=k=>({w:css('--f1'),s:css('--f4'),e:css('--f2'),ev:css('--f2'),l:css('--f5'),i:css('--f3')})[k];
+ c.L.forEach(l=>{const col=colOf(l.k);
+  const dot=(x,y)=>`<circle cx="${x}" cy="${y}" r="3.5" fill="${col}" stroke="${css('--card')}" stroke-width="1.2"/>`;
+  if(l.V>0.01){const x=X(l.x),y=Y(l.k==="ev"?H*0.15:l.y),len=ls(l.V);
+   g+=`<line x1="${x}" y1="${y-len}" x2="${x}" y2="${y-4}" stroke="${col}" stroke-width="2" marker-end="url(#a${svgEl.id})"/>${dot(x,y)}<text x="${x+4}" y="${y-len-3}" style="fill:${col};font-weight:600;paint-order:stroke;stroke:${css('--card')};stroke-width:3px">${fx(l.V,2)} t · x = ${fx(l.x)}</text>`}
+  if(l.Hh>0.01){const x1=X(l.x),y=Y(l.y),len=ls(l.Hh),x0=x1+len;
+   g+=`<line x1="${x0}" y1="${y}" x2="${x1+4}" y2="${y}" stroke="${col}" stroke-width="2" marker-end="url(#a${svgEl.id})"/>${dot(x1,y)}<text x="${x0+4}" y="${l.k==="l"?y+14:y-3}" style="fill:${col};font-weight:600;paint-order:stroke;stroke:${css('--card')};stroke-width:3px">${fx(l.Hh,2)} t · y = ${fx(l.y)}</text>`}
+ });
+ // reacción
+ const yb=Y(0);const qs=40/Math.max(c.lin.qmax,c.qeq);
+ if(c.out){g+=`<text x="${X(0)}" y="${yb+16}" style="fill:${css('--ng')};font-weight:700">Resultante fuera de la base: el muro vuelca</text>`}
+ else if(p.ftype==="S"&&c.st!=="S"){const L=B-2*Math.abs(c.e),x0=c.e>=0?0:B-L;
+  g+=`<rect x="${X(x0)}" y="${yb}" width="${L*sc}" height="${c.qeq*qs}" fill="${css('--f4')}" opacity=".25" stroke="${css('--f4')}"/><text x="${X(x0)+2}" y="${yb+c.qeq*qs+12}">q = ${fx(c.qeq,1)} t/m² (Meyerhof)</text>`;
+ }else{const pts=[];for(let i=0;i<=40;i++){const x=B*i/40;pts.push([X(x),yb+qAt(c,B,x)*qs])}
+  g+=`<polygon points="${X(0)},${yb} ${pts.map(q=>q.join(",")).join(" ")} ${X(B)},${yb}" fill="${css('--f4')}" opacity=".25" stroke="${css('--f4')}"/><text x="${X(0)}" y="${yb+c.lin.qmax*qs+12}">qmáx = ${fx(c.lin.qmax,1)} t/m²</text>`}
+ if(!c.out)g+=`<circle cx="${X(c.xR)}" cy="${yb}" r="4" fill="${css('--ng')}"/><text x="${X(c.xR)+5}" y="${yb-5}" style="fill:${css('--ng')}">R (e = ${fx(c.e,2)} m)</text>`;
+ g+=`<line x1="${X(B/2-c.elim)}" y1="${yb+2}" x2="${X(B/2+c.elim)}" y2="${yb+2}" stroke="${css('--ng')}" stroke-width="3" opacity=".5"/>`;
+ svgEl.setAttribute("viewBox",`0 0 ${W} ${Hh+30}`);svgEl.innerHTML=g;
+}
+
+function plot(series,o){ // o:{xl,yl,vert,u}  vert: el valor va en x y la altura en y
+ const w=560,h=400,ml=60,mr=22,mt=18,mb=46,vert=!!o.vert,u=o.u||"";
+ const xs=series.flatMap(s=>s.x),ys=series.flatMap(s=>s.y);
+ let x0=Math.min(0,...xs),x1=Math.max(...xs),y0=Math.min(0,...ys),y1=Math.max(...ys);if(x1-x0<1e-9)x1=x0+1;if(y1-y0<1e-9)y1=y0+1;
+ if(vert)x1+=(x1-x0)*0.08;else y1+=(y1-y0)*0.10;
+ const nice=(a,b)=>{const r=b-a,st=Math.pow(10,Math.floor(Math.log10(r/5))),m=[1,2,2.5,5,10].find(k=>r/(k*st)<=6)*st;return{a:Math.floor(a/m+1e-9)*m,b:Math.ceil(b/m-1e-9)*m,m}};
+ const nx=nice(x0,x1),ny=nice(y0,y1),dec=m=>m>=1?0:(m>=0.1&&Math.round(m*100)%10===0?1:2);
+ const X=v=>ml+(v-nx.a)/(nx.b-nx.a)*(w-ml-mr),Y=v=>h-mb-(v-ny.a)/(ny.b-ny.a)*(h-mt-mb);
+ let g=`<rect x="${ml}" y="${mt}" width="${w-ml-mr}" height="${h-mt-mb}" fill="${css('--bg')}" stroke="${css('--ln')}"/>`;
+ for(let v=nx.a;v<=nx.b+1e-9;v+=nx.m)g+=`<line x1="${X(v)}" x2="${X(v)}" y1="${mt}" y2="${h-mb}" stroke="${css('--ln')}" stroke-width=".7"/><text x="${X(v)}" y="${h-mb+16}" text-anchor="middle">${fx(v,dec(nx.m))}</text>`;
+ for(let v=ny.a;v<=ny.b+1e-9;v+=ny.m)g+=`<line x1="${ml}" x2="${w-mr}" y1="${Y(v)}" y2="${Y(v)}" stroke="${css('--ln')}" stroke-width=".7"/><text x="${ml-6}" y="${Y(v)+4}" text-anchor="end">${fx(v,dec(ny.m))}</text>`;
+ g+=`<line x1="${X(0)}" x2="${X(0)}" y1="${mt}" y2="${h-mb}" stroke="${css('--mu')}" stroke-width="1.4"/><line x1="${ml}" x2="${w-mr}" y1="${Y(0)}" y2="${Y(0)}" stroke="${css('--mu')}" stroke-width="1.4"/>`;
+ g+=`<text x="${(ml+w-mr)/2}" y="${h-8}" text-anchor="middle" style="font-size:12.5px;font-weight:600">${o.xl}</text><text transform="translate(15,${(mt+h-mb)/2}) rotate(-90)" text-anchor="middle" style="font-size:12.5px;font-weight:600">${o.yl}</text>`;
+ let labs="",k=0;const L=[];
+ series.forEach(s=>{const col=css(s.col),n=s.x.length,pts=s.x.map((v,i)=>X(v)+","+Y(s.y[i])).join(" ");
+  if(!s.dash){const base=vert?`${X(0)},${Y(s.y[n-1])} ${X(0)},${Y(s.y[0])}`:`${X(s.x[n-1])},${Y(0)} ${X(s.x[0])},${Y(0)}`;
+   g+=`<polygon points="${pts} ${base}" fill="${col}" opacity=".13"/>`}
+  g+=`<polyline fill="none" stroke="${col}" stroke-width="${s.dash?2.2:2.6}" stroke-linejoin="round" ${s.dash?`stroke-dasharray="${s.dash}"`:""} points="${pts}"/>`;
+  const val=vert?s.x:s.y;let im=0;val.forEach((v,i)=>{if(Math.abs(v)>Math.abs(val[im]))im=i});
+  if(s.dash&&o.capAt)im=o.capAt(s);
+  const px=X(s.x[im]),py=Y(s.y[im]),right=px>w-mr-95;
+  const ty=vert?py-9-16*k:py-9,tx=right?px-7:px+7;k++;
+  L.push({px,py,ty,tx,right,col,t:fx(val[im],2)+" "+u})});
+ if(!vert){L.sort((a,b)=>a.ty-b.ty);for(let i=1;i<L.length;i++)if(L[i].ty-L[i-1].ty<15)L[i].ty=L[i-1].ty+15;
+  const over=L.length?L[L.length-1].ty-(h-mb-4):0;if(over>0)L.forEach(l=>l.ty-=over)}
+ L.forEach(l=>{labs+=`<line x1="${l.px}" y1="${l.py}" x2="${vert?l.px:l.tx}" y2="${l.ty-(vert?-3:4)}" stroke="${l.col}" stroke-width=".8"/>`+
+   `<circle cx="${l.px}" cy="${l.py}" r="4" fill="${l.col}" stroke="${css('--card')}" stroke-width="1.5"/>`+
+   `<text x="${l.tx+(vert?0:(l.right?-8:8))}" y="${l.ty}" text-anchor="${l.right?"end":"start"}" style="fill:${l.col};font-size:12.5px;font-weight:700;paint-order:stroke;stroke:${css('--bg')};stroke-width:3px">${l.t}</text>`});
+ const leg=series.map(s=>`<span style="display:inline-flex;align-items:center;gap:5px;margin:2px 12px 2px 0;font-size:12.5px"><svg width="26" height="10"><line x1="0" y1="5" x2="26" y2="5" stroke="${css(s.col)}" stroke-width="3" ${s.dash?`stroke-dasharray="${s.dash}"`:""}/></svg>${s.lab}</span>`).join("");
+ return `<svg viewBox="0 0 ${w} ${h}" class="plt">${g}${labs}</svg><div style="display:flex;flex-wrap:wrap;margin-top:4px">${leg}</div>`;
+}
+
+/* ---------- render ---------- */
+function run(){
+ const p=read();{const e=$("#i_mu");if(p.mumode==="A"){p.mu=Math.tan(2/3*R(p.phi));e.value=p.mu.toFixed(3);e.disabled=true}else e.disabled=false}
+ const A=analyze(p),{G,H,B}=A;
+ drawWall($("#geoSvg"),p,A,null);
+ $("#deriv").innerHTML=(A.errs.length?`<p class="ng">${A.errs.join("<br>")}</p>`:"")+`<table>
+ <tr><th>Parámetro</th><th>Valor</th><th>Origen</th></tr>
+ <tr><td>H / B / altura de pantalla Hp</td><td class="n">${fx(H)} / ${fx(B)} / ${fx(G.Hp)} m</td><td>Geometría</td></tr>
+ <tr><td>Áreas A1 pantalla / A2 zapata / A3 suelo talón / A4 suelo puntera</td><td class="n">${fx(G.cs.A,3)} / ${fx(G.cf.A,3)} / ${fx(G.ca.A,3)} / ${fx(G.ct.A,3)} m²</td><td>Polígonos de la sección</td></tr>
+ <tr><td>Ka plano virtual (δ = ${fx(D(A.dv),1)}°) · Ka pantalla (δ = ${fx(D(A.dw),1)}°)</td><td class="n">${fx(A.Ka,4)} · ${fx(A.Kw,4)}</td><td>${p.dmode==="R"?"Rankine":"Coulomb"} · Coulomb</td></tr>
+ <tr><td>As (zona ${p.zona}, sitio ${p.sitio}) · SD1</td><td class="n">${fx(A.As,2)} · ${fx(A.SD1,2)}</td><td><span class="ref">IC-103 VI Tabla 3.10.4.1-1</span></td></tr>
+ <tr><td>kh0 ${p.sitio==="A"||p.sitio==="B"?"= 1,2·As":"= As"}</td><td class="n">${fx(A.kh0,3)}</td><td><span class="ref">11.6.5.2.1</span></td></tr>
+ <tr><td>kh ${p.desp==="1"?"= 0,5·kh0":"= kh0"} · θ</td><td class="n">${fx(A.kh,3)} · ${fx(D(A.th),2)}°</td><td><span class="ref">${p.desp==="1"?"11.6.5.2.2":"11.6.5.4"}</span></td></tr>
+ <tr><td>KAE plano virtual · KAE pantalla</td><td class="n">${fx(A.KAE,4)} · ${fx(A.KAEw,4)}</td><td><span class="ref">11.6.5.3 / A11.3.1</span></td></tr>
+ <tr><td>Pa = ½·Ka·γ·H² · PAE = ½·KAE·γ·H²</td><td class="n">${fx(A.Pa,2)} · ${fx(A.PAE,2)} t/m</td><td>PAE a ${A.rTxt} <span class="ref">11.6.5.3-2</span></td></tr>
+ <tr><td>PIR = kh·(Ww + Ws), a y = ${fx(A.yPir,2)} m</td><td class="n">${fx(A.kh*A.Wpir,2)} t/m</td><td><span class="ref">11.6.5.1-1</span></td></tr>
+ <tr><td>Condición M-O: φ ≥ i + θ</td><td class="n">${fx(p.phi,1)}° ≥ ${fx(D(A.th),1)}°</td><td>${okng(p.phi>=D(A.th))} <span class="ref">11.6.5.3-1</span></td></tr>
+ <tr><td>qn = FS·σadm = ${fx(p.FSq,2)} · ${fx(p.sadm,1)} t/m² (σadm = ${fx(p.sadm/10,2)} kg/cm²)</td><td class="n">${fx(A.qn,1)} t/m²</td><td class="wn">Supuesto: el estudio no informa la carga de rotura</td></tr>
+ <tr><td>Empuje pasivo Ep</td><td class="n">${fx(A.Ep,2)} t/m</td><td>${p.pas==="1"?"Kp = "+fx(A.Kp,2)+", prof. "+fx(A.Dp)+" m":"No considerado"}</td></tr>
+ </table>`;
+ // resumen
+ $("#summary").innerHTML=`<table><tr><th>Combinación</th><th>e / e lím (m)</th><th>Excentricidad</th><th>q / resistencia (t/m²)</th><th>Portante</th><th>Rr / Ru (t/m)</th><th>Deslizamiento</th></tr>`+
+ A.C.map(c=>`<tr><td>${c.id}</td><td class="n">${fx(c.e)} / ${fx(c.elim)}</td><td>${okng(c.okE)} <span class="note">${fx(c.elim/Math.max(Math.abs(c.e),1e-6),2)}</span></td>
+ <td class="n">${c.st==="S"?fx(c.lin.qmax,1)+" / σadm "+fx(p.sadm,1):fx(c.qd,1)+" / "+fx(c.Rb,1)}</td><td>${okng(c.okB)} <span class="note">${fx((c.st==="S"?p.sadm/c.lin.qmax:c.Rb/c.qd),2)}</span></td>
+ <td class="n">${c.st==="S"?"—":fx(c.Rr,2)+" / "+fx(c.Hs,2)}</td><td>${c.st==="S"?"—":okng(c.okD)+` <span class="note">${fx(c.Rr/c.Hs,2)}</span>`}</td></tr>`).join("")+`</table>
+ <p class="note">Los números chicos son el cociente resistencia/solicitación (≥ 1 verifica). En Servicio I la excentricidad se compara con B/6 (núcleo central, criterio recomendado, no exigido) y qmáx (distribución lineal) con la σadm del estudio.</p>`;
+ // combos
+ $("#combos").innerHTML=A.C.map(c=>`<div class="card"><h2>${c.t}</h2><p class="formula">${c.f}</p><div class="cmb"><svg id="sv_${c.id}"></svg><div>
+ <table><tr><th>Carga</th><th>V (t)</th><th>x (m)</th><th>H (t)</th><th>y (m)</th><th>Ubicación de la resultante: en base a qué</th></tr>${c.L.map(l=>`<tr><td>${l.n}</td><td class="n">${l.V?fx(l.V,2):""}</td><td class="n">${l.V?fx(l.x):""}</td><td class="n">${l.Hh?fx(l.Hh,2):""}</td><td class="n">${l.Hh?fx(l.y):""}</td><td class="note">${l.b}</td></tr>`).join("")}
+ <tr><th>Σ</th><th class="n">${fx(c.V,2)}</th><th></th><th class="n">${fx(c.Hs,2)}</th><th></th><th class="note">x desde el borde de la puntera; y desde el plano de fundación</th></tr></table>
+ <table style="margin-top:8px">
+ <tr><td>Momento respecto de la puntera: estabilizante / volcador</td><td class="n">${fx(c.Mv,2)} / ${fx(c.Mh,2)} t·m/m</td><td></td></tr>
+ <tr><td>Reacción del suelo: x<sub>R</sub> = (ΣM estab. − ΣM volc.)/ΣV desde la puntera · e = B/2 − x<sub>R</sub></td><td class="n">${fx(c.xR)} · ${fx(c.e)} m</td><td></td></tr>
+ <tr><td>Límite de e ${c.st==="E"?`(γEQ = ${fx(p.gEQ,2)}) <span class="ref">IC-103 VI 11.6.5.1</span>`:c.st==="R"?`<span class="ref">AASHTO 11.6.3.3 †</span>`:"(B/6, recomendado)"}</td><td class="n">${fx(c.elim)} m</td><td>${okng(c.okE)}</td></tr>
+ ${c.st==="S"?`<tr><td>qmáx / qmín (lineal) vs σadm</td><td class="n">${fx(c.lin.qmax,1)} / ${fx(c.lin.qmin,1)} · ${fx(p.sadm,1)} t/m²</td><td>${okng(c.okB)}</td></tr>`:
+ `<tr><td>${p.ftype==="S"?"q Meyerhof = V/(B − 2e)":"qmáx lineal"} vs φb·qn = ${fx(c.ph.b,2)}·${fx(A.qn,1)} <span class="ref">AASHTO 11.6.3.2 †</span></td><td class="n">${fx(c.qd,1)} / ${fx(c.Rb,1)} t/m²</td><td>${okng(c.okB)}</td></tr>
+ <tr><td>Deslizamiento (μ = ${fx(p.mu,3)}): φτ·μ·V + φep·Ep = ${fx(c.ph.t,2)}·${fx(p.mu,3)}·${fx(c.V,2)} + ${fx(c.ph.e,2)}·${fx(A.Ep,2)} <span class="ref">AASHTO 10.6.3.4 †</span></td><td class="n">${fx(c.Rr,2)} / ${fx(c.Hs,2)} t</td><td>${okng(c.okD)}</td></tr>`}
+ </table></div></div></div>`).join("");
+ A.C.forEach(c=>drawWall($("#sv_"+c.id),p,A,c));
+
+ // pantalla
+ const S=stem(p,A);
+ const env=S.cap.map((k,i)=>Math.max(...S.cases.map(c=>c.M[i])));
+ const envV=S.cap.map((k,i)=>Math.max(...S.cases.map(c=>c.V[i])));
+ const hgt=S.cap.map(k=>S.Hp-k.s);
+ $("#stemPlotM").innerHTML="<h3>Momento Mu y φMn (t·m/m) a lo largo de la altura</h3>"+plot([
+  ...S.cases.map(c=>({x:c.M,y:hgt,col:c.col,lab:c.n})),
+  {x:S.cap.map(k=>k.phiMn),y:hgt,col:"--ok",dash:"6 3",lab:"φMn colocado",wd:2.5}],{xl:"M (t·m/m)",yl:"Altura sobre la zapata (m)",vert:true,u:"t·m/m",capAt:s=>s.x.length-1});
+ $("#stemPlotV").innerHTML="<h3>Corte Vu y φVc (t/m)</h3>"+plot([
+  ...S.cases.map(c=>({x:c.V,y:hgt,col:c.col,lab:c.n})),
+  {x:S.cap.map(k=>k.phiVc),y:hgt,col:"--ok",dash:"6 3",lab:"φVc = 0,75·0,17√f'c·b·d",wd:2.5}],{xl:"V (t/m)",yl:"Altura sobre la zapata (m)",vert:true,u:"t/m",capAt:s=>s.x.length-1});
+ let worst={r:1e9},worstV={r:1e9};S.cap.forEach((k,i)=>{if(env[i]>0.05){const r=k.phiMn/env[i];if(r<worst.r)worst={r,i}}if(envV[i]>0.05){const r=k.phiVc/envV[i];if(r<worstV.r)worstV={r,i}}});
+ const b0=S.cap[S.cap.length-1],top=S.cap[0];
+ const AsminFail=S.cap.filter(k=>k.As<k.Asmin);
+ const smax=Math.min(3*b0.h,300);
+ const Ash=2*Ab(p.dh)*1000/p.sh,hm=(p.B2+p.B4)/2*1000;
+ const wi=worst.i!=null?S.cap[worst.i]:b0;
+ $("#stemTab").innerHTML=`<table><tr><th>Verificación</th><th>Valor</th><th>Requisito</th><th></th></tr>
+ <tr><td>Base de pantalla: Mu (envolvente) / φMn</td><td class="n">${fx(env[env.length-1],2)} / ${fx(b0.phiMn,2)} t·m/m</td><td>φ = ${fx(b0.phi,2)} <span class="ref">21.2.2</span></td><td>${okng(b0.phiMn>=env[env.length-1])}</td></tr>
+ <tr><td>Sección más exigida: altura ${fx(S.Hp-wi.s,2)} m</td><td class="n">φMn/Mu = ${fx(worst.r,2)}</td><td>≥ 1 en toda la altura <span class="ref">13.3.6.3</span></td><td>${okng(worst.r>=1)}</td></tr>
+ <tr><td>Corte: menor φVc/Vu (en ${fx(worstV.i!=null?S.Hp-S.cap[worstV.i].s:0,2)} m)</td><td class="n">${fx(worstV.r,2)}</td><td>V<sub>c</sub> = 0,17√f'c·b·d, φ = 0,75 <span class="ref">13.3.6.1.1</span></td><td>${okng(worstV.r>=1)}</td></tr>
+ <tr><td>As base / As,mín = 0,0018·Ag</td><td class="n">${fx(b0.As,0)} / ${fx(b0.Asmin,0)} mm²/m</td><td><span class="ref">7.6.1.1</span>${AsminFail.length?` — no cumple en ${fx(S.Hp-AsminFail[0].s,2)} m hacia ${fx(S.Hp-AsminFail[AsminFail.length-1].s,2)} m`:""}</td><td>${okng(!AsminFail.length)}</td></tr>
+ <tr><td>Separación de la principal</td><td class="n">${fx(p.s1,0)} mm</td><td>≤ menor de 3h y 300 mm = ${fx(smax,0)} <span class="ref">CIRSOC 201-25 7.7.2.3</span></td><td>${okng(p.s1<=smax&&(p.d2<=0||p.s2<=smax))}</td></tr>
+ <tr><td>Horizontal (2 caras): ρ = ${fx(Ash,0)} mm²/m / h medio ${fx(hm,0)} mm</td><td class="n">${fx(Ash/(1000*hm)*1000,2)} ‰</td><td>≥ 1,8 ‰; sep. ≤ ${fx(Math.min(5*top.h,450),0)} mm <span class="ref">7.6.4.1 → 24.4.3.2/3</span></td><td>${okng(Ash/(1000*hm)>=0.0018-1e-9&&p.sh<=Math.min(5*top.h,450))}</td></tr>
+ <tr><td>Horizontal en la base (h = ${fx(b0.h,0)} mm)</td><td class="n">${fx(Ash/(1000*b0.h)*1000,2)} ‰</td><td>Referencia: en la base conviene cumplir el 1,8 ‰ sobre el espesor real</td><td>${Ash/(1000*b0.h)>=0.0018?'<span class="ok">OK</span>':'<span class="wn">Revisar</span>'}</td></tr>
+ </table><p class="note">Cargas sobre la pantalla: Coulomb con δ = 2/3 φ (hormigón contra suelo), componente horizontal. En sismo, la presión de PAE sobre la pantalla se reparte de modo que su resultante quede a ${A.rTxt} de la altura de la pantalla (IC-103 VI 11.6.5.3 y C11.6.5.3), y solo cuenta la inercia de la pantalla, aplicada en su baricentro (no la del suelo sobre el talón). El ${p.d2>0?`Ø${p.d2} c/${p.s2} adicional`:"refuerzo"} se corta a ${fx(p.hc)} m (escalón en la curva φMn).</p>`;
+
+ // zapata
+ const Fz=footing(p,A);const cols={RIa:"--f4",RIb:"--f1",EEa:"--f2",EEb:"--f3"};
+ const heelAs=Ab(p.dt)*1000/p.st,toeAs=Ab(p.db)*1000/p.sb;
+ const hcap=[],tcap=[];
+ Fz.heel[0].x.forEach(x=>{const h=Fz.ytop(x)*1000,d=h-p.ct-p.dt/2;hcap.push({x,h,d,...flex(heelAs,d,p.fc,p.fy)})});
+ Fz.toe[0].x.forEach(u=>{const x=p.B1-u;const h=Fz.ytop(x)*1000,d=h-p.cb-p.db/2;tcap.push({x:u,h,d,...flex(toeAs,d,p.fc,p.fy)})});
+ $("#heelPlot").innerHTML="<h3>Momento en el talón (+ tracciona arriba)</h3>"+plot([
+  ...Fz.heel.map(c=>({x:c.x.map(x=>x-G.xs),y:c.M,col:cols[c.id],lab:c.id})),
+  {x:hcap.map(k=>k.x-G.xs),y:hcap.map(k=>k.phiMn),col:"--ok",dash:"6 3",lab:"φMn superior"}],{xl:"Distancia desde la cara trasera de la pantalla (m)",yl:"M (t·m/m)",u:"t·m/m",capAt:s=>s.x.length-1});
+ $("#toePlot").innerHTML="<h3>Momento en la puntera (+ tracciona abajo)</h3>"+plot([
+  ...Fz.toe.map(c=>({x:c.x.map(u=>u),y:c.M,col:cols[c.id],lab:c.id})),
+  {x:tcap.map(k=>k.x),y:tcap.map(k=>k.phiMn),col:"--ok",dash:"6 3",lab:"φMn inferior"}],{xl:"Distancia desde el borde libre (m)",yl:"M (t·m/m)",u:"t·m/m",capAt:s=>s.x.length-1});
+ const ftab=(arr,cap,As,dbar,face,s,crit)=>{
+  const hf=cap[cap.length-1],n=arr[0].x.length-1;
+  const rows=arr.map(c=>{const M=c.M[n];let Vd;
+   if(crit==="d"){const u=Math.max(0,c.x[n]-hf.d/1000);let k=0;while(k<n&&c.x[k]<u)k++;Vd=c.V[k]}else Vd=c.V[n];
+   const vc=vcFoot(p.fc,hf.d,As);
+   return `<tr><td>${c.id}</td><td class="n">${fx(M,2)}</td><td class="n">${fx(hf.phiMn,2)}</td><td>${okng(hf.phiMn>=M)}</td><td class="n">${fx(Vd,2)}</td><td class="n">${fx(vc.phiVc,2)}</td><td>${okng(vc.phiVc>=Vd)}</td></tr>`}).join("");
+  const Asmin=0.0018*1000*hf.h,smx=Math.min(3*hf.h,300);
+  return `<table><tr><th>Comb.</th><th>Mu cara</th><th>φMn</th><th></th><th>Vu ${crit==="d"?"a d":"en cara"}</th><th>φVc</th><th></th></tr>${rows}</table>
+  <table style="margin-top:8px"><tr><td>Armadura ${face}: Ø${dbar} c/${s} = ${fx(As,0)} mm²/m · d = ${fx(hf.d,0)} mm · φ = ${fx(hf.phi,2)}</td><td></td></tr>
+  <tr><td>As,mín = 0,0018·Ag = ${fx(Asmin,0)} mm²/m <span class="ref">13.3.2.1 → 7.6.1.1</span></td><td>${okng(As>=Asmin)}</td></tr>
+  <tr><td>Separación ≤ menor de 3h y 300 mm = ${fx(smx,0)} mm <span class="ref">CIRSOC 201-25 7.7.2.3</span></td><td>${okng(s<=smx)}</td></tr>
+  <tr><td colspan="2" class="note">φVc = 0,75·0,66·λs·ρw<sup>1/3</sup>·√f'c·b·d, con λs = √(2/(1 + d/254)) ≤ 1 y sin armadura de corte <span class="ref">22.5.5.1, Tabla 22.5.5.1, 22.5.5.1.3</span>. En la otra cara colocar la armadura de contracción y temperatura (0,0018 Ag total, <span class="ref">24.4.3.2</span>).</td></tr></table>`};
+ $("#heelTab").innerHTML=ftab(Fz.heel,hcap,heelAs,p.dt,"superior",p.st,"face")+`<p class="note">El talón se carga con el suelo, el peso propio, la sobrecarga y la componente vertical del empuje en el extremo, menos la presión de contacto lineal de cada combinación. Corte en la cara: el apoyo no comprime la zona del talón.</p>`;
+ $("#toeTab").innerHTML=ftab(Fz.toe,tcap,toeAs,p.db,"inferior",p.sb,"d")+`<p class="note">Corte de la puntera a la distancia d de la cara de la pantalla. Si B1 &lt; d, la sección crítica cae fuera de la puntera y Vu = 0.</p>`;
+}
+run();
+</script>
+</body>
+</html>
