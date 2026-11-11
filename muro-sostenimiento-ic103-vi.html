@@ -454,11 +454,11 @@ function analyze(p){
   return L;
  }
  const C=[
-  {id:"RIa",t:"Resistencia I a — deslizamiento y excentricidad",f:"0,90 DC + 1,00 EV + 1,50 EH + 1,75 LS(h)",DC:.9,EV:1,EHh:1.5,EHv:1,LSh:1.75,LSv:0,st:"R"},
-  {id:"RIb",t:"Resistencia I b — capacidad portante y diseño",f:"1,25 DC + 1,35 EV + 1,50 EH + 1,75 LS",DC:1.25,EV:1.35,EHh:1.5,EHv:1.5,LSh:1.75,LSv:1.75,st:"R"},
-  {id:"EEa",t:"Evento Extremo I a — 100% PAE + 50% PIR",f:"1,0 DC + 1,0 EV + 1,0 PAE + 0,5 PIR + γEQ LS",DC:1,EV:1,eq:1,fAE:1,fIR:.5,st:"E"},
-  {id:"EEb",t:"Evento Extremo I b — 50% PAE (≥ Pa) + 100% PIR",f:"1,0 DC + 1,0 EV + máx(0,5 PAE; Pa) + 1,0 PIR + γEQ LS",DC:1,EV:1,eq:1,fAE:.5,fIR:1,st:"E"},
-  {id:"SI",t:"Servicio I — tensiones de contacto vs σadm",f:"1,0 DC + 1,0 EV + 1,0 EH + 1,0 LS",DC:1,EV:1,EHh:1,EHv:1,LSh:1,LSv:1,st:"S"}
+  {id:"RIa",sn:"Resistencia I a — sin sismo, pesos mínimos",d:"Sin sismo. Empujes mayorados y pesos con su valor mínimo: es la más desfavorable para deslizamiento y excentricidad.",t:"Resistencia I a — sin sismo, pesos mínimos (deslizamiento y excentricidad)",f:"0,90 DC + 1,00 EV + 1,50 EH + 1,75 LS(h)",DC:.9,EV:1,EHh:1.5,EHv:1,LSh:1.75,LSv:0,st:"R"},
+  {id:"RIb",sn:"Resistencia I b — sin sismo, pesos máximos",d:"Sin sismo. Empujes y pesos mayorados al máximo: es la más desfavorable para la presión sobre el suelo y para armar el muro.",t:"Resistencia I b — sin sismo, pesos máximos (capacidad de carga y armaduras)",f:"1,25 DC + 1,35 EV + 1,50 EH + 1,75 LS",DC:1.25,EV:1.35,EHh:1.5,EHv:1.5,LSh:1.75,LSv:1.75,st:"R"},
+  {id:"EEa",sn:"Evento Extremo I a — sismo: 100 % PAE + 50 % PIR",d:"Con sismo. Todo el empuje sísmico del suelo (PAE) más la mitad de la inercia del muro (PIR).",t:"Evento Extremo I a — sismo: 100 % del empuje sísmico + 50 % de la inercia",f:"1,0 DC + 1,0 EV + 1,0 PAE + 0,5 PIR + γEQ LS",DC:1,EV:1,eq:1,fAE:1,fIR:.5,st:"E"},
+  {id:"EEb",sn:"Evento Extremo I b — sismo: 50 % PAE + 100 % PIR",d:"Con sismo. La mitad del empuje sísmico (pero no menos que el empuje estático) más toda la inercia del muro.",t:"Evento Extremo I b — sismo: 50 % del empuje sísmico (≥ estático) + 100 % de la inercia",f:"1,0 DC + 1,0 EV + máx(0,5 PAE; Pa) + 1,0 PIR + γEQ LS",DC:1,EV:1,eq:1,fAE:.5,fIR:1,st:"E"},
+  {id:"SI",sn:"Servicio I — cargas sin mayorar",d:"Sin sismo y sin mayorar: cargas reales de uso, para comparar con la tensión admisible del estudio.",t:"Servicio I — cargas sin mayorar (comparación con σadm)",f:"1,0 DC + 1,0 EV + 1,0 EH + 1,0 LS",DC:1,EV:1,EHh:1,EHv:1,LSh:1,LSv:1,st:"S"}
  ];
  C.forEach(c=>{
   c.L=loads(c);
@@ -536,13 +536,13 @@ function footing(p,A){
    for(let j=0;j<i;j++){const xm=B-(j+0.5)*dx,arm=u-(j+0.5)*dx;
     const w=DC*p.gc*ytop(xm)+EV*p.g*(A.H-ytop(xm))+LSv*p.q-qAt(c,B,xm);V+=w*dx;M+=w*dx*arm}
    hx.push(B-u);hV.push(V);hM.push(M)}
-  heel.push({id:c.id,t:c.t,x:hx,M:hM,V:hV});
+  heel.push({id:c.id,sn:c.sn,t:c.t,x:hx,M:hM,V:hV});
   const tx=[],tM=[],tV=[];const dt=p.B1/n;
   for(let i=0;i<=n;i++){const u=i*dt;let V=0,M=0;
    for(let j=0;j<i;j++){const xm=(j+0.5)*dt,arm=u-xm;const yt=ytop(xm);
     const w=qAt(c,B,xm)-DC*p.gc*yt-EV*p.gf*Math.max(0,p.H3-yt);V+=w*dt;M+=w*dt*arm}
    tx.push(u);tV.push(V);tM.push(M)}
-  toe.push({id:c.id,t:c.t,x:tx,M:tM,V:tV});
+  toe.push({id:c.id,sn:c.sn,t:c.t,x:tx,M:tM,V:tV});
  });
  return{heel,toe,ytop};
 }
@@ -578,7 +578,7 @@ function drawWall(svgEl,p,A,c,opt={}){
   if(l.V>0.01){const x=X(l.x),y=Y(l.k==="ev"?H*0.15:l.y),len=ls(l.V),left=l.x<B*0.2;
    g+=`<line x1="${x}" y1="${y-len}" x2="${x}" y2="${y-4}" stroke="${col}" stroke-width="2" marker-end="url(#a${svgEl.id})"/>${dot(x,y)}`+lab(left?x-6:x+5,left?y-len+2:y-len-17,left?"end":"start",`${fx(l.V,2)} t · x = ${fx(l.x)} m`)}
   if(l.Hh>0.01){const x1=X(l.x),y=Y(l.y),len=ls(l.Hh),x0=x1+len;
-   g+=`<line x1="${x0}" y1="${y}" x2="${x1+4}" y2="${y}" stroke="${col}" stroke-width="2" marker-end="url(#a${svgEl.id})"/>${dot(x1,y)}`+lab(x0+5,l.k==="l"?y+13:y-17,"start",`${fx(l.Hh,2)} t · y = ${fx(l.y)} m`)}
+   g+=`<line x1="${x0}" y1="${y}" x2="${x1+4}" y2="${y}" stroke="${col}" stroke-width="2" marker-end="url(#a${svgEl.id})"/>${dot(x1,y)}`+lab(l.k==="i"?x0:x0+5,l.k==="e"||l.k==="i"?y+14:y-17,l.k==="i"?"end":"start",`${fx(l.Hh,2)} t · y = ${fx(l.y)} m`)}
  });
  // reacción
  const yb=Y(0);const qs=40/Math.max(c.lin.qmax,c.qeq);
@@ -688,12 +688,12 @@ function run(){
  </table>`;
  // resumen
  $("#summary").innerHTML=`<table><tr><th>Combinación</th><th>e / e lím (m)</th><th>Excentricidad</th><th>q / resistencia (t/m²)</th><th>Portante</th><th>Rr / Ru (t/m)</th><th>Deslizamiento</th></tr>`+
- A.C.map(c=>`<tr><td>${c.id}</td><td class="n">${fx(c.e)} / ${fx(c.elim)}</td><td>${okng(c.okE)} <span class="note">${fx(c.elim/Math.max(Math.abs(c.e),1e-6),2)}</span></td>
+ A.C.map(c=>`<tr><td><b>${c.sn}</b><br><span class="note">${c.d}<br>${c.f}</span></td><td class="n">${fx(c.e)} / ${fx(c.elim)}</td><td>${okng(c.okE)} <span class="note">${fx(c.elim/Math.max(Math.abs(c.e),1e-6),2)}</span></td>
  <td class="n">${fx(c.qd,1)+" / "+(c.st==="S"?"σadm ":"")+fx(c.Rb,1)}</td><td>${okng(c.okB)} <span class="note">${fx((c.Rb/c.qd),2)}</span></td>
  <td class="n">${c.st==="S"?"—":fx(c.Rr,2)+" / "+fx(c.Hs,2)}</td><td>${c.st==="S"?"—":okng(c.okD)+` <span class="note">${fx(c.Rr/c.Hs,2)}</span>`}</td></tr>`).join("")+`</table>
  <p class="note">Los números chicos son el cociente resistencia/solicitación (≥ 1 verifica). En Servicio I la excentricidad se compara con B/6 (núcleo central, criterio recomendado, no exigido) y la presión de contacto, sin mayorar, con la σadm del estudio.</p>`;
  // combos
- $("#combos").innerHTML=A.C.map(c=>`<div class="card"><h2>${c.t}</h2><p class="formula">${c.f}</p><div class="cmb"><div><svg id="sv_${c.id}"></svg><p class="note" style="max-width:640px;margin:6px auto 0;padding:6px 8px;border-left:3px solid var(--f4);background:var(--bg)"><b>Presión del suelo.</b> ${diagTxt(c,p,A)} El punto rojo marca la reacción R y la barra roja, el tramo donde puede caer según el límite de excentricidad.</p></div><div>
+ $("#combos").innerHTML=A.C.map(c=>`<div class="card"><h2>${c.t}</h2><p style="margin:0 0 4px">${c.d}</p><p class="formula">${c.f}</p><div class="cmb"><div><svg id="sv_${c.id}"></svg><p class="note" style="max-width:640px;margin:6px auto 0;padding:6px 8px;border-left:3px solid var(--f4);background:var(--bg)"><b>Presión del suelo.</b> ${diagTxt(c,p,A)} El punto rojo marca la reacción R y la barra roja, el tramo donde puede caer según el límite de excentricidad.</p></div><div>
  <table><tr><th>Carga</th><th>V (t)</th><th>x (m)</th><th>H (t)</th><th>y (m)</th><th>Ubicación de la resultante: en base a qué</th></tr>${c.L.map(l=>`<tr><td>${l.n}</td><td class="n">${l.V?fx(l.V,2):""}</td><td class="n">${l.V?fx(l.x):""}</td><td class="n">${l.Hh?fx(l.Hh,2):""}</td><td class="n">${l.Hh?fx(l.y):""}</td><td class="note">${l.b}</td></tr>`).join("")}
  <tr><th>Σ</th><th class="n">${fx(c.V,2)}</th><th></th><th class="n">${fx(c.Hs,2)}</th><th></th><th class="note">x desde el borde de la puntera; y desde el plano de fundación</th></tr></table>
  </div></div>${checks(c,p,A)}</div>`).join("");
@@ -733,19 +733,19 @@ function run(){
  Fz.heel[0].x.forEach(x=>{const h=Fz.ytop(x)*1000,d=h-p.ct-p.dt/2;hcap.push({x,h,d,...flex(heelAs,d,p.fc,p.fy)})});
  Fz.toe[0].x.forEach(u=>{const x=p.B1-u;const h=Fz.ytop(x)*1000,d=h-p.cb-p.db/2;tcap.push({x:u,h,d,...flex(toeAs,d,p.fc,p.fy)})});
  $("#heelPlot").innerHTML="<h3>Momento en el talón (+ tracciona arriba)</h3>"+plot([
-  ...Fz.heel.map(c=>({x:c.x.map(x=>x-G.xs),y:c.M,col:cols[c.id],lab:c.id})),
+  ...Fz.heel.map(c=>({x:c.x.map(x=>x-G.xs),y:c.M,col:cols[c.id],lab:c.sn})),
   {x:hcap.map(k=>k.x-G.xs),y:hcap.map(k=>k.phiMn),col:"--ok",dash:"6 3",lab:"φMn superior"}],{xl:"Distancia desde la cara trasera de la pantalla (m)",yl:"M (t·m/m)",u:"t·m/m",capAt:s=>s.x.length-1});
  $("#toePlot").innerHTML="<h3>Momento en la puntera (+ tracciona abajo)</h3>"+plot([
-  ...Fz.toe.map(c=>({x:c.x.map(u=>u),y:c.M,col:cols[c.id],lab:c.id})),
+  ...Fz.toe.map(c=>({x:c.x.map(u=>u),y:c.M,col:cols[c.id],lab:c.sn})),
   {x:tcap.map(k=>k.x),y:tcap.map(k=>k.phiMn),col:"--ok",dash:"6 3",lab:"φMn inferior"}],{xl:"Distancia desde el borde libre (m)",yl:"M (t·m/m)",u:"t·m/m",capAt:s=>s.x.length-1});
  const ftab=(arr,cap,As,dbar,face,s,crit)=>{
   const hf=cap[cap.length-1],n=arr[0].x.length-1;
   const rows=arr.map(c=>{const M=c.M[n];let Vd;
    if(crit==="d"){const u=Math.max(0,c.x[n]-hf.d/1000);let k=0;while(k<n&&c.x[k]<u)k++;Vd=c.V[k]}else Vd=c.V[n];
    const vc=vcFoot(p.fc,hf.d,As);
-   return `<tr><td>${c.id}</td><td class="n">${fx(M,2)}</td><td class="n">${fx(hf.phiMn,2)}</td><td>${okng(hf.phiMn>=M)}</td><td class="n">${fx(Vd,2)}</td><td class="n">${fx(vc.phiVc,2)}</td><td>${okng(vc.phiVc>=Vd)}</td></tr>`}).join("");
+   return `<tr><td>${c.sn}</td><td class="n">${fx(M,2)}</td><td class="n">${fx(hf.phiMn,2)}</td><td>${okng(hf.phiMn>=M)}</td><td class="n">${fx(Vd,2)}</td><td class="n">${fx(vc.phiVc,2)}</td><td>${okng(vc.phiVc>=Vd)}</td></tr>`}).join("");
   const Asmin=0.0018*1000*hf.h,smx=Math.min(3*hf.h,300);
-  return `<table><tr><th>Comb.</th><th>Mu cara</th><th>φMn</th><th></th><th>Vu ${crit==="d"?"a d":"en cara"}</th><th>φVc</th><th></th></tr>${rows}</table>
+  return `<table><tr><th>Combinación</th><th>Mu cara</th><th>φMn</th><th></th><th>Vu ${crit==="d"?"a d":"en cara"}</th><th>φVc</th><th></th></tr>${rows}</table>
   <table style="margin-top:8px"><tr><td>Armadura ${face}: Ø${dbar} c/${s} = ${fx(As,0)} mm²/m · d = ${fx(hf.d,0)} mm · φ = ${fx(hf.phi,2)}</td><td></td></tr>
   <tr><td>As,mín = 0,0018·Ag = ${fx(Asmin,0)} mm²/m <span class="ref">13.3.2.1 → 7.6.1.1</span></td><td>${okng(As>=Asmin)}</td></tr>
   <tr><td>Separación ≤ menor de 3h y 300 mm = ${fx(smx,0)} mm <span class="ref">CIRSOC 201-25 7.7.2.3</span></td><td>${okng(s<=smx)}</td></tr>
