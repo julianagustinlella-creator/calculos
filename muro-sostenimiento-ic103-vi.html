@@ -552,8 +552,8 @@ function vcFoot(fc,d,As){const rho=As/(1000*d),ls=Math.min(1,Math.sqrt(2/(1+d/25
 /* ---------- dibujo ---------- */
 const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 function drawWall(svgEl,p,A,c,opt={}){
- const{G,H,B}=A,W=c?600:440,Hh=440,pad=46,sc=Math.min((W-2*pad-(c?230:60))/(B+1.2),(Hh-2*pad-30)/(H+0.6));
- const X=x=>pad+40+x*sc,Y=y=>Hh-pad-y*sc;
+ const{G,H,B}=A,W=c?640:440,Hh=c?470:440,pad=46,sc=Math.min((W-2*pad-(c?300:60))/(B+1.2),(Hh-2*pad-(c?60:30))/(H+0.6));
+ const X=x=>pad+(c?75:40)+x*sc,Y=y=>Hh-pad-y*sc;
  const poly=(P,f,s="")=>`<polygon points="${P.map(([x,y])=>X(x)+","+Y(y)).join(" ")}" fill="${f}" stroke="${css('--mu')}" stroke-width="1" ${s}/>`;
  let g=`<defs><pattern id="h${svgEl.id}" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="${css('--soil2')}"/><line x1="0" y1="0" x2="0" y2="7" stroke="${css('--soil')}" stroke-width="2"/></pattern>
  <marker id="a${svgEl.id}" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="context-stroke"/></marker></defs>`;
@@ -574,10 +574,11 @@ function drawWall(svgEl,p,A,c,opt={}){
  const colOf=k=>({w:css('--f1'),s:css('--f4'),e:css('--f2'),ev:css('--f2'),l:css('--f5'),i:css('--f3')})[k];
  c.L.forEach(l=>{const col=colOf(l.k);
   const dot=(x,y)=>`<circle cx="${x}" cy="${y}" r="3.5" fill="${col}" stroke="${css('--card')}" stroke-width="1.2"/>`;
-  if(l.V>0.01){const x=X(l.x),y=Y(l.k==="ev"?H*0.15:l.y),len=ls(l.V);
-   g+=`<line x1="${x}" y1="${y-len}" x2="${x}" y2="${y-4}" stroke="${col}" stroke-width="2" marker-end="url(#a${svgEl.id})"/>${dot(x,y)}<text x="${x+4}" y="${y-len-3}" style="fill:${col};font-weight:600;paint-order:stroke;stroke:${css('--card')};stroke-width:3px">${fx(l.V,2)} t · x = ${fx(l.x)}</text>`}
+  const lab=(x,y,anc,val)=>`<text text-anchor="${anc}" style="fill:${col};font-weight:700;paint-order:stroke;stroke:${css('--card')};stroke-width:3.5px"><tspan x="${x}" y="${y}">${l.n}</tspan><tspan x="${x}" y="${y+13}" style="font-weight:600">${val}</tspan></text>`;
+  if(l.V>0.01){const x=X(l.x),y=Y(l.k==="ev"?H*0.15:l.y),len=ls(l.V),left=l.x<B*0.2;
+   g+=`<line x1="${x}" y1="${y-len}" x2="${x}" y2="${y-4}" stroke="${col}" stroke-width="2" marker-end="url(#a${svgEl.id})"/>${dot(x,y)}`+lab(left?x-6:x+5,left?y-len+2:y-len-17,left?"end":"start",`${fx(l.V,2)} t · x = ${fx(l.x)} m`)}
   if(l.Hh>0.01){const x1=X(l.x),y=Y(l.y),len=ls(l.Hh),x0=x1+len;
-   g+=`<line x1="${x0}" y1="${y}" x2="${x1+4}" y2="${y}" stroke="${col}" stroke-width="2" marker-end="url(#a${svgEl.id})"/>${dot(x1,y)}<text x="${x0+4}" y="${l.k==="l"?y+14:y-3}" style="fill:${col};font-weight:600;paint-order:stroke;stroke:${css('--card')};stroke-width:3px">${fx(l.Hh,2)} t · y = ${fx(l.y)}</text>`}
+   g+=`<line x1="${x0}" y1="${y}" x2="${x1+4}" y2="${y}" stroke="${col}" stroke-width="2" marker-end="url(#a${svgEl.id})"/>${dot(x1,y)}`+lab(x0+5,l.k==="l"?y+13:y-17,"start",`${fx(l.Hh,2)} t · y = ${fx(l.y)} m`)}
  });
  // reacción
  const yb=Y(0);const qs=40/Math.max(c.lin.qmax,c.qeq);
