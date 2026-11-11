@@ -279,7 +279,7 @@ code{font-size:12.5px;background:var(--bg);padding:0 3px;border-radius:3px}
 <p class="note"><b>Ligaduras entre las dos mallas de la pantalla.</b> No son obligatorias: la pantalla se diseña como losa en una dirección (11.1.4 → 13.3.6.1 → Cap. 7), y el arriostramiento de barras verticales solo se exige si trabajan a compresión con cuantía mayor al 1 % (CIRSOC 201-25, 11.7.4.1; ACI 318-25, 11.7.5.1). Se colocan como armadura constructiva, para mantener las mallas en posición. Serían obligatorias si el corte no verificara con el hormigón solo (7.6.3.1).</p>
 </div>
 <div class="card"><h2>Pantalla</h2><div class="cmb"><div id="stemPlotM"></div><div id="stemPlotV"></div></div><div id="stemTab"></div></div>
-<div class="card"><h2>Talón (armadura superior)</h2><div class="cmb"><div id="heelPlot"></div><div id="heelTab"></div></div></div>
+<div class="card"><h2>Talón (armadura superior)</h2><div id="heelNode"></div><div class="cmb"><div id="heelPlot"></div><div id="heelTab"></div></div></div>
 <div class="card"><h2>Puntera (armadura inferior)</h2><div class="cmb"><div id="toePlot"></div><div id="toeTab"></div></div></div>
 </section>
 
@@ -378,7 +378,7 @@ const FA=[
   ["v3rd","Tramo 3 — refuerzo: Ø (0 = sin refuerzo)","mm",0],["v3rs","Tramo 3 — refuerzo: separación","mm",150]]],
  ["P2 · Pantalla: vertical, cara del frente",[["ved","Ø","mm",10],["ves","Separación","mm",200]]],
  ["P3 · Pantalla: horizontal, en cada cara",[["dh","Ø","mm",10],["sh","Separación","mm",200]]],
- ["Z1 · Talón: superior (principal)",[["ct","Recubrimiento superior","mm",50],["dt","Barra: Ø","mm",16],["st","Barra: separación","mm",125],
+ ["Z1 · Talón: superior (principal)",[["hcrit","Criterio para el Mu del talón","",["A","A · Convencional (más conservador)"],[["A","A · Convencional (más conservador)"],["B","B · Limitado por el equilibrio del nudo"]]],["ct","Recubrimiento superior","mm",50],["dt","Barra: Ø","mm",16],["st","Barra: separación","mm",125],
   ["dtr","Refuerzo: Ø (0 = sin refuerzo)","mm",0],["str","Refuerzo: separación","mm",125]]],
  ["Z2 · Puntera: inferior (principal)",[["cb","Recubrimiento inferior (contra terreno)","mm",75],["db","Barra: Ø","mm",12],["sb","Barra: separación","mm",200],
   ["dbr","Refuerzo: Ø (0 = sin refuerzo)","mm",0],["sbr","Refuerzo: separación","mm",200]]],
@@ -891,20 +891,41 @@ function run(){
  const hcap=[],tcap=[];
  Fz.heel[0].x.forEach(x=>{const h=Fz.ytop(x)*1000,d=h-p.ct-Math.max(p.dt,p.dtr>0&&p.str>0?p.dtr:0)/2;hcap.push({x,h,d,...flex(heelAs,d,p.fc,p.fy)})});
  Fz.toe[0].x.forEach(u=>{const x=p.B1-u;const h=Fz.ytop(x)*1000,d=h-p.cb-Math.max(p.db,p.dbr>0&&p.sbr>0?p.dbr:0)/2;tcap.push({x:u,h,d,...flex(toeAs,d,p.fc,p.fy)})});
- $("#heelPlot").innerHTML="<h3>Momento en el talón (+ tracciona arriba)</h3>"+plot([
+ $("#heelPlot").innerHTML="<h3>Momento en el talón por el criterio A (+ tracciona arriba)</h3>"+plot([
   ...Fz.heel.map(c=>({x:c.x.map(x=>x-G.xs),y:c.M,col:cols[c.id],lab:c.sn})),
   {x:hcap.map(k=>k.x-G.xs),y:hcap.map(k=>k.phiMn),col:"--ok",dash:"6 3",lab:"φMn superior"}],{xl:"Distancia desde la cara trasera de la pantalla (m)",yl:"M (t·m/m)",u:"t·m/m",capAt:s=>s.x.length-1});
  $("#toePlot").innerHTML="<h3>Momento en la puntera (+ tracciona abajo)</h3>"+plot([
   ...Fz.toe.map(c=>({x:c.x.map(u=>u),y:c.M,col:cols[c.id],lab:c.sn})),
   {x:tcap.map(k=>k.x),y:tcap.map(k=>k.phiMn),col:"--ok",dash:"6 3",lab:"φMn inferior"}],{xl:"Distancia desde el borde libre (m)",yl:"M (t·m/m)",u:"t·m/m",capAt:s=>s.x.length-1});
+ {const nS=S.cap.length-1,SCm={RIa:"RIb",RIb:"RIb",EEa:"EEa",EEb:"EEb"},xc=p.B1+p.B2/2;
+  Fz.heel.forEach(h=>{const sc=S.cases.find(k=>k.id===SCm[h.id]),cm=A.C.find(k=>k.id===h.id),tt=Fz.toe.find(t=>t.id===h.id);
+   h.Ms=sc.M[nS];h.Vs=sc.V[nS];h.Ne=cm.DC*A.Wst*(xc-G.cs.x);h.Mst=h.Ms+h.Vs*p.H5/2+h.Ne;
+   h.Mt=Math.max(0,tt.M[tt.M.length-1]);h.Mconv=h.M[h.M.length-1];h.Mnudo=Math.max(0,h.Mst-h.Mt);
+   h.Mdes=p.hcrit==="B"?Math.min(h.Mconv,h.Mnudo):h.Mconv});
+  const B_=p.hcrit==="B";
+  $("#heelNode").innerHTML=`<h3>Con qué momento se arma el talón</h3>
+  <div class="chks">
+  <div class="chk" style="border-left-color:var(${B_?"--ln":"--ac"})"><h4><span>Criterio A · Convencional</span>${B_?"":'<span class="ok">EN USO</span>'}</h4>
+   <p style="margin:0 0 6px">El talón es un voladizo empotrado en la cara trasera de la pantalla. Se carga con todo lo que tiene encima y se le resta la reacción del suelo:</p>
+   <p class="formula">Mu = M(suelo + zapata + sobrecarga) − M(reacción lineal del suelo)</p>
+   <p class="note" style="margin:0">Sale del equilibrio del muro entero, con el empuje de Rankine sobre toda la altura H. Es el método habitual y el más conservador.</p></div>
+  <div class="chk" style="border-left-color:var(${B_?"--ac":"--ln"})"><h4><span>Criterio B · Equilibrio del nudo</span>${B_?'<span class="ok">EN USO</span>':""}</h4>
+   <p style="margin:0 0 6px">En el nudo se juntan la pantalla, el talón y la puntera. El momento que trae la pantalla lo equilibran los otros dos, así que el talón no puede tomar más que:</p>
+   <p class="formula">Mu ≤ M pantalla en el nudo − M puntera</p>
+   <p class="formula">M pantalla en el nudo = Mu base + Vu base · H5/2 + N · e</p>
+   <p class="note" style="margin:0">El suelo sobre el talón solo actúa en la medida necesaria para equilibrar a la pantalla. Se adopta el menor entre A y este tope. Queda coherente con el empuje con que se armó la pantalla (Coulomb, δ = 2/3 φ, sobre su altura).</p></div>
+  </div>
+  <table style="margin-top:10px"><tr><th>Combinación</th><th>Mu base de la pantalla</th><th>+ Vu·H5/2</th><th>+ N·e</th><th>= M pantalla en el nudo</th><th>− M puntera</th><th>B · tope por el nudo</th><th>A · convencional</th><th>Mu adoptado</th></tr>
+  ${Fz.heel.map(h=>`<tr><td>${h.sn}</td><td class="n">${fx(h.Ms,2)}</td><td class="n">${fx(h.Vs*p.H5/2,2)}</td><td class="n">${fx(h.Ne,2)}</td><td class="n">${fx(h.Mst,2)}</td><td class="n">${fx(h.Mt,2)}</td><td class="n"><b>${fx(h.Mnudo,2)}</b></td><td class="n"><b>${fx(h.Mconv,2)}</b></td><td class="n" style="color:var(--ac)"><b>${fx(h.Mdes,2)}</b> ${B_&&h.Mnudo<h.Mconv?"(B)":"(A)"}</td></tr>`).join("")}</table>
+  <p class="note">Valores en t·m/m. Vu·H5/2 lleva el momento desde la cara superior de la zapata hasta el centro del nudo. N·e es el peso de la pantalla por su excentricidad respecto del centro del nudo (${fx(xc-G.cs.x,3)} m). El momento de la puntera se toma en su cara, que es menor que en el centro del nudo: así el tope queda del lado seguro. En Resistencia I a la pantalla tiene las mismas cargas que en Resistencia I b. El criterio se elige en el grupo Z1 de arriba. El reglamento no fija cuál usar: el CIRSOC 201-25 solo manda diseñar la zapata como losa en una dirección (13.3.2.1). El corte del talón se verifica siempre con el método convencional.</p><p class="note" style="color:var(--wn)"><b>Cuidado con el criterio B en sismo.</b> El momento de la pantalla incluye su propia inercia, pero no la del suelo que está sobre el talón. En el criterio A esa inercia sí entra, a través de la reacción del suelo. Por eso B baja mucho el momento en las combinaciones sísmicas, sobre todo en la de 100 % de inercia. Si usás B, revisá que la diferencia con A sea razonable.</p>`;}
  const ftab=(arr,cap,As,dbar,face,s,crit)=>{
   const hf=cap[cap.length-1],n=arr[0].x.length-1;
-  const rows=arr.map(c=>{const M=c.M[n];let Vd;
+  const rows=arr.map(c=>{const M=c.Mdes!=null?c.Mdes:c.M[n];let Vd;
    if(crit==="d"){const u=Math.max(0,c.x[n]-hf.d/1000);let k=0;while(k<n&&c.x[k]<u)k++;Vd=c.V[k]}else Vd=c.V[n];
    const vc=vcFoot(p.fc,hf.d,As);
    return `<tr><td>${c.sn}</td><td class="n">${fx(M,2)}</td><td class="n">${fx(hf.phiMn,2)}</td><td>${okng(hf.phiMn>=M)}</td><td class="n">${fx(Vd,2)}</td><td class="n">${fx(vc.phiVc,2)}</td><td>${okng(vc.phiVc>=Vd)}</td></tr>`}).join("");
   const Asmin=0.0018*1000*hf.h,smx=Math.min(3*hf.h,300);
-  return `<table><tr><th>Combinación</th><th>Mu cara</th><th>φMn</th><th></th><th>Vu ${crit==="d"?"a d":"en cara"}</th><th>φVc</th><th></th></tr>${rows}</table>
+  return `<table><tr><th>Combinación</th><th>Mu de diseño</th><th>φMn</th><th></th><th>Vu ${crit==="d"?"a d":"en cara"}</th><th>φVc</th><th></th></tr>${rows}</table>
   <table style="margin-top:8px"><tr><td>Armadura ${face}: ${dbar} = ${fx(As,0)} mm²/m · d = ${fx(hf.d,0)} mm · φ = ${fx(hf.phi,2)}</td><td></td></tr>
   <tr><td>As,mín = 0,0018·Ag = ${fx(Asmin,0)} mm²/m <span class="ref">13.3.2.1 → 7.6.1.1</span></td><td>${okng(As>=Asmin)}</td></tr>
   <tr><td>Separación ≤ menor de 3h y 300 mm = ${fx(smx,0)} mm <span class="ref">CIRSOC 201-25 7.7.2.3</span></td><td>${okng(s<=smx)}</td></tr>
