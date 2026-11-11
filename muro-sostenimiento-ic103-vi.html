@@ -180,7 +180,12 @@ code{font-size:12.5px;background:var(--bg);padding:0 3px;border-radius:3px}
 <li><b>Solo el diente, con la tapada H3 como peso:</b> E<sub>p</sub> = ½·K<sub>p</sub>·γ·[(H3 + d<sub>k</sub>)² − H3²].</li>
 <li><b>Puntera + diente:</b> E<sub>p</sub> = ½·K<sub>p</sub>·γ·(H3 + d<sub>k</sub>)².</li></ul>
 <p class="note">K<sub>p</sub> = tan²(45° + φ/2) (Rankine, sin fricción), que queda por debajo del de la espiral logarítmica que pide el 11.6.5.5. Se afecta con φep = 0,50 en Resistencia I y 1,00 en Evento Extremo I. El pasivo se cuenta solo para el deslizamiento: no se suma al momento estabilizante ni cambia las presiones de contacto. El peso del diente se suma como DC. La armadura del diente no se verifica acá.</p>
-<h3>3.4 Inercia del muro y no concurrencia <span class="ref">IC-103 VI 11.6.5.1</span></h3>
+<h3>3.4 Empuje por compactación (etapa de obra)</h3>
+<p>El paso de un equipo de compactación deja en el relleno un empuje horizontal residual. La AASHTO pide considerarlo cuando el equipo trabaja a menos de media altura del muro (art. 3.11.2 <span class="unv">†</span>). Según Ingold (1979), una carga lineal p (peso más fuerza centrífuga por metro de ancho del equipo) da una presión que crece hasta σ<sub>h,máx</sub> a la profundidad z<sub>c</sub>, se mantiene hasta h<sub>c</sub> y por debajo coincide con el activo:</p>
+<div class="formula">σ<sub>h,máx</sub> = √(2·p·γ/π) &nbsp;·&nbsp; z<sub>c</sub> = K<sub>a</sub>·√(2·p/(π·γ)) &nbsp;·&nbsp; h<sub>c</sub> = (1/K<sub>a</sub>)·√(2·p/(π·γ))</div>
+<p>La calculadora lo trata como una combinación de obra aparte para la pantalla: 1,5 × ese empuje, sin la sobrecarga de servicio ni la carga de la corona, porque actúa mientras se rellena y se alivia cuando la pantalla se deforma con las cargas posteriores. Es un criterio del proyectista. Se activa cargando la carga lineal del equipo en Datos; con 0 no se verifica. Como referencia, una placa vibratoria o un rodillo manual rondan los 10 a 20 kN/m, y un rodillo pesado los 200 kN/m.</p>
+<p><b>Carga sobre la corona.</b> Si una losa u otra estructura apoya sobre la corona con un apoyo deslizante, transmite sólo carga vertical. Se cuenta con 0,90 en Resistencia I a (sólo la permanente), con 1,25 y 1,75 en Resistencia I b, y con 1,0 y γEQ en sismo. Entra en la estabilidad, en las presiones para armar la zapata y, por su excentricidad, en el momento de la pantalla.</p>
+<h3>3.5 Inercia del muro y no concurrencia <span class="ref">IC-103 VI 11.6.5.1</span></h3>
 <div class="formula">P<sub>IR</sub> = k<sub>h</sub> (W<sub>w</sub> + W<sub>s</sub>) &nbsp;(11.6.5.1-1) &nbsp;&nbsp;·&nbsp;&nbsp; W<sub>w</sub> = peso del muro; W<sub>s</sub> = suelo inmediatamente sobre el talón</div>
 <p>Como PAE y PIR no son simultáneos, hay que verificar dos casos y quedarse con el peor:</p>
 <ul><li><b>EE-I a:</b> 100 % PAE + 50 % PIR</li>
@@ -359,7 +364,10 @@ const F=[
  ["Materiales",[["gc","γ hormigón","t/m³",2.4],["fc","f'c","MPa",20],["fy","fy","MPa",420]]],
  ["Relleno y sobrecarga",[["g","γ relleno","t/m³",2.1],["phi","φ relleno","°",34],
   ["dmode","δ en el plano virtual del talón","",["R","δ = 0 Rankine (recomendado)"],[["R","δ = 0 Rankine (recomendado)"],["C","δ = 2/3 φ Coulomb"]]],
-  ["q","Sobrecarga en la plataforma","t/m²",0.2]]],
+  ["q","Sobrecarga en la plataforma","t/m²",0.2],
+  ["RD","Carga permanente sobre la corona, p. ej. reacción de una losa (0 = no hay)","t/m",0],
+  ["RL","Sobrecarga sobre la corona (0 = no hay)","t/m",0],
+  ["pcomp","Compactación junto al muro: carga lineal del equipo (0 = no verificar)","kN/m",0]]],
  ["Fundación",[["ftype","Tipo de apoyo (CIRSOC 804-3, 11.6.3.2)","",["S","Suelo: presión uniforme en el área efectiva"],[["S","Suelo: presión uniforme en el área efectiva"],["R","Roca: distribución lineal (triángulo o trapecio)"]]],
   ["sadm","σadm del estudio (10 t/m² = 1 kg/cm²)","t/m²",40],["FSq","FS adoptado para qn = FS·σadm","",3.5],
   ["mumode","μ base–suelo: cómo se obtiene","",["A","Automático: tan(2/3·φ relleno)"],[["A","Automático: tan(2/3·φ relleno)"],["M","Manual (p. ej. el del estudio)"]]],
@@ -552,6 +560,9 @@ function analyze(p){
   if(Wk>0)add("Diente (DC)",c.DC*Wk,p.xk+p.wk/2,0,-p.dk/2,"w","Centro del diente");
   add("Suelo s/talón (EV)",c.EV*Wso,G.ca.x,0,G.ca.y,"s","Baricentro del área A3 (trapecio sobre el talón + cuña sobre la cara inclinada)");
   if(Wto>0)add("Suelo s/puntera (EV)",c.EV*Wto,G.ct.x,0,G.ct.y,"s","Baricentro del área A4");
+  {const fRL=c.RL==="g"?p.gEQ:(c.RL||0),xcor=p.B1+p.B4/2,bC="Centro de la corona: x = B1 + B4/2. Sólo carga vertical (apoyo deslizante)";
+   if(p.RD>0&&c.RD)add("Carga s/corona, permanente (DC)",c.RD*p.RD,xcor,0,H,"r",bC);
+   if(p.RL>0&&fRL)add("Carga s/corona, sobrecarga (LL)",fRL*p.RL,xcor,0,H,"r",bC);}
   const bLSh="H/2: presión constante K·q en toda la altura "+rAASH("3.11.6.1")+" "+rIC("11.6.5.3");
   const bLSv="Centro del ancho cargado detrás de la pantalla (talón + cuña): x = B − L/2";
   const bV="Sobre el plano vertical del talón: x = B";
@@ -575,11 +586,11 @@ function analyze(p){
   return L;
  }
  const C=[
-  {id:"RIa",sn:"Resistencia I a — sin sismo, pesos mínimos",d:"Sin sismo. Empujes mayorados y pesos con su valor mínimo: es la más desfavorable para deslizamiento y excentricidad.",t:"Resistencia I a — sin sismo, pesos mínimos (deslizamiento y excentricidad)",f:"0,90 DC + 1,00 EV + 1,50 EH + 1,75 LS(h)",DC:.9,EV:1,EHh:1.5,EHv:1,LSh:1.75,LSv:0,st:"R"},
-  {id:"RIb",sn:"Resistencia I b — sin sismo, pesos máximos",d:"Sin sismo. Empujes y pesos mayorados al máximo: es la más desfavorable para la presión sobre el suelo y para armar el muro.",t:"Resistencia I b — sin sismo, pesos máximos (capacidad de carga y armaduras)",f:"1,25 DC + 1,35 EV + 1,50 EH + 1,75 LS",DC:1.25,EV:1.35,EHh:1.5,EHv:1.5,LSh:1.75,LSv:1.75,st:"R"},
-  {id:"EEa",sn:"Evento Extremo I a — sismo: 100 % PAE + 50 % PIR",d:"Con sismo. Todo el empuje sísmico del suelo (PAE) más la mitad de la inercia del muro (PIR).",t:"Evento Extremo I a — sismo: 100 % del empuje sísmico + 50 % de la inercia",f:"1,0 DC + 1,0 EV + 1,0 PAE + 0,5 PIR + γEQ LS",DC:1,EV:1,eq:1,fAE:1,fIR:.5,st:"E"},
-  {id:"EEb",sn:"Evento Extremo I b — sismo: 50 % PAE + 100 % PIR",d:"Con sismo. La mitad del empuje sísmico (pero no menos que el empuje estático) más toda la inercia del muro.",t:"Evento Extremo I b — sismo: 50 % del empuje sísmico (≥ estático) + 100 % de la inercia",f:"1,0 DC + 1,0 EV + máx(0,5 PAE; Pa) + 1,0 PIR + γEQ LS",DC:1,EV:1,eq:1,fAE:.5,fIR:1,st:"E"},
-  {id:"SI",sn:"Servicio I — cargas sin mayorar",d:"Sin sismo y sin mayorar: cargas reales de uso, para comparar con la tensión admisible del estudio.",t:"Servicio I — cargas sin mayorar (comparación con σadm)",f:"1,0 DC + 1,0 EV + 1,0 EH + 1,0 LS",DC:1,EV:1,EHh:1,EHv:1,LSh:1,LSv:1,st:"S"}
+  {id:"RIa",sn:"Resistencia I a — sin sismo, pesos mínimos",d:"Sin sismo. Empujes mayorados y pesos con su valor mínimo: es la más desfavorable para deslizamiento y excentricidad.",t:"Resistencia I a — sin sismo, pesos mínimos (deslizamiento y excentricidad)",f:"0,90 DC + 1,00 EV + 1,50 EH + 1,75 LS(h)",DC:.9,EV:1,EHh:1.5,EHv:1,LSh:1.75,LSv:0,RD:.9,RL:0,st:"R"},
+  {id:"RIb",sn:"Resistencia I b — sin sismo, pesos máximos",d:"Sin sismo. Empujes y pesos mayorados al máximo: es la más desfavorable para la presión sobre el suelo y para armar el muro.",t:"Resistencia I b — sin sismo, pesos máximos (capacidad de carga y armaduras)",f:"1,25 DC + 1,35 EV + 1,50 EH + 1,75 LS",DC:1.25,EV:1.35,EHh:1.5,EHv:1.5,LSh:1.75,LSv:1.75,RD:1.25,RL:1.75,st:"R"},
+  {id:"EEa",sn:"Evento Extremo I a — sismo: 100 % PAE + 50 % PIR",d:"Con sismo. Todo el empuje sísmico del suelo (PAE) más la mitad de la inercia del muro (PIR).",t:"Evento Extremo I a — sismo: 100 % del empuje sísmico + 50 % de la inercia",f:"1,0 DC + 1,0 EV + 1,0 PAE + 0,5 PIR + γEQ LS",DC:1,EV:1,eq:1,fAE:1,fIR:.5,RD:1,RL:"g",st:"E"},
+  {id:"EEb",sn:"Evento Extremo I b — sismo: 50 % PAE + 100 % PIR",d:"Con sismo. La mitad del empuje sísmico (pero no menos que el empuje estático) más toda la inercia del muro.",t:"Evento Extremo I b — sismo: 50 % del empuje sísmico (≥ estático) + 100 % de la inercia",f:"1,0 DC + 1,0 EV + máx(0,5 PAE; Pa) + 1,0 PIR + γEQ LS",DC:1,EV:1,eq:1,fAE:.5,fIR:1,RD:1,RL:"g",st:"E"},
+  {id:"SI",sn:"Servicio I — cargas sin mayorar",d:"Sin sismo y sin mayorar: cargas reales de uso, para comparar con la tensión admisible del estudio.",t:"Servicio I — cargas sin mayorar (comparación con σadm)",f:"1,0 DC + 1,0 EV + 1,0 EH + 1,0 LS",DC:1,EV:1,EHh:1,EHv:1,LSh:1,LSv:1,RD:1,RL:1,st:"S"}
  ];
  C.forEach(c=>{
   c.L=loads(c);
@@ -632,8 +643,11 @@ function stem(p,A){
   {id:"EEb",n:"EE b: máx(0,5 PAE; Pa) + PIR",col:"--f3",p:s=>{const use=0.5*KAEh>=Kwh;
     const e=use?0.5*KAEh*p.g*(aT*s+(1-aT)*Hp/2):Kwh*p.g*s;return e+p.gEQ*(use?0.5*KAEh:Kwh)*p.q+kh*p.gc*t(s)}}
  ];
+ const NC={RIb:1.25*p.RD+1.75*p.RL,EEa:p.RD+p.gEQ*p.RL,EEb:p.RD+p.gEQ*p.RL};cases.forEach(c=>c.N=NC[c.id]||0);
+ if(p.pcomp>0){const pc=p.pcomp/G0,Kr=A.Ka,rt=Math.sqrt(2*pc/(Math.PI*p.g)),smax=Math.sqrt(2*pc*p.g/Math.PI),zc=Kr*rt,hc=rt/Kr;
+  cases.push({id:"CO",n:"Construcción: 1,5 × compactación",col:"--f4",N:0,comp:{smax,zc,hc},p:s=>1.5*(s<zc?smax*s/zc:s<hc?smax:Kr*p.g*s)})}
  cases.forEach(c=>{c.s=[];c.V=[];c.M=[];let V=0,M=0,pp=c.p(0);
-  for(let i=0;i<=n;i++){const s=i*ds;if(i>0){const pn=c.p(s);const Vn=V+(pp+pn)/2*ds;M+=(V+Vn)/2*ds;V=Vn;pp=pn}c.s.push(s);c.V.push(V);c.M.push(M)}});
+  for(let i=0;i<=n;i++){const s=i*ds;if(i>0){const pn=c.p(s);const Vn=V+(pp+pn)/2*ds;M+=(V+Vn)/2*ds;V=Vn;pp=pn}c.s.push(s);c.V.push(V);c.M.push(M+c.N*(t(s)-p.B4)/2)}});
 // capacidad por tramos
  const cuts=[0];if(p.vh1>0&&p.vh1<Hp){cuts.push(p.vh1);if(p.vh2>p.vh1&&p.vh2<Hp)cuts.push(p.vh2)}cuts.push(Hp);
  const TB={1:[p.v1d,p.v1s,p.v1rd,p.v1rs],2:[p.v2d,p.v2s,p.v2rd,p.v2rs],3:[p.v3d,p.v3s,p.v3rd,p.v3rs]};
@@ -671,7 +685,7 @@ function footing(p,A){
  return{heel,toe,ytop};
 }
 function vcFoot(fc,d,As){const rho=As/(1000*d),ls=Math.min(1,Math.sqrt(2/(1+d/254)));
- let Vc=0.66*ls*Math.cbrt(rho)*Math.sqrt(fc)*1000*d/1000;Vc=Math.min(Vc,0.42*Math.sqrt(fc)*d);return{phiVc:0.75*Vc/G0,ls}}
+ return{phiVc:0.75*0.17*Math.sqrt(fc)*d/G0,ls}}
 
 /* ---------- dibujo ---------- */
 const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
@@ -695,12 +709,12 @@ function drawWall(svgEl,p,A,c,opt={}){
   svgEl.setAttribute("viewBox",`0 0 ${W} ${Hh+kd}`);svgEl.innerHTML=g;return;
  }
  const fmax=Math.max(...c.L.map(l=>Math.max(l.V,l.Hh)));const ls=f=>12+48*Math.sqrt(f/fmax);
- const colOf=k=>({w:css('--f1'),s:css('--f4'),e:css('--f2'),ev:css('--f2'),l:css('--f5'),i:css('--f3')})[k];
+ const colOf=k=>({w:css('--f1'),s:css('--f4'),e:css('--f2'),ev:css('--f2'),l:css('--f5'),i:css('--f3'),r:css('--f1')})[k];
  c.L.forEach(l=>{const col=colOf(l.k);
   const dot=(x,y)=>`<circle cx="${x}" cy="${y}" r="3.5" fill="${col}" stroke="${css('--card')}" stroke-width="1.2"/>`;
   const lab=(x,y,anc,val)=>`<text text-anchor="${anc}" style="fill:${col};font-weight:700;paint-order:stroke;stroke:${css('--card')};stroke-width:3.5px"><tspan x="${x}" y="${y}">${l.n}</tspan><tspan x="${x}" y="${y+13}" style="font-weight:600">${val}</tspan></text>`;
   if(l.V>0.01){const x=X(l.x),y=Y(l.k==="ev"?H*0.15:l.y),len=ls(l.V),left=l.x<B*0.2;
-   g+=`<line x1="${x}" y1="${y-len}" x2="${x}" y2="${y-4}" stroke="${col}" stroke-width="2" marker-end="url(#a${svgEl.id})"/>${dot(x,y)}`+lab(left?x-6:x+5,left?y-len+2:y-len-17,left?"end":"start",`${fx(l.V,2)} t · x = ${fx(l.x)} m`)}
+   g+=`<line x1="${x}" y1="${y-len}" x2="${x}" y2="${y-4}" stroke="${col}" stroke-width="2" marker-end="url(#a${svgEl.id})"/>${dot(x,y)}`+lab(left?x-6:x+5,(left?y-len+2:y-len-17)-(l.n.includes("(LL)")?30:0),left?"end":"start",`${fx(l.V,2)} t · x = ${fx(l.x)} m`)}
   if(l.Hh>0.01){const x1=X(l.x),y=Y(l.y),len=ls(l.Hh),x0=x1+len;
    g+=`<line x1="${x0}" y1="${y}" x2="${x1+4}" y2="${y}" stroke="${col}" stroke-width="2" marker-end="url(#a${svgEl.id})"/>${dot(x1,y)}`+lab(l.k==="i"?x0:x0+5,l.k==="e"||l.k==="i"?y+14:y-17,l.k==="i"?"end":"start",`${fx(l.Hh,2)} t · y = ${fx(l.y)} m`)}
  });
@@ -894,14 +908,14 @@ function run(){
  <table><tr><th>Verificación</th><th>Valor</th><th>Requisito</th><th></th></tr>
  <tr><td>Corte: menor φVc/Vu (a ${fx(worstV.i!=null?S.Hp-S.cap[worstV.i].s:0,2)} m de la zapata)</td><td class="n">${fx(worstV.r,2)}</td><td>V<sub>c</sub> = 0,17√f'c·b·d, φ = 0,75 <span class="ref">13.3.6.1.1</span></td><td>${okng(worstV.r>=1)}</td></tr>
  ${HT.map(T=>`<tr><td>P3 horizontal, tramo ${T.k} (de ${fx(T.z0)} a ${fx(T.z1)} m): Ø${T.d} c/${T.sp} en 2 caras = ${fx(T.As,0)} mm²/m. Espesor medio = (${fx(T.h0,0)} + ${fx(T.h1,0)}) / 2 = ${fx(T.hmed,0)} mm</td><td class="n">${fx(T.As/(1000*T.hmed)*100,3)} %</td><td>≥ 0,18 %; separación ≤ ${fx(T.smax,0)} mm <span class="ref">7.6.4.1 → 24.4.3.2/3</span></td><td>${okng(T.okR&&T.okS)}</td></tr>`).join("")}
- </table><p class="note">La curva verde de φMn tiene un escalón en cada altura de cambio. La altura de cambio es donde deja de contarse la barra de abajo, así que el empalme con la barra de arriba va por encima de esa altura. Cargas sobre la pantalla: Coulomb con δ = 2/3 φ (hormigón contra suelo), componente horizontal. En sismo, la presión de PAE se reparte de modo que su resultante quede a ${A.rTxt} de la altura de la pantalla (IC-103 VI 11.6.5.3 y C11.6.5.3), y solo cuenta la inercia de la pantalla.</p>`;
+ </table><p class="note">${p.RD>0||p.RL>0?"La carga sobre la corona, excéntrica respecto del eje de la pantalla, suma un momento N·e en cada sección. ":""}${p.pcomp>0?(c=>`Caso de construcción: empuje residual de compactación con equipo de ${fx(p.pcomp,0)} kN/m (σh,máx = ${fx(c.smax,2)} t/m² entre ${fx(c.zc,2)} y ${fx(c.hc,2)} m de profundidad), mayorado por 1,5, sin sobrecarga ni carga en la corona. `)(S.cases.find(k=>k.id==="CO").comp):""}La curva verde de φMn tiene un escalón en cada altura de cambio. La altura de cambio es donde deja de contarse la barra de abajo, así que el empalme con la barra de arriba va por encima de esa altura. Cargas sobre la pantalla: Coulomb con δ = 2/3 φ (hormigón contra suelo), componente horizontal. En sismo, la presión de PAE se reparte de modo que su resultante quede a ${A.rTxt} de la altura de la pantalla (IC-103 VI 11.6.5.3 y C11.6.5.3), y solo cuenta la inercia de la pantalla.</p>`;
 
  // zapata
  const Fz=footing(p,A);const cols={RIa:"--f4",RIb:"--f1",EEa:"--f2",EEb:"--f3"};
  const heelAs=asb(p.dt,p.st,p.dtr,p.str),toeAs=asb(p.db,p.sb,p.dbr,p.sbr),heelD=bd(p.dt,p.st,p.dtr,p.str),toeD=bd(p.db,p.sb,p.dbr,p.sbr);
  const hcap=[],tcap=[];
  Fz.heel[0].x.forEach(x=>{const h=Fz.ytop(x)*1000,d=h-p.ct-Math.max(p.dt,p.dtr>0&&p.str>0?p.dtr:0)/2;hcap.push({x,h,d,...flex(heelAs,d,p.fc,p.fy)})});
- Fz.toe[0].x.forEach(u=>{const x=p.B1-u;const h=Fz.ytop(x)*1000,d=h-p.cb-Math.max(p.db,p.dbr>0&&p.sbr>0?p.dbr:0)/2;tcap.push({x:u,h,d,...flex(toeAs,d,p.fc,p.fy)})});
+ Fz.toe[0].x.forEach(u=>{const x=u;const h=Fz.ytop(x)*1000,d=h-p.cb-Math.max(p.db,p.dbr>0&&p.sbr>0?p.dbr:0)/2;tcap.push({x:u,h,d,...flex(toeAs,d,p.fc,p.fy)})});
  $("#heelPlot").innerHTML="<h3>Momento en el talón por el criterio A (+ tracciona arriba)</h3>"+plot([
   ...Fz.heel.map(c=>({x:c.x.map(x=>x-G.xs),y:c.M,col:cols[c.id],lab:c.sn})),
   {x:hcap.map(k=>k.x-G.xs),y:hcap.map(k=>k.phiMn),col:"--ok",dash:"6 3",lab:"φMn superior"}],{xl:"Distancia desde la cara trasera de la pantalla (m)",yl:"M (t·m/m)",u:"t·m/m",capAt:s=>s.x.length-1});
@@ -940,7 +954,7 @@ function run(){
   <table style="margin-top:8px"><tr><td>Armadura ${face}: ${dbar} = ${fx(As,0)} mm²/m · d = ${fx(hf.d,0)} mm · φ = ${fx(hf.phi,2)}</td><td></td></tr>
   <tr><td>As,mín = 0,0018·Ag = ${fx(Asmin,0)} mm²/m <span class="ref">13.3.2.1 → 7.6.1.1</span></td><td>${okng(As>=Asmin)}</td></tr>
   <tr><td>Separación ≤ menor de 3h y 300 mm = ${fx(smx,0)} mm <span class="ref">CIRSOC 201-25 7.7.2.3</span></td><td>${okng(s<=smx)}</td></tr>
-  <tr><td colspan="2" class="note">φVc = 0,75·0,66·λs·ρw<sup>1/3</sup>·√f'c·b·d, con λs = √(2/(1 + d/254)) ≤ 1 y sin armadura de corte <span class="ref">22.5.5.1, Tabla 22.5.5.1, 22.5.5.1.3</span>. En la otra cara colocar la armadura de contracción y temperatura (0,0018 Ag total, <span class="ref">24.4.3.2</span>).</td></tr></table>`};
+  <tr><td colspan="2" class="note">φVc = 0,75·0,17·√f'c·b·d, sin armadura de corte: expresión para fundaciones superficiales apoyadas en forma continua sobre el suelo <span class="ref">CIRSOC 201-25 / ACI 318-25, 13.2.6.2 (a)</span>. En la otra cara colocar la armadura de contracción y temperatura (0,0018 Ag total, <span class="ref">24.4.3.2</span>).</td></tr></table>`};
  $("#heelTab").innerHTML=ftab(Fz.heel,hcap,heelAs,heelD,"superior",Math.min(p.st,p.dtr>0&&p.str>0?p.str:1e9),"face")+`<p class="note">El talón se carga con el suelo, el peso propio, la sobrecarga y la componente vertical del empuje en el extremo, menos la presión de contacto lineal de cada combinación. Corte en la cara: el apoyo no comprime la zona del talón.</p>`;
 {const mk=ok=>ok?'<b class="ok">✔ cumple la mínima</b>':'<b class="ng">✘ no llega a la mínima</b>';
   const rl=(t,As,h,need=true)=>`<b>${t}</b>: As = ${fx(As,0)} mm²/m · cuantía ρ = ${fx(As/(1000*h)*100,3)} % (h = ${fx(h,0)} mm)`+(need?` · mínima 0,18 % = ${fx(1.8*h,0)} mm²/m ${mk(As>=1.8*h-1e-6)}`:"");
