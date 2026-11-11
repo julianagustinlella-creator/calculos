@@ -67,6 +67,7 @@ code{font-size:12.5px;background:var(--bg);padding:0 3px;border-radius:3px}
 <button data-t="dat">2 · Datos</button>
 <button data-t="ver">3 · Verificación</button>
 <button data-t="arm">4 · Armaduras</button>
+<button data-t="jun">5 · Juntas y drenaje</button>
 </nav>
 <div id="pm">
  <label>Proyecto <input id="pmProj" placeholder="p. ej. CL-043 ETRSU"></label>
@@ -253,14 +254,50 @@ code{font-size:12.5px;background:var(--bg);padding:0 3px;border-radius:3px}
 <div class="card">
 <h2>Armaduras propuestas</h2>
 <p class="note">El esquema muestra dónde va cada armadura, con el mismo color y la misma sigla (P1, P2, P3, Z1, Z2, Z3) que su grupo de datos. Al cargar un diámetro o una separación se actualizan el esquema, la cuantía colocada y si cumple la mínima. b = 1,00 m de muro.</p>
-<div class="cmb"><div><svg id="rebSvg"></svg><p class="note">Las líneas son barras en el plano del dibujo. Los puntos son barras que corren a lo largo del muro (perpendiculares al dibujo). Las líneas de trazos marcan las alturas donde cambia la armadura vertical P1.</p></div>
-<div class="grid" id="formArm" style="grid-template-columns:1fr"></div></div>
+<svg id="rebSvg" style="max-width:920px;margin:0 auto"></svg>
+<p class="note" style="max-width:920px;margin:6px auto 12px">Las líneas son barras en el plano del dibujo; la línea fina paralela es el refuerzo, si lo hay. Los puntos son barras que corren a lo largo del muro (perpendiculares al dibujo). Las líneas de trazos marcan las alturas donde cambia la armadura vertical P1: esas alturas las elegís vos en el grupo P1 («ALTURA DEL CAMBIO»). Cada rótulo indica la cuantía ρ que se está colocando.</p>
+<div class="grid" id="formArm"></div>
 </div>
 <div class="card"><h2>Pantalla</h2><div class="cmb"><div id="stemPlotM"></div><div id="stemPlotV"></div></div><div id="stemTab"></div></div>
 <div class="card"><h2>Talón (armadura superior)</h2><div class="cmb"><div id="heelPlot"></div><div id="heelTab"></div></div></div>
 <div class="card"><h2>Puntera (armadura inferior)</h2><div class="cmb"><div id="toePlot"></div><div id="toeTab"></div></div></div>
 </section>
 
+<!-- ======================= JUNTAS Y DRENAJE ======================= -->
+<section class="tab" id="jun">
+<div class="card">
+<h2>Qué exige el reglamento</h2>
+<table>
+<tr><th>Tema</th><th>Requisito</th><th>Dónde está</th></tr>
+<tr><td><b>Juntas de contracción</b></td><td>A intervalos no mayores de <b>9 m</b>.</td><td><span class="ref">CIRSOC 804-3 (2020), art. 11.6.1.6</span></td></tr>
+<tr><td><b>Juntas de expansión</b></td><td>A intervalos no mayores de <b>27 m</b>. Todas las juntas se rellenan con un material aprobado que asegure su funcionamiento.</td><td><span class="ref">CIRSOC 804-3 (2020), art. 11.6.1.6</span></td></tr>
+<tr><td><b>Juntas en zona sísmica</b></td><td>Diseñarlas para que no se abran y dejen pasar el relleno, sin perder la capacidad de deslizar y de admitir movimientos verticales diferenciales. Vale también para las esquinas. Usar rellenos compresibles, placas de apoyo y selladores. Se aplica con zona de desempeño sísmico 2 o mayor, o con As &gt; 0,15 g.</td><td><span class="ref">IC-103 VI (2020), art. 11.6.5.6</span></td></tr>
+<tr><td><b>Drenaje del relleno</b></td><td>Hay que drenar el relleno detrás del muro. Si no es posible, el muro se calcula con el empuje del suelo <b>más la presión hidrostática total</b>.</td><td><span class="ref">CIRSOC 804-3, art. 11.6.6</span> <span class="ref">IC-103 VI, art. 11.6.6</span></td></tr>
+<tr><td><b>Material de relleno</b></td><td>Granular y de libre drenaje. Si se retienen suelos cohesivos, hay que proveer drenaje para reducir la presión hidrostática. En zona sísmica no usar, en general, rellenos arcillosos o limosos.</td><td><span class="ref">CIRSOC 804-3, art. 11.4.1</span> <span class="ref">IC-103 VI, art. 11.6.5.6</span></td></tr>
+<tr><td><b>Alcance de los drenes</b></td><td>Los orificios de drenaje (barbacanas) no aseguran por sí solos el drenaje total. El sistema debe drenar todo el volumen de suelo detrás del muro.</td><td><span class="ref">IC-103 VI, Comentarios, C11.6.6</span></td></tr>
+</table>
+<p class="warn" style="color:var(--wn)"><b>Cantidad y posición de los drenes:</b> el reglamento no las fija. Ni el CIRSOC 804-3 ni el IC-103 VI dan diámetro, separación ni altura de las barbacanas; solo exigen que el relleno quede drenado. Los valores de abajo son de práctica habitual, no reglamentarios, y los elegís vos.</p>
+<p><b>Práctica habitual para el drenaje</b> (no reglamentaria):</p>
+<ul>
+<li><b>Barbacanas:</b> caños de Ø 75 a 100 mm que atraviesan la pantalla, cada 1,5 a 3 m, con pendiente hacia el frente. La primera fila, unos 0,20 a 0,30 m por encima del terreno o pavimento del frente. En muros altos, una segunda fila en tresbolillo.</li>
+<li><b>Manto drenante:</b> grava o piedra partida contra la cara del relleno, envuelta en geotextil para que no se colmate, o un geocompuesto drenante.</li>
+<li><b>Dren longitudinal:</b> caño perforado de Ø 100 a 150 mm al pie del relleno, sobre el talón, con pendiente y salida a un desagüe. Es lo que permite drenar todo el volumen, como pide el comentario C11.6.6.</li>
+<li><b>Superficie:</b> pavimento o sellado arriba, con pendiente que aleje el agua del muro.</li>
+</ul>
+<p class="note">Esta calculadora supone el relleno drenado: no suma presión de agua. Si el drenaje no se puede garantizar, el muro hay que verificarlo con la presión hidrostática (art. 11.6.6).</p>
+</div>
+<div class="card">
+<h2>Distribución en este muro</h2>
+<div class="grid" id="formJ"></div>
+<div id="junRes"></div>
+<h3>Vista de frente de todo el muro</h3>
+<svg id="junSvg" style="max-width:1100px;margin:6px auto 0"></svg>
+<p class="note" style="max-width:1100px;margin:6px auto 0">Alzado visto desde el lado del frente (el lado bajo). Línea gruesa: junta de expansión. Línea de trazos: junta de contracción. Círculos: bocas de las barbacanas. La franja inferior, en trazos, es la parte del muro y la zapata que queda enterrada.</p>
+<h3>Corte: cómo queda el drenaje</h3>
+<svg id="drSvg" style="max-width:900px;margin:6px auto 0"></svg>
+<p class="note" style="max-width:900px;margin:6px auto 0">Esquema de práctica habitual, no reglamentario. El reglamento solo exige que el relleno quede drenado (CIRSOC 804-3, 11.6.6) y aclara que las barbacanas solas no alcanzan (IC-103 VI, C11.6.6): por eso se dibujan el manto drenante y el dren longitudinal.</p>
+</div>
+</section>
 </main>
 
 <script>
@@ -311,17 +348,24 @@ const F=[
 ];
 const FA=[
  ["P1 · Pantalla: vertical, cara del relleno (tracción)",[["cs","Recubrimiento de la pantalla","mm",50],
-  ["v1d","Tramo 1 (desde la zapata): Ø","mm",20],["v1s","Tramo 1: separación","mm",150],
-  ["vh1","Altura donde cambia al tramo 2 (0 = no cambia)","m",2.5],
-  ["v2d","Tramo 2: Ø","mm",16],["v2s","Tramo 2: separación","mm",150],
-  ["vh2","Altura donde cambia al tramo 3 (0 = no cambia)","m",0],
-  ["v3d","Tramo 3: Ø","mm",12],["v3s","Tramo 3: separación","mm",150]]],
+  ["v1d","Tramo 1 (desde la zapata) — barra: Ø","mm",20],["v1s","Tramo 1 — barra: separación","mm",150],
+  ["v1rd","Tramo 1 — refuerzo: Ø (0 = sin refuerzo)","mm",0],["v1rs","Tramo 1 — refuerzo: separación","mm",150],
+  ["vh1","ALTURA DEL CAMBIO de tramo 1 a tramo 2, desde la zapata (0 = sin cambio)","m",2.5],
+  ["v2d","Tramo 2 — barra: Ø","mm",16],["v2s","Tramo 2 — barra: separación","mm",150],
+  ["v2rd","Tramo 2 — refuerzo: Ø (0 = sin refuerzo)","mm",0],["v2rs","Tramo 2 — refuerzo: separación","mm",150],
+  ["vh2","ALTURA DEL CAMBIO de tramo 2 a tramo 3, desde la zapata (0 = sin cambio)","m",0],
+  ["v3d","Tramo 3 — barra: Ø","mm",12],["v3s","Tramo 3 — barra: separación","mm",150],
+  ["v3rd","Tramo 3 — refuerzo: Ø (0 = sin refuerzo)","mm",0],["v3rs","Tramo 3 — refuerzo: separación","mm",150]]],
  ["P2 · Pantalla: vertical, cara del frente",[["ved","Ø","mm",10],["ves","Separación","mm",200]]],
  ["P3 · Pantalla: horizontal, en cada cara",[["dh","Ø","mm",10],["sh","Separación","mm",200]]],
- ["Z1 · Talón: superior (principal)",[["ct","Recubrimiento superior","mm",50],["dt","Ø","mm",16],["st","Separación","mm",125]]],
- ["Z2 · Puntera: inferior (principal)",[["cb","Recubrimiento inferior (contra terreno)","mm",75],["db","Ø","mm",12],["sb","Separación","mm",200]]],
+ ["Z1 · Talón: superior (principal)",[["ct","Recubrimiento superior","mm",50],["dt","Barra: Ø","mm",16],["st","Barra: separación","mm",125],
+  ["dtr","Refuerzo: Ø (0 = sin refuerzo)","mm",0],["str","Refuerzo: separación","mm",125]]],
+ ["Z2 · Puntera: inferior (principal)",[["cb","Recubrimiento inferior (contra terreno)","mm",75],["db","Barra: Ø","mm",12],["sb","Barra: separación","mm",200],
+  ["dbr","Refuerzo: Ø (0 = sin refuerzo)","mm",0],["sbr","Refuerzo: separación","mm",200]]],
  ["Z3 · Zapata: longitudinal, arriba y abajo (paralela al muro)",[["dl","Ø","mm",10],["sl","Separación","mm",200]]]
 ];
+const bd=(d,sp,rd,rs)=>`Ø${d} c/${sp}`+(rd>0&&rs>0?` + Ø${rd} c/${rs}`:"");
+const asb=(d,sp,rd,rs)=>(sp>0?Ab(d)*1000/sp:0)+(rd>0&&rs>0?Ab(rd)*1000/rs:0);
 const RC=["--f2","--f1","--f3","--f5","--f4","--wn"];
 function buildForm(groups,el){
  el.innerHTML=groups.map(([t,items])=>`<div class="fg"><h3>${t}</h3>${items.map(([id,l,u,dv,opts])=>{
@@ -338,7 +382,86 @@ $("#form").insertAdjacentHTML("beforeend",`<div class="fg" style="grid-column:1/
 </table>
 <p class="note">Se aplican a la resistencia <b>nominal</b> (de rotura) qn, no a la admisible: se compara la presión mayorada con φb·qn. El CIRSOC 804-3 (julio 2020) es la versión argentina del capítulo 11 de la AASHTO LRFD, al que remite el IC-103 VI 11.6.5.1. El φep = 0,50 es del capítulo 10 (fundaciones), que en el CIRSOC 804 está «en preparación»: es el valor de la AASHTO y no lo pude cotejar.</p></div>`);buildForm(FA,$("#formArm"));
 [...$("#formArm").children].forEach((g,i)=>{g.style.borderLeft=`5px solid var(${RC[i]})`;g.style.paddingLeft="10px";g.insertAdjacentHTML("beforeend",`<div class="rho" id="rho${i}"></div>`)});
-const ALL=[...F,...FA].flatMap(g=>g[1]);
+const FJ=[
+ ["Juntas",[["Lm","Longitud total del muro","m",30],["sj","Separación máxima adoptada entre juntas de contracción (reglamento: ≤ 9)","m",9],["se","Separación máxima adoptada entre juntas de expansión (reglamento: ≤ 27)","m",27]]],
+ ["Barbacanas (práctica habitual, no reglamentario)",[["sdr","Separación horizontal","m",2],["ddr","Diámetro","mm",100],["hdr","Altura de la primera fila sobre el terreno del frente","m",0.3],["nfil","Cantidad de filas","",1],["sfil","Separación vertical entre filas","m",1.5]]]
+];
+buildForm(FJ,$("#formJ"));
+const ALL=[...F,...FA,...FJ].flatMap(g=>g[1]);
+function renderJun(p,A){
+ const L=Math.max(p.Lm,0.1),se=Math.max(p.se,0.5),sj=Math.max(p.sj,0.5);
+ const nE=Math.ceil(L/se-1e-9),Lp=L/nE,nC=Math.ceil(Lp/sj-1e-9),Lc=Lp/nC,ex=[],co=[];
+ for(let i=1;i<nE;i++)ex.push(i*Lp);
+ for(let i=0;i<nE;i++)for(let j=1;j<nC;j++)co.push(i*Lp+j*Lc);
+ const nD=Math.max(1,Math.round(L/Math.max(p.sdr,0.2))),sd=L/nD,rows=Math.max(1,Math.round(p.nfil)),dr=[];let mov=0;
+ for(let r=0;r<rows;r++)for(let i=0;i<nD;i++){let x=(i+0.5+(r%2?0.5:0))*sd;if([...ex,...co].some(j=>Math.abs(j-x)<0.3)){x+=0.4;mov++}if(x<L-0.05)dr.push([x,p.hdr+r*p.sfil])}
+ const hTop=p.hdr+(rows-1)*p.sfil,seis=A.As>0.15||A.SD1>0.15,lst=a=>a.length?a.map(v=>fx(v,2)).join(" · ")+" m":"ninguna";
+ $("#junRes").innerHTML=`<table style="margin-top:10px"><tr><th>Elemento</th><th>Cantidad</th><th>Posición (desde un extremo del muro)</th><th>Control</th></tr>
+ <tr><td>Juntas de expansión</td><td class="n">${ex.length}</td><td>${lst(ex)}<br><span class="note">Tramos de ${fx(Lp,2)} m</span></td><td>${p.se<=27&&Lp<=27+1e-9?'<span class="ok">≤ 27 m: cumple</span>':'<span class="ng">Supera los 27 m</span>'} <span class="ref">804-3, 11.6.1.6</span></td></tr>
+ <tr><td>Juntas de contracción</td><td class="n">${co.length}</td><td>${lst(co)}<br><span class="note">Paños de ${fx(Lc,2)} m</span></td><td>${p.sj<=9&&Lc<=9+1e-9?'<span class="ok">≤ 9 m: cumple</span>':'<span class="ng">Supera los 9 m</span>'} <span class="ref">804-3, 11.6.1.6</span></td></tr>
+ <tr><td>Barbacanas Ø${fx(p.ddr,0)} mm</td><td class="n">${dr.length}</td><td>${rows} fila${rows>1?"s":""} de ${nD}, cada ${fx(sd,2)} m${rows>1?", en tresbolillo":""}. Primera en x = ${fx(sd/2,2)} m. Altura sobre el terreno del frente: ${Array.from({length:rows},(_,r)=>fx(p.hdr+r*p.sfil,2)).join(" · ")} m</td><td>${hTop<p.H1?'<span class="wn">Práctica habitual, sin exigencia reglamentaria</span>':'<span class="ng">La fila más alta queda por encima del muro</span>'}</td></tr>
+ <tr><td>Requisitos sísmicos de juntas</td><td class="n">—</td><td>As = ${fx(A.As,2)} g · SD1 = ${fx(A.SD1,2)}</td><td>${seis?'<span class="wn">Aplican los detalles del IC-103 VI 11.6.5.6</span>':'<span class="ok">No obligatorios (As ≤ 0,15 g y zona de desempeño 1)</span>'}</td></tr></table>
+ <p class="note">Las juntas se reparten en tramos iguales. Cada junta de expansión cuenta también como corte de contracción. Las barbacanas que caían a menos de 0,30 m de una junta se corrieron 0,40 m${mov?` (${mov} en este muro)`:""}.</p>`;
+const W=1100,pl=60,pr=40,pt=52,pb=84,sx=(W-pl-pr)/L,hT=p.H1+p.H3,c=v=>css(v);
+ let sy=sx,exg=1;if(hT*sy<190){sy=190/hT;exg=sy/sx}
+ const Hh=pt+hT*sy+pb,X=x=>pl+x*sx,Y=y=>pt+(p.H1-y)*sy; // y desde el terreno del frente
+ let g=`<rect x="${X(0)-30}" y="${Y(0)}" width="${L*sx+60}" height="${p.H3*sy+10}" fill="${c('--soil2')}" opacity=".55"/>`;
+ g+=`<rect x="${X(0)}" y="${Y(p.H1)}" width="${L*sx}" height="${p.H1*sy}" fill="${c('--conc')}" fill-opacity=".55" stroke="${c('--mu')}" stroke-width="1.5"/>`;
+ g+=`<rect x="${X(0)}" y="${Y(0)}" width="${L*sx}" height="${p.H3*sy}" fill="${c('--conc')}" fill-opacity=".25" stroke="${c('--mu')}" stroke-dasharray="5 4"/>`;
+ g+=`<line x1="${X(0)-30}" y1="${Y(0)}" x2="${X(L)+30}" y2="${Y(0)}" stroke="${c('--soil')}" stroke-width="3"/>`;
+ co.forEach(x=>g+=`<line x1="${X(x)}" y1="${Y(p.H1)}" x2="${X(x)}" y2="${Y(-p.H3)}" stroke="${c('--f1')}" stroke-width="1.8" stroke-dasharray="7 4"/>`);
+ ex.forEach(x=>g+=`<line x1="${X(x)}" y1="${Y(p.H1)-8}" x2="${X(x)}" y2="${Y(-p.H3)+4}" stroke="${c('--f2')}" stroke-width="4"/><text x="${X(x)}" y="${Y(p.H1)-14}" text-anchor="middle" style="fill:${c('--f2')};font-weight:700;font-size:13px">junta de expansión · x = ${fx(x,2)} m</text>`);
+ const rb=Math.max(3.2,Math.min(7,p.ddr/2000*sx*3));
+ dr.forEach(([x,y])=>{if(y<p.H1)g+=`<circle cx="${X(x)}" cy="${Y(y)}" r="${rb}" fill="${c('--bg')}" stroke="${c('--f4')}" stroke-width="2.2"/><line x1="${X(x)}" y1="${Y(y)+rb}" x2="${X(x)}" y2="${Y(y)+rb+7}" stroke="${c('--f4')}" stroke-width="1.2" opacity=".7"/>`});
+ g+=`<text x="${X(0)+6}" y="${Y(p.H1)+16}" style="font-size:12px;font-weight:600">coronamiento</text><text x="${X(0)+6}" y="${Y(0)+14}" style="font-size:12px;font-weight:600">terreno del frente</text><text x="${X(L)-6}" y="${Y(-p.H3)-5}" text-anchor="end" style="font-size:11px">zapata, enterrada</text>`;
+ g+=`<text x="${X(L)}" y="18" text-anchor="end" style="font-size:12px">${exg>1.05?"Altura exagerada × "+fx(exg,1)+" para que se lea":"Dibujo a escala"} · altura visible ${fx(p.H1,2)} m</text>`;
+ if(dr.length&&dr[0][1]<p.H1){const[x0,y0]=dr[0];g+=`<text x="${X(x0)+rb+6}" y="${Y(y0)-rb-4}" style="fill:${c('--f4')};font-weight:700;font-size:12.5px">barbacanas Ø${fx(p.ddr,0)} mm cada ${fx(sd,2)} m, a ${fx(p.hdr,2)} m del terreno</text>`}
+ if(co.length)g+=`<text x="${X(co[0])+6}" y="${Y(p.H1*0.72)}" style="fill:${c('--f1')};font-weight:700;font-size:12.5px">junta de contracción</text>`;
+ const yb=Y(-p.H3),tk=[0,...ex,...co,L].sort((a,b)=>a-b);
+ g+=`<line x1="${X(0)}" y1="${yb+24}" x2="${X(L)}" y2="${yb+24}" stroke="${c('--mu')}"/>`;
+ tk.forEach((x,i)=>{g+=`<line x1="${X(x)}" y1="${yb+18}" x2="${X(x)}" y2="${yb+30}" stroke="${c('--mu')}"/>`;if(i>0)g+=`<text x="${(X(x)+X(tk[i-1]))/2}" y="${yb+44}" text-anchor="middle" style="font-size:12px">${fx(x-tk[i-1],2)} m</text>`});
+ g+=`<text x="${X(L/2)}" y="${yb+68}" text-anchor="middle" style="font-size:13px;font-weight:700">Longitud del muro: ${fx(L,2)} m · ${ex.length} junta${ex.length===1?"":"s"} de expansión · ${co.length} de contracción · ${dr.length} barbacanas</text>`;
+ const el=$("#junSvg");el.setAttribute("viewBox",`0 0 ${W} ${Hh}`);el.innerHTML=g;
+ drawDrain($("#drSvg"),p,A,rows);
+}
+function drawDrain(el,p,A,rows){
+ const{G,H,B}=A,W=900,Hh=620,padL=250,padB=70,sc=Math.min((W-padL-330)/(B+0.4),(Hh-padB-40)/H),c=v=>css(v);
+ const X=x=>padL+x*sc,Y=y=>Hh-padB-y*sc,Hp=G.Hp;
+ const poly=(P,f,o=1,st="")=>`<polygon points="${P.map(([x,y])=>X(x)+","+Y(y)).join(" ")}" fill="${f}" fill-opacity="${o}" ${st}/>`;
+ const yt=x=>x>=G.xs?p.H5+(p.H4-p.H5)*(x-G.xs)/p.B3:p.H5,xbk=y=>G.xs-(p.B2-p.B4)*(y-p.H5)/Hp;
+ const txt=(x,y,t,col,anc,...sub)=>`<text text-anchor="${anc}" style="fill:${c(col)};font-weight:700;font-size:13.5px;paint-order:stroke;stroke:${c('--card')};stroke-width:4px"><tspan x="${x}" y="${y}">${t}</tspan>${sub.map((u,i)=>`<tspan x="${x}" y="${y+16*(i+1)}" style="font-weight:500;font-size:12.5px">${u}</tspan>`).join("")}</text>`;
+ const lead=(x1,y1,x2,y2,col)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c(col)}" stroke-width="1"/>`;
+ const wd=0.35,top=H-0.25;
+ let g=poly(G.soil,c('--soil2'),.6)+poly([[-0.9,0],[0,0],[0,p.H2],[p.B1,Math.min(p.H5,p.H3)],[p.B1,p.H3],[-0.9,p.H3]],c('--soil2'),.6);
+ // manto drenante y geotextil
+ const band=[[G.xs,p.H5],[G.xs+wd,yt(G.xs+wd)],[xbk(top)+wd,top],[xbk(top),top]];
+ g+=poly(band,c('--f4'),.32)+`<polyline points="${[[G.xs+wd,yt(G.xs+wd)],[xbk(top)+wd,top],[xbk(top),top]].map(([x,y])=>X(x)+","+Y(y)).join(" ")}" fill="none" stroke="${c('--f3')}" stroke-width="2" stroke-dasharray="6 4"/>`;
+ for(let y=p.H5+0.25;y<top-0.1;y+=0.33){g+=`<circle cx="${X(xbk(y)+wd*0.3)}" cy="${Y(y)}" r="2.6" fill="none" stroke="${c('--f4')}"/><circle cx="${X(xbk(y)+wd*0.72)}" cy="${Y(y+0.15)}" r="2.2" fill="none" stroke="${c('--f4')}"/>`}
+ g+=poly(G.foot,c('--conc'),.9,`stroke="${c('--mu')}"`)+poly(G.stem,c('--conc'),.9,`stroke="${c('--mu')}"`)+(G.key?poly(G.key,c('--conc'),.9,`stroke="${c('--mu')}"`):"");
+ // superficies
+ g+=`<line x1="${X(-0.9)}" y1="${Y(p.H3)}" x2="${X(p.B1)}" y2="${Y(p.H3)}" stroke="${c('--soil')}" stroke-width="3"/><line x1="${X(p.B1+p.B4)}" y1="${Y(H)}" x2="${X(B+0.35)}" y2="${Y(H+0.06)}" stroke="${c('--soil')}" stroke-width="3"/>`;
+ // dren longitudinal
+ const xd=G.xs+wd*0.5,yd=yt(xd)+0.13,rd=Math.max(5,0.075*sc);
+ g+=`<circle cx="${X(xd)}" cy="${Y(yd)}" r="${rd}" fill="${c('--bg')}" stroke="${c('--f1')}" stroke-width="2.5" stroke-dasharray="3 2"/>`;
+ // barbacanas
+ const ys=[];for(let r=0;r<rows;r++){const y=p.H3+p.hdr+r*p.sfil;if(y<H-0.4)ys.push(y)}
+ const wb=Math.max(4,p.ddr/1000*sc);
+ ys.forEach(y=>{g+=`<line x1="${X(xbk(y+0.06)+0.04)}" y1="${Y(y+0.06)}" x2="${X(p.B1-0.12)}" y2="${Y(y-0.02)}" stroke="${c('--f4')}" stroke-width="${wb}" stroke-linecap="butt"/><line x1="${X(xbk(y+0.06)+0.04)}" y1="${Y(y+0.06)}" x2="${X(p.B1-0.12)}" y2="${Y(y-0.02)}" stroke="${c('--bg')}" stroke-width="${Math.max(1.5,wb-3)}"/><path d="M${X(p.B1-0.14)} ${Y(y-0.02)} q -8 6 -6 ${0.25*sc}" fill="none" stroke="${c('--f1')}" stroke-width="1.4" stroke-dasharray="3 3"/>`});
+ // rótulos
+ const xl=X(-0.9)-10,xr=X(B)+24;
+ if(ys.length){const y=ys[0];g+=lead(xl+4,Y(y)-56,X(p.B1+0.1),Y(y),"--f4")+txt(xl,Y(y)-58,`Barbacana Ø${fx(p.ddr,0)} mm`,"--f4","end","atraviesa la pantalla","con pendiente hacia el frente");
+  g+=`<line x1="${X(-0.55)}" y1="${Y(p.H3)}" x2="${X(-0.55)}" y2="${Y(y)}" stroke="${c('--mu')}" marker-start="url(#aj)" marker-end="url(#aj)"/><text x="${X(-0.55)+5}" y="${(Y(p.H3)+Y(y))/2+4}" style="font-size:12px">${fx(p.hdr,2)} m</text>`;
+  if(ys.length>1)g+=txt(xl,Y(ys[1])-6,`2.ª fila a ${fx(ys[1]-p.H3,2)} m`,"--f4","end","en tresbolillo con la 1.ª")}
+ g+=txt(xl,Y(p.H3)+20,"Terreno del frente","--mu","end");
+ const ym=p.H5+Hp*0.55;
+ g+=lead(X(xbk(ym)+wd*0.6),Y(ym),xr-4,Y(ym)-5,"--f4")+txt(xr,Y(ym),"Manto drenante","--f4","start","grava o piedra partida,","de unos 30 cm, contra el muro");
+ const yg=p.H5+Hp*0.82;
+ g+=lead(X(xbk(yg)+wd),Y(yg),xr-4,Y(yg)-5,"--f3")+txt(xr,Y(yg),"Geotextil","--f3","start","envuelve la grava para","que no se tape con finos");
+ g+=lead(X(xd)+rd,Y(yd),xr-4,Y(yd)-30,"--f1")+txt(xr,Y(yd)-26,"Dren longitudinal","--f1","start","caño perforado Ø100 a 150 mm","sobre el talón, con salida al desagüe");
+ g+=txt(X(G.xs+p.B3*0.5),Y(H)-14,"Superficie con pendiente que aleje el agua","--mu","middle");
+ g+=txt(X(G.xs+p.B3*0.62),Y(p.H5+Hp*0.3),"Relleno granular","--mu","middle","de libre drenaje");
+ el.setAttribute("viewBox",`0 0 ${W} ${Hh}`);el.innerHTML=`<defs><marker id="aj" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto-start-reverse"><path d="M0,0 L8,4 L0,8 z" fill="${c('--mu')}"/></marker></defs>`+g;
+}
 $("#i_ftype").closest("label").insertAdjacentHTML("afterend",'<p class="note" id="ftNote" style="margin:2px 0 8px;padding:6px 8px;border-left:3px solid var(--ac);background:var(--bg)"></p>');
 function diagTxt(c,p,A){
  const B=A.B,ae=Math.abs(c.e),rS='<span class="ref">CIRSOC 804-3 (2020), art. 11.6.3.2 «Capacidad portante», ec. 11.6.3.2-1 y Fig. 11.6.3.2-1</span>',rR='<span class="ref">CIRSOC 804-3 (2020), art. 11.6.3.2 «Capacidad portante», ec. 11.6.3.2-2 a 11.6.3.2-5 y Fig. 11.6.3.2-2</span>';
@@ -485,12 +608,12 @@ function stem(p,A){
   for(let i=0;i<=n;i++){const s=i*ds;if(i>0){const pn=c.p(s);const Vn=V+(pp+pn)/2*ds;M+=(V+Vn)/2*ds;V=Vn;pp=pn}c.s.push(s);c.V.push(V);c.M.push(M)}});
 // capacidad por tramos
  const cuts=[0];if(p.vh1>0&&p.vh1<Hp){cuts.push(p.vh1);if(p.vh2>p.vh1&&p.vh2<Hp)cuts.push(p.vh2)}cuts.push(Hp);
- const TB={1:[p.v1d,p.v1s],2:[p.v2d,p.v2s],3:[p.v3d,p.v3s]};
+ const TB={1:[p.v1d,p.v1s,p.v1rd,p.v1rs],2:[p.v2d,p.v2s,p.v2rd,p.v2rs],3:[p.v3d,p.v3s,p.v3rd,p.v3rs]};
  const tr=z=>{let k=1;while(k<cuts.length-1&&z>=cuts[k]-1e-9)k++;return k};
- const cap=[];for(let i=0;i<=n;i++){const s=i*ds,h=t(s)*1000,k=tr(Hp-s),[db,sp]=TB[k],d=h-p.cs-db/2;
-  const As=sp>0?Ab(db)*1000/sp:0;
+ const cap=[];for(let i=0;i<=n;i++){const s=i*ds,h=t(s)*1000,k=tr(Hp-s),[db,sp,rd,rs]=TB[k],d=h-p.cs-Math.max(db,rd>0&&rs>0?rd:0)/2;
+  const As=asb(db,sp,rd,rs);
   const f=flex(As,d,p.fc,p.fy),Vc=0.75*0.17*Math.sqrt(p.fc)*1000*d/1000/G0;
-  cap.push({s,h,d,As,k,db,sp,phiMn:f.phiMn,phi:f.phi,phiVc:Vc,Asmin:0.0018*1000*h})}
+  cap.push({s,h,d,As,k,db,sp,rd,rs,phiMn:f.phiMn,phi:f.phi,phiVc:Vc,Asmin:0.0018*1000*h})}
  return{cases,cap,Hp,t,cuts,TB};
 }
 
@@ -598,38 +721,42 @@ function plot(series,o){ // o:{xl,yl,vert,u}  vert: el valor va en x y la altura
 }
 
 /* ---------- esquema de armaduras ---------- */
-function drawRebar(el,p,A,S){
- const{G,H,B}=A,W=620,Hh=500,padL=150,padB=82,sc=Math.min((W-padL-215)/B,(Hh-padB-28)/H),c=v=>css(v);
+function drawRebar(el,p,A,S,TR,RH){
+ const{G,H,B}=A,W=860,Hh=700,padL=215,padB=120,sc=Math.min((W-padL-330)/B,(Hh-padB-30)/H),c=v=>css(v);
  const X=x=>padL+x*sc,Y=y=>Hh-padB-y*sc,cv=0.07,Hp=G.Hp,kd=G.key?p.dk*sc+4:0;
  const poly=P=>`<polygon points="${P.map(([x,y])=>X(x)+","+Y(y)).join(" ")}" fill="${c('--conc')}" fill-opacity=".35" stroke="${c('--mu')}"/>`;
- const line=(pts,col,w=3)=>`<polyline points="${pts.map(([x,y])=>X(x)+","+Y(y)).join(" ")}" fill="none" stroke="${c(col)}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
- const txt=(x,y,t,col,anc="start",sub="")=>`<text text-anchor="${anc}" style="fill:${c(col)};font-weight:700;font-size:12px;paint-order:stroke;stroke:${c('--card')};stroke-width:3.5px"><tspan x="${x}" y="${y}">${t}</tspan>${sub?`<tspan x="${x}" y="${y+13}" style="font-weight:500">${sub}</tspan>`:""}</text>`;
- const lead=(x1,y1,x2,y2,col)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c(col)}" stroke-width=".9"/>`;
- const dots=(P,col)=>P.map(([x,y])=>`<circle cx="${X(x)}" cy="${Y(y)}" r="2.6" fill="${c(col)}"/>`).join("");
+ const line=(pts,col,w=3,dx=0,dy=0)=>`<polyline points="${pts.map(([x,y])=>(X(x)+dx)+","+(Y(y)+dy)).join(" ")}" fill="none" stroke="${c(col)}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+ const txt=(x,y,t,col,anc,...sub)=>`<text text-anchor="${anc}" style="fill:${c(col)};font-weight:700;font-size:14px;paint-order:stroke;stroke:${c('--card')};stroke-width:4px"><tspan x="${x}" y="${y}">${t}</tspan>${sub.map((u,i)=>`<tspan x="${x}" y="${y+16*(i+1)}" style="font-weight:500;font-size:13px">${u}</tspan>`).join("")}</text>`;
+ const lead=(x1,y1,x2,y2,col)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c(col)}" stroke-width="1"/>`;
+ const dots=(P,col)=>P.map(([x,y])=>`<circle cx="${X(x)}" cy="${Y(y)}" r="3.4" fill="${c(col)}"/>`).join("");
  const xb=z=>G.xs-(p.B2-p.B4)*z/Hp-cv, yt=x=>x<=p.B1?p.H2+(p.H5-p.H2)*x/p.B1:x>=G.xs?p.H5+(p.H4-p.H5)*(x-G.xs)/p.B3:p.H5;
+ const has=(d,sp)=>d>0&&sp>0;
  let g=poly(G.foot)+poly(G.stem)+(G.key?poly(G.key):"");
- // Z3 y P3 (puntos)
- const z3=[],p3=[];for(let x=0.22;x<B-0.1;x+=0.42){z3.push([x,cv+0.09],[x,yt(x)-cv-0.07])}
- for(let z=0.35;z<Hp-0.1;z+=0.45){p3.push([p.B1+cv+0.06,p.H5+z],[xb(z)-0.06,p.H5+z])}
+ const z3=[],p3=[];for(let x=0.22;x<B-0.1;x+=0.42){z3.push([x,cv+0.1],[x,yt(x)-cv-0.08])}
+ for(let z=0.35;z<Hp-0.1;z+=0.45){p3.push([p.B1+cv+0.07,p.H5+z],[xb(z)-0.07,p.H5+z])}
  g+=dots(z3,"--wn")+dots(p3,"--f3");
- // Z2, Z1, P2
- g+=line([[0.06,cv+0.02],[B-0.06,cv+0.02]],"--f4",2+p.db/8);
- g+=line([[p.B1+0.12,p.H5-cv],[G.xs,p.H5-cv],[B-0.06,p.H4-cv]],"--f5",2+p.dt/8);
- g+=line([[p.B1+cv,0.14],[p.B1+cv,H-0.05]],"--f1",2+p.ved/8);
+ // Z2 y su refuerzo
+ g+=line([[0.06,cv+0.02],[B-0.06,cv+0.02]],"--f4",2.5+p.db/7);
+ if(has(p.dbr,p.sbr))g+=line([[0.06,cv+0.02],[G.xs+0.6,cv+0.02]],"--f4",1.6,0,-6);
+ // Z1 y su refuerzo
+ const z1=[[p.B1+0.12,p.H5-cv],[G.xs,p.H5-cv],[B-0.06,p.H4-cv]];
+ g+=line(z1,"--f5",2.5+p.dt/7);if(has(p.dtr,p.str))g+=line(z1,"--f5",1.6,0,6);
+ g+=line([[p.B1+cv,0.14],[p.B1+cv,H-0.05]],"--f1",2.5+p.ved/7);
  // P1 por tramos
- const cu=S.cuts,xr=X(G.xs)+16;
- for(let i=0;i<cu.length-1;i++){const z0=cu[i],z1=cu[i+1],k=i+1,[db,sp]=S.TB[k],zm=(z0+z1)/2;
-  const pts=[[xb(z0),p.H5+z0],[xb(z1)+(z1>=Hp?0:0),p.H5+Math.min(z1,Hp-0.05)]];if(i===0)pts.unshift([xb(0)-0.4,0.14],[xb(0),0.14]);
-  g+=line(pts,"--f2",2+db/8);
-  if(i>0)g+=`<line x1="${X(p.B1)-8}" y1="${Y(p.H5+z0)}" x2="${xr-4}" y2="${Y(p.H5+z0)}" stroke="${c('--f2')}" stroke-dasharray="5 3"/><text x="${xr}" y="${Y(p.H5+z0)+4}" style="fill:${c('--f2')}">cambio a ${fx(z0)} m de la zapata</text>`;
-  g+=lead(X(xb(zm)),Y(p.H5+zm),xr-3,Y(p.H5+zm)-4,"--f2")+txt(xr,Y(p.H5+zm),`P1 · tramo ${k}: Ø${db} c/${sp}`,"--f2","start",`de ${fx(z0)} a ${fx(z1)} m · cara del relleno`)}
+ const cu=S.cuts,xr=X(G.xs)+26;
+ for(let i=0;i<cu.length-1;i++){const z0=cu[i],z1c=cu[i+1],T=TR[i],zm=(z0+z1c)/2;
+  const pts=[[xb(z0),p.H5+z0],[xb(z1c),p.H5+Math.min(z1c,Hp-0.05)]];if(i===0)pts.unshift([xb(0)-0.45,0.14],[xb(0),0.14]);
+  g+=line(pts,"--f2",2.5+T.db/7);if(has(T.rd,T.rs))g+=line(pts.slice(i===0?2:0),"--f2",1.6,-6,0);
+  if(i>0)g+=`<line x1="${X(p.B1)-14}" y1="${Y(p.H5+z0)}" x2="${xr-6}" y2="${Y(p.H5+z0)}" stroke="${c('--f2')}" stroke-width="1.4" stroke-dasharray="6 4"/><text x="${xr}" y="${Y(p.H5+z0)+5}" style="fill:${c('--f2')};font-size:13px;font-weight:600">cambio de armadura a ${fx(z0)} m de la zapata</text>`;
+  g+=lead(X(xb(zm)),Y(p.H5+zm),xr-4,Y(p.H5+zm)-5,"--f2")+txt(xr,Y(p.H5+zm),`P1 · tramo ${T.k}: ${T.desc}`,"--f2","start",`cuantía ρ = ${fx(T.As/(1000*T.hmax)*100,2)} % · de ${fx(z0)} a ${fx(z1c)} m`,"vertical · cara del relleno")}
  // rótulos
- const xl=X(0)-14;
- g+=lead(xl+3,Y(H*0.78)-4,X(p.B1+cv),Y(H*0.78)-4,"--f1")+txt(xl,Y(H*0.78),`P2: Ø${p.ved} c/${p.ves}`,"--f1","end","vertical · cara del frente");
- g+=lead(xl+3,Y(H*0.5)-4,X(p.B1+cv+0.06),Y(H*0.5)-4,"--f3")+txt(xl,Y(H*0.5),`P3: Ø${p.dh} c/${p.sh}`,"--f3","end","horizontal · en cada cara");
- g+=lead(X(G.xs+p.B3*0.55),Y(yt(G.xs+p.B3*0.55)-cv),X(G.xs+p.B3*0.55)+10,Y(p.H5)-24,"--f5")+txt(X(G.xs+p.B3*0.55)+12,Y(p.H5)-26,`Z1: Ø${p.dt} c/${p.st}`,"--f5","start","talón · arriba");
- g+=txt(X(0),Y(0)+18+kd,`Z2: Ø${p.db} c/${p.sb}`,"--f4","start","puntera y base · abajo");
- g+=txt(X(0),Y(0)+48+kd,`Z3: Ø${p.dl} c/${p.sl}`,"--wn","start","longitudinal (puntos) · arriba y abajo");
+ const xl=X(0)-18;
+ g+=lead(xl+4,Y(H*0.8)-5,X(p.B1+cv),Y(H*0.8)-5,"--f1")+txt(xl,Y(H*0.8),`P2: Ø${p.ved} c/${p.ves}`,"--f1","end",`cuantía ρ = ${RH.p2}`,"vertical · cara del frente");
+ g+=lead(xl+4,Y(H*0.5)-5,X(p.B1+cv+0.07),Y(H*0.5)-5,"--f3")+txt(xl,Y(H*0.5),`P3: Ø${p.dh} c/${p.sh}`,"--f3","end",`cuantía ρ = ${RH.p3} (2 caras)`,"horizontal · en cada cara");
+ const xz=G.xs+p.B3*0.55;
+ g+=lead(X(B-0.06),Y(p.H4-cv),X(B)+12,Y(p.H4-cv)-14,"--f5")+txt(X(B)+16,Y(p.H4-cv)-12,`Z1: ${RH.z1d}`,"--f5","start",`cuantía ρ = ${RH.z1}`,"talón · arriba");
+ g+=txt(X(0),Y(0)+24+kd,`Z2: ${RH.z2d}`,"--f4","start",`cuantía ρ = ${RH.z2}`,"puntera y base · abajo");
+ g+=txt(X(0),Y(0)+84+kd,`Z3: Ø${p.dl} c/${p.sl}`,"--wn","start",`cuantía ρ = ${RH.z3} (2 capas)`,"longitudinal (puntos) · arriba y abajo");
  el.setAttribute("viewBox",`0 0 ${W} ${Hh+kd}`);el.innerHTML=g;
 }
 
@@ -707,6 +834,7 @@ function run(){
  <tr><th>Σ</th><th class="n">${fx(c.V,2)}</th><th></th><th class="n">${fx(c.Hs,2)}</th><th></th><th class="note">x desde el borde de la puntera; y desde el plano de fundación</th></tr></table>
  </div></div>${checks(c,p,A)}</div>`).join("");
  A.C.forEach(c=>drawWall($("#sv_"+c.id),p,A,c));
+ renderJun(p,A);
 
  // pantalla
  const S=stem(p,A);
@@ -722,13 +850,13 @@ function run(){
  let worstV={r:1e9};S.cap.forEach((k,i)=>{if(envV[i]>0.05){const r=k.phiVc/envV[i];if(r<worstV.r)worstV={r,i}}});
  const b0=S.cap[S.cap.length-1],top=S.cap[0];
  const TR=[];for(let k=1;k<S.cuts.length;k++){const T={k,z0:S.cuts[k-1],z1:S.cuts[k],r:1e9,rz:S.cuts[k-1],hmax:0,hmin:1e9};
-  S.cap.forEach((q,i)=>{if(q.k!==k)return;T.db=q.db;T.sp=q.sp;T.As=q.As;T.hmax=Math.max(T.hmax,q.h);T.hmin=Math.min(T.hmin,q.h);
+  S.cap.forEach((q,i)=>{if(q.k!==k)return;T.db=q.db;T.sp=q.sp;T.rd=q.rd;T.rs=q.rs;T.desc=bd(q.db,q.sp,q.rd,q.rs);T.As=q.As;T.hmax=Math.max(T.hmax,q.h);T.hmin=Math.min(T.hmin,q.h);
    if(env[i]>0.05){const r=q.phiMn/env[i];if(r<T.r){T.r=r;T.rz=S.Hp-q.s;T.Mu=env[i];T.Mn=q.phiMn}}});
-  T.okR=T.As>=1.8*T.hmax-1e-6;T.okS=T.sp<=Math.min(3*T.hmin,300);T.okM=T.r>=1;TR.push(T)}
+  T.okR=T.As>=1.8*T.hmax-1e-6;T.okS=Math.min(T.sp,T.rd>0&&T.rs>0?T.rs:1e9)<=Math.min(3*T.hmin,300);T.okM=T.r>=1;TR.push(T)}
  const Ash=2*Ab(p.dh)*1000/p.sh,hm=(p.B2+p.B4)/2*1000;
  $("#stemTab").innerHTML=`<h3>Armadura vertical P1, por tramos</h3>
  <table><tr><th>Tramo</th><th>Alturas desde la zapata</th><th>Armadura</th><th>As colocada</th><th>Cuantía ρ (en el espesor mayor del tramo)</th><th>Mínima 0,18 % <span class="ref">7.6.1.1</span></th><th>Separación ≤ 300 mm <span class="ref">7.7.2.3</span></th><th>Sección más exigida: Mu / φMn</th><th>Flexión</th></tr>
- ${TR.map(T=>`<tr><td><b>Tramo ${T.k}</b></td><td>de ${fx(T.z0)} a ${fx(T.z1)} m</td><td>Ø${T.db} c/${T.sp}</td><td class="n">${fx(T.As,0)} mm²/m</td><td class="n">${fx(T.As/(1000*T.hmax)*100,3)} % (h = ${fx(T.hmax,0)} mm)</td><td>${okng(T.okR)}</td><td>${okng(T.okS)}</td>
+ ${TR.map(T=>`<tr><td><b>Tramo ${T.k}</b></td><td>de ${fx(T.z0)} a ${fx(T.z1)} m</td><td>${T.desc}</td><td class="n">${fx(T.As,0)} mm²/m</td><td class="n">${fx(T.As/(1000*T.hmax)*100,3)} % (h = ${fx(T.hmax,0)} mm)</td><td>${okng(T.okR)}</td><td>${okng(T.okS)}</td>
   <td class="n">${T.Mu==null?"—":`${fx(T.Mu,2)} / ${fx(T.Mn,2)} t·m/m a ${fx(T.rz)} m`}</td><td>${T.Mu==null?"—":okng(T.okM)+` <span class="note">${fx(T.r,2)}</span>`}</td></tr>`).join("")}</table>
  <h3>Resto de la pantalla</h3>
  <table><tr><th>Verificación</th><th>Valor</th><th>Requisito</th><th></th></tr>
@@ -739,10 +867,10 @@ function run(){
 
  // zapata
  const Fz=footing(p,A);const cols={RIa:"--f4",RIb:"--f1",EEa:"--f2",EEb:"--f3"};
- const heelAs=Ab(p.dt)*1000/p.st,toeAs=Ab(p.db)*1000/p.sb;
+ const heelAs=asb(p.dt,p.st,p.dtr,p.str),toeAs=asb(p.db,p.sb,p.dbr,p.sbr),heelD=bd(p.dt,p.st,p.dtr,p.str),toeD=bd(p.db,p.sb,p.dbr,p.sbr);
  const hcap=[],tcap=[];
- Fz.heel[0].x.forEach(x=>{const h=Fz.ytop(x)*1000,d=h-p.ct-p.dt/2;hcap.push({x,h,d,...flex(heelAs,d,p.fc,p.fy)})});
- Fz.toe[0].x.forEach(u=>{const x=p.B1-u;const h=Fz.ytop(x)*1000,d=h-p.cb-p.db/2;tcap.push({x:u,h,d,...flex(toeAs,d,p.fc,p.fy)})});
+ Fz.heel[0].x.forEach(x=>{const h=Fz.ytop(x)*1000,d=h-p.ct-Math.max(p.dt,p.dtr>0&&p.str>0?p.dtr:0)/2;hcap.push({x,h,d,...flex(heelAs,d,p.fc,p.fy)})});
+ Fz.toe[0].x.forEach(u=>{const x=p.B1-u;const h=Fz.ytop(x)*1000,d=h-p.cb-Math.max(p.db,p.dbr>0&&p.sbr>0?p.dbr:0)/2;tcap.push({x:u,h,d,...flex(toeAs,d,p.fc,p.fy)})});
  $("#heelPlot").innerHTML="<h3>Momento en el talón (+ tracciona arriba)</h3>"+plot([
   ...Fz.heel.map(c=>({x:c.x.map(x=>x-G.xs),y:c.M,col:cols[c.id],lab:c.sn})),
   {x:hcap.map(k=>k.x-G.xs),y:hcap.map(k=>k.phiMn),col:"--ok",dash:"6 3",lab:"φMn superior"}],{xl:"Distancia desde la cara trasera de la pantalla (m)",yl:"M (t·m/m)",u:"t·m/m",capAt:s=>s.x.length-1});
@@ -757,23 +885,23 @@ function run(){
    return `<tr><td>${c.sn}</td><td class="n">${fx(M,2)}</td><td class="n">${fx(hf.phiMn,2)}</td><td>${okng(hf.phiMn>=M)}</td><td class="n">${fx(Vd,2)}</td><td class="n">${fx(vc.phiVc,2)}</td><td>${okng(vc.phiVc>=Vd)}</td></tr>`}).join("");
   const Asmin=0.0018*1000*hf.h,smx=Math.min(3*hf.h,300);
   return `<table><tr><th>Combinación</th><th>Mu cara</th><th>φMn</th><th></th><th>Vu ${crit==="d"?"a d":"en cara"}</th><th>φVc</th><th></th></tr>${rows}</table>
-  <table style="margin-top:8px"><tr><td>Armadura ${face}: Ø${dbar} c/${s} = ${fx(As,0)} mm²/m · d = ${fx(hf.d,0)} mm · φ = ${fx(hf.phi,2)}</td><td></td></tr>
+  <table style="margin-top:8px"><tr><td>Armadura ${face}: ${dbar} = ${fx(As,0)} mm²/m · d = ${fx(hf.d,0)} mm · φ = ${fx(hf.phi,2)}</td><td></td></tr>
   <tr><td>As,mín = 0,0018·Ag = ${fx(Asmin,0)} mm²/m <span class="ref">13.3.2.1 → 7.6.1.1</span></td><td>${okng(As>=Asmin)}</td></tr>
   <tr><td>Separación ≤ menor de 3h y 300 mm = ${fx(smx,0)} mm <span class="ref">CIRSOC 201-25 7.7.2.3</span></td><td>${okng(s<=smx)}</td></tr>
   <tr><td colspan="2" class="note">φVc = 0,75·0,66·λs·ρw<sup>1/3</sup>·√f'c·b·d, con λs = √(2/(1 + d/254)) ≤ 1 y sin armadura de corte <span class="ref">22.5.5.1, Tabla 22.5.5.1, 22.5.5.1.3</span>. En la otra cara colocar la armadura de contracción y temperatura (0,0018 Ag total, <span class="ref">24.4.3.2</span>).</td></tr></table>`};
- $("#heelTab").innerHTML=ftab(Fz.heel,hcap,heelAs,p.dt,"superior",p.st,"face")+`<p class="note">El talón se carga con el suelo, el peso propio, la sobrecarga y la componente vertical del empuje en el extremo, menos la presión de contacto lineal de cada combinación. Corte en la cara: el apoyo no comprime la zona del talón.</p>`;
+ $("#heelTab").innerHTML=ftab(Fz.heel,hcap,heelAs,heelD,"superior",Math.min(p.st,p.dtr>0&&p.str>0?p.str:1e9),"face")+`<p class="note">El talón se carga con el suelo, el peso propio, la sobrecarga y la componente vertical del empuje en el extremo, menos la presión de contacto lineal de cada combinación. Corte en la cara: el apoyo no comprime la zona del talón.</p>`;
 {const mk=ok=>ok?'<b class="ok">✔ cumple la mínima</b>':'<b class="ng">✘ no llega a la mínima</b>';
   const rl=(t,As,h,need=true)=>`<b>${t}</b>: As = ${fx(As,0)} mm²/m · cuantía ρ = ${fx(As/(1000*h)*100,3)} % (h = ${fx(h,0)} mm)`+(need?` · mínima 0,18 % = ${fx(1.8*h,0)} mm²/m ${mk(As>=1.8*h-1e-6)}`:"");
-  const nt=t=>`<br><span class="note">${t}</span>`;
+  const nt=t=>`<br><span class="note">${t}</span>`,pc=(As,h)=>fx(As/(1000*h)*100,2)+" %";
   const hH=hcap[hcap.length-1].h,hT=tcap[tcap.length-1].h,Ase=p.ves>0?Ab(p.ved)*1000/p.ves:0,Asl=p.sl>0?2*Ab(p.dl)*1000/p.sl:0,hF=G.cf.A/B*1000;
-  $("#rho0").innerHTML=TR.map(T=>rl(`Tramo ${T.k} (de ${fx(T.z0)} a ${fx(T.z1)} m), Ø${T.db} c/${T.sp}`,T.As,T.hmax)).join("<br>")+nt("Mínima de flexión 0,0018·Ag, con el espesor mayor de cada tramo (CIRSOC 201-25 / ACI 318-25, 7.6.1.1). Si vh2 ≤ vh1, el tramo 3 no se usa.");
-  $("#rho1").innerHTML=rl(`Ø${p.ved} c/${p.ves}`,Ase,hm,false)+nt("Cara comprimida: armadura constructiva, sin mínima propia. Sostiene la horizontal y controla la fisuración del frente.");
-  $("#rho2").innerHTML=rl(`Ø${p.dh} c/${p.sh} en 2 caras`,Ash,hm)+nt(`Contracción y temperatura, sobre el espesor medio (24.4.3.2). En la base (h = ${fx(b0.h,0)} mm) da ${fx(Ash/(1000*b0.h)*100,3)} %.`);
-  $("#rho3").innerHTML=rl(`Ø${p.dt} c/${p.st}`,heelAs,hH)+nt("Mínima de flexión en la sección junto a la pantalla (13.3.2.1 → 7.6.1.1).");
-  $("#rho4").innerHTML=rl(`Ø${p.db} c/${p.sb}`,toeAs,hT)+nt("Mínima de flexión en la sección junto a la pantalla (13.3.2.1 → 7.6.1.1).");
-  $("#rho5").innerHTML=rl(`Ø${p.dl} c/${p.sl} en 2 capas`,Asl,hF)+nt("Contracción y temperatura, sobre el espesor medio de la zapata (24.4.3.2).");
-  drawRebar($("#rebSvg"),p,A,S);}
- $("#toeTab").innerHTML=ftab(Fz.toe,tcap,toeAs,p.db,"inferior",p.sb,"d")+`<p class="note">Corte de la puntera a la distancia d de la cara de la pantalla. Si B1 &lt; d, la sección crítica cae fuera de la puntera y Vu = 0.</p>`;
+  $("#rho0").innerHTML=TR.map(T=>rl(`Tramo ${T.k} (de ${fx(T.z0)} a ${fx(T.z1)} m), ${T.desc}`,T.As,T.hmax)).join("<br>")+nt("La pantalla es de espesor variable: la cuantía de cada tramo se calcula con su sección más gruesa (la de abajo), que es la que más armadura pide. Si cumple ahí, cumple en todo el tramo. Mínima de flexión 0,0018·Ag (CIRSOC 201-25 / ACI 318-25, 7.6.1.1). El tramo 3 solo se usa si su altura de cambio es mayor que la del tramo 2.");
+  $("#rho1").innerHTML=rl(`Ø${p.ved} c/${p.ves}`,Ase,hm,false)+nt("Cara comprimida: armadura constructiva, sin mínima propia. Cuantía sobre el espesor medio.");
+  $("#rho2").innerHTML=rl(`Ø${p.dh} c/${p.sh} en 2 caras`,Ash,hm)+nt(`Contracción y temperatura: 0,0018 del área bruta (24.4.3.2). Con espesor variable, área bruta = espesor medio × altura, por eso se usa el espesor medio (${fx(hm,0)} mm). En la base (h = ${fx(b0.h,0)} mm) da ${fx(Ash/(1000*b0.h)*100,3)} %: si querés cumplir también ahí, cerrá la separación en la parte baja.`);
+  $("#rho3").innerHTML=rl(heelD,heelAs,hH)+nt("Mínima de flexión 0,18 % con el espesor junto a la pantalla, que es la sección más gruesa del talón (13.3.2.1 → 7.6.1.1).");
+  $("#rho4").innerHTML=rl(toeD,toeAs,hT)+nt("Mínima de flexión 0,18 % con el espesor junto a la pantalla (13.3.2.1 → 7.6.1.1).");
+  $("#rho5").innerHTML=rl(`Ø${p.dl} c/${p.sl} en 2 capas`,Asl,hF)+nt("Sí: la mínima de la longitudinal es 0,18 % (0,0018·Ag, contracción y temperatura, 24.4.3.2), sumando las dos capas. Se calcula sobre el espesor medio de la zapata, porque Ag es el área de toda la sección.");
+  drawRebar($("#rebSvg"),p,A,S,TR,{p2:pc(Ase,hm),p3:pc(Ash,hm),z1:pc(heelAs,hH),z2:pc(toeAs,hT),z3:pc(Asl,hF),z1d:heelD,z2d:toeD});}
+ $("#toeTab").innerHTML=ftab(Fz.toe,tcap,toeAs,toeD,"inferior",Math.min(p.sb,p.dbr>0&&p.sbr>0?p.sbr:1e9),"d")+`<p class="note">Corte de la puntera a la distancia d de la cara de la pantalla. Si B1 &lt; d, la sección crítica cae fuera de la puntera y Vu = 0.</p>`;
 }
 run();
 
