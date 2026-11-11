@@ -44,6 +44,12 @@ svg.plt text{font-size:12px}
 .cmb{display:grid;grid-template-columns:minmax(280px,1fr) minmax(280px,1.1fr);gap:14px}
 #combos .cmb{grid-template-columns:1fr}#combos .cmb>svg{max-width:640px;margin:0 auto}
 @media (max-width:760px){.cmb{grid-template-columns:1fr}.fg label{grid-template-columns:1fr 80px 46px}}
+.chks{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;margin-top:14px}
+.chk{border:1px solid var(--ln);border-left:5px solid var(--ok);border-radius:6px;padding:10px 12px;background:var(--bg)}
+.chk.ng{border-left-color:var(--ng)}
+.chk h4{margin:0 0 6px;font-size:14.5px;display:flex;justify-content:space-between;gap:8px}
+.chk td{border-bottom:1px dashed var(--ln)}
+.chk .res{font-weight:700;margin-top:8px;font-size:14px}
 .pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;border:1px solid var(--ln)}
 ol.find li{margin-bottom:8px}
 code{font-size:12.5px;background:var(--bg);padding:0 3px;border-radius:3px}
@@ -194,6 +200,7 @@ code{font-size:12.5px;background:var(--bg);padding:0 3px;border-radius:3px}
 <tr><td>Deslizamiento</td><td>φτ·μ·V + φep·Ep ≥ ΣH <span class="ref">CIRSOC 804-3, 11.6.3.6 → 10.6.3.4 <span class="unv">†</span></span></td><td>Igual, con φ de Evento Extremo</td></tr>
 <tr><td>Factores φ</td><td>Muros de gravedad y semigravedad: φb = 0,55; φτ = 1,0. Pasivo: φep = 0,50 <span class="unv">†</span> <span class="ref">CIRSOC 804-3, Tabla 11.5.7-1</span></td><td>φ = 1,0, salvo capacidad de carga: φb = 0,80 <span class="ref">CIRSOC 804-3, 11.5.8</span></td></tr>
 </table>
+<p><b>Forma del diagrama de presiones</b> <span class="ref">CIRSOC 804-3, 11.6.3.2</span>: la fija el reglamento según el apoyo. Sobre <b>suelo</b> se usa el método del área efectiva: presión uniforme q = ΣV/(B − 2e) sobre el ancho B' = B − 2e. Sobre <b>roca</b> se usa la distribución lineal (trapecio si e ≤ B/6, triángulo si e > B/6). En los dos casos la reacción cae en el mismo punto, x<sub>R</sub>, porque sale del equilibrio: el rectángulo queda centrado en x<sub>R</sub> y el baricentro del triángulo también está en x<sub>R</sub>.</p>
 <p><b>qn (resistencia nominal):</b> el estudio solo informa la tensión admisible. Si el geotécnico no da la carga de rotura, se toma qn = FS · σadm, adoptando un FS y dejándolo escrito como supuesto. Es más seguro pedirle al geotécnico la carga de rotura.</p>
 </div>
 
@@ -321,7 +328,7 @@ const F=[
  ["Relleno y sobrecarga",[["g","γ relleno","t/m³",2.1],["phi","φ relleno","°",34],
   ["dmode","δ en el plano virtual del talón","",["R","δ = 0 Rankine (recomendado)"],[["R","δ = 0 Rankine (recomendado)"],["C","δ = 2/3 φ Coulomb"]]],
   ["q","Sobrecarga en la plataforma","t/m²",0.2]]],
- ["Fundación",[["ftype","Tipo de apoyo","",["S","Suelo"],[["S","Suelo"],["R","Roca"]]],
+ ["Fundación",[["ftype","Tipo de apoyo (CIRSOC 804-3, 11.6.3.2)","",["S","Suelo: presión uniforme en el área efectiva"],[["S","Suelo: presión uniforme en el área efectiva"],["R","Roca: distribución lineal (triángulo o trapecio)"]]],
   ["sadm","σadm del estudio (10 t/m² = 1 kg/cm²)","t/m²",40],["FSq","FS adoptado para qn = FS·σadm","",3.5],
   ["mumode","μ base–suelo: cómo se obtiene","",["A","Automático: tan(2/3·φ relleno)"],[["A","Automático: tan(2/3·φ relleno)"],["M","Manual (p. ej. el del estudio)"]]],
   ["mu","μ base–suelo","",0.418],["gf","γ del suelo delante de la puntera (lado opuesto al relleno)","t/m³",2.1],
@@ -452,7 +459,7 @@ function analyze(p){
   c.Rb=ph.b*qn;
   c.Rr=ph.t*p.mu*V+ph.e*Ep;
   c.okE=ae<=c.elim; c.okB=c.qd<=c.Rb; c.okD=c.Rr>=Hs;
-  if(c.st==="S"){c.okB=c.lin.qmax<=p.sadm}
+  if(c.st==="S"){c.Rb=p.sadm;c.okB=c.qd<=p.sadm}
  });
  D0.C=C;
  return D0;
@@ -552,8 +559,8 @@ function drawWall(svgEl,p,A,c,opt={}){
  // reacción
  const yb=Y(0);const qs=40/Math.max(c.lin.qmax,c.qeq);
  if(c.out){g+=`<text x="${X(0)}" y="${yb+16}" style="fill:${css('--ng')};font-weight:700">Resultante fuera de la base: el muro vuelca</text>`}
- else if(p.ftype==="S"&&c.st!=="S"){const L=B-2*Math.abs(c.e),x0=c.e>=0?0:B-L;
-  g+=`<rect x="${X(x0)}" y="${yb}" width="${L*sc}" height="${c.qeq*qs}" fill="${css('--f4')}" opacity=".25" stroke="${css('--f4')}"/><text x="${X(x0)+2}" y="${yb+c.qeq*qs+12}">q = ${fx(c.qeq,1)} t/m² (Meyerhof)</text>`;
+ else if(p.ftype==="S"){const L=B-2*Math.abs(c.e),x0=c.e>=0?0:B-L;
+  g+=`<rect x="${X(x0)}" y="${yb}" width="${L*sc}" height="${c.qeq*qs}" fill="${css('--f4')}" opacity=".25" stroke="${css('--f4')}"/><text x="${X(x0)+2}" y="${yb+c.qeq*qs+12}">q = ${fx(c.qeq,1)} t/m² uniforme en B' = ${fx(L)} m</text>`;
  }else{const pts=[];for(let i=0;i<=40;i++){const x=B*i/40;pts.push([X(x),yb+qAt(c,B,x)*qs])}
   g+=`<polygon points="${X(0)},${yb} ${pts.map(q=>q.join(",")).join(" ")} ${X(B)},${yb}" fill="${css('--f4')}" opacity=".25" stroke="${css('--f4')}"/><text x="${X(0)}" y="${yb+c.lin.qmax*qs+12}">qmáx = ${fx(c.lin.qmax,1)} t/m²</text>`}
  if(!c.out)g+=`<circle cx="${X(c.xR)}" cy="${yb}" r="4" fill="${css('--ng')}"/><text x="${X(c.xR)+5}" y="${yb-5}" style="fill:${css('--ng')}">R (e = ${fx(c.e,2)} m)</text>`;
@@ -593,6 +600,45 @@ function plot(series,o){ // o:{xl,yl,vert,u}  vert: el valor va en x y la altura
  return `<svg viewBox="0 0 ${w} ${h}" class="plt">${g}${labs}</svg><div style="display:flex;flex-wrap:wrap;margin-top:4px">${leg}</div>`;
 }
 
+/* ---------- verificaciones paso a paso ---------- */
+function checks(c,p,A){
+ const B=A.B,ae=Math.abs(c.e),rock=p.ftype==="R",R=a=>`<span class="ref">${a}</span>`;
+ const box=(n,t,ok,rows,res,ratio)=>`<div class="chk ${ok===false?"ng":""}"><h4><span>${n} · ${t}</span>${ok==null?"":okng(ok)}</h4><table>${rows.map(r=>`<tr><td>${r[0]}</td><td class="n">${r[1]}</td></tr>`).join("")}</table><div class="res">${res}${ratio==null?"":` <span class="note">(resistencia / solicitación = ${fx(ratio,2)})</span>`}</div></div>`;
+ const lim=c.st==="E"?`Resultante entre los 2/3 centrales (γEQ = 0) y los 8/10 centrales (γEQ = 1); con γEQ = ${fx(p.gEQ,2)} ${R("IC-103 VI 11.6.5.1")}`:
+  c.st==="S"?"B/6: núcleo central, sin despegue (recomendado, no exigido)":
+  rock?"0,45·B: resultante en los 9/10 centrales (roca) "+R("CIRSOC 804-3, 11.6.3.3"):"B/3: resultante en los 2/3 centrales (suelo) "+R("CIRSOC 804-3, 11.6.3.3");
+ const b1=box(1,"Excentricidad (reemplaza al vuelco)",c.okE,[
+  ["Momento estabilizante, ΣV·x respecto del borde de la puntera",fx(c.Mv,2)+" t·m/m"],
+  ["Momento volcador, ΣH·y",fx(c.Mh,2)+" t·m/m"],
+  [`Posición de la reacción: x<sub>R</sub> = (${fx(c.Mv,2)} − ${fx(c.Mh,2)}) / ${fx(c.V,2)}`,fx(c.xR)+" m"],
+  [`Excentricidad: e = B/2 − x<sub>R</sub> = ${fx(B/2)} − ${fx(c.xR)}`,fx(c.e)+" m"],
+  ["Límite. "+lim,fx(c.elim)+" m"]],
+  `e = ${fx(ae)} m ${c.okE?"≤":">"} ${fx(c.elim)} m`,c.elim/Math.max(ae,1e-6));
+ let rows;
+ if(c.out)rows=[["La resultante cae fuera de la base","—"]];
+ else if(!rock)rows=[
+  ["Método del área efectiva: presión uniforme sobre B' "+R("CIRSOC 804-3, 11.6.3.2"),""],
+  [`Ancho efectivo: B' = B − 2e = ${fx(B)} − 2·${fx(ae)}`,fx(B-2*ae)+" m"],
+  [`Presión de contacto: q = ΣV / B' = ${fx(c.V,2)} / ${fx(B-2*ae)}`,fx(c.qeq,1)+" t/m²"],
+  ["La reacción R actúa en el centro de B', a x<sub>R</sub> de la puntera",fx(c.xR)+" m"]];
+ else rows=[
+  ["Distribución lineal, por ser apoyo en roca "+R("CIRSOC 804-3, 11.6.3.2"),""],
+  ...(ae<=B/6?[[`Trapecio (e ≤ B/6 = ${fx(B/6)} m): q<sub>máx</sub> = ΣV/B·(1 + 6e/B)`,fx(c.lin.qmax,1)+" t/m²"],["q<sub>mín</sub> = ΣV/B·(1 − 6e/B)",fx(c.lin.qmin,1)+" t/m²"]]:
+   [[`Triángulo (e > B/6 = ${fx(B/6)} m): largo comprimido = 3·(B/2 − e)`,fx(c.lin.Lc)+" m"],["q<sub>máx</sub> = 2·ΣV / [3·(B/2 − e)]",fx(c.lin.qmax,1)+" t/m²"]]),
+  ["La reacción R actúa en el baricentro del diagrama, a x<sub>R</sub> de la puntera",fx(c.xR)+" m"]];
+ rows.push(c.st==="S"?["Se compara con la tensión admisible del estudio, sin mayorar",fx(p.sadm,1)+" t/m²"]:
+  [`Resistencia: φb·qn = ${fx(c.ph.b,2)} · ${fx(A.qn,1)} `+R(c.st==="E"?"CIRSOC 804-3, 11.5.8":"CIRSOC 804-3, Tabla 11.5.7-1"),fx(c.Rb,1)+" t/m²"]);
+ const b2=box(2,"Capacidad de carga del suelo",c.okB,rows,`q = ${fx(c.qd,1)} t/m² ${c.okB?"≤":">"} ${fx(c.Rb,1)} t/m²`,c.Rb/c.qd);
+ const b3=c.st==="S"?box(3,"Deslizamiento",null,[["En servicio no se verifica: se controla en Resistencia I y Evento Extremo I",""]],"—",null):
+  box(3,"Deslizamiento",c.okD,[
+  ["Fuerza que empuja: ΣH",fx(c.Hs,2)+" t/m"],
+  [`Fricción en la base: φτ·μ·ΣV = ${fx(c.ph.t,2)} · ${fx(p.mu,3)} · ${fx(c.V,2)} `+R("CIRSOC 804-3, 11.6.3.6 → 10.6.3.4 †"),fx(c.ph.t*p.mu*c.V,2)+" t/m"],
+  [p.pas==="1"?`Pasivo: φep·Ep = ${fx(c.ph.e,2)} · ${fx(A.Ep,2)}`:"Pasivo: no considerado "+R("CIRSOC 804-3, 11.6.3.5"),fx(c.ph.e*A.Ep,2)+" t/m"],
+  ["Resistencia total",fx(c.Rr,2)+" t/m"]],
+  `Resistencia ${fx(c.Rr,2)} t/m ${c.okD?"≥":"<"} ΣH = ${fx(c.Hs,2)} t/m`,c.Rr/c.Hs);
+ return `<div class="chks">${b1}${b2}${b3}</div>`;
+}
+
 /* ---------- render ---------- */
 function run(){
  const p=read();{const e=$("#i_mu");if(p.mumode==="A"){p.mu=Math.tan(2/3*R(p.phi));e.value=p.mu.toFixed(3);e.disabled=true}else e.disabled=false}
@@ -616,21 +662,14 @@ function run(){
  // resumen
  $("#summary").innerHTML=`<table><tr><th>Combinación</th><th>e / e lím (m)</th><th>Excentricidad</th><th>q / resistencia (t/m²)</th><th>Portante</th><th>Rr / Ru (t/m)</th><th>Deslizamiento</th></tr>`+
  A.C.map(c=>`<tr><td>${c.id}</td><td class="n">${fx(c.e)} / ${fx(c.elim)}</td><td>${okng(c.okE)} <span class="note">${fx(c.elim/Math.max(Math.abs(c.e),1e-6),2)}</span></td>
- <td class="n">${c.st==="S"?fx(c.lin.qmax,1)+" / σadm "+fx(p.sadm,1):fx(c.qd,1)+" / "+fx(c.Rb,1)}</td><td>${okng(c.okB)} <span class="note">${fx((c.st==="S"?p.sadm/c.lin.qmax:c.Rb/c.qd),2)}</span></td>
+ <td class="n">${fx(c.qd,1)+" / "+(c.st==="S"?"σadm ":"")+fx(c.Rb,1)}</td><td>${okng(c.okB)} <span class="note">${fx((c.Rb/c.qd),2)}</span></td>
  <td class="n">${c.st==="S"?"—":fx(c.Rr,2)+" / "+fx(c.Hs,2)}</td><td>${c.st==="S"?"—":okng(c.okD)+` <span class="note">${fx(c.Rr/c.Hs,2)}</span>`}</td></tr>`).join("")+`</table>
- <p class="note">Los números chicos son el cociente resistencia/solicitación (≥ 1 verifica). En Servicio I la excentricidad se compara con B/6 (núcleo central, criterio recomendado, no exigido) y qmáx (distribución lineal) con la σadm del estudio.</p>`;
+ <p class="note">Los números chicos son el cociente resistencia/solicitación (≥ 1 verifica). En Servicio I la excentricidad se compara con B/6 (núcleo central, criterio recomendado, no exigido) y la presión de contacto, sin mayorar, con la σadm del estudio.</p>`;
  // combos
  $("#combos").innerHTML=A.C.map(c=>`<div class="card"><h2>${c.t}</h2><p class="formula">${c.f}</p><div class="cmb"><svg id="sv_${c.id}"></svg><div>
  <table><tr><th>Carga</th><th>V (t)</th><th>x (m)</th><th>H (t)</th><th>y (m)</th><th>Ubicación de la resultante: en base a qué</th></tr>${c.L.map(l=>`<tr><td>${l.n}</td><td class="n">${l.V?fx(l.V,2):""}</td><td class="n">${l.V?fx(l.x):""}</td><td class="n">${l.Hh?fx(l.Hh,2):""}</td><td class="n">${l.Hh?fx(l.y):""}</td><td class="note">${l.b}</td></tr>`).join("")}
  <tr><th>Σ</th><th class="n">${fx(c.V,2)}</th><th></th><th class="n">${fx(c.Hs,2)}</th><th></th><th class="note">x desde el borde de la puntera; y desde el plano de fundación</th></tr></table>
- <table style="margin-top:8px">
- <tr><td>Momento respecto de la puntera: estabilizante / volcador</td><td class="n">${fx(c.Mv,2)} / ${fx(c.Mh,2)} t·m/m</td><td></td></tr>
- <tr><td>Reacción del suelo: x<sub>R</sub> = (ΣM estab. − ΣM volc.)/ΣV desde la puntera · e = B/2 − x<sub>R</sub></td><td class="n">${fx(c.xR)} · ${fx(c.e)} m</td><td></td></tr>
- <tr><td>Límite de e ${c.st==="E"?`(γEQ = ${fx(p.gEQ,2)}) <span class="ref">IC-103 VI 11.6.5.1</span>`:c.st==="R"?`<span class="ref">CIRSOC 804-3, 11.6.3.3</span>`:"(B/6, recomendado)"}</td><td class="n">${fx(c.elim)} m</td><td>${okng(c.okE)}</td></tr>
- ${c.st==="S"?`<tr><td>qmáx / qmín (lineal) vs σadm</td><td class="n">${fx(c.lin.qmax,1)} / ${fx(c.lin.qmin,1)} · ${fx(p.sadm,1)} t/m²</td><td>${okng(c.okB)}</td></tr>`:
- `<tr><td>${p.ftype==="S"?"q Meyerhof = V/(B − 2e)":"qmáx lineal"} vs φb·qn = ${fx(c.ph.b,2)}·${fx(A.qn,1)} <span class="ref">CIRSOC 804-3, 11.6.3.2</span></td><td class="n">${fx(c.qd,1)} / ${fx(c.Rb,1)} t/m²</td><td>${okng(c.okB)}</td></tr>
- <tr><td>Deslizamiento (μ = ${fx(p.mu,3)}): φτ·μ·V + φep·Ep = ${fx(c.ph.t,2)}·${fx(p.mu,3)}·${fx(c.V,2)} + ${fx(c.ph.e,2)}·${fx(A.Ep,2)} <span class="ref">CIRSOC 804-3, 11.6.3.6 → 10.6.3.4 †</span></td><td class="n">${fx(c.Rr,2)} / ${fx(c.Hs,2)} t</td><td>${okng(c.okD)}</td></tr>`}
- </table></div></div></div>`).join("");
+ </div></div>${checks(c,p,A)}</div>`).join("");
  A.C.forEach(c=>drawWall($("#sv_"+c.id),p,A,c));
 
  // pantalla
