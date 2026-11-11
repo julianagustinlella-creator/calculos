@@ -50,6 +50,11 @@ svg.plt text{font-size:12px}
 .chk h4{margin:0 0 6px;font-size:14.5px;display:flex;justify-content:space-between;gap:8px}
 .chk td{border-bottom:1px dashed var(--ln)}
 .chk .res{font-weight:700;margin-top:8px;font-size:14px}
+#armBar{position:sticky;top:44px;z-index:4;display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:var(--card);border:1px solid var(--ln);border-radius:8px;padding:8px 10px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.chip{font-size:12.5px;padding:3px 9px;border-radius:14px;border:1.5px solid var(--ok);white-space:nowrap}
+.chip.ng{border-color:var(--ng);background:color-mix(in srgb,var(--ng) 14%,transparent)}
+.stt{font-weight:600;padding:4px 7px;border-radius:5px;margin-bottom:5px;border-left:4px solid var(--ok)}
+.stt.ng{border-left-color:var(--ng);background:color-mix(in srgb,var(--ng) 12%,transparent)}
 .rho{font-size:12.5px;line-height:1.55;margin-top:6px;padding:6px 8px;background:var(--bg);border-radius:5px}
 .pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;border:1px solid var(--ln)}
 ol.find li{margin-bottom:8px}
@@ -251,6 +256,7 @@ code{font-size:12.5px;background:var(--bg);padding:0 3px;border-radius:3px}
 
 <!-- ======================= ARMADURAS ======================= -->
 <section class="tab" id="arm">
+<div id="armBar"></div>
 <div class="card">
 <h2>Armaduras propuestas</h2>
 <p class="note">El esquema muestra dónde va cada armadura, con el mismo color y la misma sigla (P1, P2, P3, Z1, Z2, Z3) que su grupo de datos. Al cargar un diámetro o una separación se actualizan el esquema, la cuantía colocada y si cumple la mínima. b = 1,00 m de muro.</p>
@@ -908,13 +914,13 @@ function run(){
    h.Mt=Math.max(0,tt.M[tt.M.length-1]);h.Mconv=h.M[h.M.length-1];h.Mnudo=Math.max(0,h.Mst-h.Mt);
    h.Mdes=p.hcrit==="B"?Math.min(h.Mconv,h.Mnudo):h.Mconv});
   const B_=p.hcrit==="B";
-  $("#heelNode").innerHTML=`<h3>Con qué momento se arma el talón</h3>
+  $("#heelNode").innerHTML=`<h3>Con qué momento se arma el talón</h3><p class="note" style="margin:0 0 6px">Para cambiar de criterio, tocá «Usar este criterio» en el recuadro que quieras. También se puede cambiar en el grupo Z1 de los datos de armadura.</p>
   <div class="chks">
-  <div class="chk" style="border-left-color:var(${B_?"--ln":"--ac"})"><h4><span>Criterio A · Convencional</span>${B_?"":'<span class="ok">EN USO</span>'}</h4>
+  <div class="chk" style="border-left-color:var(${B_?"--ln":"--ac"})"><h4><span>Criterio A · Convencional</span>${B_?'<button type="button" class="pickH" data-v="A" style="border:1px solid var(--ac);background:var(--ac);color:#fff;padding:3px 10px;border-radius:6px;cursor:pointer;font:inherit;font-size:13px">Usar este criterio</button>':'<span class="ok">✔ EN USO</span>'}</h4>
    <p style="margin:0 0 6px">El talón es un voladizo empotrado en la cara trasera de la pantalla. Se carga con todo lo que tiene encima y se le resta la reacción del suelo:</p>
    <p class="formula">Mu = M(suelo + zapata + sobrecarga) − M(reacción lineal del suelo)</p>
    <p class="note" style="margin:0">Sale del equilibrio del muro entero, con el empuje de Rankine sobre toda la altura H. Es el método habitual y el más conservador.</p></div>
-  <div class="chk" style="border-left-color:var(${B_?"--ac":"--ln"})"><h4><span>Criterio B · Equilibrio del nudo</span>${B_?'<span class="ok">EN USO</span>':""}</h4>
+  <div class="chk" style="border-left-color:var(${B_?"--ac":"--ln"})"><h4><span>Criterio B · Equilibrio del nudo</span>${B_?'<span class="ok">✔ EN USO</span>':'<button type="button" class="pickH" data-v="B" style="border:1px solid var(--ac);background:var(--ac);color:#fff;padding:3px 10px;border-radius:6px;cursor:pointer;font:inherit;font-size:13px">Usar este criterio</button>'}</h4>
    <p style="margin:0 0 6px">En el nudo se juntan la pantalla, el talón y la puntera. El momento que trae la pantalla lo equilibran los otros dos, así que el talón no puede tomar más que:</p>
    <p class="formula">Mu ≤ M pantalla en el nudo − M puntera</p>
    <p class="formula">M pantalla en el nudo = Mu base + Vu base · H5/2 + N · e</p>
@@ -948,11 +954,27 @@ function run(){
   $("#rho5").innerHTML=rl(`Ø${p.dl} c/${p.sl} en 2 capas`,Asl,hF)+nt("Sí: la mínima de la longitudinal es 0,18 % (0,0018·Ag, contracción y temperatura, 24.4.3.2), sumando las dos capas. Se calcula sobre el espesor medio de la zapata, porque Ag es el área de toda la sección.");
   drawRebar($("#rebSvg"),p,A,S,TR,{p2:pc(Ase,hm),p3:HT,z1:pc(heelAs,hH),z2:pc(toeAs,hT),z3:pc(Asl,hF),z1d:heelD,z2d:toeD});}
  $("#toeTab").innerHTML=ftab(Fz.toe,tcap,toeAs,toeD,"inferior",Math.min(p.sb,p.dbr>0&&p.sbr>0?p.sbr:1e9),"d")+`<p class="note">Corte de la puntera a la distancia d de la cara de la pantalla. Si B1 &lt; d, la sección crítica cae fuera de la puntera y Vu = 0.</p>`;
+ {const footChk=(arr,cap,As,crit)=>{const hf=cap[cap.length-1],n=arr[0].x.length-1,vc=vcFoot(p.fc,hf.d,As).phiVc;let rm=99,rv=99;
+   arr.forEach(c=>{const M=c.Mdes!=null?c.Mdes:c.M[n];let Vd;if(crit==="d"){const u=Math.max(0,c.x[n]-hf.d/1000);let k=0;while(k<n&&c.x[k]<u)k++;Vd=c.V[k]}else Vd=c.V[n];
+    if(M>0.01)rm=Math.min(rm,hf.phiMn/M);if(Vd>0.01)rv=Math.min(rv,vc/Vd)});return{rm,rv,h:hf.h}};
+  const hz=footChk(Fz.heel,hcap,heelAs,"face"),tz2=footChk(Fz.toe,tcap,toeAs,"d"),r2=v=>v>=99?"sin carga":fx(v,2),t=ok=>ok?"✔":"✘";
+  const Asl=p.sl>0?2*Ab(p.dl)*1000/p.sl:0,hF=G.cf.A/B*1000,okZ1m=heelAs>=1.8*hz.h-1e-6,okZ2m=toeAs>=1.8*tz2.h-1e-6,okZ3=Asl>=1.8*hF-1e-6,okV=worstV.r>=1;
+  const items=[
+   ...TR.map(T=>({n:`P1 · tramo ${T.k}`,ok:T.okM&&T.okR&&T.okS,x:`flexión ${T.Mu==null?"—":fx(T.r,2)} ${t(T.okM)} · mínima ${t(T.okR)} · separación ${t(T.okS)}`,g:0})),
+   {n:"Pantalla · corte",ok:okV,x:`${fx(worstV.r,2)} ${t(okV)}`,g:0},
+   ...HT.map(T=>({n:`P3${HT.length>1?" · tramo "+T.k:""}`,ok:T.okR&&T.okS,x:`mínima ${t(T.okR)} · separación ${t(T.okS)}`,g:2})),
+   {n:"Z1 · talón",ok:hz.rm>=1&&hz.rv>=1&&okZ1m,x:`flexión ${r2(hz.rm)} ${t(hz.rm>=1)} · corte ${r2(hz.rv)} ${t(hz.rv>=1)} · mínima ${t(okZ1m)}`,g:3},
+   {n:"Z2 · puntera",ok:tz2.rm>=1&&tz2.rv>=1&&okZ2m,x:`flexión ${r2(tz2.rm)} ${t(tz2.rm>=1)} · corte ${r2(tz2.rv)} ${t(tz2.rv>=1)} · mínima ${t(okZ2m)}`,g:4},
+   {n:"Z3 · longitudinal",ok:okZ3,x:`mínima ${t(okZ3)}`,g:5}];
+  const bad=items.filter(i=>!i.ok).length;
+  $("#armBar").innerHTML=`<b style="margin-right:4px;color:var(${bad?"--ng":"--ok"})">${bad?bad+" sin verificar":"Todo verifica"}</b>`+items.map(i=>`<span class="chip ${i.ok?"":"ng"}"><b>${i.n}</b> ${i.x}</span>`).join("")+`<span class="note" style="flex-basis:100%">Los números son resistencia / solicitación (≥ 1 verifica). Esta barra queda a la vista mientras cargás la armadura.</span>`;
+  [0,2,3,4,5].forEach(g=>{const it=items.filter(i=>i.g===g);$("#rho"+g).insertAdjacentHTML("afterbegin",it.map(i=>`<div class="stt ${i.ok?"":"ng"}">${i.ok?"✔":"✘"} ${i.n}: ${i.x}</div>`).join(""))});}
 }
 run();
 
 /* ---------- proyectos y muros guardados ---------- */
 const PM_KEY="muroIC103.v1";
+document.addEventListener("click",ev=>{const b=ev.target.closest(".pickH");if(!b)return;const e=$("#i_hcrit");e.value=b.dataset.v;e.dispatchEvent(new Event("change",{bubbles:true}))});
 const getVals=()=>{const d={};ALL.forEach(([id])=>d[id]=$("#i_"+id).value);return d};
 const setVals=d=>{ALL.forEach(([id])=>{$("#i_"+id).value=d[id]!=null?d[id]:DEF[id]});run()};
 const DEF=getVals();
