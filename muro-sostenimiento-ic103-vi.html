@@ -169,6 +169,11 @@ code{font-size:12.5px;background:var(--bg);padding:0 3px;border-radius:3px}
 <p><b>Punto de aplicación:</b> P<sub>AE</sub> ya incluye la parte estática. El 11.6.5.3 pide la misma distribución que la presión estática, con la resultante <b>no más abajo de H/3</b>. El comentario C11.6.5.3 aclara que la práctica anterior (incremento sísmico a 0,6h, Seed y Whitman) fue reemplazada: las investigaciones recientes ubican la resultante total en h/3, y admite subirla a 0,4h–0,5h en muros cuya falla tiene alto impacto. Con sobrecarga, su empuje se reparte en toda la altura h.</p>
 <h3>3.3 Pasivo <span class="ref">IC-103 VI 11.6.5.5</span></h3>
 <p>No se puede usar M-O para el pasivo: se usa el método de la espiral logarítmica con δ = 2/3 φ. Si el empotramiento es menor de 1,50 m, se calcula con los métodos estáticos. En esta herramienta el pasivo es opcional y por defecto no se cuenta, como hace la planilla en la práctica.</p>
+<p><b>Diente (llave de corte):</b> es un resalto de hormigón bajo la zapata que moviliza empuje pasivo en el suelo que tiene delante. El CIRSOC 804-3, 11.6.3.5, manda omitir el pasivo salvo que la base quede por debajo de la socavación u otras perturbaciones, y despreciarlo si el suelo es blando, suelto o no hay contacto firme. Por eso el diente tiene que hormigonarse contra el terreno natural sin excavar de más. La calculadora ofrece tres formas de contarlo:</p>
+<ul><li><b>Solo el diente, sin la tapada:</b> E<sub>p</sub> = ½·K<sub>p</sub>·γ·d<sub>k</sub>². Vale aunque el suelo de adelante se excave en el futuro.</li>
+<li><b>Solo el diente, con la tapada H3 como peso:</b> E<sub>p</sub> = ½·K<sub>p</sub>·γ·[(H3 + d<sub>k</sub>)² − H3²].</li>
+<li><b>Puntera + diente:</b> E<sub>p</sub> = ½·K<sub>p</sub>·γ·(H3 + d<sub>k</sub>)².</li></ul>
+<p class="note">K<sub>p</sub> = tan²(45° + φ/2) (Rankine, sin fricción), que queda por debajo del de la espiral logarítmica que pide el 11.6.5.5. Se afecta con φep = 0,50 en Resistencia I y 1,00 en Evento Extremo I. El pasivo se cuenta solo para el deslizamiento: no se suma al momento estabilizante ni cambia las presiones de contacto. El peso del diente se suma como DC. La armadura del diente no se verifica acá.</p>
 <h3>3.4 Inercia del muro y no concurrencia <span class="ref">IC-103 VI 11.6.5.1</span></h3>
 <div class="formula">P<sub>IR</sub> = k<sub>h</sub> (W<sub>w</sub> + W<sub>s</sub>) &nbsp;(11.6.5.1-1) &nbsp;&nbsp;·&nbsp;&nbsp; W<sub>w</sub> = peso del muro; W<sub>s</sub> = suelo inmediatamente sobre el talón</div>
 <p>Como PAE y PIR no son simultáneos, hay que verificar dos casos y quedarse con el peor:</p>
@@ -324,6 +329,8 @@ const F=[
   ["H3","H3 — tapada frente a la puntera","m",0.5],["H4","H4 — espesor de zapata en el borde del talón","m",0.5],
   ["H5","H5 — espesor de zapata bajo la pantalla","m",0.7],["B1","B1 — puntera","m",0.3],["B2","B2 — pantalla en la base","m",0.75],
   ["B3","B3 — talón","m",3.15],["B4","B4 — pantalla en la corona","m",0.25]]],
+ ["Diente (llave de corte)",[["dk","Profundidad bajo la zapata (0 = sin diente)","m",0],["wk","Ancho del diente","m",0.5],
+  ["xk","Distancia del borde de la puntera a la cara frontal del diente","m",0.3]]],
  ["Materiales",[["gc","γ hormigón","t/m³",2.4],["fc","f'c","MPa",20],["fy","fy","MPa",420]]],
  ["Relleno y sobrecarga",[["g","γ relleno","t/m³",2.1],["phi","φ relleno","°",34],
   ["dmode","δ en el plano virtual del talón","",["R","δ = 0 Rankine (recomendado)"],[["R","δ = 0 Rankine (recomendado)"],["C","δ = 2/3 φ Coulomb"]]],
@@ -332,7 +339,7 @@ const F=[
   ["sadm","σadm del estudio (10 t/m² = 1 kg/cm²)","t/m²",40],["FSq","FS adoptado para qn = FS·σadm","",3.5],
   ["mumode","μ base–suelo: cómo se obtiene","",["A","Automático: tan(2/3·φ relleno)"],[["A","Automático: tan(2/3·φ relleno)"],["M","Manual (p. ej. el del estudio)"]]],
   ["mu","μ base–suelo","",0.418],["gf","γ del suelo delante de la puntera (lado opuesto al relleno)","t/m³",2.1],
-  ["pas","Empuje pasivo del suelo delante de la puntera","",["0","No considerar"],[["0","No considerar"],["1","Considerar (Rankine, prof. H3)"]]],["phif","φ del suelo delante de la puntera (solo para el pasivo)","°",34]]],
+  ["pas","Empuje pasivo (puntera y diente)","",["0","No considerar"],[["0","No considerar"],["3","Solo el diente, sin contar la tapada H3 (más conservador)"],["2","Solo el diente, con la tapada H3 como peso encima"],["1","Puntera + diente: toda la profundidad H3 + diente"]]],["phif","φ del suelo delante de la puntera (solo para el pasivo)","°",34]]],
  ["Sismo — IC-103 VI",[["zona","Zona sísmica (IC-103 I, Anexo A)","",["2","2"],[["1","1"],["2","2"],["3","3"],["4","4"]]],
   ["sitio","Clase de sitio (Tabla 3.10.3.1-1)","",["A","A"],[["A","A"],["B","B"],["C","C"],["D","D"],["E","E"]]],
   ["desp","Desplazamiento admitido (11.6.5.2.2 / 11.6.5.4)","",["0","Nulo: kh = kh0"],[["0","Nulo: kh = kh0"],["1","25–50 mm: kh = 0,5 kh0"]]],
@@ -375,7 +382,8 @@ function geom(p){
  const stem=[[p.B1,p.H5],[xs,p.H5],[p.B1+p.B4,H],[p.B1,H]];
  const soil=[[xs,p.H5],[B,p.H4],[B,H],[p.B1+p.B4,H]];
  const toe=clipY([[0,p.H2],[p.B1,p.H5],[p.B1,99],[0,99]],p.H3);
- return{H,B,xs,Hp:H-p.H5,foot,stem,soil,toe,cf:areaC(foot),cs:areaC(stem),ca:areaC(soil),ct:toe.length>2?areaC(toe):{A:0,x:0,y:0}};
+ const key=p.dk>0&&p.wk>0?[[p.xk,0],[p.xk+p.wk,0],[p.xk+p.wk,-p.dk],[p.xk,-p.dk]]:null;
+ return{key,H,B,xs,Hp:H-p.H5,foot,stem,soil,toe,cf:areaC(foot),cs:areaC(stem),ca:areaC(soil),ct:toe.length>2?areaC(toe):{A:0,x:0,y:0}};
 }
 
 /* ---------- empujes ---------- */
@@ -395,18 +403,24 @@ function analyze(p){
  const KAE=Kmo(phi,dv,th), KAEw=Kmo(phi,dw,th);
  const rAE=p.rAE==="0.3333"?1/3:parseFloat(p.rAE), rTxt=p.rAE==="0.3333"?"H/3":fx(rAE,1)+"·H";
  if(!isFinite(KAE))errs.push("φ < i + θ: no se puede aplicar M-O (11.6.5.3-1). Usar GLE.");
- const qn=p.FSq*p.sadm, Kp=Math.tan(R(45+p.phif/2))**2, Dp=p.H3, Ep=p.pas==="1"?0.5*Kp*p.gf*Dp*Dp:0;
+ const qn=p.FSq*p.sadm, Kp=Math.tan(R(45+p.phif/2))**2, dkE=G.key?p.dk:0, Dp=p.H3+dkE,
+  Ep=p.pas==="1"?0.5*Kp*p.gf*Dp*Dp:p.pas==="2"?0.5*Kp*p.gf*(Dp*Dp-p.H3*p.H3):p.pas==="3"?0.5*Kp*p.gf*dkE*dkE:0,
+  pasTxt=p.pas==="0"?"No considerado":p.pas==="1"?`Kp = ${fx(Kp,2)}; ½·Kp·γ·(H3 + dk)² con H3 + dk = ${fx(Dp)} m`:p.pas==="2"?`Kp = ${fx(Kp,2)}; ½·Kp·γ·[(H3 + dk)² − H3²], diente de ${fx(dkE)} m`:`Kp = ${fx(Kp,2)}; ½·Kp·γ·dk², diente de ${fx(dkE)} m`,
+  Wk=G.key?p.dk*p.wk*p.gc:0;
+ if(p.dk>0&&p.xk+p.wk>B+1e-9)errs.push("El diente se sale de la zapata: revisar su posición y ancho.");
+ if(p.pas!=="0"&&p.pas!=="1"&&!G.key)errs.push("Elegiste contar el pasivo del diente, pero la profundidad del diente es 0.");
  const Wst=G.cs.A*p.gc, Wft=G.cf.A*p.gc, Wso=G.ca.A*p.g, Wto=G.ct.A*p.gf;
  const Pa=0.5*Ka*p.g*H*H, PAE=0.5*KAE*p.g*H*H*(1-kv);
  const LsW=B-(p.B1+p.B4);  // ancho de sobrecarga sobre talón+cuña
  const Wpir=Wst+Wft+Wso, yPir=(Wst*G.cs.y+Wft*G.cf.y+Wso*G.ca.y)/Wpir, xPir=(Wst*G.cs.x+Wft*G.cf.x+Wso*G.ca.x)/Wpir;
- const D0={rTxt,xPir,G,H,B,Ka,Kw,As,kh0,kh,th,KAE,KAEw,rAE,qn,Kp,Ep,Dp,Wst,Wft,Wso,Wto,Pa,PAE,dv,dw,LsW,Wpir,yPir,errs,SD1:SD1[p.sitio][+p.zona-1]};
+ const D0={pasTxt,Wk,rTxt,xPir,G,H,B,Ka,Kw,As,kh0,kh,th,KAE,KAEw,rAE,qn,Kp,Ep,Dp,Wst,Wft,Wso,Wto,Pa,PAE,dv,dw,LsW,Wpir,yPir,errs,SD1:SD1[p.sitio][+p.zona-1]};
 
  function loads(c){
   const L=[];const add=(n,V,x,Hh,y,k,b)=>L.push({n,V,x,Hh,y,k,b});
   const rAASH=a=>`<span class="ref">AASHTO ${a} †</span>`, rIC=a=>`<span class="ref">IC-103 VI ${a}</span>`;
   add("Pantalla (DC)",c.DC*Wst,G.cs.x,0,G.cs.y,"w","Baricentro del área A1 (trapecio de la pantalla)");
   add("Zapata (DC)",c.DC*Wft,G.cf.x,0,G.cf.y,"w","Baricentro del área A2 (polígono de la zapata)");
+  if(Wk>0)add("Diente (DC)",c.DC*Wk,p.xk+p.wk/2,0,-p.dk/2,"w","Centro del diente");
   add("Suelo s/talón (EV)",c.EV*Wso,G.ca.x,0,G.ca.y,"s","Baricentro del área A3 (trapecio sobre el talón + cuña sobre la cara inclinada)");
   if(Wto>0)add("Suelo s/puntera (EV)",c.EV*Wto,G.ct.x,0,G.ct.y,"s","Baricentro del área A4");
   const bLSh="H/2: presión constante K·q en toda la altura "+rAASH("3.11.6.1")+" "+rIC("11.6.5.3");
@@ -537,15 +551,16 @@ function drawWall(svgEl,p,A,c,opt={}){
  <marker id="a${svgEl.id}" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="context-stroke"/></marker></defs>`;
  g+=poly(G.soil,`url(#h${svgEl.id})`);
  if(G.toe.length>2)g+=poly(G.toe,`url(#h${svgEl.id})`);
- g+=poly(G.foot,css('--conc'))+poly(G.stem,css('--conc'));
+ g+=poly(G.foot,css('--conc'))+poly(G.stem,css('--conc'))+(G.key?poly(G.key,css('--conc')):'');
+ const kd=G.key?p.dk*sc+8:0;
  g+=`<line x1="${X(-0.6)}" y1="${Y(p.H3)}" x2="${X(0)}" y2="${Y(p.H3)}" stroke="${css('--mu')}"/>`;
  g+=`<line x1="${X(B)}" y1="${Y(0)}" x2="${X(B)}" y2="${Y(H)}" stroke="${css('--mu')}" stroke-dasharray="4 3"/>`;
  if(!c){ // cotas
   const dim=(x1,y1,x2,y2,t,dx=0,dy=0)=>`<line x1="${X(x1)+dx}" y1="${Y(y1)+dy}" x2="${X(x2)+dx}" y2="${Y(y2)+dy}" stroke="${css('--ac')}" marker-end="url(#a${svgEl.id})" marker-start="url(#a${svgEl.id})"/><text x="${(X(x1)+X(x2))/2+dx+(dy?0:4)}" y="${(Y(y1)+Y(y2))/2+dy+(dy?-3:4)}" ${dy?'text-anchor="middle"':''}>${t}</text>`;
   g+=dim(0,0,0,H,"H = "+fx(H),-34,0)+dim(0,p.H3,0,H,"H1",-14,0)+dim(B,0,B,p.H4,"H4",14,0)+dim(p.B1,0,p.B1,p.H5,"H5",8,0);
-  g+=dim(0,0,p.B1,0,"B1",0,16)+dim(p.B1,0,G.xs,0,"B2",0,16)+dim(G.xs,0,B,0,"B3",0,16)+dim(0,0,B,0,"B = "+fx(B),0,32)+dim(p.B1,H,p.B1+p.B4,H,"B4",0,-10);
+  g+=dim(0,0,p.B1,0,"B1",0,16+kd)+dim(p.B1,0,G.xs,0,"B2",0,16+kd)+dim(G.xs,0,B,0,"B3",0,16+kd)+dim(0,0,B,0,"B = "+fx(B),0,32+kd)+(G.key?`<text x="${X(p.xk+p.wk)+4}" y="${Y(-p.dk/2)+4}">diente ${fx(p.wk)} × ${fx(p.dk)}</text>`:"")+dim(p.B1,H,p.B1+p.B4,H,"B4",0,-10);
   g+=`<text x="${X(G.ca.x)}" y="${Y(G.ca.y)}">A3</text><text x="${X(G.cs.x)-6}" y="${Y(G.cs.y)}">A1</text><text x="${X(B/2)}" y="${Y(p.H4/2)}">A2</text>`;
-  svgEl.setAttribute("viewBox",`0 0 ${W} ${Hh}`);svgEl.innerHTML=g;return;
+  svgEl.setAttribute("viewBox",`0 0 ${W} ${Hh+kd}`);svgEl.innerHTML=g;return;
  }
  const fmax=Math.max(...c.L.map(l=>Math.max(l.V,l.Hh)));const ls=f=>12+48*Math.sqrt(f/fmax);
  const colOf=k=>({w:css('--f1'),s:css('--f4'),e:css('--f2'),ev:css('--f2'),l:css('--f5'),i:css('--f3')})[k];
@@ -633,7 +648,7 @@ function checks(c,p,A){
   box(3,"Deslizamiento",c.okD,[
   ["Fuerza que empuja: ΣH",fx(c.Hs,2)+" t/m"],
   [`Fricción en la base: φτ·μ·ΣV = ${fx(c.ph.t,2)} · ${fx(p.mu,3)} · ${fx(c.V,2)} `+R("CIRSOC 804-3, 11.6.3.6 → 10.6.3.4 †"),fx(c.ph.t*p.mu*c.V,2)+" t/m"],
-  [p.pas==="1"?`Pasivo: φep·Ep = ${fx(c.ph.e,2)} · ${fx(A.Ep,2)}`:"Pasivo: no considerado "+R("CIRSOC 804-3, 11.6.3.5"),fx(c.ph.e*A.Ep,2)+" t/m"],
+  [p.pas!=="0"?`Pasivo: φep·Ep = ${fx(c.ph.e,2)} · ${fx(A.Ep,2)}. ${A.pasTxt} `+R("CIRSOC 804-3, 11.6.3.5"):"Pasivo: no considerado "+R("CIRSOC 804-3, 11.6.3.5"),fx(c.ph.e*A.Ep,2)+" t/m"],
   ["Resistencia total",fx(c.Rr,2)+" t/m"]],
   `Resistencia ${fx(c.Rr,2)} t/m ${c.okD?"≥":"<"} ΣH = ${fx(c.Hs,2)} t/m`,c.Rr/c.Hs);
  return `<div class="chks">${b1}${b2}${b3}</div>`;
@@ -657,7 +672,7 @@ function run(){
  <tr><td>PIR = kh·(Ww + Ws), a y = ${fx(A.yPir,2)} m</td><td class="n">${fx(A.kh*A.Wpir,2)} t/m</td><td><span class="ref">11.6.5.1-1</span></td></tr>
  <tr><td>Condición M-O: φ ≥ i + θ</td><td class="n">${fx(p.phi,1)}° ≥ ${fx(D(A.th),1)}°</td><td>${okng(p.phi>=D(A.th))} <span class="ref">11.6.5.3-1</span></td></tr>
  <tr><td>qn = FS·σadm = ${fx(p.FSq,2)} · ${fx(p.sadm,1)} t/m² (σadm = ${fx(p.sadm/10,2)} kg/cm²)</td><td class="n">${fx(A.qn,1)} t/m²</td><td class="wn">Supuesto: el estudio no informa la carga de rotura</td></tr>
- <tr><td>Empuje pasivo Ep</td><td class="n">${fx(A.Ep,2)} t/m</td><td>${p.pas==="1"?"Kp = "+fx(A.Kp,2)+", prof. "+fx(A.Dp)+" m":"No considerado"}</td></tr>
+ <tr><td>Empuje pasivo Ep${A.Wk>0?" · peso del diente":""}</td><td class="n">${fx(A.Ep,2)} t/m${A.Wk>0?" · "+fx(A.Wk,2)+" t/m":""}</td><td>${A.pasTxt}</td></tr>
  </table>`;
  // resumen
  $("#summary").innerHTML=`<table><tr><th>Combinación</th><th>e / e lím (m)</th><th>Excentricidad</th><th>q / resistencia (t/m²)</th><th>Portante</th><th>Rr / Ru (t/m)</th><th>Deslizamiento</th></tr>`+
@@ -731,7 +746,7 @@ run();
 /* ---------- proyectos y muros guardados ---------- */
 const PM_KEY="muroIC103.v1";
 const getVals=()=>{const d={};ALL.forEach(([id])=>d[id]=$("#i_"+id).value);return d};
-const setVals=d=>{ALL.forEach(([id])=>{if(d[id]!=null)$("#i_"+id).value=d[id]});run()};
+const setVals=d=>{ALL.forEach(([id])=>{$("#i_"+id).value=d[id]!=null?d[id]:DEF[id]});run()};
 const DEF=getVals();
 let PM={items:[],cur:null},pmOK=true;
 try{const r=localStorage.getItem(PM_KEY);if(r)PM=JSON.parse(r)}catch(e){pmOK=false}
