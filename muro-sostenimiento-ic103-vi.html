@@ -235,6 +235,7 @@ code{font-size:12.5px;background:var(--bg);padding:0 3px;border-radius:3px}
 <tr><td>Bloque de tensiones</td><td>0,85 f'c; β1 = 0,85 para f'c ≤ 28 MPa</td><td>22.2.2.4</td></tr>
 <tr><td>Recubrimiento</td><td>Hormigonado contra el terreno: 75 mm. Expuesto al terreno o a la intemperie: 50 mm (barras Ø ≥ 16 mm)</td><td>20.5.1.3.1</td></tr>
 </table>
+<p><b>Desplazamiento de la cabeza del muro.</b> Se calcula integrando la curvatura de la pantalla con la inercia efectiva de cada sección: I<sub>g</sub> si no fisura y la de la Tabla 24.2.3.5 si el momento supera ⅔ del de fisuración (M<sub>cr</sub> = f<sub>r</sub>·I<sub>g</sub>/y<sub>t</sub>, f<sub>r</sub> = 0,62·√f'c, E<sub>c</sub> = 4700·√f'c). En servicio se suma la flecha a largo plazo, λΔ = ξ / (1 + 50·ρ') (art. 24.2.4.1.1), sobre las cargas persistentes. Para estado último se usan los momentos mayorados. Opcionalmente se suma el giro de la zapata sobre el suelo, con el coeficiente de balasto. El reglamento no fija un límite de desplazamiento para muros: lo adopta el proyectista. Está en la pestaña de armaduras.</p>
 <p class="note">Las cuantías 0,0012 (vertical) y 0,0020 (horizontal) son de la Tabla 11.6.1 para tabiques y <b>no corresponden</b> a muros de contención en voladizo desde el ACI 318-14. La vertical mínima pasa a ser 0,0018 Ag.</p>
 </div>
 </section>
@@ -290,6 +291,10 @@ code{font-size:12.5px;background:var(--bg);padding:0 3px;border-radius:3px}
 <p class="note"><b>Ligaduras entre las dos mallas de la pantalla.</b> No son obligatorias: la pantalla se diseña como losa en una dirección (11.1.4 → 13.3.6.1 → Cap. 7), y el arriostramiento de barras verticales solo se exige si trabajan a compresión con cuantía mayor al 1 % (CIRSOC 201-25, 11.7.4.1; ACI 318-25, 11.7.5.1). Se colocan como armadura constructiva, para mantener las mallas en posición. Serían obligatorias si el corte no verificara con el hormigón solo (7.6.3.1).</p>
 </div>
 <div class="card"><h2>Pantalla</h2><div class="cmb"><div id="stemPlotM"></div><div id="stemPlotV"></div></div><div id="stemTab"></div></div>
+<div class="card"><h2>Desplazamiento en la cabeza del muro</h2>
+<p class="note">Desplazamiento horizontal del coronamiento, con la pantalla fisurada. Se calcula para servicio (cargas sin mayorar, instantáneo y a largo plazo) y para cada combinación de estado último.</p>
+<div class="grid" id="formDef"></div>
+<div class="cmb" style="margin-top:10px"><div id="defPlot"></div><div id="defTab"></div></div><div id="defNote"></div></div>
 <div class="card"><h2>Talón (armadura superior)</h2><div id="heelNode"></div><div class="cmb"><div id="heelPlot"></div><div id="heelTab"></div></div></div>
 <div class="card"><h2>Puntera (armadura inferior)</h2><div class="cmb"><div id="toePlot"></div><div id="toeTab"></div></div></div>
 </section>
@@ -423,7 +428,10 @@ const FJ=[
  ["Barbacanas (práctica habitual, no reglamentario)",[["sdr","Separación horizontal","m",2],["ddr","Diámetro","mm",100],["hdr","Altura de la primera fila sobre el terreno del frente","m",0.3],["nfil","Cantidad de filas","",1],["sfil","Separación vertical entre filas","m",1.5]]]
 ];
 buildForm(FJ,$("#formJ"));
-const ALL=[...F,...FA,...FJ].flatMap(g=>g[1]);
+const FD=[["Datos para el desplazamiento",[["kb","Coeficiente de balasto del suelo (0 = no contar el giro de la zapata)","kg/cm³",15],
+  ["xi","Factor de larga duración ξ (2,0 para 5 años o más)","",2],["dlim","Límite adoptado en servicio: altura de pantalla / …","",200]]]];
+buildForm(FD,$("#formDef"));
+const ALL=[...F,...FA,...FJ,...FD].flatMap(g=>g[1]);
 function renderJun(p,A){
  const L=Math.max(p.Lm,0.1),se=Math.max(p.se,0.5),sj=Math.max(p.sj,0.5);
  const nE=Math.ceil(L/se-1e-9),Lp=L/nE,nC=Math.ceil(Lp/sj-1e-9),Lc=Lp/nC,ex=[],co=[];
@@ -843,6 +851,53 @@ function checks(c,p,A){
  return `<div class="chks">${b1}${b2}${b3}</div>`;
 }
 
+/* ---------- desplazamiento en la cabeza del muro ---------- */
+function deflCalc(p,A,S){
+ const Hp=S.Hp,n=S.cap.length-1,ds=Hp/n,Ec=4700*Math.sqrt(p.fc),fr=0.62*Math.sqrt(p.fc),nm=200000/Ec,b=1000,t=S.t;
+ const Kwh=A.Kw*Math.cos(A.dw);
+ const sec=S.cap.map(k=>{const Ig=b*k.h**3/12,Mcr=fr*Ig/(k.h/2)/1e6/G0,kd=(-nm*k.As+Math.sqrt((nm*k.As)**2+2*b*nm*k.As*k.d))/b;
+  return{Ig,Mcr,Icr:Math.min(b*kd**3/3+nm*k.As*(k.d-kd)**2,Ig)}});
+ const integ=(pf,N)=>{const M=[0];let V=0,m=0,pp=pf(0);for(let i=1;i<=n;i++){const pn=pf(i*ds),Vn=V+(pp+pn)/2*ds;m+=(V+Vn)/2*ds;V=Vn;pp=pn;M.push(m)}
+  return M.map((v,i)=>v+N*(t(i*ds)-p.B4)/2)};
+ const Ie=(Ma,q)=>Ma<=2/3*q.Mcr?q.Ig:q.Icr/(1-((2/3*q.Mcr/Ma)**2)*(1-q.Icr/q.Ig));
+ const shape=(M,Mref)=>{const kap=M.map((v,i)=>v*G0*1e6/(Ec*Ie(Mref[i],sec[i]))),y=new Array(n+1).fill(0);let th=0,yy=0;
+  for(let i=n-1;i>=0;i--){const dz=ds*1000,thn=th+(kap[i+1]+kap[i])/2*dz;yy+=(th+thn)/2*dz;th=thn;y[i]=yy}return y};
+ const rhoP=(p.ves>0?Ab(p.ved)*1000/p.ves:0)/(b*S.cap[n].d),lam=p.xi/(1+50*rhoP),ks=p.kb*1000;
+ const list=[{id:"SI",n:"Servicio I: empuje + sobrecarga, sin mayorar",svc:1,col:"--f5",p:s=>Kwh*p.g*s+Kwh*p.q,N:p.RD+p.RL,ps:s=>Kwh*p.g*s,Ns:p.RD},
+  ...S.cases.map(c=>({id:c.id,n:c.n,col:c.col,p:c.p,N:c.N||0}))];
+ list.forEach(c=>{const M=integ(c.p,c.N),y=shape(M,M);c.M=M;c.y=y;c.dfl=y[0];c.Mb=M[n];c.Mcr=sec[n].Mcr;c.IeIg=Ie(M[n],sec[n])/sec[n].Ig;
+  let ic=-1;for(let i=n;i>=0;i--){if(M[i]>2/3*sec[i].Mcr)ic=i;else break}c.zc=ic<0?0:Hp-ic*ds;
+  if(c.svc){const Ms=integ(c.ps,c.Ns),ys=shape(Ms,M);c.dsus=ys[0];c.dlong=lam*ys[0]}
+  const cm=A.C.find(k=>k.id===c.id);c.drot=null;
+  if(ks>0&&cm&&!cm.out){const ae=Math.abs(cm.e),th=ae<=A.B/6?(cm.lin.qmax-cm.lin.qmin)/(ks*A.B):cm.lin.qmax/(ks*cm.lin.Lc);c.th=th*Math.sign(cm.e||1);c.drot=c.th*A.H*1000}
+  c.dtot=c.dfl+(c.dlong||0)+(c.drot||0)});
+ return{list,Ec,fr,nm,lam,rhoP,Hp,sec,n};
+}
+function renderDef(p,A,S){
+ const D=deflCalc(p,A,S),hgt=S.cap.map(k=>S.Hp-k.s),sv=D.list[0],lim=p.dlim>0?S.Hp*1000/p.dlim:null;
+ $("#defPlot").innerHTML="<h3>Deformada de la pantalla por flexión (mm)</h3>"+plot(D.list.map(c=>({x:c.y,y:hgt,col:c.col,lab:c.id==="SI"?"Servicio I (instantánea)":c.n})),{xl:"Desplazamiento horizontal (mm)",yl:"Altura sobre la zapata (m)",vert:true,u:"mm"});
+ const row=(nm,c,dfl,drot,tot,extra="")=>`<tr><td>${nm}</td><td class="n">${fx(c.Mb,2)} / ${fx(c.Mcr,2)}</td><td class="n">${c.zc>0?fx(c.zc,2)+" m":"sin fisurar"}</td><td class="n">${fx(c.IeIg,2)}</td><td class="n">${fx(dfl,1)}</td><td class="n">${drot==null?"—":fx(drot,1)}</td><td class="n"><b>${fx(tot,1)}</b></td><td class="n">${tot>0.01?"H/"+fx(S.Hp*1000/tot,0):"—"}</td><td>${extra}</td></tr>`;
+ const okS=lim==null||sv.dtot<=lim;
+ $("#defTab").innerHTML=`<table><tr><th>Caso</th><th>M base / Mcr (t·m/m)</th><th>Fisurada hasta</th><th>Ie / Ig en la base</th><th>Flexión (mm)</th><th>Giro de la zapata (mm)</th><th>Total (mm)</th><th>Relación</th><th></th></tr>
+ <tr class="h"><td colspan="9"><b>Servicio (cargas sin mayorar)</b></td></tr>
+ ${row("Servicio I, instantáneo",sv,sv.dfl,sv.drot,sv.dfl+(sv.drot||0))}
+ <tr><td>Adicional a largo plazo: λΔ × flecha por carga permanente = ${fx(D.lam,2)} × ${fx(sv.dsus,1)}</td><td></td><td></td><td></td><td class="n">${fx(sv.dlong,1)}</td><td class="n">—</td><td class="n">${fx(sv.dlong,1)}</td><td></td><td></td></tr>
+ ${row("<b>Servicio I, total a largo plazo</b>",sv,sv.dfl+sv.dlong,sv.drot,sv.dtot,lim==null?"":(okS?'<span class="ok">≤ '+fx(lim,1)+' mm</span>':'<span class="ng">&gt; '+fx(lim,1)+' mm</span>'))}
+ <tr class="h"><td colspan="9"><b>Estado último (cargas mayoradas)</b></td></tr>
+ ${D.list.slice(1).map(c=>row(c.n,c,c.dfl,c.drot,c.dtot)).join("")}</table>`;
+ $("#defNote").innerHTML=`<p class="note"><b>Cómo se calcula.</b> La pantalla es un voladizo de espesor y armadura variables. En cada sección se obtiene el momento, se decide si está fisurada y se le asigna la inercia efectiva I<sub>e</sub>; el desplazamiento sale de integrar dos veces la curvatura M / (E<sub>c</sub>·I<sub>e</sub>) desde la base.</p>
+ <ul class="note">
+ <li>E<sub>c</sub> = 4700·√f'c = ${fx(D.Ec,0)} MPa <span class="ref">CIRSOC 201-25, 19.2.2.1 (b)</span> · n = E<sub>s</sub>/E<sub>c</sub> = ${fx(D.nm,2)}.</li>
+ <li>Momento de fisuración M<sub>cr</sub> = f<sub>r</sub>·I<sub>g</sub>/y<sub>t</sub>, con f<sub>r</sub> = 0,62·√f'c = ${fx(D.fr,2)} MPa <span class="ref">24.2.3.5 y 19.2.3.1</span>.</li>
+ <li>Inercia efectiva <span class="ref">Tabla 24.2.3.5</span>: I<sub>e</sub> = I<sub>g</sub> si M<sub>a</sub> ≤ ⅔·M<sub>cr</sub>; si no, I<sub>e</sub> = I<sub>cr</sub> / [1 − (⅔·M<sub>cr</sub>/M<sub>a</sub>)²·(1 − I<sub>cr</sub>/I<sub>g</sub>)]. I<sub>cr</sub> es la inercia de la sección fisurada con la armadura de la cara del relleno de cada tramo.</li>
+ <li>Largo plazo <span class="ref">24.2.4.1.1</span>: λΔ = ξ / (1 + 50·ρ') = ${fx(p.xi,1)} / (1 + 50·${fx(D.rhoP,4)}) = ${fx(D.lam,2)}, aplicado a la flecha del empuje del suelo y de la carga permanente de la corona, que son las cargas persistentes. ρ' es la cuantía de la armadura de la cara del frente en la base.</li>
+ <li>Estado último: mismas expresiones con los momentos mayorados de cada combinación. Es un cálculo elástico con secciones fisuradas, sin efectos de segundo orden.</li>
+ <li>Giro de la zapata: giro rígido θ = (q<sub>máx</sub> − q<sub>mín</sub>) / (k·B) sobre un suelo de Winkler, o q<sub>máx</sub> / (k·largo comprimido) si la base se despega, con la presión de contacto lineal de la combinación. El desplazamiento en la corona es θ·H. Con k = ${fx(p.kb,1)} kg/cm³${p.kb>0?"":" no se cuenta"}. El caso de construcción no tiene combinación de estabilidad asociada.</li>
+ <li>No se incluyen el deslizamiento de la base ni la deformación propia del talón y la puntera.</li>
+ </ul>
+ <p class="note">El CIRSOC 201-25 no fija un límite de desplazamiento para muros de contención. El límite de servicio (altura de pantalla / ${fx(p.dlim,0)}${lim==null?"":" = "+fx(lim,1)+" mm"}) es un criterio del proyectista. El coeficiente de balasto del estudio (15 kg/cm³) corresponde a un ensayo de placa: para una zapata de ${fx(A.B,2)} m conviene que el geotécnico lo ajuste.</p>`;
+}
+
 /* ---------- render ---------- */
 function run(){
  const p=read();{const e=$("#i_mu");if(p.mumode==="A"){p.mu=Math.tan(2/3*R(p.phi));e.value=p.mu.toFixed(3);e.disabled=true}else e.disabled=false}
@@ -910,6 +965,7 @@ function run(){
  ${HT.map(T=>`<tr><td>P3 horizontal, tramo ${T.k} (de ${fx(T.z0)} a ${fx(T.z1)} m): Ø${T.d} c/${T.sp} en 2 caras = ${fx(T.As,0)} mm²/m. Espesor medio = (${fx(T.h0,0)} + ${fx(T.h1,0)}) / 2 = ${fx(T.hmed,0)} mm</td><td class="n">${fx(T.As/(1000*T.hmed)*100,3)} %</td><td>≥ 0,18 %; separación ≤ ${fx(T.smax,0)} mm <span class="ref">7.6.4.1 → 24.4.3.2/3</span></td><td>${okng(T.okR&&T.okS)}</td></tr>`).join("")}
  </table><p class="note">${p.RD>0||p.RL>0?"La carga sobre la corona, excéntrica respecto del eje de la pantalla, suma un momento N·e en cada sección. ":""}${p.pcomp>0?(c=>`Caso de construcción: empuje residual de compactación con equipo de ${fx(p.pcomp,0)} kN/m (σh,máx = ${fx(c.smax,2)} t/m² entre ${fx(c.zc,2)} y ${fx(c.hc,2)} m de profundidad), mayorado por 1,5, sin sobrecarga ni carga en la corona. `)(S.cases.find(k=>k.id==="CO").comp):""}La curva verde de φMn tiene un escalón en cada altura de cambio. La altura de cambio es donde deja de contarse la barra de abajo, así que el empalme con la barra de arriba va por encima de esa altura. Cargas sobre la pantalla: Coulomb con δ = 2/3 φ (hormigón contra suelo), componente horizontal. En sismo, la presión de PAE se reparte de modo que su resultante quede a ${A.rTxt} de la altura de la pantalla (IC-103 VI 11.6.5.3 y C11.6.5.3), y solo cuenta la inercia de la pantalla.</p>`;
 
+ renderDef(p,A,S);
  // zapata
  const Fz=footing(p,A);const cols={RIa:"--f4",RIb:"--f1",EEa:"--f2",EEb:"--f3"};
  const heelAs=asb(p.dt,p.st,p.dtr,p.str),toeAs=asb(p.db,p.sb,p.dbr,p.sbr),heelD=bd(p.dt,p.st,p.dtr,p.str),toeD=bd(p.db,p.sb,p.dbr,p.sbr);
