@@ -1149,7 +1149,7 @@ function drawVC(m,d){const ms=A.ms,K=G0/1000*1000/1000,E=200000,Fy=+d.fyW,t2k=9.
    const segOf=(pts,X0)=>{const p=[0,...pts.filter(v=>v>1e-6&&v<Lm-1e-6),Lm].sort((a,b)=>a-b);for(let q=1;q<p.length;q++)if(X0<=p[q]+1e-9)return [p[q-1],p[q]];return [p[p.length-2],Lm]};
    const uni=(L0,X0)=>{let a=Math.min(Math.floor((X0-1e-9)/L0)*L0,Math.max(Lm-L0,0));a=Math.max(a,0);return [a,Math.min(a+L0,Lm)]};
    const kb=k=='c'?'cLb':(bot?'vLbi':'vLbs'),ky=k=='c'?'cLy':'vLy',man=q=>d.LoSrc&&d.LoSrc[q]=='manual';
-   const [a0,b0]=man(kb)?uni(+d[kb],x):segOf(k=='c'?[...I.tnC,...I.brC]:(bot?I.tnV:(d.coPos||[])),x),Lb=b0-a0;
+   const [a0,b0]=man(kb)?uni(+d[kb],x):segOf(k=='c'?[...I.tnC,...I.brC]:(bot?I.tnV:[...I.tnV,...I.brV]),x),Lb=b0-a0;
    const [ya,yb]=man(ky)?[0,+d[ky]]:segOf(k=='c'?[...I.tnC,...I.brC]:[...I.tnV,...I.brV],x),LyS=yb-ya,phPnS=0.9*Pn_(pg,Fy,Lx,LyS).Pn;
    const sg=cbSeg(dg,a0,b0),CbU=CbM>0?CbM:sg.Cb;
    const Mn=Math.min(Mn_(pg,Fy,Lb,CbU).Mn,MnNet),phMn=0.9*Mn;
@@ -1263,7 +1263,7 @@ function drawVer(m,d){d=Object.assign({},d);for(const [s0,h,b,dd,t] of [['coSel'
   if(+d.arTnV>0){const P=CP(d,sl),nc=P.length-1;for(let c=+d.arTnV;c<=nc;c+=+d.arTnV)tnV.push(P[c])}
   const nP=Math.max(1,+d.arParN|0),nT=Math.max(1,+d.arTecN|0),brC=[...Array(nP-1)].map((_,k)=>H*(k+1)/nP),brV=tecPan(d,sl).slice(1,-1);
   d.LoInfo={tnC,tnV,brC,brV};
-  const Lo={vLx:2*sl,cLx:H,coLbs:d.s/((+d.arTe)+1),coLbi:d.s/((+d.arTe)+1),pLbi:d.s/((+d.arTp)+1),pLs:d.s/((+d.arTp)+1),vLbs:+d.coSep,vLy:gap([...tnV,...brV],sl),vLbi:gap(tnV,sl),cLb:gap([...tnC,...brC],H),cLy:gap([...tnC,...brC],H)};
+  const Lo={vLx:2*sl,cLx:H,coLbs:d.s/((+d.arTe)+1),coLbi:d.s/((+d.arTe)+1),pLbi:d.s/((+d.arTp)+1),pLs:d.s/((+d.arTp)+1),vLbs:gap([...tnV,...brV],sl),vLy:gap([...tnV,...brV],sl),vLbi:gap(tnV,sl),cLb:gap([...tnC,...brC],H),cLy:gap([...tnC,...brC],H)};
   d.LoAuto=Lo;d.LoSrc={};for(const k in Lo){if($(k)&&$(k).dataset.man=='1'&&+d[k]>0)d.LoSrc[k]='manual';else{d[k]=Lo[k];d.LoSrc[k]='auto'}}}
  try{const cs=Math.cos(m.th),sl=(d.L/2)/cs,Ws=k=>ppSec(secData(d,k)),cw=(H,B,D,t,tp)=>corrSec(+H,+B,+D,+t,+tp,235).sc.A*7.85e-3,x=CHL[+d.chSel];
   window.VRpeso={ch:[x.w,'kg/m² de chapa'],co:[cw(d.coH,d.coB,d.coD,d.cot,d.coTipo)*(d.coPos.length-0.5)/sl,'kg/m² de cubierta'],pa:[cw(d.pH,d.pB,d.pD,d.pt,d.pTipo)/(+d.pSep),'kg/m² de pared'],col:[2*m.Hc*Ws('c')/(d.L*d.s),'kg/m² de planta'],vig:[2*sl*Ws('r')/(d.L*d.s),'kg/m² de planta']}}catch(e){console.error(e)}
@@ -1273,7 +1273,7 @@ function drawVer(m,d){d=Object.assign({},d);for(const [s0,h,b,dd,t] of [['coSel'
   ${r('Correa de techo, L<sub>b</sub> de las dos alas','coLbs',`luz ${f(d.s)} m / (${d.arTe} tillas + 1)`)}
   ${r('Correa de pared, L<sub>b</sub> del ala interior y luz en el eje débil','pLbi',`luz ${f(d.s)} m / (${d.arTp} tillas + 1)`)}
   ${sec('Viga del pórtico')}${r('Viga, k·L<sub>x</sub> (en el plano)','vLx','largo desarrollado de los dos faldones (alero a alero): en el plano del pórtico la cumbrera no es un punto fijo, puede subir y bajar')}
-  ${r('Viga, L<sub>b</sub> del ala superior','vLbs','separación de correas: la correa fija el ala superior, que es la comprimida')}
+  ${r('Viga, L<sub>b</sub> del ala superior','vLbs','igual que k·L<sub>y</sub>: la correa sola no es punto fijo; solo lo es donde llega a un nudo de la cruz de techo (o hay tornapunta)')}
   ${r('Viga, k·L<sub>y</sub> (fuera del plano)','vLy',`mayor distancia entre puntos fijos: nudos de las cruces de techo (uno cada ${d.arTecN} correas, se trasladan a todos los pórticos por las correas)${+d.arTnV>0?' y tornapuntas':''}`)}
   ${r('Viga, L<sub>b</sub> del ala inferior','vLbi',+d.arTnV>0?`tornapuntas cada ${d.arTnV} correas`:'sin tornapuntas: largo del faldón')}
   ${sec('Columna del pórtico')}${r('Columna, k·L<sub>x</sub> (en el plano)','cLx','altura total de la columna (k = 1, como indicaste)')}
@@ -1468,7 +1468,7 @@ function drawArViz(m,d){arVizSlot();const el=$('arViz');if(!el)return;const Lt=m
  for(const dd0 of I.tnV)for(const sd of [0,1]){const dd=dd0*cs,y=sd?L-dd:dd,z=H+dd*Math.tan(th);q+=`<line x1="${X2(y)}" y1="${Z2(z)+2}" x2="${X2(y)+(sd?10:-10)}" y2="${Z2(z)+16}" stroke="#f97316" stroke-width="2.5"/>`}
  for(const dd0 of I.brV)for(const sd of [0,1]){const dd=dd0*cs,y=sd?L-dd:dd,z=H+dd*Math.tan(th);q+=`<circle cx="${X2(y)}" cy="${Z2(z)}" r="5" fill="#16a34a"/>`}
  const Lo=d.LoAuto||{};q+=`<text x="${X2(L)+40}" y="40" style="font-size:12px;font-weight:600">Longitudes que salen</text>`;
- [['Columna, en el plano','cLx'],['Columna, fuera del plano y L<tspan font-size="9">b</tspan>','cLy'],['Viga, ala superior (correas)','vLbs'],['Viga, fuera del plano','vLy'],['Viga, ala inferior','vLbi'],['Correa de techo','coLbs'],['Correa de pared','pLbi']].forEach(([n,k],i)=>q+=`<text x="${X2(L)+40}" y="${60+i*18}" style="font-size:12px">${n}: <tspan font-weight="700">${f(Lo[k]||0)} m</tspan></text>`);
+ [['Columna, en el plano','cLx'],['Columna, fuera del plano y L<tspan font-size="9">b</tspan>','cLy'],['Viga, ala superior','vLbs'],['Viga, fuera del plano','vLy'],['Viga, ala inferior','vLbi'],['Correa de techo','coLbs'],['Correa de pared','pLbi']].forEach(([n,k],i)=>q+=`<text x="${X2(L)+40}" y="${60+i*18}" style="font-size:12px">${n}: <tspan font-weight="700">${f(Lo[k]||0)} m</tspan></text>`);
  q+=`<text x="10" y="14" style="font-size:12px;font-weight:600">3 · Corte del pórtico: correas (cuadrados grises), tornapuntas (naranja), nudos de cruces que dan punto fijo (círculos)</text></svg>`;
  const hint=(id,txt)=>{const fe=$(id)&&$(id).closest('.f');if(!fe)return;let h=fe.querySelector('.hint');if(!h){h=document.createElement('div');h.className='hint';fe.appendChild(h)}h.innerHTML=txt};
  hint('arTe',`→ tilla cada ${f(s/((+d.arTe)+1))} m: L<sub>b</sub> de la correa de techo = ${f(Lo.coLbs||s/((+d.arTe)+1))} m`);
