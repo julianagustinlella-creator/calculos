@@ -476,7 +476,7 @@ const F=[
   ["arPar","Pared lateral: vanos con cruz (tocalos en el esquema)","","1, 17"],
   ["arParN","Pared lateral: paneles de la cruz en la altura (2 = punto fijo a media altura de columna)","",1],
   ["arTec","Techo: vanos con cruz (tocalos en el esquema)","","1, 17"],
-  ["arTecN","Techo: paneles de la cruz en cada faldón","",4],
+  ["arTecN","Techo: un nudo de la cruz cada N correas","",4],
   ["arTe","Correas de techo: tillas en cada vano (entre dos pórticos)","",2],
   ["arTp","Correas de pared: tillas en cada vano","",1],
   ["arTnV","Viga: una tornapunta cada N correas (0 = no hay)","",4],
@@ -1153,7 +1153,7 @@ function drawVer(m,d){d=Object.assign({},d);for(const [s0,h,b,dd,t] of [['coSel'
   const gap=(pts,Lt)=>{const p=[0,...pts.filter(x=>x>1e-6&&x<Lt-1e-6),Lt].sort((a,b)=>a-b);let g=0;for(let i=1;i<p.length;i++)g=Math.max(g,p[i]-p[i-1]);return g};
   const H=m.Hc,ps=+d.pSep,tnC=[],tnV=[];if(+d.arTnC>0){let k=0;for(let hh=ps/2;hh<H;hh+=ps){k++;if(k%(+d.arTnC)==0)tnC.push(hh)}}
   if(+d.arTnV>0){const nc=Math.floor(sl/(+d.coSep)+1e-9);for(let c=+d.arTnV;c<=nc;c+=+d.arTnV)tnV.push(c*(+d.coSep))}
-  const nP=Math.max(1,+d.arParN|0),nT=Math.max(1,+d.arTecN|0),brC=[...Array(nP-1)].map((_,k)=>H*(k+1)/nP),brV=[...Array(nT-1)].map((_,k)=>sl*(k+1)/nT);
+  const nP=Math.max(1,+d.arParN|0),nT=Math.max(1,+d.arTecN|0),brC=[...Array(nP-1)].map((_,k)=>H*(k+1)/nP),brV=[];for(let x=nT*(+d.coSep);x<sl-1e-6;x+=nT*(+d.coSep))brV.push(x);
   d.LoInfo={tnC,tnV,brC,brV};
   const Lo={cLx:H,coLbs:d.s/((+d.arTe)+1),coLbi:d.s/((+d.arTe)+1),pLbi:d.s/((+d.arTp)+1),pLs:d.s/((+d.arTp)+1),vLbs:+d.coSep,vLy:gap([...tnV,...brV],sl),vLbi:gap(tnV,sl),cLb:gap([...tnC,...brC],H),cLy:gap([...tnC,...brC],H)};
   d.LoAuto=Lo;if(+d.arAuto==1)Object.assign(d,Lo)}
@@ -1163,7 +1163,7 @@ function drawVer(m,d){d=Object.assign({},d);for(const [s0,h,b,dd,t] of [['coSel'
   ${r('Correa de techo, L<sub>b</sub> de las dos alas','coLbs',`luz ${f(d.s)} m / (${d.arTe} tillas + 1)`)}
   ${r('Correa de pared, L<sub>b</sub> del ala interior y luz en el eje débil','pLbi',`luz ${f(d.s)} m / (${d.arTp} tillas + 1)`)}
   ${r('Viga, L<sub>b</sub> del ala superior','vLbs','separación de correas: la correa fija el ala superior, que es la comprimida')}
-  ${r('Viga, k·L<sub>y</sub> (fuera del plano)','vLy',`mayor distancia entre puntos fijos: nudos de las cruces de techo (${d.arTecN} paneles por faldón, se trasladan a todos los pórticos por las correas)${+d.arTnV>0?' y tornapuntas':''}`)}
+  ${r('Viga, k·L<sub>y</sub> (fuera del plano)','vLy',`mayor distancia entre puntos fijos: nudos de las cruces de techo (uno cada ${d.arTecN} correas, se trasladan a todos los pórticos por las correas)${+d.arTnV>0?' y tornapuntas':''}`)}
   ${r('Viga, L<sub>b</sub> del ala inferior','vLbi',+d.arTnV>0?`tornapuntas cada ${d.arTnV} correas`:'sin tornapuntas: largo del faldón')}
   ${r('Columna, k·L<sub>x</sub> (en el plano)','cLx','altura total de la columna (k = 1, como indicaste)')}
   ${r('Columna, k·L<sub>y</sub> (fuera del plano) y L<sub>b</sub>','cLy',`mayor distancia entre puntos fijos: ${+d.arTnC>0?'tornapuntas cada '+d.arTnC+' correas de pared':'sin tornapuntas'}${(+d.arParN|0)>1?' y nudos de las cruces de pared ('+d.arParN+' paneles en altura, se trasladan a todas las columnas por la correa)':''}; si no hay ninguno, la altura total`)}
@@ -1244,7 +1244,7 @@ function draw3D3(m,d,R){g3Init();if(!G3.r)return false;
  const gAr=gp('g3Ar'),tA='<b>Arriostramiento</b> (todavía no verificado)';
  for(const i of d.arParV||[])for(const zz of [0,L]){const n=Math.max(1,+d.arParN|0),x0=(i-1)*s,x1=i*s;for(let k=0;k<n;k++){const y0=H*k/n,y1=H*(k+1)/n;g3Line(gAr,[[x0,y0,zz],[x1,y1,zz]],0x1d4ed8,0.04,'<b>Cruz de pared</b>, vano '+i);g3Line(gAr,[[x1,y0,zz],[x0,y1,zz]],0x1d4ed8,0.04,'<b>Cruz de pared</b>, vano '+i)}}
  const ro=off+cH/2+0.02;
- for(const i of d.arTecV||[]){const n=Math.max(1,+d.arTecN|0),x0=(i-1)*s,x1=i*s;for(const side of [0,1]){const yy=k=>side?L-k*(L/2)/n:k*(L/2)/n;
+ const TB=tecPan(d,sl);for(const i of d.arTecV||[]){const n=TB.length-1,x0=(i-1)*s,x1=i*s;for(const side of [0,1]){const yy=k=>{const h=TB[k]*Math.cos(th);return side?L-h:h};
   for(let k=0;k<n;k++){const ya=yy(k),yb2=yy(k+1);g3Line(gAr,[[x0,zt(ya)+ro,ya],[x1,zt(yb2)+ro,yb2]],0x16a34a,0.04,'<b>Cruz de techo</b>, vano '+i);g3Line(gAr,[[x1,zt(ya)+ro,ya],[x0,zt(yb2)+ro,yb2]],0x16a34a,0.04,'<b>Cruz de techo</b>, vano '+i)}}}
  for(let i=0;i<nb;i++)for(let k=1;k<=(+d.arTe|0);k++){const x=i*s+k*s/((+d.arTe)+1);for(const side of [0,1]){const ya=side?L:0;g3Line(gAr,[[x,zt(ya)+ro,ya],[x,zt(L/2)+ro,L/2]],0x6b7280,0.015,'<b>Tilla de correas de techo</b>')}}
  for(let i=0;i<nb;i++)for(let k=1;k<=(+d.arTp|0);k++){const x=i*s+k*s/((+d.arTp)+1);for(const zz of [0,L]){const zw=zz+(zz?1:-1)*offp;g3Line(gAr,[[x,0.2,zw],[x,H,zw]],0x6b7280,0.015,'<b>Tilla de correas de pared</b>')}}
@@ -1288,6 +1288,7 @@ function draw3D(m,d){const L=d.L,Lt=m.Lt,H=m.Hc,fr=m.fr,a=crA(m),s=+d.s,sp=+d.co
  $('v3d').innerHTML=(ok3?'':o)+`<div class="tw"><table><tr><th>Elemento</th><th>Relación máxima</th></tr>${T('Columnas',rCol)}${T('Vigas',rVig)}${T('Correas de techo, zona 1',rCo.z1)}${T('Correas de techo, zona 2',rCo.z2)}${T('Correas de techo, zona 3',rCo.z3)}${T('Correas de pared, zona 4',rPa.w4)}${T('Correas de pared, zona 5',rPa.w5)}${T('Chapa de techo, zona 1 (separación / separación máxima)',rCh.z1)}${T('Chapa de techo, zona 2',rCh.z2)}${T('Chapa de techo, zona 3',rCh.z3)}${T('Chapa de pared, zona 4',rCh.w4)}${T('Chapa de pared, zona 5',rCh.w5)}</table></div><p class="note">Todos los pórticos se pintan con el resultado del pórtico analizado (pórtico ${m.np}); los extremos tienen la mitad de ancho tributario. Las correas de techo se pintan según la zona de viento de cada tramo (Fig. 5.3-2B) y las de pared según zona 4 o 5 (Fig. 5.3-1). La chapa usa la separación de correas cargada.</p>`}
 
 /* ---------- esquema interactivo de arriostramientos ---------- */
+function tecPan(d,sl){const st=Math.max(1,+d.arTecN|0)*(+d.coSep),b=[0];for(let x=st;x<sl-1e-6;x+=st)b.push(x);b.push(sl);return b}
 function arVizSlot(){if($('arViz'))return;const h=[...document.querySelectorAll('#fver .card h2')].find(x=>x.textContent.startsWith('Arriostramientos'));if(h)h.parentElement.insertAdjacentHTML('afterend','<div class="card" id="arViz"></div>')}
 function arTog(id,i){const v=String($(id).value).split(/[,; ]+/).map(Number).filter(x=>x>0);const k=v.indexOf(i);if(k>=0)v.splice(k,1);else v.push(i);v.sort((a,b)=>a-b);$(id).value=v.join(', ');run()}
 function drawArViz(m,d){arVizSlot();const el=$('arViz');if(!el)return;const Lt=m.Lt,L=d.L,s=d.s,nb=Math.round(Lt/s),H=m.Hc,fr=m.fr;
@@ -1297,7 +1298,7 @@ function drawArViz(m,d){arVizSlot();const el=$('arViz');if(!el)return;const Lt=m
  const Hp=150,sy=(Hp-40)/L,Y=y=>20+y*sy;let o=`<svg viewBox="0 0 ${W} ${Hp+10}">`;
  for(let i=1;i<=nb;i++){const xa=x0+(i-1)*s*sx,xb=x0+i*s*sx,on=vT.includes(i);
   o+=`<rect x="${xa}" y="${Y(0)}" width="${xb-xa}" height="${L*sy}" fill="${on?'rgba(22,163,74,.18)':'transparent'}" stroke="var(--mut)" stroke-width="0.6" style="cursor:pointer" onclick="arTog('arTec',${i})"><title>vano ${i}: ${on?'sacar':'poner'} cruz de techo</title></rect>`;
-  if(on)for(const sd of [0,1])for(let k=0;k<nT;k++){const ya=sd?L/2+L/2*k/nT:L/2*k/nT,yb=ya+L/2/nT;o+=`<path d="M${xa},${Y(ya)}L${xb},${Y(yb)}M${xb},${Y(ya)}L${xa},${Y(yb)}" stroke="#16a34a" stroke-width="1.6" pointer-events="none"/>`}
+  if(on){const TB=tecPan(d,(L/2)/Math.cos(m.th)).map(v=>v*Math.cos(m.th));for(const sd of [0,1])for(let k=0;k<TB.length-1;k++){const ya=sd?L-TB[k+1]:TB[k],yb=sd?L-TB[k]:TB[k+1];o+=`<path d="M${xa},${Y(ya)}L${xb},${Y(yb)}M${xb},${Y(ya)}L${xa},${Y(yb)}" stroke="#16a34a" stroke-width="1.6" pointer-events="none"/>`}}
   o+=`<text x="${(xa+xb)/2}" y="${Hp+6}" text-anchor="middle" style="font-size:10px">${i}</text>`}
  o+=`<line x1="${x0}" y1="${Y(L/2)}" x2="${x0+Lt*sx}" y2="${Y(L/2)}" stroke="var(--ink)" stroke-dasharray="6 3"/><text x="${x0}" y="12" style="font-size:12px;font-weight:600">1 · Planta de techo: tocá un vano para poner o sacar la cruz (verde). Cumbrera en línea de trazos.</text></svg>`;
  // elevación lateral
@@ -1327,7 +1328,7 @@ function drawArViz(m,d){arVizSlot();const el=$('arViz');if(!el)return;const Lt=m
  hint('arTnV',+d.arTnV>0?`→ correas cada ${f(+d.coSep)} m: tornapunta cada ${f(+d.arTnV*(+d.coSep))} m; L<sub>b</sub> del ala inferior de la viga = ${f(Lo.vLbi)} m`:'→ sin tornapuntas: L<sub>b</sub> del ala inferior = largo del faldón');
  hint('arTnC',+d.arTnC>0?`→ correas de pared cada ${f(+d.pSep)} m: tornapunta cada ${f(+d.arTnC*(+d.pSep))} m; columna fuera del plano = ${f(Lo.cLy)} m`:`→ sin tornapuntas: columna fuera del plano = ${f(Lo.cLy)} m (nudos de la cruz o altura total)`);
  hint('arParN',`→ ${(+d.arParN|0)>1?'puntos fijos cada '+f(H/(+d.arParN))+' m en la altura de todas las columnas':'sin punto fijo intermedio en la columna'}`);
- hint('arTecN',`→ puntos fijos cada ${f(sl/Math.max(1,+d.arTecN|0))} m sobre el faldón; viga fuera del plano = ${f(Lo.vLy)} m`);
+ hint('arTecN',`→ correas cada ${f(+d.coSep)} m: nudo cada ${f(Math.max(1,+d.arTecN|0)*(+d.coSep))} m sobre el faldón (${tecPan(d,sl).length-1} paneles); viga fuera del plano = ${f(Lo.vLy)} m`);
  el.innerHTML=`<h2>Esquema de los arriostramientos</h2><p class="note">Los vanos se cuentan desde el pórtico 1 (izquierda). Los cambios se aplican al momento: el 3D y las verificaciones se recalculan.</p>${o}${p}${q}
  <p class="note"><b>Cómo se leen los puntos fijos.</b> La correa sola sujeta un ala. Una tornapunta sujeta las dos alas de la columna o de la viga. Un nudo de la cruz (pared o techo) es un punto fijo que las correas trasladan a todos los pórticos. La longitud de pandeo fuera del plano es la mayor distancia entre puntos fijos.</p>`}
 
