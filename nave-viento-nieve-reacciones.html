@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nave: viento, nieve y reacciones</title>
+<title>Nave: modelo estructural</title>
 <style>
 :root{--bg:#f6f5f2;--card:#fff;--ink:#1f2328;--mut:#667085;--line:#d9d6cf;--acc:#ec7200;--acc2:#0b6bcb;--ok:#1a7f37;--bad:#c62828;--inp:#fff8e6;--press:#c62828;--suc:#0b6bcb}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#15171a;--card:#1e2126;--ink:#e8e6e3;--mut:#9aa3ad;--line:#353a41;--acc:#ff9a3c;--acc2:#6db3ff;--ok:#5fd07e;--bad:#ff7b72;--inp:#2a2618;--press:#ff7b72;--suc:#6db3ff}}
@@ -60,68 +60,86 @@ table.crit td.n{font-size:15px;font-weight:700;white-space:nowrap}
 table.crit td.m{white-space:nowrap;color:var(--mut)}
 table.crit caption{caption-side:top;text-align:left;font-weight:600;padding:10px 0 5px;color:var(--acc)}
 details.help{margin-top:8px}details.help .note{margin-top:6px}
+#geoBox{position:relative}#geoOv .ov{position:absolute;transform:translate(-50%,-50%);background:var(--card);border:2px solid var(--acc);border-radius:8px;padding:4px 7px;box-shadow:0 2px 6px rgba(0,0,0,.18);font-size:12px;display:flex;flex-direction:column;gap:2px;z-index:2}
+#geoOv .ov b{color:var(--acc);font-size:11.5px}#geoOv select{padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--inp);color:var(--ink);font:inherit;font-size:13px;max-width:220px}
+h2.sec{margin:26px 0 4px;padding:6px 0;border-bottom:2px solid var(--acc);color:var(--acc);scroll-margin-top:60px}
+.secg{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:12px}
 code{background:color-mix(in srgb,var(--mut) 15%,transparent);padding:1px 4px;border-radius:4px}
 </style>
 </head>
 <body>
 <header>
-<h1>Nave industrial: viento, nieve, peso propio y reacciones</h1>
-<div class="sub">Pórtico a dos aguas con bases articuladas · CIRSOC 102-2025 (viento) · CIRSOC 104-2005 (nieve) · CIRSOC 101-2025 (combinaciones) · unidades: t, m, kg/m²</div>
+<h1>Nave industrial · modelo estructural del pórtico</h1>
+<div class="sub">Pórtico a dos aguas · CIRSOC 101-2025 (cargas y combinaciones) · CIRSOC 102-2025 (viento) · CIRSOC 104-2005 (nieve) · unidades: t, m, kg/m²</div>
 </header>
 <div id="nav">
-<button data-t="datos" class="on">Datos</button>
-<button data-t="viento">Viento</button>
-<button data-t="nieve">Nieve y gravitatorias</button>
-<button data-t="portico">Pórtico y reacciones</button>
-<button data-t="comb">Combinaciones</button>
+<button data-t="geo" class="on">1 · Geometría y secciones</button>
+<button data-t="cargas">2 · Análisis de cargas</button>
+<button data-t="esf">3 · Esfuerzos</button>
+<button data-t="reac">4 · Reacciones</button>
 <button data-t="teoria">Criterios y reglamento</button>
 </div>
 <main>
-<section class="tab on" id="t-datos">
+<section class="tab on" id="t-geo">
 <div class="card"><h2>Proyecto</h2>
 <div class="row"><input id="pname" class="btn" style="flex:1;min-width:200px;background:var(--inp)" value="CL-043 ETRSU Neuquén · Nave de transferencia">
 <button class="btn" onclick="saveP()">Guardar</button><select id="plist" class="btn"></select><button class="btn" onclick="loadP()">Abrir</button><button class="btn" onclick="delP()">Borrar</button><button class="btn" onclick="expP()">Exportar JSON</button><label class="btn">Importar<input type="file" accept=".json" style="display:none" onchange="impP(this)"></label><button class="btn" onclick="resetP()">Valores iniciales</button></div>
 <div class="note">Los proyectos se guardan en este navegador. Los valores iniciales son los de la nave de CL-043 leídos de los planos EST-P-PG-006 y ARQ-P-PV-03.</div></div>
+<div class="card"><h2>Geometría del pórtico</h2>
+<div id="geoBox"><div id="geoSvg"></div><div id="geoOv" class="frm"></div></div>
+<div class="note">Elegí el perfil de la columna y de la viga y el tipo de apoyo directamente sobre el dibujo. «Armada» usa las dimensiones de la sección armada que se cargan más abajo.</div></div>
+<div class="card"><h2>Secciones elegidas</h2><div id="secOut"></div></div>
+<div id="fgeo" class="frm"></div>
+<div id="fsec" class="frm"></div>
 <div class="two">
-<div class="card"><h2>Corte transversal y niveles</h2><div id="svgGeo"></div><div id="geoOut" class="note"></div></div>
+<div class="card"><h2>Corte transversal y terreno</h2><div id="svgGeo"></div><div id="geoOut" class="note"></div></div>
 <div class="card"><h2>Planta y pórtico analizado</h2><div id="svgPlan"></div></div>
 </div>
-<div id="forms"></div>
 </section>
 
-<section class="tab" id="t-viento">
+<section class="tab" id="t-cargas">
+<div class="card" style="border-left:4px solid var(--acc)"><h2>Análisis de cargas</h2><div class="note">Cada carga se determina en su apartado: datos, valores intermedios y resultado sobre el pórtico. Las cargas de viento se muestran sobre la nave completa; más adelante se agregan las correas de pared y de techo para el viento sobre componentes y revestimientos.</div>
+<div class="row" style="margin-top:8px"><a class="btn" href="#c-perm">1 · Permanentes y sobrecarga</a><a class="btn" href="#c-nieve">2 · Nieve</a><a class="btn" href="#c-viento">3 · Viento</a><a class="btn" href="#c-losa">4 · Losa de transferencia</a></div></div>
+<h2 id="c-perm" class="sec">1 · Cargas permanentes y sobrecarga de cubierta</h2>
+<div id="fcar" class="frm"></div>
+<div class="card"><h2>Cargas gravitatorias sobre el pórtico</h2><div id="gOut"></div></div>
+<h2 id="c-nieve" class="sec">2 · Nieve (CIRSOC 104-2005)</h2>
+<div id="fnie" class="frm"></div>
+<div class="card"><h2>Determinación de la carga de nieve</h2><div id="sOut"></div><div id="svgS"></div></div>
+<h2 id="c-viento" class="sec">3 · Viento (CIRSOC 102-2025)</h2>
+<div id="fvie" class="frm"></div>
 <div class="card"><h2>Presión dinámica</h2><div id="qOut"></div></div>
 <div class="card"><h2>Coeficientes de presión externa, C<sub>p</sub> (Figura 2.4-1)</h2><div id="cpOut"></div></div>
-<div class="card"><h2>Casos de viento sobre el pórtico</h2>
-<div class="row"><label>Caso: <select id="selW" class="big"></select></label></div>
-<div id="svgW"></div><div class="tw" id="wTab"></div>
-<div class="note">Presión neta p = q·G·C<sub>p</sub> − q<sub>h</sub>·(GC<sub>pi</sub>) (expresión 2.4-1). Signo positivo: empuja hacia la superficie. Signo negativo: succión. Las flechas rojas son presión y las azules, succión.</div></div>
+<div class="card"><h2>Casos de viento sobre la nave</h2>
+<div class="row"><label>Caso: <select id="selW" class="big"></select></label><label>Sentido: <select id="selWdir" class="big" style="max-width:240px"><option value="0">Viento desde la izquierda (A)</option><option value="1">Viento desde la derecha (E)</option></select></label></div>
+<div id="svg3d"></div>
+<div class="note">Presión neta sobre cada cara de la nave, en kg/m²: p = q·G·C<sub>p</sub> − q<sub>h</sub>·(GC<sub>pi</sub>). Rojo: presión (empuja hacia la superficie). Azul: succión. Las caras de atrás se dibujan transparentes.</div>
+<h3>Cargas sobre el pórtico analizado</h3>
+<div id="svgW"></div><div class="tw" id="wTab"></div></div>
 <div class="card"><h2>Viento longitudinal: fuerza total sobre los frentes</h2><div id="lonOut"></div></div>
+<h2 id="c-losa" class="sec">4 · Losa del nivel de transferencia</h2>
+<div id="flos" class="frm"></div>
 </section>
 
-<section class="tab" id="t-nieve">
-<div class="card"><h2>Nieve (CIRSOC 104-2005)</h2><div id="sOut"></div><div id="svgS"></div></div>
-<div class="card"><h2>Cargas gravitatorias sobre el pórtico</h2><div id="gOut"></div></div>
+<section class="tab" id="t-esf">
+<div class="card"><h2>Esfuerzos en el pórtico</h2>
+<div class="row"><label>Caso o combinación: <select id="selC" class="big" style="max-width:100%"></select></label></div>
+<div class="row" style="margin:6px 0"><label>Diagrama: <select id="selD" class="big" style="max-width:260px"><option value="M">Momento flector M</option><option value="V">Esfuerzo de corte V</option><option value="N">Esfuerzo normal N</option></select></label><span class="note" id="secInfo"></span></div>
+<div id="svgR"></div><div id="rOut" class="note"></div></div>
 </section>
 
-<section class="tab" id="t-portico">
+<section class="tab" id="t-reac">
 <div class="card"><h2>Reacciones críticas en las bases</h2>
 <div class="opt"><b>Losa del nivel de transferencia</b><select class="losq"><option value="0">No sumar su reacción</option><option value="1">Sumar en la base A</option><option value="2">Sumar en las dos bases</option></select><span class="note losinfo"></span></div>
 <div id="frameInfo" class="note"></div>
 <div id="quick"></div>
-<details class="help"><summary>Cómo se leen estas tablas</summary><div class="note">Cada fila da la reacción buscada (en grande) y la que la acompaña en la misma base y la misma combinación. Compresión: mayor V hacia arriba. Tracción: V más negativa (la columna tira de la fundación). Corte: mayor H en valor absoluto. «Corte máximo con mayor o menor axial» busca, entre las combinaciones cuyo corte queda dentro del margen indicado respecto del máximo, la de mayor y la de menor V. La losa no produce corte: solo cambia la V que acompaña. Al hacer clic en una fila se dibuja ese caso en el esquema de abajo.</div></details></div>
-<div class="card"><h2>Esquema de cargas, reacciones y momentos</h2>
-<div class="row"><label>Ver: <select id="selC" class="big" style="max-width:100%"></select></label></div>
-<div id="svgR"></div><div id="rOut" class="note"></div></div>
+<details class="help"><summary>Cómo se leen estas tablas</summary><div class="note">Cada fila da la reacción buscada (en grande) y las que la acompañan en la misma base y la misma combinación. Compresión: mayor V hacia arriba. Tracción: V más negativa (la columna tira de la fundación). Corte: mayor H en valor absoluto. «Corte máximo con mayor o menor axial» busca, entre las combinaciones cuyo corte queda dentro del margen indicado respecto del máximo, la de mayor y la de menor V. Con bases empotradas se agrega el momento en la base. Al hacer clic en una fila se dibuja ese caso en la pestaña Esfuerzos.</div></details></div>
 <div class="card"><h2>Reacciones por caso de carga (sin mayorar)</h2>
 <div class="tw" id="rTab"></div>
-<details class="help"><summary>Convención de signos</summary><div class="note">A: base de la columna izquierda. E: base de la columna derecha. V positiva: hacia arriba (la columna comprime a la fundación). V negativa: la columna tira de la fundación (levantamiento). H positiva: hacia la derecha. El viento de los casos sopla desde la izquierda; los casos espejados (viento desde la derecha) intercambian A y E y se incluyen en las combinaciones. Control: la suma de reacciones debe igualar a la carga total aplicada.</div></details></div>
-</section>
-
-<section class="tab" id="t-comb">
-<div class="card"><h2>Envolvente de reacciones mayoradas en cada base</h2><div class="opt"><b>Losa del nivel de transferencia</b><select class="losq"><option value="0">No sumar su reacción</option><option value="1">Sumar en la base A</option><option value="2">Sumar en las dos bases</option></select><span class="note losinfo"></span></div>
+<details class="help"><summary>Convención de signos</summary><div class="note">A: base de la columna izquierda. E: base de la columna derecha. V positiva: hacia arriba (la columna comprime a la fundación). V negativa: la columna tira de la fundación (levantamiento). H positiva: hacia la derecha. M positivo: antihorario. El viento de los casos sopla desde la izquierda; los casos espejados (viento desde la derecha) intercambian A y E y se incluyen en las combinaciones. Control: la suma de reacciones debe igualar a la carga total aplicada.</div></details></div>
+<div class="card"><h2>Envolvente de reacciones mayoradas</h2>
 <div class="tw" id="envTab"></div>
-<div class="note">Como el pórtico es simétrico y se combinan el viento y la nieve no balanceada en los dos sentidos, la envolvente es la misma para las dos bases. Si se suma la losa solo en la base A, la envolvente es la de esa base (la columna que recibe la losa).</div></div>
+<div class="note">Como el pórtico es simétrico y se combinan el viento y la nieve no balanceada en los dos sentidos, la envolvente es la misma para las dos bases. Si se suma la losa solo en la base A, la envolvente es la de esa base.</div></div>
 <div class="card"><h2>Resumen por pórtico</h2><div class="tw" id="sumTab"></div>
 <div class="note">Pórtico extremo: mitad del ancho tributario. Si el frente tiene columnas de viento propias, sus reacciones se calculan aparte.</div></div>
 <div class="card"><h2>Todas las combinaciones (pórtico analizado)</h2><details><summary>Mostrar tabla completa</summary><div class="tw" id="allTab"></div></details></div>
@@ -134,25 +152,41 @@ code{background:color-mix(in srgb,var(--mut) 15%,transparent);padding:1px 4px;bo
 <script>
 "use strict";
 const G0=9.80665;
+const CAT={
+ 'IPE 200':[200,100,5.6,8.5],'IPE 220':[220,110,5.9,9.2],'IPE 240':[240,120,6.2,9.8],'IPE 270':[270,135,6.6,10.2],'IPE 300':[300,150,7.1,10.7],'IPE 330':[330,160,7.5,11.5],'IPE 360':[360,170,8,12.7],'IPE 400':[400,180,8.6,13.5],'IPE 450':[450,190,9.4,14.6],'IPE 500':[500,200,10.2,16],'IPE 550':[550,210,11.1,17.2],'IPE 600':[600,220,12,19],
+ 'HEA 200':[190,200,6.5,10],'HEA 220':[210,220,7,11],'HEA 240':[230,240,7.5,12],'HEA 260':[250,260,7.5,12.5],'HEA 280':[270,280,8,13],'HEA 300':[290,300,8.5,14],'HEA 320':[310,300,9,15.5],'HEA 340':[330,300,9.5,16.5],'HEA 360':[350,300,10,17.5],'HEA 400':[390,300,11,19],'HEA 450':[440,300,11.5,21],'HEA 500':[490,300,12,23],'HEA 600':[590,300,13,25],
+ 'HEB 200':[200,200,9,15],'HEB 220':[220,220,9.5,16],'HEB 240':[240,240,10,17],'HEB 260':[260,260,10,17.5],'HEB 280':[280,280,10.5,18],'HEB 300':[300,300,11,19],'HEB 320':[320,300,11.5,20.5],'HEB 340':[340,300,12,21.5],'HEB 360':[360,300,12.5,22.5],'HEB 400':[400,300,13.5,24],'HEB 450':[450,300,14,26],'HEB 500':[500,300,14.5,28],'HEB 600':[600,300,15.5,30],
+ 'W 310x38,7':[310,165,5.8,9.7],'W 310x52':[317,167,7.6,13.2],'W 310x60':[303,203,7.5,13.1],'W 310x74':[310,205,9.4,16.3],'W 310x97':[308,305,9.9,15.4],
+ 'W 360x51':[355,171,7.2,11.6],'W 360x64':[347,203,7.7,13.5],'W 360x79':[354,205,9.4,16.8],'W 360x101':[357,255,10.5,18.3],
+ 'W 410x60':[407,178,7.7,12.8],'W 410x75':[413,180,9.7,16],'W 410x85':[417,181,10.9,18.2],'W 410x100':[415,260,10,16.9],
+ 'W 460x74':[457,190,9,14.5],'W 460x89':[463,192,10.5,17.7],'W 460x106':[469,194,12.6,20.6],
+ 'W 530x85':[535,166,10.3,16.5],'W 530x101':[537,210,10.9,17.4],'W 530x123':[544,212,13.1,21.2],
+ 'W 610x101':[603,228,10.5,14.9],'W 610x125':[612,229,11.9,19.6],'W 610x155':[611,324,12.7,19]};
+// alveolares (castellados) a partir de IPE y HEA: H = 1,5 h, agujero ho = h. Inercia con agujero (sección neta). † a confirmar
+for(const k of ['IPE 300','IPE 330','IPE 360','IPE 400','IPE 450','IPE 500','IPE 550','IPE 600','HEA 300','HEA 340','HEA 400','HEA 450','HEA 500']){const p=CAT[k];CAT['Alveolar '+k+' · H '+(1.5*p[0]).toFixed(0)+' †']=[1.5*p[0],p[1],p[2],p[3],p[0]]}
+const CATN=Object.keys(CAT),SECOPT=['Armada (dimensiones de abajo)'].concat(CATN);
 const F=[
  ["Geometría (planos EST-P-PG-006 y ARQ-P-PV-03)",[
   ["L","Luz del pórtico, entre ejes de columnas","m",40],
   ["nv","Cantidad de vanos entre pórticos","",17],
   ["s","Separación entre pórticos","m",5],
-  ["zb","Nivel de la base de la columna (articulación)","m",5.5],
+  ["zb","Nivel de la base de la columna","m",5.5],
   ["ze","Nivel del alero (encuentro columna y viga)","m",11.3],
   ["pend","Pendiente de la cubierta","%",25],
   ["np","Pórtico analizado (1 = extremo)","",9]]],
- ["Secciones del pórtico (para la rigidez relativa)",[
-  ["cd0","Columna: altura de la sección en la base","m",0.5],
-  ["cd1","Columna: altura de la sección en el alero","m",0.9],
-  ["cb","Columna: ancho de ala","mm",250],
-  ["ctf","Columna: espesor de ala","mm",25],
-  ["ctw","Columna: espesor de alma","mm",15.9],
-  ["rd","Viga: altura de la sección","m",0.7],
-  ["rb","Viga: ancho de ala","mm",250],
-  ["rtf","Viga: espesor de ala","mm",25],
-  ["rtw","Viga: espesor de alma","mm",15.9]]],
+ ["Sección armada (se usa cuando el perfil elegido es «Armada»)",[
+  ["apo","Apoyos de las columnas","",0,["Articulados","Empotrados"]],
+  ["csel","Columna: perfil","",0,SECOPT],
+  ["rsel","Viga: perfil","",0,SECOPT],
+  ["cd0","Columna armada: altura de la sección en la base","m",0.5],
+  ["cd1","Columna armada: altura de la sección en el alero","m",0.9],
+  ["cb","Columna armada: ancho de ala","mm",250],
+  ["ctf","Columna armada: espesor de ala","mm",25],
+  ["ctw","Columna armada: espesor de alma","mm",15.9],
+  ["rd","Viga armada: altura de la sección","m",0.7],
+  ["rb","Viga armada: ancho de ala","mm",250],
+  ["rtf","Viga armada: espesor de ala","mm",25],
+  ["rtw","Viga armada: espesor de alma","mm",15.9]]],
  ["Emplazamiento y altura de referencia",[
   ["crit","Criterio para la altura sobre el terreno","",0,["Desde el nivel de calle, Kzt = 1","Desde la plataforma, Kzt por escarpa (Fig. 1.8-1)","Manual: nivel de referencia y Kzt a elección"]],
   ["z0","Nivel de calle (terreno general)","m",0],
@@ -193,19 +227,22 @@ const $=id=>document.getElementById(id);
 const f=(x,d=2)=>(Math.abs(x)<0.5*Math.pow(10,-d)?0:x).toFixed(d).replace('.',',');
 const fs=(x,d=2)=>(x>=0?'+':'−')+f(Math.abs(x),d);
 
+const TGT=['fgeo','fsec','fvie','fvie','fnie','fcar','flos'],OVF={apo:'Apoyos de las columnas',csel:'Perfil de la columna',rsel:'Perfil de la viga'};
 function buildForms(){
- let h='';
- for(const [t,fl] of F){
+ const H={};
+ F.forEach(([t,fl],gi)=>{const tg=TGT[gi]||'fgeo';let h='';const vis=fl.filter(x=>!OVF[x[0]]);if(!vis.length)return;
   h+=`<div class="card"><h2>${t}</h2><div class="grid">`;
-  for(const [id,lab,u,def,op] of fl){
+  for(const [id,lab,u,def,op] of vis){
    h+=`<div class="f"><label for="${id}">${lab}</label><div class="r">`;
    if(op)h+=`<select id="${id}">${op.map((o,i)=>`<option value="${i}"${i==def?' selected':''}>${o}</option>`).join('')}</select>`;
    else h+=`<input id="${id}" type="number" step="any" value="${def}"><span class="u">${u}</span>`;
    h+=`</div></div>`;
   }
-  h+='</div></div>';
- }
- $('forms').innerHTML=h;
+  h+='</div></div>';H[tg]=(H[tg]||'')+h;
+ });
+ for(const tg of new Set(TGT))$(tg).innerHTML=H[tg]||'';
+ let ov='';for(const [,fl] of F)for(const [id,lab,u,def,op] of fl)if(OVF[id])ov+=`<div class="ov" id="ov_${id}"><b>${OVF[id]}</b><select id="${id}">${op.map((o,i)=>`<option value="${i}"${i==def?' selected':''}>${o}</option>`).join('')}</select></div>`;
+ $('geoOv').innerHTML=ov;
 }
 function read(){const o={};for(const [,fl] of F)for(const [id] of fl){const v=parseFloat($(id).value);o[id]=isFinite(v)?v:0}return o}
 
@@ -294,6 +331,7 @@ function cases(m){
 
 /* ---------- pórtico: método de rigidez ---------- */
 function Isec(dm,b,tf,tw){b/=1000;tf/=1000;tw/=1000;const hw=dm-2*tf;return {I:(b*dm**3-(b-tw)*hw**3)/12,A:2*b*tf+hw*tw}}
+function secCat(i){const p=CAT[CATN[i-1]],sc=Isec(p[0]/1000,p[1],p[3],p[2]);if(p[4]){const ho=p[4]/1000,tw=p[2]/1000;sc.I-=tw*ho**3/12;sc.A-=tw*ho;sc.alv=1}return sc}
 function mesh(m){
  const d=m.d,nc=8,nr=12,N=[],E=[];
  const P=[[0,0],[0,m.Hc],[d.L/2,m.Hc+m.fr],[d.L,m.Hc],[d.L,0]],div=[nc,nr,nr,nc],sf=['cl','rl','rr','cr'];
@@ -302,12 +340,12 @@ function mesh(m){
   const t0=(i-1)/div[k],t1=i/div[k],a=P[k],b=P[k+1];
   N.push([a[0]+(b[0]-a[0])*t1,a[1]+(b[1]-a[1])*t1]);
   let sec;
-  if(k==0||k==3){const tm=(t0+t1)/2,u=k==0?tm:1-tm;sec=Isec(d.cd0+(d.cd1-d.cd0)*u,d.cb,d.ctf,d.ctw)}
-  else sec=Isec(d.rd,d.rb,d.rtf,d.rtw);
+  if(k==0||k==3){const tm=(t0+t1)/2,u=k==0?tm:1-tm;sec=d.csel>0?secCat(d.csel):Isec(d.cd0+(d.cd1-d.cd0)*u,d.cb,d.ctf,d.ctw)}
+  else sec=d.rsel>0?secCat(d.rsel):Isec(d.rd,d.rb,d.rtf,d.rtw);
   E.push({i:N.length-2,j:N.length-1,sf:sf[k],EI:2.039e7*sec.I,EA:2.039e7*sec.A});
  }
  for(const e of E){const a=N[e.i],b=N[e.j];e.Lx=b[0]-a[0];e.Ly=b[1]-a[1];e.Le=Math.hypot(e.Lx,e.Ly);e.c=e.Lx/e.Le;e.s=e.Ly/e.Le;e.ym=(a[1]+b[1])/2}
- return {N,E};
+ return {N,E,apo:d.apo|0};
 }
 function kloc(e){const L=e.Le,a=e.EA/L,b=12*e.EI/L**3,c=6*e.EI/L**2,dd=4*e.EI/L,g=2*e.EI/L;
  return [[a,0,0,-a,0,0],[0,b,c,0,-b,c],[0,c,dd,0,-c,g],[-a,0,0,a,0,0],[0,-b,-c,0,b,-c],[0,c,g,0,-c,dd]]}
@@ -319,7 +357,7 @@ function assemble(ms){
   const dof=[e.i*3,e.i*3+1,e.i*3+2,e.j*3,e.j*3+1,e.j*3+2];e.dof=dof;e.k=k;e.T=T;
   for(let a=0;a<6;a++)for(let b=0;b<6;b++)K[dof[a]][dof[b]]+=kg[a][b];
  }
- const last=(ms.N.length-1)*3;ms.fix=[0,1,last,last+1];ms.K=K;
+ const last=(ms.N.length-1)*3;ms.fix=ms.apo?[0,1,2,last,last+1,last+2]:[0,1,last,last+1];ms.K=K;
  ms.free=[];for(let i=0;i<n;i++)if(!ms.fix.includes(i))ms.free.push(i);
  // factorización (Gauss) guardando la inversa reducida por columnas resolviendo bajo demanda
  return ms;
@@ -337,9 +375,11 @@ function solve(ms,w){ // w: por elemento [wx,wy] t/m global
  const u=new Float64Array(n);fr.forEach((j,c)=>u[j]=x[c]);
  const R=ms.fix.map(i=>{let s=-Fg[i];for(let j=0;j<n;j++)s+=ms.K[i][j]*u[j];return s});
  const M=ms.E.map(e=>{const ug=e.dof.map(q=>u[q]),ul=e.T.map(r=>r.reduce((s,v,q)=>s+v*ug[q],0));
-  const fe=e.k.map((r,a)=>r.reduce((s,v,q)=>s+v*ul[q],0)-e.fl[a]);return [-fe[2],fe[5]]});
+  const fe=e.k.map((r,a)=>r.reduce((s,v,q)=>s+v*ul[q],0)-e.fl[a]);e._fe=fe;return [-fe[2],fe[5]]});
+ const V=ms.E.map(e=>[e._fe[1],-e._fe[4]]),Nn=ms.E.map(e=>[-e._fe[0],e._fe[3]]);
  const nb=8; // nudo del alero izquierdo
- return {RA:[R[0],R[1]],RE:[R[2],R[3]],M,SF:[SFx,SFy],dx:u[nb*3]};
+ const RA=ms.apo?[R[0],R[1],R[2]]:[R[0],R[1],0],RE=ms.apo?[R[3],R[4],R[5]]:[R[2],R[3],0];
+ return {RA,RE,M,V,N:Nn,SF:[SFx,SFy],dx:u[nb*3]};
 }
 function loadVec(m,ms,c,mir){
  const tr=m.trib/1000,sn=Math.sin(m.th),cs=Math.cos(m.th),nrm={cl:[-1,0],rl:[-sn,cs],rr:[sn,cs],cr:[1,0]},sw={cl:'cr',cr:'cl',rl:'rr',rr:'rl'};
@@ -358,7 +398,7 @@ function analyze(d,np){
  // combinaciones CIRSOC 101-25
  const Ws=list.filter(x=>x.c.tipo!='G').map(x=>x.id),Ss=list.filter(x=>x.id[0]=='S').map(x=>x.id),nm=id=>list.find(x=>x.id==id).nom;
  const lo=d.los|0;
- if(lo){const mk=P=>({RA:[0,P],RE:[0,lo==2?P:0],SF:[0,-P*(lo==2?2:1)],dx:0,M:ms.E.map(()=>[0,0])});res.DL=mk(d.PD);res.L=mk(d.PL)}
+ if(lo){const z=()=>ms.E.map(()=>[0,0]),mk=P=>({RA:[0,P,0],RE:[0,lo==2?P:0,0],SF:[0,-P*(lo==2?2:1)],dx:0,M:z(),V:z(),N:z()});res.DL=mk(d.PD);res.L=mk(d.PL)}
  const cb=[],add=(t,o)=>{if(lo&&o.D)o.DL=o.D;cb.push({t,o})};
  const wn=id=>{const x=list.find(q=>q.id==id);return 'Viento '+id+(x.mir?' (desde la derecha)':'')};
  const snn=id=>id=='S'?'Nieve balanceada':(id=='Sn'?'Nieve no balanceada (viento desde la izquierda)':'Nieve no balanceada (viento desde la derecha)');
@@ -377,8 +417,9 @@ function analyze(d,np){
   for(const s of Ss)add('1,2 Permanente + 1,6 '+snn(s)+' + 1,0 '+LL,{D:1.2,[s]:1.6,L:1});
   for(const w of Ws){add('1,2 Permanente + 1,0 '+wn(w)+' + 1,0 '+LL,{D:1.2,[w]:1,L:1});add('1,2 Permanente + 1,0 '+wn(w)+' + 1,0 '+LL+' + 0,5 Sobrecarga de cubierta',{D:1.2,[w]:1,L:1,Lr:0.5});
    for(const s of Ss)add('1,2 Permanente + 1,0 '+wn(w)+' + 1,0 '+LL+' + 0,5 '+snn(s),{D:1.2,[w]:1,L:1,[s]:0.5})}}
- const comb=o=>{const r={RA:[0,0],RE:[0,0],SF:[0,0],dx:0,M:ms.E.map(()=>[0,0])};
-  for(const k in o){const a=res[k],fc=o[k];for(const q of ['RA','RE','SF']){r[q][0]+=fc*a[q][0];r[q][1]+=fc*a[q][1]}r.dx+=fc*a.dx;a.M.forEach((v,i)=>{r.M[i][0]+=fc*v[0];r.M[i][1]+=fc*v[1]})}return r};
+ const comb=o=>{const z=()=>ms.E.map(()=>[0,0]),r={RA:[0,0,0],RE:[0,0,0],SF:[0,0],dx:0,M:z(),V:z(),N:z()};
+  for(const k in o){const a=res[k],fc=o[k];for(const q of ['RA','RE','SF'])for(let j=0;j<r[q].length;j++)r[q][j]+=fc*(a[q][j]||0);r.dx+=fc*a.dx;
+   for(const q of ['M','V','N'])a[q].forEach((v,i)=>{r[q][i][0]+=fc*v[0];r[q][i][1]+=fc*v[1]})}return r};
  for(const c of cb)c.r=comb(c.o);
  const env={Vmax:null,Vmin:null,Hin:null,Hout:null};
  for(const c of cb){const v=c.r.RA[1],h=c.r.RA[0];
@@ -429,12 +470,14 @@ function frameDims(g,m,W,yl){const d=m.d,xa=g.X(0),xe=g.X(d.L),yb=g.Y(0),ye=g.Y(
   +`<text x="${W-33}" y="${(yb+ye)/2+4}" text-anchor="end">${f(m.Hc)} m</text>`
   +`<text x="${g.X(d.L/4)}" y="${g.Y(m.Hc+m.fr/2)+26}" text-anchor="middle">${f(d.pend,0)} %</text>`
   +`<text x="${xa}" y="${yb+16}" text-anchor="middle">A</text><text x="${xe}" y="${yb+16}" text-anchor="middle">E</text></g>`}
+let DIAG='M';
 function drawRes(A,r,title,ps,gl){const m=A.m,d=m.d,W=960,Hh=520,g=frameGeom(m,W,Hh,240,110,150);let o=`<svg viewBox="0 0 ${W} ${Hh}">`;
- // momentos
- let mx=0;r.M.forEach(v=>{mx=Math.max(mx,Math.abs(v[0]),Math.abs(v[1]))});const ms=mx>1e-9?46/mx:0;let pth='',lab='';
- A.ms.E.forEach((e,i)=>{const a=A.ms.N[e.i],b=A.ms.N[e.j],nx=-e.s,ny=e.c,M=r.M[i];
+ // diagrama elegido
+ const DD=r[DIAG]||r.M,COL={M:'var(--acc2)',V:'var(--acc)',N:'var(--ok)'}[DIAG];
+ let mx=0;DD.forEach(v=>{mx=Math.max(mx,Math.abs(v[0]),Math.abs(v[1]))});const ms=mx>1e-9?46/mx:0;let pth='',lab='';
+ A.ms.E.forEach((e,i)=>{const a=A.ms.N[e.i],b=A.ms.N[e.j],nx=-e.s,ny=e.c,M=DD[i];
   const p=[[g.X(a[0]),g.Y(a[1])],[g.X(a[0])-nx*M[0]*ms,g.Y(a[1])+ny*M[0]*ms],[g.X(b[0])-nx*M[1]*ms,g.Y(b[1])+ny*M[1]*ms],[g.X(b[0]),g.Y(b[1])]];
-  pth+=`<polygon points="${p.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ')}" fill="color-mix(in srgb,var(--acc2) 30%,transparent)" stroke="var(--acc2)" stroke-width="0.6"/>`});
+  pth+=`<polygon points="${p.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ')}" fill="color-mix(in srgb,${COL} 30%,transparent)" stroke="${COL}" stroke-width="0.6"/>`});
  o+=pth+frameLine(g);
  if(ps)o+=pressArrows(g,m,ps,ps.map(p=>fs(p*m.trib/1000,3)+' t/m'));
  if(gl){const na=7;[0,1].forEach(k=>{const a=g.pts[k+1],b=g.pts[k+2];if(gl[k]<0.01)return;
@@ -445,19 +488,91 @@ function drawRes(A,r,title,ps,gl){const m=A.m,d=m.d,W=960,Hh=520,g=frameGeom(m,W
   o+=R[1]>=0?arrow(x,y+48,x,y+4,col,2.4):arrow(x,y+4,x,y+48,col,2.4);
   o+=`<text x="${x}" y="${y+64}" text-anchor="middle" style="fill:${col};font-weight:700">V${nm} = ${fs(R[1])} t</text>`;
   const xa=x+sg*70,xb=x+sg*22;if(Math.abs(R[0])>0.005)o+=(R[0]>0)==(sg<0)?arrow(xa,y-18,xb,y-18,col,2.4):arrow(xb,y-18,xa,y-18,col,2.4);
-  o+=`<text x="${x+sg*76}" y="${y-14}" text-anchor="${sg<0?'end':'start'}" style="fill:${col};font-weight:700">H${nm} = ${fs(R[0])} t</text>`});
- const Mk=[r.M[7][1],r.M[19][1],r.M[31][1]],px=[[0,m.Hc,-1],[d.L/2,m.Hc+m.fr,0],[d.L,m.Hc,1]];
- px.forEach((p,i)=>{o+=`<text x="${g.X(p[0])-p[2]*12}" y="${g.Y(p[1])+(i==1?30:24)}" text-anchor="${p[2]<0?'start':(p[2]>0?'end':'middle')}" style="fill:var(--acc2)">M = ${f(Math.abs(Mk[i]),1)} tm</text>`});
- o+=`<text x="${W/2}" y="18" text-anchor="middle" style="font-weight:600">${title.length>110?title.slice(0,108)+'…':title}</text><text x="${W/2}" y="36" text-anchor="middle" style="fill:var(--mut)">Pórtico ${m.np} · luz ${f(d.L)} m · columna ${f(m.Hc)} m · flecha ${f(m.fr)} m · ancho tributario ${f(m.trib)} m · bases A y E articuladas</text>`;
+  o+=`<text x="${x+sg*76}" y="${y-14}" text-anchor="${sg<0?'end':'start'}" style="fill:${col};font-weight:700">H${nm} = ${fs(R[0])} t</text>`;
+  if(A.ms.apo)o+=`<text x="${x+sg*76}" y="${y+4}" text-anchor="${sg<0?'end':'start'}" style="fill:${col};font-weight:700">M${nm} = ${fs(R[2])} tm</text>`});
+ if(DIAG=='M'){const Mk=[r.M[7][1],r.M[19][1],r.M[31][1]],px=[[0,m.Hc,-1],[d.L/2,m.Hc+m.fr,0],[d.L,m.Hc,1]];
+  px.forEach((p,i)=>{o+=`<text x="${g.X(p[0])-p[2]*12}" y="${g.Y(p[1])+(i==1?30:24)}" text-anchor="${p[2]<0?'start':(p[2]>0?'end':'middle')}" style="fill:var(--acc2)">M = ${f(Math.abs(Mk[i]),1)} tm</text>`});
+  if(A.ms.apo){[[0,r.M[0][0],-1],[d.L,r.M[A.ms.E.length-1][1],1]].forEach(([x,Mb,sg])=>{o+=`<text x="${g.X(x)-sg*14}" y="${g.Y(0)-8}" text-anchor="${sg<0?'start':'end'}" style="fill:var(--acc2)">M = ${f(Math.abs(Mb),1)} tm</text>`})}}
+ else{const lab=DIAG=='V'?'Corte':'Normal',ex=[];[[0,7],[8,19],[20,31],[32,A.ms.E.length-1]].forEach(([i0,i1],k)=>{let b=0;for(let i=i0;i<=i1;i++)for(const v of DD[i])if(Math.abs(v)>Math.abs(b))b=v;ex.push(b)});
+  [['columna A',0,0.5],['viga izquierda',1,0.25],['viga derecha',2,0.75],['columna E',3,0.5]].forEach(([n,k,t],j)=>{const P=k==0?[0,m.Hc*t]:(k==3?[d.L,m.Hc*t]:[d.L*t,m.Hc+m.fr*(1-Math.abs(2*t-1))]);
+   o+=`<text x="${g.X(P[0])+(k==0?-14:(k==3?14:0))}" y="${g.Y(P[1])+(k==1||k==2?-22:0)}" text-anchor="${k==0?'end':(k==3?'start':'middle')}" style="fill:${COL};font-weight:600">${lab} máx. ${fs(ex[j],1)} t</text>`})}
+ o+=`<text x="${W/2}" y="18" text-anchor="middle" style="font-weight:600">${title.length>110?title.slice(0,108)+'…':title}</text><text x="${W/2}" y="36" text-anchor="middle" style="fill:var(--mut)">Pórtico ${m.np} · luz ${f(d.L)} m · columna ${f(m.Hc)} m · flecha ${f(m.fr)} m · ancho tributario ${f(m.trib)} m · bases A y E ${A.ms.apo?'empotradas':'articuladas'}</text>`;
  o+=frameDims(g,m,W,Hh-8);
  return o+'</svg>'}
 function casePress(A,x){const m=A.m,c=x.c;if(c.tipo!='W')return null;const zm=Math.max(m.d.zb-m.zref+m.Hc/2,0);let p=[c.cl(zm),c.rl,c.rr,c.cr];if(x.mir)p=[p[3],p[2],p[1],p[0]];return p}
+
+
+/* ---------- geometría grande con perfiles ---------- */
+function secData(d,k){ // k: 'c' columna, 'r' viga
+ const i=k=='c'?d.csel:d.rsel;
+ if(i>0){const nm=CATN[i-1],p=CAT[nm],sc=secCat(i);return {nm,h:p[0],b:p[1],tw:p[2],tf:p[3],ho:p[4]||0,I:sc.I,A:sc.A,var:false}}
+ if(k=='c'){const s0=Isec(d.cd0,d.cb,d.ctf,d.ctw),s1=Isec(d.cd1,d.cb,d.ctf,d.ctw);return {nm:'Armada, sección variable',h:d.cd0*1000,h1:d.cd1*1000,b:d.cb,tw:d.ctw,tf:d.ctf,ho:0,I:s0.I,I1:s1.I,A:s0.A,A1:s1.A,var:true}}
+ const s0=Isec(d.rd,d.rb,d.rtf,d.rtw);return {nm:'Armada',h:d.rd*1000,b:d.rb,tw:d.rtw,tf:d.rtf,ho:0,I:s0.I,A:s0.A,var:false}}
+function secSketch(sd,tit){const W=300,Hh=230,hh=sd.var?sd.h1:sd.h,sc=Math.min(150/hh,170/sd.b),x0=W/2,y0=26,b=sd.b*sc,h=hh*sc,tf=Math.max(sd.tf*sc,2),tw=Math.max(sd.tw*sc,1.5);
+ let o=`<svg viewBox="0 0 ${W} ${Hh}"><text x="${W/2}" y="14" text-anchor="middle" style="font-weight:600">${tit}</text>`;
+ o+=`<path d="M${x0-b/2},${y0} h${b} v${tf} h${-(b-tw)/2} v${h-2*tf} h${(b-tw)/2} v${tf} h${-b} v${-tf} h${(b-tw)/2} v${-(h-2*tf)} h${-(b-tw)/2} z" fill="color-mix(in srgb,var(--acc2) 25%,transparent)" stroke="var(--acc2)" stroke-width="1.5"/>`;
+ if(sd.ho){for(const k of [-1,0,1]){const cx=x0,cy=y0+h/2;}o+=`<rect x="${x0-tw*1.6}" y="${y0+(h-sd.ho*sc)/2}" width="${tw*3.2}" height="${sd.ho*sc}" fill="var(--card)" stroke="var(--acc2)" stroke-dasharray="3 2"/><text x="${x0+b/2+6}" y="${y0+h/2+4}" style="font-size:11px">agujero h₀ = ${f(sd.ho,0)}</text>`}
+ o+=dimH(x0-b/2,x0+b/2,y0+h+16,f(sd.b,0))+dimV(x0-b/2-14,y0,y0+h,f(hh,0))+`<text x="${x0+tw/2+4}" y="${y0+h*0.72}" style="font-size:11px">t<tspan baseline-shift="sub" style="font-size:9px">w</tspan> ${f(sd.tw,1)}</text><text x="${x0+b/2+4}" y="${y0+tf+3}" style="font-size:11px">t<tspan baseline-shift="sub" style="font-size:9px">f</tspan> ${f(sd.tf,1)}</text>`;
+ return o+'</svg>'}
+function drawBig(m){const d=m.d,W=1100,Hh=440,g=frameGeom(m,W,Hh,170,70,120),sd=[secData(d,'c'),secData(d,'r')];let o=`<svg viewBox="0 0 ${W} ${Hh}">`;
+ const P=g.pts.map(p=>[g.X(p[0]),g.Y(p[1])]),wc=Math.max(5,Math.min(16,(sd[0].var?sd[0].h1:sd[0].h)/60)),wr=Math.max(5,Math.min(16,sd[1].h/60));
+ o+=`<line x1="${P[0][0]}" y1="${P[0][1]}" x2="${P[1][0]}" y2="${P[1][1]}" stroke="var(--acc2)" stroke-width="${wc}" stroke-linecap="square"/><line x1="${P[4][0]}" y1="${P[4][1]}" x2="${P[3][0]}" y2="${P[3][1]}" stroke="var(--acc2)" stroke-width="${wc}" stroke-linecap="square"/>`;
+ o+=`<polyline points="${P[1].join(',')} ${P[2].join(',')} ${P[3].join(',')}" fill="none" stroke="var(--acc)" stroke-width="${wr}" stroke-linejoin="round"/>`;
+ // apoyos
+ [P[0],P[4]].forEach(p=>{const x=p[0],y=p[1];if(d.apo){o+=`<rect x="${x-26}" y="${y}" width="52" height="10" fill="var(--mut)"/>`;for(let k=0;k<6;k++)o+=`<line x1="${x-24+k*9}" y1="${y+10}" x2="${x-32+k*9}" y2="${y+20}" stroke="var(--mut)"/>`}
+  else{o+=`<polygon points="${x},${y} ${x-16},${y+22} ${x+16},${y+22}" fill="none" stroke="var(--ink)" stroke-width="2"/><circle cx="${x}" cy="${y}" r="4" fill="var(--card)" stroke="var(--ink)" stroke-width="2"/><line x1="${x-24}" y1="${y+22}" x2="${x+24}" y2="${y+22}" stroke="var(--ink)" stroke-width="2"/>`}});
+ // nudos
+ [['A',P[0],-1,1],['B',P[1],-1,-1],['C',P[2],0,-1],['D',P[3],1,-1],['E',P[4],1,1]].forEach(([n,p,sx,sy])=>{o+=`<circle cx="${p[0]}" cy="${p[1]}" r="5" fill="var(--ink)"/><text x="${p[0]+sx*14}" y="${p[1]+sy*14+4}" text-anchor="middle" style="font-weight:700;font-size:15px">${n}</text>`});
+ // cotas
+ o+=dimH(P[0][0],P[4][0],P[0][1]+70,'L = '+f(d.L)+' m')+dimH(P[0][0],P[2][0],P[0][1]+44,f(d.L/2)+' m')+dimH(P[2][0],P[4][0],P[0][1]+44,f(d.L/2)+' m');
+ o+=dimV(P[0][0]-60,P[0][1],P[1][1],f(m.Hc)+' m')+dimV(P[4][0]+60,P[3][1],P[2][1],'f = '+f(m.fr)+' m',1)+`<line x1="${P[3][0]}" y1="${P[2][1]}" x2="${P[4][0]+68}" y2="${P[2][1]}" stroke="var(--mut)" stroke-dasharray="3 3"/>`;
+ o+=`<text x="${(P[1][0]+P[2][0])/2+30}" y="${(P[1][1]+P[2][1])/2+28}" text-anchor="middle" style="fill:var(--mut)">pendiente ${f(d.pend,0)} % (${f(m.thd,1)}°)</text>`;
+ const lv=(y,t)=>`<line x1="${P[4][0]+80}" y1="${y}" x2="${W-10}" y2="${y}" stroke="var(--mut)" stroke-dasharray="4 3"/><text x="${W-10}" y="${y-4}" text-anchor="end">${t}</text>`;
+ o+=lv(P[2][1],'cumbrera '+fs(m.zr))+lv(P[1][1],'alero '+fs(d.ze))+lv(P[0][1],'base '+fs(d.zb));
+ o+=`<text x="${W/2}" y="${Hh-8}" text-anchor="middle" style="fill:var(--mut)">Pórtico ${m.np} de ${m.nf} · separación ${f(d.s)} m · ancho tributario ${f(m.trib)} m · bases ${d.apo?'empotradas':'articuladas'}</text>`;
+ // posiciones de los desplegables (en % del dibujo)
+ const pos=(id,x,y)=>{const e=$('ov_'+id);if(e){e.style.left=(x/W*100)+'%';e.style.top=(y/Hh*100)+'%'}};
+ pos('csel',P[1][0]+150,(P[0][1]+P[1][1])/2);pos('rsel',(P[1][0]+P[2][0])/2-20,(P[1][1]+P[2][1])/2-58);pos('apo',P[0][0]-60,P[0][1]-70);
+ return o+'</svg>'}
+function secOut(d){const sd=[secData(d,'c'),secData(d,'r')],pk=a=>a*7850;
+ const row=(t,s)=>`<tr><td>${t}</td><td class="l">${s.nm}</td><td>${s.var?f(s.h,0)+' a '+f(s.h1,0):f(s.h,0)}</td><td>${f(s.b,0)}</td><td>${f(s.tw,1)}</td><td>${f(s.tf,1)}</td><td>${s.ho?f(s.ho,0):'—'}</td><td>${s.var?f(s.A*1e4,1)+' a '+f(s.A1*1e4,1):f(s.A*1e4,1)}</td><td>${s.var?f(s.I*1e8,0)+' a '+f(s.I1*1e8,0):f(s.I*1e8,0)}</td><td>${s.var?f(pk(s.A),1)+' a '+f(pk(s.A1),1):f(pk(s.A),1)}</td></tr>`;
+ return `<div class="secg"><div>${secSketch(sd[0],'Columna')}</div><div>${secSketch(sd[1],'Viga')}</div></div><div class="tw"><table><tr><th>Barra</th><th>Perfil</th><th>h [mm]</th><th>b [mm]</th><th>t<sub>w</sub> [mm]</th><th>t<sub>f</sub> [mm]</th><th>Agujero h₀ [mm]</th><th>A [cm²]</th><th>I [cm⁴]</th><th>Peso [kg/m]</th></tr>${row('Columna',sd[0])}${row('Viga',sd[1])}</table></div>
+ <p class="note">Propiedades calculadas con alas y alma rectangulares, sin los radios de acuerdo (la inercia da algo menor que la de tabla). Alveolares †: castellados obtenidos de un IPE o HEA, altura H = 1,5 h, agujero h₀ = h; A e I son los de la sección neta en el agujero, valores provisorios a confirmar con el fabricante. El análisis usa estas inercias y áreas; para el pórtico solo importa la rigidez relativa entre columna y viga, y con bases articuladas casi no cambia los momentos.</p>`}
+
+/* ---------- viento en 3D ---------- */
+function wind3d(A,x,mir){const m=A.m,d=m.d,c=x.c,Lt=m.Lt,L=d.L,Hc=m.Hc,fr=m.fr,W=1100,Hh=520;
+ if(c.tipo!='W')return '<div class="note">El viento mínimo del art. 2.1.5 es un caso convencional sobre la proyección vertical; no se dibuja en 3D.</div>';
+ const qh=m.qh,G=d.G,gi=m.gcpi,sg=c.sg,zm=Math.max(d.zb-m.zref+Hc/2,0),lon=x.id>='W5';
+ let pw=[c.cl(zm),c.rl,c.rr,c.cr];if(mir)pw=[pw[3],pw[2],pw[1],pw[0]];
+ const pgT=qh*G*(-0.7)-sg*qh*gi,pgW=m.q(m.h)*G*0.8-sg*qh*gi,pgL=qh*G*cpLee(Lt/L)*(-1)*(-1)*1-sg*qh*gi;
+ const gab0=lon?pgW:pgT,gab1=lon?qh*G*(-Math.abs(cpLee(Lt/L)))-sg*qh*gi:pgT;
+ // proyección isométrica: x a lo largo de la nave, y a lo ancho, z vertical
+ const ca=Math.cos(Math.PI/6),sa=Math.sin(Math.PI/6),pr=(x,y,z)=>[x*0.94-y*0.62,-x*0.17-y*0.42-z*1.0];
+ const V=[[0,0,0],[Lt,0,0],[Lt,L,0],[0,L,0],[0,0,Hc],[Lt,0,Hc],[Lt,L,Hc],[0,L,Hc],[0,L/2,Hc+fr],[Lt,L/2,Hc+fr]].map(v=>pr(...v));
+ const xs=V.map(v=>v[0]),ys=V.map(v=>v[1]),mnx=Math.min(...xs),mxx=Math.max(...xs),mny=Math.min(...ys),mxy=Math.max(...ys),sc=Math.min((W-300)/(mxx-mnx),(Hh-120)/(mxy-mny)),ox=150-mnx*sc,oy=70-mny*sc;
+ const T=p=>[ox+p[0]*sc,oy+p[1]*sc],Q=i=>T(V[i]);
+ const faces=[ // [nombre, vértices, p, atrás]
+  ['Pared lado E',[3,2,6,7],pw[3],1],['Frente del fondo',[1,2,6,9,5],gab1,1],['Cubierta lado E',[8,9,6,7],pw[2],0],
+  ['Cubierta lado A',[4,5,9,8],pw[1],0],['Frente',[0,3,7,8,4],gab0,0],['Pared lado A',[0,1,5,4],pw[0],0]];
+ const pmax=Math.max(...faces.map(f=>Math.abs(f[2])),1);let o=`<svg viewBox="0 0 ${W} ${Hh}">`;
+ for(const [n,vs,p,back] of faces){const pts=vs.map(Q),col=p>=0?'var(--press)':'var(--suc)',al=Math.round(15+45*Math.abs(p)/pmax);
+  o+=`<polygon points="${pts.map(q=>q.map(v=>v.toFixed(1)).join(',')).join(' ')}" fill="color-mix(in srgb,${col} ${back?Math.round(al/3):al}%,transparent)" stroke="var(--ink)" stroke-width="${back?0.8:1.4}" ${back?'stroke-dasharray="5 4"':''}/>`;
+  const cx=pts.reduce((a,q)=>a+q[0],0)/pts.length,cy=pts.reduce((a,q)=>a+q[1],0)/pts.length;
+  o+=`<text x="${cx}" y="${cy-4}" text-anchor="middle" style="font-weight:700;fill:${col}">${fs(p,1)}</text><text x="${cx}" y="${cy+11}" text-anchor="middle" style="font-size:10.5px;fill:var(--mut)">${n}${back?' (atrás)':''}</text>`}
+ // pórtico analizado
+ const xp=(m.np-1)*d.s,pp=[[xp,0,0],[xp,0,Hc],[xp,L/2,Hc+fr],[xp,L,Hc],[xp,L,0]].map(v=>T(pr(...v)));
+ o+=`<polyline points="${pp.map(q=>q.map(v=>v.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="var(--acc)" stroke-width="3"/><text x="${pp[2][0]}" y="${pp[2][1]-8}" text-anchor="middle" style="fill:var(--acc);font-weight:700">pórtico ${m.np}</text>`;
+ // dirección del viento
+ const a0=lon?T(pr(-Lt*0.18,L/2,Hc*0.6)):(mir?T(pr(Lt*0.5,L*1.45,Hc*0.6)):T(pr(Lt*0.5,-L*0.45,Hc*0.6))),a1=lon?T(pr(-Lt*0.04,L/2,Hc*0.6)):(mir?T(pr(Lt*0.5,L*1.1,Hc*0.6)):T(pr(Lt*0.5,-L*0.1,Hc*0.6)));
+ o+=arrow(a0[0],a0[1],a1[0],a1[1],'var(--ink)',4)+`<text x="${a0[0]}" y="${a0[1]-10}" text-anchor="middle" style="font-weight:700">VIENTO</text>`;
+ o+=`<text x="${W/2}" y="20" text-anchor="middle" style="font-weight:600">${x.id}${mir?"'":''} · ${x.nom.replace(' · viento desde la derecha','')}${mir?' · viento desde la derecha':''}</text><text x="${W/2}" y="38" text-anchor="middle" style="fill:var(--mut)">presión neta en kg/m² · q<tspan baseline-shift="sub" style="font-size:9px">h</tspan> = ${f(qh,1)} kg/m² · GC<tspan baseline-shift="sub" style="font-size:9px">pi</tspan> = ${sg>0?'+':'−'}${f(gi)}</text>`;
+ return o+'</svg>'}
 
 /* ---------- salida ---------- */
 let A=null;
 function run(){
  const d=read();A=analyze(d,d.np);const m=A.m;
- $('svgGeo').innerHTML=drawGeo(m);$('svgPlan').innerHTML=drawPlan(m);
+ $('svgGeo').innerHTML=drawGeo(m);$('svgPlan').innerHTML=drawPlan(m);$('geoSvg').innerHTML=drawBig(m);$('secOut').innerHTML=secOut(d);
  $('geoOut').innerHTML=`Altura de columna ${f(m.Hc)} m · flecha de cubierta ${f(m.fr)} m · cumbrera ${fs(m.zr)} · nivel de referencia del terreno ${fs(m.zref)} · altura de alero sobre el terreno ${f(m.he)} m · altura de cumbrera ${f(m.hr)} m · <b>altura media de cubierta h = ${f(m.h)} m</b> (θ ${m.thd>=10?'≥':'<'} 10°: ${m.thd>=10?'promedio de alero y cumbrera':'altura del alero'}).`;
  // viento
  const kzh=Kz(m.h,m.e),kzth=m.kzt(m.h);
@@ -500,13 +615,16 @@ function run(){
  <p class="note">El reglamento llama liviana a la cubierta cuyo peso total (estructura de cubierta más cerramiento) no pasa de 0,5 kN/m² (51 kg/m²). Los ${f(d.D+d.D2,0)} kg/m² del caso D son el peso de la nave completa, para las reacciones; la cubierta sola (chapa, correas y aislación) es liviana, por eso L<sub>r</sub> va por el art. 4.8.1(b).</p>
  <div class="tw"><table><tr><th>Carga</th><th>Faldón izquierdo [kg/m² de planta]</th><th>Faldón derecho [kg/m² de planta]</th><th>Sobre el pórtico, izquierda [t/m horizontal]</th><th>Sobre el pórtico, derecha [t/m horizontal]</th><th>Total sobre el pórtico [t]</th></tr>${gl.map(c=>`<tr><td>${c.nom}</td><td>${f(c.g[0],1)}</td><td>${f(c.g[1],1)}</td><td>${f(c.g[0]*tr,3)}</td><td>${f(c.g[1]*tr,3)}</td><td>${f((c.g[0]+c.g[1])*tr*d.L/2,2)}</td></tr>`).join('')}</table></div><p class="note">Ancho tributario del pórtico ${m.np}: ${f(m.trib)} m. Las cargas gravitatorias se aplican sobre la proyección horizontal de la cubierta.</p>`;
  // reacciones
- $('frameInfo').innerHTML=`Pórtico ${m.np} de ${m.nf} · ancho tributario ${f(m.trib)} m · bases articuladas · peso propio ${f(d.D+d.D2,0)} kg/m² (caso D) · sobrecarga de cubierta ${f(m.kg(m.Lr),1)} kg/m² (caso Lr).`;
+ const sN=i=>i>0?CATN[i-1]:'armada',sC=d.csel>0?secCat(d.csel):Isec((d.cd0+d.cd1)/2,d.cb,d.ctf,d.ctw),sR=d.rsel>0?secCat(d.rsel):Isec(d.rd,d.rb,d.rtf,d.rtw);
+ $('secInfo').innerHTML=` Columna ${sN(d.csel)}${d.csel>0?'':' (sección variable)'}: I = ${f(sC.I*1e8,0)} cm⁴${d.csel>0?'':' en media altura'} · viga ${sN(d.rsel)}: I = ${f(sR.I*1e8,0)} cm⁴ · bases ${d.apo?'empotradas':'articuladas'}.`;
+ $('frameInfo').innerHTML=`Pórtico ${m.np} de ${m.nf} · ancho tributario ${f(m.trib)} m · bases ${d.apo?'empotradas':'articuladas'} · peso propio ${f(d.D+d.D2,0)} kg/m² (caso D) · sobrecarga de cubierta ${f(m.kg(m.Lr),1)} kg/m² (caso Lr).`;
  document.querySelectorAll('.losinfo').forEach(q=>q.innerHTML=A.lo?`D = ${f(d.PD,1)} t y L = ${f(d.PL,1)} t por base, sin mayorar (se editan en Datos). «Permanente» incluye la losa.`:'Las reacciones son solo las de la nave metálica.');
- let rt='<table><tr><th>Caso de carga</th><th>H<sub>A</sub> [t]</th><th>V<sub>A</sub> [t]</th><th>H<sub>E</sub> [t]</th><th>V<sub>E</sub> [t]</th><th>Carga horizontal total [t]</th><th>Carga vertical total [t]</th><th>Equilibrio</th></tr>';
+ const AP=A.ms.apo,mh=k=>AP?`<th>M<sub>${k}</sub> [t·m]</th>`:'',mc=v=>AP?`<td>${fs(v)}</td>`:'';
+ let rt='<table><tr><th>Caso de carga</th><th>H<sub>A</sub> [t]</th><th>V<sub>A</sub> [t]</th>'+mh('A')+'<th>H<sub>E</sub> [t]</th><th>V<sub>E</sub> [t]</th>'+mh('E')+'<th>Carga horizontal total [t]</th><th>Carga vertical total [t]</th><th>Equilibrio</th></tr>';
  for(const x of A.list.filter(q=>!q.mir)){const r=A.res[x.id],ex=r.RA[0]+r.RE[0]+r.SF[0],ey=r.RA[1]+r.RE[1]+r.SF[1],ok=Math.abs(ex)<1e-6&&Math.abs(ey)<1e-6;
-  rt+=`<tr><td>${x.id} · ${x.nom}</td><td>${fs(r.RA[0])}</td><td>${fs(r.RA[1])}</td><td>${fs(r.RE[0])}</td><td>${fs(r.RE[1])}</td><td>${fs(r.SF[0])}</td><td>${fs(r.SF[1])}</td><td class="${ok?'ok':'bad'}">${ok?'cierra':'NO cierra'}</td></tr>`}
+  rt+=`<tr><td>${x.id} · ${x.nom}</td><td>${fs(r.RA[0])}</td><td>${fs(r.RA[1])}</td>${mc(r.RA[2])}<td>${fs(r.RE[0])}</td><td>${fs(r.RE[1])}</td>${mc(r.RE[2])}<td>${fs(r.SF[0])}</td><td>${fs(r.SF[1])}</td><td class="${ok?'ok':'bad'}">${ok?'cierra':'NO cierra'}</td></tr>`}
  if(A.lo)for(const [k,n] of [['DL','Losa y vigas del nivel de transferencia · permanente D (dato)'],['L','Losa del nivel de transferencia · sobrecarga L (dato)']]){const r=A.res[k];
-  rt+=`<tr><td>${n}</td><td>${fs(0)}</td><td>${fs(r.RA[1])}</td><td>${fs(0)}</td><td>${fs(r.RE[1])}</td><td>${fs(0)}</td><td>${fs(r.SF[1])}</td><td class="ok">dato</td></tr>`}
+  rt+=`<tr><td>${n}</td><td>${fs(0)}</td><td>${fs(r.RA[1])}</td>${mc(0)}<td>${fs(0)}</td><td>${fs(r.RE[1])}</td>${mc(0)}<td>${fs(0)}</td><td>${fs(r.SF[1])}</td><td class="ok">dato</td></tr>`}
  $('rTab').innerHTML=rt+'</table>';
  document.querySelectorAll('.losq').forEach(q=>q.value=d.los|0);
  const sc=$('selC'),pc=sc.value;
@@ -520,28 +638,28 @@ function run(){
  for(const i of fr){const B=i==m.np?A:analyze(d,i),n=i==1?'extremo':(i==2?'segundo':(i==Math.ceil(m.nf/2)?'central':''));
   st+=`<tr><td>${i}${n?' ('+n+')':''}${i==m.np?' · analizado':''}</td><td>${f(B.m.trib)}</td><td>${fs(B.env.Vmax.v)}</td><td>${fs(B.env.Vmin.v)}</td><td>${fs(B.env.Hin.v)}</td><td>${fs(B.env.Hout.v)}</td></tr>`}
  $('sumTab').innerHTML=st+'</table>';
- $('allTab').innerHTML='<table><tr><th>Combinación</th><th>H<sub>A</sub></th><th>V<sub>A</sub></th><th>H<sub>E</sub></th><th>V<sub>E</sub></th></tr>'+A.cb.map(c=>`<tr><td>${c.t}</td><td>${fs(c.r.RA[0])}</td><td>${fs(c.r.RA[1])}</td><td>${fs(c.r.RE[0])}</td><td>${fs(c.r.RE[1])}</td></tr>`).join('')+'</table>';
+ $('allTab').innerHTML='<table><tr><th>Combinación</th><th>H<sub>A</sub></th><th>V<sub>A</sub></th>'+mh('A')+'<th>H<sub>E</sub></th><th>V<sub>E</sub></th>'+mh('E')+'</tr>'+A.cb.map(c=>`<tr><td>${c.t}</td><td>${fs(c.r.RA[0])}</td><td>${fs(c.r.RA[1])}</td>${mc(c.r.RA[2])}<td>${fs(c.r.RE[0])}</td><td>${fs(c.r.RE[1])}</td>${mc(c.r.RE[2])}</tr>`).join('')+'</table>';
  $('bar').innerHTML=`<span>Losa <b>${['no sumada','en base A','en las dos bases'][A.lo]}</b></span><span>q<sub>h</sub> <b>${f(m.qh,1)} kg/m²</b></span><span>Nieve p<sub>s</sub> <b>${f(m.kg(m.ps),1)} kg/m²</b></span><span>Pórtico <b>${m.np}</b></span><span>V máx <b>${fs(e.Vmax.v)} t</b></span><span>V mín <b>${fs(e.Vmin.v)} t</b></span><span>H adentro <b>${fs(e.Hin.v)} t</b></span><span>H afuera <b>${fs(e.Hout.v)} t</b></span>`;
  teoria(m);
 }
-function drawW(){const x=A.list.find(q=>q.id==$('selW').value);if(!x)return;const m=A.m,p=casePress(A,x),W=960,Hh=440,g=frameGeom(m,W,Hh,250,100,80);
+function drawW(){const x0=A.list.find(q=>q.id==$('selW').value);if(!x0)return;const mir=$('selWdir').value=='1'&&x0.c.mir,x=mir?A.list.find(q=>q.id==x0.id+"'"):x0;$('svg3d').innerHTML=wind3d(A,x0,mir);const m=A.m,p=casePress(A,x),W=960,Hh=440,g=frameGeom(m,W,Hh,250,100,80);
  $('svgW').innerHTML=`<svg viewBox="0 0 ${W} ${Hh}">`+frameLine(g)+pressArrows(g,m,p,p.map(v=>fs(v,1)+' kg/m²'))+(x.id<'W5'?arrow(40,60,110,60,'var(--ink)',2.5)+'<text x="40" y="48">viento</text>':'<text x="40" y="48">viento paralelo a la cumbrera</text>')+`<text x="${g.X(m.d.L/2)}" y="${g.Y(m.Hc/2)}" text-anchor="middle" style="fill:var(--mut)">presión interna ${x.c.sg>0?'positiva (empuja hacia afuera)':'negativa (succiona hacia adentro)'}</text>`+frameDims(g,m,W,Hh-8)+'</svg>'}
 let QTOL=10,QBASE='AE';
 function quickBtns(){
- const cand=items=>{const o=[];items.forEach(it=>{for(const b of QBASE){const r=b=='A'?it.r.RA:it.r.RE;o.push({it,b,H:r[0],V:r[1]})}});return o};
+ const cand=items=>{const o=[];items.forEach(it=>{for(const b of QBASE){const r=b=='A'?it.r.RA:it.r.RE;o.push({it,b,H:r[0],V:r[1],M:r[2]||0})}});return o};
  const best=(c,fn)=>c.reduce((m,x)=>!m||fn(x)>fn(m)?x:m,null);
- const tr=(lab,q,k)=>`<tr class="qb" data-v="${q.it.val}"><td>${lab}</td><td class="${k=='V'?'n':'m'}">${fs(q.V)}</td><td class="${k=='H'?'n':'m'}">${f(Math.abs(q.H))}</td><td style="text-align:center">${q.b}</td><td class="l"><b>${q.it.id}</b> · ${q.it.nom}</td></tr>`;
+ const tr=(lab,q,k)=>`<tr class="qb" data-v="${q.it.val}"><td>${lab}</td><td class="${k=='V'?'n':'m'}">${fs(q.V)}</td><td class="${k=='H'?'n':'m'}">${f(Math.abs(q.H))}</td>${A.ms.apo?`<td class="${k=='M'?'n':'m'}">${f(Math.abs(q.M))}</td>`:''}<td style="text-align:center">${q.b}</td><td class="l"><b>${q.it.id}</b> · ${q.it.nom}</td></tr>`;
  const grp=(tit,items)=>{if(!items.length)return'';const c=cand(items),kc=best(c,x=>x.V),kt=best(c,x=>-x.V),kh=best(c,x=>Math.abs(x.H));
   const near=c.filter(x=>Math.abs(x.H)>=Math.abs(kh.H)*(1-QTOL/100)),hN=best(near,x=>x.V),hn=best(near,x=>-x.V);
-  return `<div class="tw"><table class="crit"><caption>${tit}</caption><tr><th style="width:25%">Reacción buscada</th><th>V [t]</th><th>H [t]</th><th>Base</th><th>Caso o combinación que la produce</th></tr>`
+  return `<div class="tw"><table class="crit"><caption>${tit}</caption><tr><th style="width:25%">Reacción buscada</th><th>V [t]</th><th>H [t]</th>${A.ms.apo?'<th>M [t·m]</th>':''}<th>Base</th><th>Caso o combinación que la produce</th></tr>`
    +tr('Mayor compresión',kc,'V')+tr(kt.V<0?'Mayor tracción (levantamiento)':'Menor vertical (no hay tracción)',kt,'V')
-   +tr('Mayor corte',kh,'H')+tr('Corte máximo con mayor axial',hN,'H')+tr('Corte máximo con menor axial',hn,'H')+'</table></div>'};
+   +tr('Mayor corte',kh,'H')+tr('Corte máximo con mayor axial',hN,'H')+tr('Corte máximo con menor axial',hn,'H')+(A.ms.apo?tr('Mayor momento en la base',best(c,x=>Math.abs(x.M)),'M'):'')+'</table></div>'};
  const w=A.list.filter(x=>x.c.tipo=='W').map(x=>({r:A.res[x.id],val:'c:'+x.id,id:x.id,nom:x.nom}));
  const cb=A.cb.map((c,i)=>({r:c.r,val:'k:'+i,id:'Comb. '+(i+1),nom:c.t}));
  $('quick').innerHTML=`<div class="opt" style="margin:10px 0 0"><b>Columna a mostrar</b><select id="qbase"><option value="AE">Las dos (la más desfavorable)</option><option value="A">Base A (columna izquierda)</option><option value="E">Base E (columna derecha)</option></select><span class="note">${QBASE=='AE'?'Cada fila indica en qué base se da el valor.':'Las tablas muestran solo las reacciones de la base '+QBASE+(A.lo?(A.lo==2||QBASE=='A'?', que recibe la losa.':', que no recibe la losa.'):'.')}</span></div>`
   +grp('Combinaciones mayoradas (para dimensionar)',cb)+grp('Casos de viento solos, sin mayorar',w)
   +`<div class="note" style="margin-top:8px">Margen para «corte máximo con mayor o menor axial»: <input id="qtol" type="number" min="0" max="100" step="1" value="${QTOL}" style="width:64px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--inp);color:var(--ink);font:inherit"> % por debajo del corte máximo.</div>`;
- $('quick').querySelectorAll('.qb').forEach(b=>b.onclick=()=>{$('selC').value=b.dataset.v;drawC();$('svgR').scrollIntoView({behavior:'smooth',block:'center'})});
+ $('quick').querySelectorAll('.qb').forEach(b=>b.onclick=()=>{$('selC').value=b.dataset.v;drawC();goTab('esf');$('svgR').scrollIntoView({behavior:'smooth',block:'center'})});
  $('qbase').value=QBASE;$('qbase').onchange=e=>{QBASE=e.target.value;drawC()};
  $('qtol').onchange=e=>{const v=parseFloat(e.target.value);QTOL=isFinite(v)?Math.min(Math.max(v,0),100):10;drawC()};
 }
@@ -549,10 +667,10 @@ function drawC(){quickBtns();const v=$('selC').value;if(!v)return;$('quick').que
  if(v[0]=='c'){const x=A.list.find(q=>q.id==v.slice(2));r=A.res[x.id];t=x.id+' · '+x.nom;ps=casePress(A,x);if(x.c.tipo=='G'){gl=x.c.g.slice();if(x.mir)gl.reverse()}}
  else{const c=A.cb[+v.slice(2)];r=c.r;t=c.t}
  $('svgR').innerHTML=drawRes(A,r,t,ps,gl);
- $('rOut').innerHTML=`Diagrama de momentos dibujado del lado traccionado. Desplazamiento horizontal del alero izquierdo: ${fs(r.dx*1000,1)} mm (análisis elástico de primer orden, con las secciones ingresadas). Suma de reacciones: horizontal ${fs(r.RA[0]+r.RE[0])} t, vertical ${fs(r.RA[1]+r.RE[1])} t.`}
+ $('rOut').innerHTML=`${DIAG=='M'?'Diagrama de momentos dibujado del lado traccionado.':(DIAG=='V'?'Corte en cada barra, perpendicular a su eje.':'Normal en cada barra: positivo tracción, negativo compresión.')} Desplazamiento horizontal del alero izquierdo: ${fs(r.dx*1000,1)} mm (análisis elástico de primer orden, con las secciones ingresadas). Suma de reacciones: horizontal ${fs(r.RA[0]+r.RE[0])} t, vertical ${fs(r.RA[1]+r.RE[1])} t.`}
 function teoria(m){const d=m.d,qa=model(Object.assign({},d,{crit:0}),d.np),qb=model(Object.assign({},d,{crit:1}),d.np);
  $('teo').innerHTML=`<h2>Criterios y referencias al reglamento</h2>
- <h3>1. Geometría (de los planos)</h3><ul><li>Planta de ${f(m.Lt)} × ${f(d.L)} m, ${m.nf} pórticos cada ${f(d.s)} m (plano EST-P-PG-006).</li><li>Columna articulada en la base, nivel ${fs(d.zb)}; alero ${fs(d.ze)}; pendiente ${f(d.pend,0)} %; cumbrera de la estructura ${fs(m.zr)} (la arquitectura da +17,00 con la cubierta, plano ARQ-P-PV-03).</li><li>Columnas de sección variable de ${f(d.cd0)} a ${f(d.cd1)} m y vigas doble T de ${f(d.rd)} m. Las secciones solo intervienen en el reparto del empuje horizontal entre las dos bases.</li></ul>
+ <h3>1. Geometría (de los planos)</h3><ul><li>Planta de ${f(m.Lt)} × ${f(d.L)} m, ${m.nf} pórticos cada ${f(d.s)} m (plano EST-P-PG-006).</li><li>Columna articulada en la base, nivel ${fs(d.zb)}; alero ${fs(d.ze)}; pendiente ${f(d.pend,0)} %; cumbrera de la estructura ${fs(m.zr)} (la arquitectura da +17,00 con la cubierta, plano ARQ-P-PV-03).</li><li>Secciones: columna ${d.csel>0?CATN[d.csel-1]:'armada de sección variable de '+f(d.cd0)+' a '+f(d.cd1)+' m'} y viga ${d.rsel>0?CATN[d.rsel-1]:'armada de '+f(d.rd)+' m'}. Las propiedades de los perfiles de catálogo se calculan con alas y alma rectangulares, sin los radios de acuerdo (inercia algo menor que la de tabla). Con bases articuladas el pórtico es una vez hiperestático y las secciones solo cambian el reparto del empuje horizontal; con bases empotradas es tres veces hiperestático y la relación de rigideces entre columna y viga cambia todo el diagrama de momentos.</li><li>Apoyos: ${d.apo?'empotrados: la base transmite momento a la fundación, que debe diseñarse para él (placa base, anclajes y fundación)':'articulados: la base no transmite momento'}. El análisis es elástico de primer orden, con E = 2.039.000 kg/cm².</li></ul>
  <h3>2. Altura de referencia: la nave está sobre un terraplén</h3><p>La plataforma está ${f(d.zp-d.z0)} m por encima de la calle. El reglamento mide z desde el terreno, y un terraplén de esa altura es un cambio abrupto de la topografía. Hay dos formas coherentes de tratarlo:</p><ul><li><b>Medir desde el nivel de calle con K<sub>zt</sub> = 1</b>: h = ${f(qa.h)} m, q<sub>h</sub> = ${f(qa.qh,1)} kg/m².</li><li><b>Medir desde la plataforma y aplicar K<sub>zt</sub> de escarpa</b> (art. 1.8, Figura 1.8-1: H ≥ 5 m en exposición C y H/L<sub>h</sub> ≥ 0,2): h = ${f(qb.h)} m, K<sub>zt</sub> = ${f(qb.kzt(qb.h),3)}, q<sub>h</sub> = ${f(qb.qh,1)} kg/m².</li></ul><p>Los dos caminos dan valores parecidos. Queda como valor inicial el primero, que es el más simple de justificar. No corresponde medir desde la plataforma con K<sub>zt</sub> = 1.</p><p>La barda de la meseta es otra posible escarpa. Si la nave quedara cerca de su borde (art. 1.8.1), hay que cargar K<sub>zt</sub> a mano. †</p>
  <h3>3. Viento, CIRSOC 102-2025</h3><ul><li>Velocidad básica: tabla de ciudades del art. 1.5.1, Neuquén: 54,8 / 58,8 / 63,0 m/s para categorías I / II / III y IV. † La tabla del PDF se leyó por orden de filas: conviene confirmar el valor en el mapa de la Figura 1.5-1.</li><li>Presión dinámica (expresión 1.13-1): q<sub>z</sub> = 0,613·K<sub>z</sub>·K<sub>zt</sub>·K<sub>d</sub>·K<sub>e</sub>·V² [N/m²]. K<sub>d</sub> = 0,85 (Tabla 1.6-1). K<sub>e</sub> = 1 permitido (art. 1.12).</li><li>Exposición C: terreno abierto de meseta (art. 1.7). K<sub>z</sub> de la Tabla 1.13-1.</li><li>Edificio rígido: G = 0,85 (art. 1.9.1).</li><li>Presión interna (Tabla 1.11-1): ±0,18 cerrado, ±0,55 parcialmente cerrado. Con el portón corredizo del frente abierto durante una tormenta, la nave puede pasar a parcialmente cerrada: conviene comparar los dos casos.</li><li>Procedimiento direccional (Capítulo 2, Parte 1): p = q·G·C<sub>p</sub> − q<sub>i</sub>·(GC<sub>pi</sub>), con C<sub>p</sub> de la Figura 2.4-1. Pared a barlovento con q<sub>z</sub>; el resto con q<sub>h</sub>.</li><li>Carga mínima (art. 2.1.5): 0,75 kN/m² sobre la pared y 0,40 kN/m² sobre la proyección vertical de la cubierta, como caso aparte.</li><li>Los casos con torsión de la Figura 2.4-8 actúan sobre el conjunto (arriostramientos de cubierta y laterales) y no se evalúan en el pórtico plano.</li><li>Viento longitudinal: sobre el pórtico solo produce succión en las dos paredes laterales y en la cubierta. El empuje sobre los frentes lo toman los arriostramientos longitudinales, que este cálculo no incluye.</li></ul>
  <h3>Losa del nivel de transferencia (opcional)</h3><ul><li>La reacción de la losa y sus vigas sobre la columna se carga como dato, sin mayorar: D = ${f(d.PD,1)} t y L = ${f(d.PL,1)} t. Estado actual: ${['no se suma','se suma en la base A','se suma en las dos bases'][d.los|0]}. Son fuerzas verticales aplicadas en la base: no cambian los momentos ni el empuje horizontal del pórtico.</li><li>La parte permanente lleva siempre el mismo factor que el peso de la nave (1,4; 1,2 o 0,9).</li><li>La sobrecarga L entra según la Tabla 5.3.1 del CIRSOC 201-2025: 1,2D + 1,6L + 0,5(L<sub>r</sub> o S); 1,2D + 1,6(L<sub>r</sub> o S) + 1,0L; 1,2D + 1,0W + 1,0L + 0,5(L<sub>r</sub> o S). No entra en 1,4D ni en 0,9D + 1,0W, que es la que define el levantamiento.</li><li>El factor de L acompañante es 1,0 y no 0,5 porque la sobrecarga de la losa supera 5 kN/m² (art. 5.3.3). Las cargas de vehículos son parte de L (art. 5.3.4).</li><li>Las combinaciones sin L siguen en la lista: representan la losa descargada.</li></ul>
@@ -576,9 +694,10 @@ function impP(inp){const fl=inp.files[0];if(!fl)return;const r=new FileReader();
 function resetP(){buildForms();run()}
 
 buildForms();refP();
-document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('on',x==b));document.querySelectorAll('section.tab').forEach(s=>s.classList.toggle('on',s.id=='t-'+b.dataset.t))});
-$('forms').addEventListener('input',run);$('forms').addEventListener('change',run);
-$('selW').onchange=drawW;$('selC').onchange=drawC;
+const goTab=t=>{document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('on',x.dataset.t==t));document.querySelectorAll('section.tab').forEach(s=>s.classList.toggle('on',s.id=='t-'+t))};
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>goTab(b.dataset.t));
+document.querySelectorAll('.frm').forEach(e=>{e.addEventListener('input',run);e.addEventListener('change',run)});
+$('selW').onchange=drawW;$('selWdir').onchange=drawW;$('selC').onchange=drawC;$('selD').onchange=()=>{DIAG=$('selD').value;drawC()};
 document.querySelectorAll('.losq').forEach(q=>q.onchange=()=>{$('los').value=q.value;run()});
 run();
 </script>
