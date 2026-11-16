@@ -472,7 +472,7 @@ const F=[
   ["PD","Losa y vigas: reacción por carga permanente D (sin mayorar)","t",76],
   ["PL","Losa: reacción por sobrecarga L (sin mayorar)","t",200]]],
  ["Arriostramientos (definen las longitudes no arriostradas)",[
-  ["arAuto","¿Cómo se obtienen las longitudes de pandeo?","",1,["Las cargo a mano en cada elemento (más abajo)","Salen solas de estos arriostramientos"]],
+  ["arPer","Techo: cruces en todo el perímetro (franja junto a los dos aleros, en todos los vanos)","",0,["No","Sí"]],
   ["arPar","Pared lateral: vanos con cruz (tocalos en el esquema)","","1, 17"],
   ["arParN","Pared lateral: paneles de la cruz en la altura (2 = punto fijo a media altura de columna)","",1],
   ["arTec","Techo: vanos con cruz (tocalos en el esquema)","","1, 17"],
@@ -496,8 +496,8 @@ const F=[
   ["coFy","Correa: fy","MPa",235],
   ["coSep","Separación máxima entre correas (sobre el faldón); se reparte parejo para que haya una correa en la cumbrera","m",1.2],
   ["coMod","Modelo de la correa","",0,["Simplemente apoyada (un tramo entre pórticos)","Continua (3 o más tramos)"]],
-  ["coLbs","Correa: Lb del ala superior (carga gravitatoria; distancia entre tillas)","m",1.67],
-  ["coLbi","Correa: Lb del ala inferior (succión y apoyos de la continua)","m",2.5],
+  ["coLbs","Correa: Lb del ala superior (0 = automática: distancia entre tillas)","m",0],
+  ["coLbi","Correa: Lb del ala inferior (0 = automática)","m",0],
   ["coCb","Correa de techo: Cb manual (0 = calcular con F1-1)","",0],
   ["coFlG","Flecha admisible de la correa, carga gravitatoria (Tabla L.3.1)","",1,["L/150","L/180","L/200","L/240","L/250","L/300","L/360"]],
   ["coFlW","Flecha admisible de la correa, viento","",1,["L/150","L/180","L/200","L/240","L/250","L/300","L/360"]]]],
@@ -510,27 +510,28 @@ const F=[
   ["pSep","Separación vertical entre correas de pared","m",1.5],
   ["pMod","Modelo de la correa de pared","",0,["Simplemente apoyada (un tramo entre columnas)","Continua (3 o más tramos)"]],
   ["pLbe","Lb del ala exterior (presión; la chapa la arriostra)","m",0.5],
-  ["pLbi","Lb del ala interior (succión; entre tillas o riostras)","m",2.5],
+  ["pLbi","Lb del ala interior (succión; 0 = automática: entre tillas)","m",0],
   ["pCb","Correa de pared: Cb manual (0 = calcular con F1-1)","",0],
   ["pDc","Peso de la chapa de pared","kg/m²",6],
-  ["pLs","Luz en el eje débil (separación de tillas)","m",2.5],
+  ["pLs","Luz en el eje débil (0 = automática: separación de tillas)","m",0],
   ["pFl","Flecha admisible de la correa de pared (viento de servicio)","",1,["L/150","L/180","L/200","L/240","L/250","L/300","L/360"]]]],
- ["Vigas y columnas del pórtico (CIRSOC 301-2018)",[
-  ["fyW","Acero de perfiles W y armados: fy","MPa",355],
-  ["cLx","Columna: longitud de pandeo en el plano del pórtico, k·Lx","m",11.6],
-  ["cLy","Columna: longitud de pandeo fuera del plano, k·Ly (entre riostras)","m",5.8],
-  ["cLb","Columna: Lb para pandeo lateral-torsional","m",5.8],
-  ["cCb","Columna: Cb manual (0 = calcular con F1-1 en cada tramo)","",0],
-  ["vLx","Viga: longitud de pandeo en el plano, k·Lx","m",20.6],
-  ["vLy","Viga: longitud de pandeo fuera del plano, k·Ly","m",1.2],
-  ["vLbs","Viga: Lb con el ala superior comprimida (entre correas)","m",1.2],
-  ["vLbi","Viga: Lb con el ala inferior comprimida (entre tornapuntas o riostras)","m",5.0],
-  ["vCb","Viga: Cb manual (0 = calcular con F1-1 en cada tramo)","",0],
+ ["Columnas del pórtico (CIRSOC 301-2018) · en las longitudes, 0 = automática según los arriostramientos",[
+  ["fyW","Acero de perfiles W y armados (columnas y vigas): fy","MPa",355],
+  ["cLx","Columna: k·Lx, pandeo en el plano del pórtico","m",0],
+  ["cLy","Columna: k·Ly, pandeo fuera del plano","m",0],
+  ["cLb","Columna: Lb, pandeo lateral-torsional","m",0],
+  ["cCb","Columna: Cb (0 = calcular con F1-1 en cada tramo)","",0],
+  ["cFl","Columna: desplazamiento lateral admisible (combinaciones de servicio)","",1,["H/100","H/150","H/160","H/200","H/300","H/400"]]]],
+ ["Vigas del pórtico (CIRSOC 301-2018) · en las longitudes, 0 = automática según los arriostramientos",[
+  ["vLx","Viga: k·Lx, pandeo en el plano (0 = largo del faldón)","m",0],
+  ["vLy","Viga: k·Ly, pandeo fuera del plano","m",0],
+  ["vLbs","Viga: Lb con el ala superior comprimida","m",0],
+  ["vLbi","Viga: Lb con el ala inferior comprimida","m",0],
+  ["vCb","Viga: Cb (0 = calcular con F1-1 en cada tramo)","",0],
   ["alvT","Alveolar: ángulo del agujero θ","°",60],
   ["alvIf","Alveolar: inercia usada en el análisis y las flechas, fracción de la I neta (sección con agujero)","",0.9],
   ["alvE","Alveolar: largo del montante e (0 = criterio de la planilla: 0,83·h₀ − 2b)","mm",0],
-  ["vFl","Flecha admisible de la viga (combinaciones de servicio, Tabla L.3.1)","",0,["L/150","L/180","L/200","L/240","L/250","L/300","L/360"]],
-  ["cFl","Desplazamiento lateral admisible de la columna (combinaciones de servicio)","",1,["H/100","H/150","H/160","H/200","H/300","H/400"]]]]
+  ["vFl","Viga: flecha admisible (combinaciones de servicio, Tabla L.3.1)","",0,["L/150","L/180","L/200","L/240","L/250","L/300","L/360"]]]]
 ];
 const VN=[54.8,58.8,63.0];
 const EXP={B:{a:7.5,zg:1000,k1:0.75,hm:20},C:{a:9.8,zg:750,k1:0.85,hm:5},D:{a:11.5,zg:590,k1:0.95,hm:5}};
@@ -539,7 +540,7 @@ const f=(x,d=2)=>(Math.abs(x)<0.5*Math.pow(10,-d)?0:x).toFixed(d).replace('.',',
 const fs=(x,d=2)=>(x>=0?'+':'−')+f(Math.abs(x),d);
 
 
-const TGT=['fgeo','fsec','fvie','fvie','fnie','fcar','flos','fver','fver','fver','fver','fver'],OVF={apo:'Apoyos de las columnas',csel:'Perfil de la columna',rsel:'Perfil de la viga'};
+const TGT=['fgeo','fsec','fvie','fvie','fnie','fcar','flos','fver','fver','fver','fver','fver','fver'],OVF={apo:'Apoyos de las columnas',csel:'Perfil de la columna',rsel:'Perfil de la viga'};
 function buildForms(){
  const H={};
  F.forEach(([t,fl],gi)=>{const tg=TGT[gi]||'fgeo';let h='';const vis=fl.filter(x=>!OVF[x[0]]);if(!vis.length)return;
@@ -1173,19 +1174,20 @@ function drawVer(m,d){d=Object.assign({},d);for(const [s0,h,b,dd,t] of [['coSel'
   if(+d.arTnV>0){const nc=Math.floor(sl/(+d.coSep)+1e-9);for(let c=+d.arTnV;c<=nc;c+=+d.arTnV)tnV.push(c*(+d.coSep))}
   const nP=Math.max(1,+d.arParN|0),nT=Math.max(1,+d.arTecN|0),brC=[...Array(nP-1)].map((_,k)=>H*(k+1)/nP),brV=tecPan(d,sl).slice(1,-1);
   d.LoInfo={tnC,tnV,brC,brV};
-  const Lo={cLx:H,coLbs:d.s/((+d.arTe)+1),coLbi:d.s/((+d.arTe)+1),pLbi:d.s/((+d.arTp)+1),pLs:d.s/((+d.arTp)+1),vLbs:+d.coSep,vLy:gap([...tnV,...brV],sl),vLbi:gap(tnV,sl),cLb:gap([...tnC,...brC],H),cLy:gap([...tnC,...brC],H)};
-  d.LoAuto=Lo;if(+d.arAuto==1)Object.assign(d,Lo)}
+  const Lo={vLx:sl,cLx:H,coLbs:d.s/((+d.arTe)+1),coLbi:d.s/((+d.arTe)+1),pLbi:d.s/((+d.arTp)+1),pLs:d.s/((+d.arTp)+1),vLbs:+d.coSep,vLy:gap([...tnV,...brV],sl),vLbi:gap(tnV,sl),cLb:gap([...tnC,...brC],H),cLy:gap([...tnC,...brC],H)};
+  d.LoAuto=Lo;d.LoSrc={};for(const k in Lo){if(+d[k]>0)d.LoSrc[k]='manual';else{d[k]=Lo[k];d.LoSrc[k]='auto'}}}
  window.DV=d;try{drawPared(m,d)}catch(e){$('paOut').innerHTML='Error: '+e.message}
- {const A_=+d.arAuto==1,Lo=d.LoAuto,r=(n,k,why)=>`<tr><td class="l">${n}</td><td>${f(+d[k])}</td><td class="l">${why}</td></tr>`;
-  $('loOut').innerHTML=`<p class="note">${A_?'<b>Automáticas</b>: salen de los arriostramientos cargados arriba (los campos manuales de cada elemento se ignoran).':'<b>Manuales</b>: se usan los valores cargados en cada elemento. Si elegís «Automáticas», salen de los arriostramientos.'}</p><div class="tw"><table><tr><th>Longitud</th><th>Valor [m]</th><th>Criterio</th></tr>
+ {const Lo=d.LoAuto,r=(n,k,why)=>`<tr><td class="l">${n}</td><td><b>${f(+d[k])}</b></td><td>${d.LoSrc[k]=='manual'?'<span style="color:var(--acc2)">manual</span> (automática: '+f(Lo[k])+')':'automática'}</td><td class="l">${why}</td></tr>`,sec=t=>`<tr><th colspan="4" style="text-align:left">${t}</th></tr>`;
+  $('loOut').innerHTML=`<p class="note">Cada longitud sale sola de los arriostramientos. Si en el campo del elemento cargás un valor mayor que 0, se usa ese valor manual; con 0 vuelve a la automática.</p><div class="tw"><table><tr><th>Longitud</th><th>Valor usado [m]</th><th>Origen</th><th>Criterio de la automática</th></tr>${sec('Correas')}
   ${r('Correa de techo, L<sub>b</sub> de las dos alas','coLbs',`luz ${f(d.s)} m / (${d.arTe} tillas + 1)`)}
   ${r('Correa de pared, L<sub>b</sub> del ala interior y luz en el eje débil','pLbi',`luz ${f(d.s)} m / (${d.arTp} tillas + 1)`)}
+  ${sec('Viga del pórtico')}${r('Viga, k·L<sub>x</sub> (en el plano)','vLx','largo del faldón')}
   ${r('Viga, L<sub>b</sub> del ala superior','vLbs','separación de correas: la correa fija el ala superior, que es la comprimida')}
   ${r('Viga, k·L<sub>y</sub> (fuera del plano)','vLy',`mayor distancia entre puntos fijos: nudos de las cruces de techo (uno cada ${d.arTecN} correas, se trasladan a todos los pórticos por las correas)${+d.arTnV>0?' y tornapuntas':''}`)}
   ${r('Viga, L<sub>b</sub> del ala inferior','vLbi',+d.arTnV>0?`tornapuntas cada ${d.arTnV} correas`:'sin tornapuntas: largo del faldón')}
-  ${r('Columna, k·L<sub>x</sub> (en el plano)','cLx','altura total de la columna (k = 1, como indicaste)')}
-  ${r('Columna, k·L<sub>y</sub> (fuera del plano) y L<sub>b</sub>','cLy',`mayor distancia entre puntos fijos: ${+d.arTnC>0?'tornapuntas cada '+d.arTnC+' correas de pared':'sin tornapuntas'}${(+d.arParN|0)>1?' y nudos de las cruces de pared ('+d.arParN+' paneles en altura, se trasladan a todas las columnas por la correa)':''}; si no hay ninguno, la altura total`)}
-  </table></div><p class="note">La correa sola fija un ala (la exterior) y no cuenta como punto fijo para el pandeo fuera del plano: solo cuentan las tornapuntas (fijan las dos alas) y los nudos de las cruces, que se trasladan a todos los pórticos a través de las correas. La viga en su plano (k·L<sub>x</sub>) sigue siendo manual. Cruces de pared en los vanos ${d.arParV.join(', ')||'—'}; cruces de techo en los vanos ${d.arTecV.join(', ')||'—'}. Las cruces, tillas y tornapuntas todavía no se verifican: por ahora definen longitudes y se dibujan en el 3D.</p>`}try{drawCorrea(m,d)}catch(e){$('coOut').innerHTML='Error: '+e.message}try{drawVC(m,d)}catch(e){$('vcOut').innerHTML='Error: '+e.message}
+  ${sec('Columna del pórtico')}${r('Columna, k·L<sub>x</sub> (en el plano)','cLx','altura total de la columna (k = 1, como indicaste)')}
+  ${r('Columna, L<sub>b</sub>','cLb','igual que k·L<sub>y</sub>: tornapuntas y nudos de la cruz')}${r('Columna, k·L<sub>y</sub> (fuera del plano)','cLy',`mayor distancia entre puntos fijos: ${+d.arTnC>0?'tornapuntas cada '+d.arTnC+' correas de pared':'sin tornapuntas'}${(+d.arParN|0)>1?' y nudos de las cruces de pared ('+d.arParN+' paneles en altura, se trasladan a todas las columnas por la correa)':''}; si no hay ninguno, la altura total`)}
+  </table></div><p class="note">La correa sola fija un ala (la exterior) y no cuenta como punto fijo para el pandeo fuera del plano: solo cuentan las tornapuntas (fijan las dos alas) y los nudos de las cruces, que se trasladan a todos los pórticos a través de las correas. Cruces de pared en los vanos ${d.arParV.join(', ')||'—'}; cruces de techo en los vanos ${d.arTecV.join(', ')||'—'}. Las cruces, tillas y tornapuntas todavía no se verifican: por ahora definen longitudes y se dibujan en el 3D.</p>`}try{drawCorrea(m,d)}catch(e){$('coOut').innerHTML='Error: '+e.message}try{drawVC(m,d)}catch(e){$('vcOut').innerHTML='Error: '+e.message}
  const a=crA(m),As=[1,2,5,10,20,50];
  $('crOut').innerHTML=`<div class="vgrid">${gWrap('Zonas de la cubierta (Fig. 5.3-2B)',zonePlan(m))}${gWrap('Presión de diseño según el área efectiva',gcpChart(m))}</div><div class="kpi"><div><b>${f(m.qh,1)} kg/m²</b><span>q<sub>h</sub> a la altura media h = ${f(m.h)} m (art. 1.13.2, con K<sub>zt</sub>)</span></div><div><b>±${f(m.gcpi,2)}</b><span>GC<sub>pi</sub>, Tabla 1.11-1</span></div><div><b>${f(a,2)} m</b><span>ancho de zona a = mín(0,10·B; 0,4·h) ≥ máx(0,04·B; 1 m)</span></div><div><b>${f(0.8*1000/G0,1)} kg/m²</b><span>presión mínima (0,80 kN/m²)</span></div></div>
  <p class="note">p = q<sub>h</sub>·[(GC<sub>p</sub>) − (GC<sub>pi</sub>)], art. 5.3.2, expresión (5.3-1). GC<sub>p</sub> de la Fig. 5.3-2B (cubierta a dos aguas, 7° &lt; θ ≤ 20°) y Fig. 5.3-1 (paredes), con las ecuaciones de las Tablas C 5.3-3 y C 5.3-1. Área efectiva A = luz × máx(ancho tributario; luz/3), art. 1.2. Zona 2: franjas de ancho a junto a los hastiales y a cada lado de la cumbrera; zona 3: esquinas; zona 5: franjas de ancho a en las esquinas de las paredes.</p>
@@ -1263,7 +1265,8 @@ function draw3D3(m,d,R){g3Init();if(!G3.r)return false;
  for(const i of d.arParV||[])for(const zz of [0,L]){const n=Math.max(1,+d.arParN|0),x0=(i-1)*s,x1=i*s;for(let k=0;k<n;k++){const y0=H*k/n,y1=H*(k+1)/n;g3Line(gAr,[[x0,y0,zz],[x1,y1,zz]],0x1d4ed8,0.04,'<b>Cruz de pared</b>, vano '+i);g3Line(gAr,[[x1,y0,zz],[x0,y1,zz]],0x1d4ed8,0.04,'<b>Cruz de pared</b>, vano '+i)}}
  for(const hh of wallLv(d,H).st)for(const zz of [0,L])g3Line(gAr,[[0,hh,zz+(zz?1:-1)*offp],[Lt,hh,zz+(zz?1:-1)*offp]],0x7c3aed,0.07,'<b>Puntal longitudinal</b> a '+f(hh)+' m (nudo de la cruz de pared; perfil a definir)');
  const ro=off+cH/2+0.02;
- const TB=tecPan(d,sl);for(const i of d.arTecV||[]){const n=TB.length-1,x0=(i-1)*s,x1=i*s;for(const side of [0,1]){const yy=k=>{const h=TB[k]*Math.cos(th);return side?L-h:h};
+ const TB=tecPan(d,sl);if(+d.arPer)for(let i=1;i<=nb;i++){if((d.arTecV||[]).includes(i))continue;const x0=(i-1)*s,x1=i*s,w1=TB[1]*Math.cos(th);for(const [ya,yb2] of [[0,w1],[L,L-w1]]){g3Line(gAr,[[x0,zt(ya)+ro,ya],[x1,zt(yb2)+ro,yb2]],0x16a34a,0.04,'<b>Cruz perimetral de techo</b>, vano '+i);g3Line(gAr,[[x1,zt(ya)+ro,ya],[x0,zt(yb2)+ro,yb2]],0x16a34a,0.04,'<b>Cruz perimetral de techo</b>, vano '+i)}}
+ for(const i of d.arTecV||[]){const n=TB.length-1,x0=(i-1)*s,x1=i*s;for(const side of [0,1]){const yy=k=>{const h=TB[k]*Math.cos(th);return side?L-h:h};
   for(let k=0;k<n;k++){const ya=yy(k),yb2=yy(k+1);g3Line(gAr,[[x0,zt(ya)+ro,ya],[x1,zt(yb2)+ro,yb2]],0x16a34a,0.04,'<b>Cruz de techo</b>, vano '+i);g3Line(gAr,[[x1,zt(ya)+ro,ya],[x0,zt(yb2)+ro,yb2]],0x16a34a,0.04,'<b>Cruz de techo</b>, vano '+i)}}}
  for(let i=0;i<nb;i++)for(let k=1;k<=(+d.arTe|0);k++){const x=i*s+k*s/((+d.arTe)+1);for(const side of [0,1]){const ya=side?L:0;g3Line(gAr,[[x,zt(ya)+ro,ya],[x,zt(L/2)+ro,L/2]],0x6b7280,0.015,'<b>Tilla de correas de techo</b>')}}
  for(let i=0;i<nb;i++)for(let k=1;k<=(+d.arTp|0);k++){const x=i*s+k*s/((+d.arTp)+1);for(const zz of [0,L]){const zw=zz+(zz?1:-1)*offp;g3Line(gAr,[[x,0.2,zw],[x,H,zw]],0x6b7280,0.015,'<b>Tilla de correas de pared</b>')}}
@@ -1328,6 +1331,7 @@ function drawArViz(m,d){arVizSlot();const el=$('arViz');if(!el)return;const Lt=m
  for(let i=1;i<=nb;i++){const xa=x0+(i-1)*s*sx,xb=x0+i*s*sx,on=vT.includes(i);
   o+=`<rect x="${xa}" y="${Y(0)}" width="${xb-xa}" height="${L*sy}" fill="${on?'rgba(22,163,74,.18)':'transparent'}" stroke="var(--mut)" stroke-width="0.6" style="cursor:pointer" onclick="arTog('arTec',${i})"><title>vano ${i}: ${on?'sacar':'poner'} cruz de techo</title></rect>`;
   if(on){const TB=tecPan(d,(L/2)/Math.cos(m.th)).map(v=>v*Math.cos(m.th));for(const sd of [0,1])for(let k=0;k<TB.length-1;k++){const ya=sd?L-TB[k+1]:TB[k],yb=sd?L-TB[k]:TB[k+1];o+=`<path d="M${xa},${Y(ya)}L${xb},${Y(yb)}M${xb},${Y(ya)}L${xa},${Y(yb)}" stroke="#16a34a" stroke-width="1.6" pointer-events="none"/>`}}
+  if(+d.arPer&&!on){const TB=tecPan(d,(L/2)/Math.cos(m.th)).map(v=>v*Math.cos(m.th)),w1=TB[1];for(const [ya,yb] of [[0,w1],[L-w1,L]])o+=`<path d="M${xa},${Y(ya)}L${xb},${Y(yb)}M${xb},${Y(ya)}L${xa},${Y(yb)}" stroke="#16a34a" stroke-width="1.6" pointer-events="none"/>`}
   o+=`<text x="${(xa+xb)/2}" y="${Hp+6}" text-anchor="middle" style="font-size:10px">${i}</text>`}
  o+=`<line x1="${x0}" y1="${Y(L/2)}" x2="${x0+Lt*sx}" y2="${Y(L/2)}" stroke="var(--ink)" stroke-dasharray="6 3"/><text x="${x0}" y="12" style="font-size:12px;font-weight:600">1 · Planta de techo: tocá un vano para poner o sacar la cruz (verde). Cumbrera en línea de trazos.</text></svg>`;
  // elevación lateral
@@ -1364,8 +1368,9 @@ function drawArViz(m,d){arVizSlot();const el=$('arViz');if(!el)return;const Lt=m
   hint('arTecN2',+d.arTecN2>0?(T.ok?`→ ${T.a} × ${T.N} + ${T.b} × ${T.N2} = ${T.nc} espacios: cierra justo en la cumbrera`:`<span style="color:#d62828">→ no hay combinación de paneles de ${T.N} y ${T.N2} que sume ${T.nc} espacios: cambiá alguno de los dos</span>`):'→ 0: lo que sobra queda en un solo panel junto a la cumbrera');
   {const W1=wallLv(d,H);hint('pSep',`→ puntales a ${W1.st.map(v=>f(v)).join(' y ')} m; ${W1.g.length} correas de pared por cara, separación real máxima ${f(W1.sep,3)} m`)}
   hint('coSep',`→ ${d.ncs} espacios por faldón: separación real ${f(+d.coSep,3)} m (faldón de ${f(sl)} m)`)}
+ for(const k of ['cLx','cLy','cLb','vLx','vLy','vLbs','vLbi','coLbs','coLbi','pLbi','pLs'])if(d.LoAuto)hint(k,d.LoSrc[k]=='manual'?`→ manual: ${f(+d[k])} m (la automática daría ${f(d.LoAuto[k])} m)`:`→ automática: ${f(d.LoAuto[k])} m`);
  for(const id of ['chFlG','chFlW','coFlG','coFlW','pFl','vFl','cFl'])hint(id,'<a href="#" onclick="openL31();return false" style="color:var(--acc)">📋 ver la Tabla L.3.1 de flechas admisibles</a>');
- el.innerHTML=`<h2>Esquema de los arriostramientos</h2><p class="note">Los vanos se cuentan desde el pórtico 1 (izquierda). Los cambios se aplican al momento: el 3D y las verificaciones se recalculan.</p>${o}${p}${q}
+ el.innerHTML=`<h2>Esquema de los arriostramientos</h2><div class="row" style="gap:8px;margin:4px 0"><button type="button" class="nav2" style="font-size:13px" onclick="$('arPer').value=+$('arPer').value?0:1;run()">${+d.arPer?'Sacar':'Poner'} X en todo el perímetro del techo</button><button type="button" class="nav2" style="font-size:13px" onclick="$('arTec').value=[...Array(${nb})].map((_,i)=>i+1).join(', ');run()">Cruz de techo en todos los vanos</button><button type="button" class="nav2" style="font-size:13px" onclick="$('arTec').value='1, ${nb}';$('arPar').value='1, ${nb}';run()">Solo vanos extremos</button></div><p class="note">Los vanos se cuentan desde el pórtico 1 (izquierda). Los cambios se aplican al momento: el 3D y las verificaciones se recalculan.</p>${o}${p}${q}
  <p class="note"><b>Cómo se leen los puntos fijos.</b> La correa sola sujeta un ala. Una tornapunta sujeta las dos alas de la columna o de la viga. Un nudo de la cruz (pared o techo) es un punto fijo que las correas trasladan a todos los pórticos. La longitud de pandeo fuera del plano es la mayor distancia entre puntos fijos.</p>`}
 
 function run(){
