@@ -74,6 +74,8 @@ code{background:color-mix(in srgb,var(--mut) 15%,transparent);padding:1px 4px;bo
 .vleg{display:flex;flex-wrap:wrap;gap:10px;font-size:12px}.vleg i{display:inline-block;width:12px;height:10px;margin-right:4px;vertical-align:middle}
 details{margin:8px 0}summary{cursor:pointer;color:var(--acc);font-weight:600}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
 <header>
@@ -165,7 +167,10 @@ details{margin:8px 0}summary{cursor:pointer;color:var(--acc);font-weight:600}
 
 <section class="tab" id="t-ver">
 <div class="card"><h2>Verificación de elementos</h2><p class="note">Viento sobre componentes y revestimientos (CIRSOC 102-2025, cap. 5), chapas (separación máxima de correas), correas, vigas y columnas. Los datos de cada verificación se cargan abajo.</p></div>
-<div class="card"><h2>Nave en 3D: qué verifica y qué no</h2><div id="v3d"></div></div>
+<div class="card"><h2>Nave en 3D: qué verifica y qué no</h2>
+<div class="row" style="gap:14px;flex-wrap:wrap;margin-bottom:6px"><label><input type="checkbox" id="g3Ch" checked> chapa</label><label><input type="checkbox" id="g3Co" checked> correas de techo</label><label><input type="checkbox" id="g3Pa" checked> correas de pared</label><label><input type="checkbox" id="g3Po" checked> pórticos</label><button type="button" class="nav2" id="g3R" style="font-size:13px">vista inicial</button></div>
+<div id="g3" style="position:relative;width:100%;height:560px;border-radius:8px;overflow:hidden;background:#eef1f4"><div id="g3i" style="position:absolute;left:10px;top:10px;background:rgba(255,255,255,.92);color:#222;padding:6px 10px;border-radius:6px;font-size:13px;pointer-events:none">Arrastrá para girar · rueda para acercar · botón derecho para desplazar · tocá un elemento para ver su verificación</div></div>
+<div id="v3d"></div></div>
 <div class="card"><details><summary>Tabla L.3.1 del CIRSOC 301: valores límite de deformaciones (para elegir las flechas admisibles)</summary>
 <div class="tw"><table><tr><th colspan="2">Edificios industriales</th><th>Flecha total</th><th>Flecha por carga variable debida a</th><th>Valor</th></tr>
 <tr><td rowspan="5">Deformaciones verticales</td><td class="l">Miembros que soportan cubiertas rígidas</td><td>L/200</td><td>Sobrecarga útil</td><td>L/240</td></tr>
@@ -1098,7 +1103,7 @@ function drawPared(m,d){const kN=v=>v*G0/1000,E=200000,G=77200,fy=+d.pFy,L=d.s,s
  <p class="note">Luz = separación de columnas ${f(L)} m (${cont?'continua: M ≈ wL²/10, flecha 1/145':'simplemente apoyada: M = wL²/8, flecha 5/384'}). Viento de componentes y revestimientos de pared (zonas 4 y 5, Fig. 5.3-1) con A = L·máx(s; L/3) = ${f(Aeff,1)} m². Eje fuerte: viento por la separación vertical ${f(sp)} m. Eje débil: 1,2 × (chapa ${f(+d.pDc,0)} kg/m² × ${f(sp)} m + peso propio) con luz ${f(Ls)} m entre tensores, M = wL²/8. Pandeo lateral-torsional: CIRSOC 303 art. ${box?'C3.1.2.2 (sección cajón, J = 4A<sub>m</sub>²t/p)':(dbl?'C3.1.2.1(b), doble C como doble Te':'C3.1.2.1(a), C simple con σ<sub>ey</sub> y σ<sub>t</sub>')}; M<sub>n</sub> con módulo efectivo del ala comprimida (B2.1). Interacción flexión biaxial: M<sub>ux</sub>/φM<sub>nx</sub> + M<sub>uy</sub>/φM<sub>ny</sub> ≤ 1; flexión y corte: (M/φM<sub>n</sub>)² + (V/φV<sub>n</sub>)² ≤ 1. Flecha con 0,6W.</p></details>`}
 
 function drawVer(m,d){d=Object.assign({},d);for(const [s0,h,b,dd,t] of [['coSel','coH','coB','coD','cot'],['pSel','pH','pB','pD','pt']]){const i=+d[s0];if(i>0){const c=CCAT[i-1];d[h]=c[0];d[b]=c[1];d[dd]=c[2];d[t]=c[3]}}
- if(+d.pCC>0){const c=CCC[+d.pCC-1];d.pTipo=2;d.pH=c[0];d.pB=c[1];d.pD=c[2];d.pt=c[3];d.pCCn=c}try{drawPared(m,d)}catch(e){$('paOut').innerHTML='Error: '+e.message}try{drawCorrea(m,d)}catch(e){$('coOut').innerHTML='Error: '+e.message}try{drawVC(m,d)}catch(e){$('vcOut').innerHTML='Error: '+e.message}
+ if(+d.pCC>0){const c=CCC[+d.pCC-1];d.pTipo=2;d.pH=c[0];d.pB=c[1];d.pD=c[2];d.pt=c[3];d.pCCn=c}window.DV=d;try{drawPared(m,d)}catch(e){$('paOut').innerHTML='Error: '+e.message}try{drawCorrea(m,d)}catch(e){$('coOut').innerHTML='Error: '+e.message}try{drawVC(m,d)}catch(e){$('vcOut').innerHTML='Error: '+e.message}
  const a=crA(m),As=[1,2,5,10,20,50];
  $('crOut').innerHTML=`<div class="vgrid">${gWrap('Zonas de la cubierta (Fig. 5.3-2B)',zonePlan(m))}${gWrap('Presión de diseño según el área efectiva',gcpChart(m))}</div><div class="kpi"><div><b>${f(m.qh,1)} kg/m²</b><span>q<sub>h</sub> a la altura media h = ${f(m.h)} m (art. 1.13.2, con K<sub>zt</sub>)</span></div><div><b>±${f(m.gcpi,2)}</b><span>GC<sub>pi</sub>, Tabla 1.11-1</span></div><div><b>${f(a,2)} m</b><span>ancho de zona a = mín(0,10·B; 0,4·h) ≥ máx(0,04·B; 1 m)</span></div><div><b>${f(0.8*1000/G0,1)} kg/m²</b><span>presión mínima (0,80 kN/m²)</span></div></div>
  <p class="note">p = q<sub>h</sub>·[(GC<sub>p</sub>) − (GC<sub>pi</sub>)], art. 5.3.2, expresión (5.3-1). GC<sub>p</sub> de la Fig. 5.3-2B (cubierta a dos aguas, 7° &lt; θ ≤ 20°) y Fig. 5.3-1 (paredes), con las ecuaciones de las Tablas C 5.3-3 y C 5.3-1. Área efectiva A = luz × máx(ancho tributario; luz/3), art. 1.2. Zona 2: franjas de ancho a junto a los hastiales y a cada lado de la cumbrera; zona 3: esquinas; zona 5: franjas de ancho a en las esquinas de las paredes.</p>
@@ -1110,6 +1115,55 @@ function drawVer(m,d){d=Object.assign({},d);for(const [s0,h,b,dd,t] of [['coSel'
  <p class="note">Separación máxima = la menor luz que cumple resistencia (M<sub>u</sub> ≤ φ·M<sub>n</sub>, φ = 0,90) y flecha. Cubierta: M<sub>u</sub> = c·w·L² con c = ${['1/8','1/8 (apoyo central)','1/10'][+d.chTr]}; flecha con coeficiente ${['5/384','1/185','1/145'][+d.chTr]}. Gravitatorias: 1,2D + 1,6(L<sub>r</sub> ó S) y 1,4D sobre la chapa (D = peso de la chapa; L<sub>r</sub> con R<sub>1</sub> = 1 por área chica, S = el mayor de balanceada y no balanceada a sotavento), flecha con D + (L<sub>r</sub> ó S) y límite ${['L/100','L/120','L/150','L/180','L/200','L/240','L/300','L/360'][+d.chFlG]}. Viento: 0,9D − 1,0W de succión y 1,0W de presión de componentes y revestimientos, con A = L²/3; flecha con 0,6W − 0,6D y límite ${['L/100','L/120','L/150','L/180','L/200','L/240','L/300','L/360'][+d.chFlW]}. Las zonas de cubierta también cumplen la gravitatoria.</p></details>
  <p class="note">Propiedades calculadas con la geometría del folleto (altura, paso, ancho útil, espesor) y fy = ${f(+d.chFy,0)} MPa. En las trapezoidales, el ancho de la cresta y la proyección del alma no figuran en el folleto († supuestos: T-98 35/16 mm, T-101 40/20 mm, T-90 40/70 mm). Las partes planas comprimidas usan ancho efectivo (CIRSOC 303, art. B2.1, k = 4). La T-90 autoportante depende mucho del pandeo de sus paredes: tomar su valor como orientativo y confirmar con el fabricante.</p>`}
 
+/* ---------- 3D navegable (three.js) con perfiles a escala ---------- */
+const G3={};
+function g3Init(){if(G3.r||typeof THREE=='undefined')return;const el=$('g3');G3.r=new THREE.WebGLRenderer({antialias:true});G3.r.setPixelRatio(Math.min(devicePixelRatio,2));el.appendChild(G3.r.domElement);
+ G3.sc=new THREE.Scene();G3.sc.background=new THREE.Color(0xeef1f4);G3.cam=new THREE.PerspectiveCamera(40,1,0.1,2000);
+ G3.sc.add(new THREE.AmbientLight(0xffffff,0.55));const dl=new THREE.DirectionalLight(0xffffff,0.75);dl.position.set(60,120,80);G3.sc.add(dl);const d2=new THREE.DirectionalLight(0xffffff,0.3);d2.position.set(-80,40,-60);G3.sc.add(d2);
+ G3.ctl=new THREE.OrbitControls(G3.cam,G3.r.domElement);G3.ctl.enableDamping=true;G3.grp=new THREE.Group();G3.sc.add(G3.grp);
+ const rs=()=>{const w=el.clientWidth,h=el.clientHeight;if(!w)return;G3.r.setSize(w,h);G3.cam.aspect=w/h;G3.cam.updateProjectionMatrix()};new ResizeObserver(rs).observe(el);rs();
+ const ray=new THREE.Raycaster(),mv=new THREE.Vector2();let down=null;
+ G3.r.domElement.addEventListener('pointerdown',e=>down=[e.clientX,e.clientY]);
+ G3.r.domElement.addEventListener('pointerup',e=>{if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>4)return;const b=G3.r.domElement.getBoundingClientRect();mv.set((e.clientX-b.left)/b.width*2-1,-(e.clientY-b.top)/b.height*2+1);ray.setFromCamera(mv,G3.cam);
+  const h=ray.intersectObjects(G3.grp.children,true).find(x=>x.object.visible&&x.object.parent.visible);$('g3i').innerHTML=h?h.object.userData.t:'Arrastrá para girar · rueda para acercar · botón derecho para desplazar · tocá un elemento para ver su verificación'});
+ ['g3Ch','g3Co','g3Pa','g3Po'].forEach(id=>$(id).onchange=()=>{G3.grp.children.forEach(g=>{if(g.userData.k)g.visible=$(g.userData.k).checked})});
+ $('g3R').onclick=()=>g3View();
+ const loop=()=>{requestAnimationFrame(loop);if(!el.offsetParent)return;G3.ctl.update();G3.r.render(G3.sc,G3.cam)};loop()}
+function g3View(){const c=G3.ctr;G3.cam.position.set(c.x-c.Lt*0.55,c.H*3.2+c.L*0.6,c.z+c.L*1.55);G3.ctl.target.set(c.x,c.H*0.6,c.z);G3.ctl.update()}
+function shpI(h,b,tw,tf){const s=new THREE.Shape(),x=b/2,y=h/2,w=tw/2;s.moveTo(-x,-y);s.lineTo(x,-y);s.lineTo(x,-y+tf);s.lineTo(w,-y+tf);s.lineTo(w,y-tf);s.lineTo(x,y-tf);s.lineTo(x,y);s.lineTo(-x,y);s.lineTo(-x,y-tf);s.lineTo(-w,y-tf);s.lineTo(-w,-y+tf);s.lineTo(-x,-y+tf);s.closePath();return s}
+function shpC(H,B,D,t){const s=new THREE.Shape(),y=H/2;s.moveTo(0,-y);s.lineTo(B,-y);s.lineTo(B,-y+D);s.lineTo(B-t,-y+D);s.lineTo(B-t,-y+t);s.lineTo(t,-y+t);s.lineTo(t,y-t);s.lineTo(B-t,y-t);s.lineTo(B-t,y-D);s.lineTo(B,y-D);s.lineTo(B,y);s.lineTo(0,y);s.closePath();return s}
+function g3Bar(shape,p1,p2,up,mat,t){const a=new THREE.Vector3(...p1),b=new THREE.Vector3(...p2),L=a.distanceTo(b);
+ const g=new THREE.ExtrudeGeometry(shape,{depth:L,bevelEnabled:false});const m=new THREE.Mesh(g,mat);m.position.copy(a);m.up.set(...up);m.lookAt(b);m.userData.t=t;return m}
+function draw3D3(m,d,R){g3Init();if(!G3.r)return false;
+ while(G3.grp.children.length){const g=G3.grp.children.pop();g.traverse(o=>{if(o.geometry)o.geometry.dispose()})}
+ const L=d.L,Lt=m.Lt,H=m.Hc,fr=m.fr,a=crA(m),s=+d.s,sp=+d.coSep,ps=+d.pSep,th=m.th,zt=y=>H+(y<=L/2?y:L-y)*Math.tan(th);
+ const OK=new THREE.MeshLambertMaterial({color:0x2a9d8f}),NO=new THREE.MeshLambertMaterial({color:0xd62828}),mt=r=>r<=1?OK:NO;
+ const CHO=new THREE.MeshLambertMaterial({color:0x2a9d8f,transparent:true,opacity:0.18,side:THREE.DoubleSide,depthWrite:false}),CHN=new THREE.MeshLambertMaterial({color:0xd62828,transparent:true,opacity:0.35,side:THREE.DoubleSide,depthWrite:false});
+ const zr=(x,y)=>{const e=x<a||x>Lt-a,ev=y<a||y>L-a,ri=Math.abs(y-L/2)<a;return e&&(ev||ri)?'z3':(e||ri?'z2':'z1')};
+ const nb=Math.round(Lt/s),gp=k=>{const g=new THREE.Group();g.userData.k=k;g.visible=$(k).checked;G3.grp.add(g);return g};
+ const gPo=gp('g3Po'),gCo=gp('g3Co'),gPa=gp('g3Pa'),gCh=gp('g3Ch');
+ const sc=secData(d,'c'),sr=secData(d,'r'),mm=v=>v/1000;
+ const shC=shpI(mm(sc.var?(sc.h+sc.h1)/2:sc.h),mm(sc.b),mm(sc.tw),mm(sc.tf)),shR=shpI(mm(sr.h),mm(sr.b),mm(sr.tw),mm(sr.tf));
+ const tC=`<b>Columna</b> ${sc.nm} · relación máxima ${f(R.col,2)}`,tR=`<b>Viga</b> ${sr.nm} · relación máxima ${f(R.vig,2)}`;
+ for(let i=0;i<=nb;i++){const x=i*s;
+  gPo.add(g3Bar(shC,[x,0,0],[x,H,0],[0,0,1],mt(R.col),tC),g3Bar(shC,[x,0,L],[x,H,L],[0,0,1],mt(R.col),tC),g3Bar(shR,[x,H,0],[x,H+fr,L/2],[0,1,0],mt(R.vig),tR),g3Bar(shR,[x,H+fr,L/2],[x,H,L],[0,1,0],mt(R.vig),tR))}
+ // correas de techo (perfil C a escala, alma normal al faldón)
+ const cH=mm(+d.coH),cB=mm(+d.coB),cD=mm(+d.coD),ct=mm(+d.cot),shCo=shpC(cH,cB,cD,ct),sl=(L/2)/Math.cos(th),nc=Math.floor(sl/sp+1e-9),off=mm(sr.h)/2+cH/2;
+ for(let side=0;side<2;side++){const nrm=[0,Math.cos(th),side?Math.sin(th):-Math.sin(th)];
+  for(let c=0;c<=nc;c++){const dd=Math.min(c*sp,sl)*Math.cos(th),yy=side?L-dd:dd,y0=zt(yy)+off*nrm[1],z0=yy+off*nrm[2];
+   for(let i=0;i<nb;i++){const z=zr((i+0.5)*s,yy),r=R.co[z];gCo.add(g3Bar(shCo,[i*s,y0,z0],[(i+1)*s,y0,z0],nrm,mt(r),`<b>Correa de techo</b> C ${d.coH}×${d.coB}×${d.coD}×${d.cot}, ${z.replace('z','zona ')} · relación ${f(r,2)}`))}}}
+ // correas de pared (alma horizontal, normal a la pared)
+ const pH=mm(+d.pH),shPa=shpC(pH,mm(+d.pB),mm(+d.pD),mm(+d.pt)),offp=mm(sc.var?(sc.h+sc.h1)/2:sc.h)/2+pH/2;
+ for(const [zz0,sg] of [[0,-1],[L,1]])for(let hh=ps/2;hh<H;hh+=ps)for(let i=0;i<nb;i++){const z=(i*s<a||(i+1)*s>Lt-a)?'w5':'w4',r=R.pa[z],zw=zz0+sg*offp;
+  gPa.add(g3Bar(shPa,[i*s,hh,zw],[(i+1)*s,hh,zw],[0,0,sg],mt(r),`<b>Correa de pared</b> ${+d.pTipo==2?'doble C en cajón':(+d.pTipo==1?'doble C':'C')} ${d.pH}×${d.pB}×${d.pD}×${d.pt}, ${z.replace('w','zona ')} · relación ${f(r,2)}`))}
+ // chapa de cubierta por paño y franja de zona
+ const yb=[0,a,L/2-a,L/2,L/2+a,L-a,L],tch=off+cH/2+0.01;
+ for(let i=0;i<nb;i++)for(let j=0;j<6;j++){const y0=yb[j],y1=yb[j+1],z=zr((i+0.5)*s,(y0+y1)/2),r=R.ch[z];
+  const g=new THREE.BufferGeometry(),P=[[i*s,zt(y0)+tch,y0],[(i+1)*s,zt(y0)+tch,y0],[(i+1)*s,zt(y1)+tch,y1],[i*s,zt(y1)+tch,y1]];
+  g.setAttribute('position',new THREE.Float32BufferAttribute([...P[0],...P[1],...P[2],...P[0],...P[2],...P[3]],3));g.computeVertexNormals();
+  const ms=new THREE.Mesh(g,r<=1?CHO:CHN);ms.userData.t=`<b>Chapa</b> ${CHOPT[+d.chSel]}, ${z.replace('z','zona ')} · separación de correas / separación máxima = ${f(r,2)}`;gCh.add(ms)}
+ const fresh=!G3.ctr;G3.ctr={x:Lt/2,z:L/2,H,L,Lt};if(fresh)g3View();return true}
+
 /* ---------- 3D de la nave con el estado de verificación ---------- */
 function draw3D(m,d){const L=d.L,Lt=m.Lt,H=m.Hc,fr=m.fr,a=crA(m),s=+d.s,sp=+d.coSep,ps=+d.pSep,th=m.th;
  const mx=(arr,re)=>Math.max(0,...(arr||[]).filter(z=>re.test(z.l)).map(z=>z.r));
@@ -1119,6 +1173,7 @@ function draw3D(m,d){const L=d.L,Lt=m.Lt,H=m.Hc,fr=m.fr,a=crA(m),s=+d.s,sp=+d.co
  const ch=chMax(m,CHL[+d.chSel],d),rCh={z1:sp/ch.z.z1,z2:sp/ch.z.z2,z3:sp/ch.z.z3,w4:ps/ch.z.w4,w5:ps/ch.z.w5};
  const zr=(x,y)=>{const e=x<a||x>Lt-a,ev=y<a||y>L-a,ri=Math.abs(y-L/2)<a;return e&&(ev||ri)?'z3':(e||ri?'z2':'z1')};
  const zt=y=>H+(y<=L/2?y:L-y)*Math.tan(th);
+ const ok3=draw3D3(m,d,{col:rCol,vig:rVig,co:rCo,pa:rPa,ch:rCh});
  const W=1000,Hh=560,P=(x,y,z)=>[x*0.92-y*0.78,-z*1.15-x*0.16-y*0.36];
  const pts=[[0,0,0],[Lt,0,0],[0,L,0],[Lt,L,0],[0,L/2,H+fr],[Lt,L/2,H+fr]].map(p=>P(...p));const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);
  const k=Math.min((W-60)/(Math.max(...xs)-Math.min(...xs)),(Hh-80)/(Math.max(...ys)-Math.min(...ys))),ox=30-Math.min(...xs)*k,oy=50-Math.min(...ys)*k;
@@ -1140,10 +1195,10 @@ function draw3D(m,d){const L=d.L,Lt=m.Lt,H=m.Hc,fr=m.fr,a=crA(m),s=+d.s,sp=+d.co
  o+=`<text x="${W/2}" y="20" text-anchor="middle" style="font-weight:600">Nave ${f(Lt,0)} × ${f(L,0)} m · pórticos cada ${f(s)} m · correas de techo cada ${f(sp)} m · correas de pared cada ${f(ps)} m</text>`;
  o+=`<g transform="translate(20,${Hh-20})"><rect width="14" height="10" fill="#2a9d8f"/><text x="20" y="9" style="font-size:12px">verifica (relación ≤ 1)</text><rect x="170" width="14" height="10" fill="#d62828"/><text x="190" y="9" style="font-size:12px">no verifica</text><text x="320" y="9" style="font-size:12px;fill:var(--mut)">chapa: relleno de los paños, por zona de viento · pasá el mouse sobre un paño para ver la relación</text></g></svg>`;
  const T=(n,r)=>`<tr><td class="l">${n}</td><td class="${r<=1?'ok':'bad'}">${f(r,2)}</td></tr>`;
- $('v3d').innerHTML=o+`<div class="tw"><table><tr><th>Elemento</th><th>Relación máxima</th></tr>${T('Columnas',rCol)}${T('Vigas',rVig)}${T('Correas de techo, zona 1',rCo.z1)}${T('Correas de techo, zona 2',rCo.z2)}${T('Correas de techo, zona 3',rCo.z3)}${T('Correas de pared, zona 4',rPa.w4)}${T('Correas de pared, zona 5',rPa.w5)}${T('Chapa de techo, zona 1 (separación / separación máxima)',rCh.z1)}${T('Chapa de techo, zona 2',rCh.z2)}${T('Chapa de techo, zona 3',rCh.z3)}${T('Chapa de pared, zona 4',rCh.w4)}${T('Chapa de pared, zona 5',rCh.w5)}</table></div><p class="note">Todos los pórticos se pintan con el resultado del pórtico analizado (pórtico ${m.np}); los extremos tienen la mitad de ancho tributario. Las correas de techo se pintan según la zona de viento de cada tramo (Fig. 5.3-2B) y las de pared según zona 4 o 5 (Fig. 5.3-1). La chapa usa la separación de correas cargada.</p>`}
+ $('v3d').innerHTML=(ok3?'':o)+`<div class="tw"><table><tr><th>Elemento</th><th>Relación máxima</th></tr>${T('Columnas',rCol)}${T('Vigas',rVig)}${T('Correas de techo, zona 1',rCo.z1)}${T('Correas de techo, zona 2',rCo.z2)}${T('Correas de techo, zona 3',rCo.z3)}${T('Correas de pared, zona 4',rPa.w4)}${T('Correas de pared, zona 5',rPa.w5)}${T('Chapa de techo, zona 1 (separación / separación máxima)',rCh.z1)}${T('Chapa de techo, zona 2',rCh.z2)}${T('Chapa de techo, zona 3',rCh.z3)}${T('Chapa de pared, zona 4',rCh.w4)}${T('Chapa de pared, zona 5',rCh.w5)}</table></div><p class="note">Todos los pórticos se pintan con el resultado del pórtico analizado (pórtico ${m.np}); los extremos tienen la mitad de ancho tributario. Las correas de techo se pintan según la zona de viento de cada tramo (Fig. 5.3-2B) y las de pared según zona 4 o 5 (Fig. 5.3-1). La chapa usa la separación de correas cargada.</p>`}
 
 function run(){
- const d=read();A=analyze(d,d.np);const m=A.m;try{drawVer(m,d)}catch(e){console.error(e)}try{draw3D(m,d)}catch(e){console.error(e)}
+ const d=read();A=analyze(d,d.np);const m=A.m;try{drawVer(m,d)}catch(e){console.error(e)}try{draw3D(m,window.DV||d)}catch(e){console.error(e)}
  $('svgGeo').innerHTML=drawGeo(m);$('svgPlan').innerHTML=drawPlan(m);$('geoSvg').innerHTML=drawBig(m);$('secOut').innerHTML=secOut(d);
  $('geoOut').innerHTML=`Altura de columna ${f(m.Hc)} m · flecha de cubierta ${f(m.fr)} m · cumbrera ${fs(m.zr)} · nivel de referencia del terreno ${fs(m.zref)} · altura de alero sobre el terreno ${f(m.he)} m · altura de cumbrera ${f(m.hr)} m · <b>altura media de cubierta h = ${f(m.h)} m</b> (θ ${m.thd>=10?'≥':'<'} 10°: ${m.thd>=10?'promedio de alero y cumbrera':'altura del alero'}).`;
  // viento
