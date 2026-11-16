@@ -388,7 +388,8 @@ const F=[
   ["rtf","Viga armada: espesor de ala","mm",25],
   ["rtw","Viga armada: espesor de alma","mm",15.9]]],
  ["Emplazamiento y altura de referencia",[
-  ["crit","Criterio para la altura sobre el terreno","",0,["Desde el nivel de calle, Kzt = 1","Desde la plataforma, Kzt por escarpa (Fig. 1.8-1)","Manual: nivel de referencia y Kzt a elección"]],
+  ["crit","Criterio para la altura sobre el terreno","",1,["Desde el nivel de calle, Kzt = 1 (no cumple art. 1.8.1 si hay terraplén)","Desde la plataforma, con Kzt de la Fig. 1.8-1","Manual: nivel de referencia y Kzt a elección"]],
+  ["forma","Forma del terraplén (Fig. 1.8-1)","",0,["Loma bidimensional (talud en ambos lados)","Escarpa bidimensional (un solo talud)","Colina tridimensional"]],
   ["z0","Nivel de calle (terreno general)","m",0],
   ["zp","Nivel de la plataforma (terraplén)","m",6],
   ["tal","Talud del terraplén, 1 : m (horizontal por vertical)","",2],
@@ -399,7 +400,7 @@ const F=[
   ["keop","Factor de altitud Ke (art. 1.12)","",0,["Ke = 1 (conservador, permitido)","Ke = e^(−0,000119·altitud)"]]]],
  ["Viento (CIRSOC 102-2025)",[
   ["cat","Categoría de riesgo (art. 1.14)","",1,["I","II","III y IV"]],
-  ["V","Velocidad básica V (0 = tomar la de Neuquén según categoría) †","m/s",0],
+  ["V","Velocidad básica V (0 = tabla de Neuquén según categoría: 58,8 m/s en cat. II; la Fig. 1.5-1A interpolada en el sitio da ≈ 58,0)","m/s",0],
   ["exp","Categoría de exposición (art. 1.7)","",1,["B","C","D"]],
   ["Kd","Factor de direccionalidad Kd (Tabla 1.6-1)","",0.85],
   ["G","Factor de efecto de ráfaga G (art. 1.9.1, rígido)","",0.85],
@@ -412,8 +413,9 @@ const F=[
   ["Is","Factor de importancia I (Tabla 4)","",1,["0,8 · categoría I","1,0 · categoría II","1,1 · categoría III","1,2 · categoría IV"]],
   ["liso","Superficie de la cubierta","",0,["Lisa sin obstrucciones (chapa)","Otra"]]]],
  ["Cargas permanentes y sobrecarga",[
-  ["D","Peso propio de la estructura metálica, por m² de planta","kg/m²",60],
-  ["D2","Otras cargas permanentes de cubierta, por m² de planta","kg/m²",0],
+  ["D","Chapa de cubierta (y aislación), por m² de planta","kg/m²",8],
+  ["D2","Correas y arriostramientos de cubierta, por m² de planta","kg/m²",10],
+  ["D3","Cerramiento lateral (chapa y correas de pared), por m² de pared","kg/m²",0],
   ["lrt","Sobrecarga de cubierta Lr (CIRSOC 101-25, art. 4.8.1)","",0,["Cubierta liviana, art. 4.8.1(b)","Cubierta pesada, art. 4.8.1(a)","Automática, según el peso D cargado","Manual"]],
   ["Lr","Manual: Lr","kN/m²",0.58]]],
  ["Losa y vigas del nivel de transferencia (reacción sobre la columna, opcional)",[
@@ -470,9 +472,10 @@ function model(d,np){
  if(d.crit==0){m.zref=d.z0;m.kzt=z=>1;m.kztTxt='Kzt = 1 (la altura se mide desde el nivel de calle)'}
  else if(d.crit==1){
   m.zref=d.zp;const Lh=Hs*d.tal/2,rat=Lh>0?Hs/Lh:0,ap=Hs>=EXP[m.e].hm&&rat>=0.2;
-  const r=Math.min(rat,0.5),LhE=rat>0.5?2*Hs:Lh,K1=EXP[m.e].k1*r,K2=Math.max(0,1-d.xc/(4*LhE));
-  m.kzt=z=>ap?Math.pow(1+K1*K2*Math.exp(-2.5*Math.max(z,0)/LhE),2):1;
-  m.kztTxt=ap?`Escarpa: H = ${f(Hs)} m, L<sub>h</sub> = ${f(Lh)} m, H/L<sub>h</sub> = ${f(rat)}${rat>0.5?' (se toma 0,5 y 2H en lugar de L<sub>h</sub>)':''}, K<sub>1</sub> = ${f(K1,3)}, K<sub>2</sub> = ${f(K2,3)}, K<sub>3</sub> = e<sup>−2,5·z/${f(LhE,1)}</sup>`:`No se cumplen las condiciones del art. 1.8.1 (H ≥ ${EXP[m.e].hm} m y H/L<sub>h</sub> ≥ 0,2): Kzt = 1`;
+  const FT=[{n:'Loma 2D',k:{B:1.30,C:1.45,D:1.55},g:3,mu:1.5},{n:'Escarpa 2D',k:{B:0.75,C:0.85,D:0.95},g:2.5,mu:4},{n:'Colina 3D',k:{B:0.95,C:1.05,D:1.15},g:4,mu:1.5}][d.forma|0];
+  const r=Math.min(rat,0.5),LhE=rat>0.5?2*Hs:Lh,K1=FT.k[m.e]*r,K2=Math.max(0,1-d.xc/(FT.mu*LhE));
+  m.kzt=z=>ap?Math.pow(1+K1*K2*Math.exp(-FT.g*Math.max(z,0)/LhE),2):1;
+  m.kztTxt=ap?`${FT.n} (K<sub>1</sub>/(H/L<sub>h</sub>) = ${f(FT.k[m.e],2)}, γ = ${f(FT.g,1)}, μ = ${f(FT.mu,1)} a sotavento de la cresta): H = ${f(Hs)} m, L<sub>h</sub> = ${f(Lh)} m, H/L<sub>h</sub> = ${f(rat)}${rat>0.5?' (se toma 0,5 y 2H en lugar de L<sub>h</sub>)':''}, K<sub>1</sub> = ${f(K1,3)}, K<sub>2</sub> = ${f(K2,3)}, K<sub>3</sub> = e<sup>−${f(FT.g,1)}·z/${f(LhE,1)}</sup>`:`No se cumplen las condiciones del art. 1.8.1 (H ≥ ${EXP[m.e].hm} m y H/L<sub>h</sub> ≥ 0,2): Kzt = 1`;
  }else{m.zref=d.zman;m.kzt=z=>d.kztman;m.kztTxt='Kzt manual'}
  m.he=d.ze-m.zref;m.hr=m.zr-m.zref;m.h=m.thd>=10?(m.he+m.hr)/2:m.he;
  m.V=d.V>0?d.V:VN[d.cat];m.Ke=d.keop==1?Math.exp(-0.000119*d.alt):1;
@@ -514,7 +517,7 @@ function cases(m){
  const W=(id,nom,cwall,cr1,cr2,cwl,sg)=>C.push({id,nom,tipo:'W',
    cl:z=>(cwall>0?m.q(z):qh)*G*cwall-sg*qh*gi,rl:qh*G*cr1-sg*qh*gi,rr:qh*G*cr2-sg*qh*gi,cr:qh*G*cwl-sg*qh*gi,
    cp:[cwall,cr1,cr2,cwl],sg});
- C.push({id:'D',nom:'Permanente (peso propio)',tipo:'G',g:[d.D+d.D2,d.D+d.D2]});
+ C.push({id:'D',nom:'Permanente (peso propio de perfiles + cubierta)',tipo:'G',g:[d.D+d.D2,d.D+d.D2],pp:1});
  C.push({id:'Lr',nom:'Sobrecarga de cubierta',tipo:'G',g:[m.kg(m.Lr),m.kg(m.Lr)]});
  C.push({id:'S',nom:'Nieve balanceada',tipo:'G',g:[m.kg(m.ps),m.kg(m.ps)]});
  if(m.unb)C.push({id:'Sn',nom:'Nieve no balanceada (viento desde la izquierda)',tipo:'G',g:[m.kg(m.psWin),m.kg(m.psLee)],mir:1});
@@ -581,11 +584,13 @@ function solve(ms,w){ // w: por elemento [wx,wy] t/m global
  const RA=ms.apo?[R[0],R[1],R[2]]:[R[0],R[1],0],RE=ms.apo?[R[3],R[4],R[5]]:[R[2],R[3],0];
  return {RA,RE,M,V,N:Nn,SF:[SFx,SFy],dx:u[nb*3],u:Array.from(u)};
 }
+function ppSec(sd){return sd.var?(sd.A+sd.A1)/2*7850:(sd.Aw||sd.A)*7850}
 function loadVec(m,ms,c,mir){
+ m.ppc=ppSec(secData(m.d,'c'));m.ppr=ppSec(secData(m.d,'r'));
  const tr=m.trib/1000,sn=Math.sin(m.th),cs=Math.cos(m.th),nrm={cl:[-1,0],rl:[-sn,cs],rr:[sn,cs],cr:[1,0]},sw={cl:'cr',cr:'cl',rl:'rr',rr:'rl'};
  return ms.E.map(e=>{
   const sf=mir?sw[e.sf]:e.sf; // superficie equivalente del caso sin espejar
-  if(c.tipo=='G'){if(e.sf[0]!='r')return [0,0];const g=c.g[sf=='rl'?0:1];return [0,-g*tr*cs]}
+  if(c.tipo=='G'){if(c.pp&&e.sf[0]=='c')return [0,-(m.ppc+(+m.d.D3||0)*m.trib)/1000];if(e.sf[0]!='r')return [0,0];const g=c.g[sf=='rl'?0:1];return [0,-g*tr*cs-(c.pp?m.ppr/1000:0)]}
   if(c.tipo=='M'){const sg=mir?-1:1;if(sf=='cl')return [sg*0.75*1000/G0*tr,0];if(sf=='rl')return [sg*0.4*1000/G0*tr*sn,0];return [0,0]}
   let p=c[sf];if(typeof p=='function')p=p(Math.max(m.d.zb-m.zref+e.ym,0));
   const nn=nrm[e.sf];return [-p*tr*nn[0],-p*tr*nn[1]];
@@ -844,14 +849,14 @@ function run(){
    if(m.unb){if(m.psWin>0)o+=blk(g.pts[1],g.pts[2],m.psWin,40,'var(--press)','no balanceada');o+=blk(g.pts[2],g.pts[3],m.psLee,40,'var(--press)','no balanceada')}
    $('svgS').innerHTML=o+'</svg>'}
  const tr=m.trib/1000,gl=A.C.filter(c=>c.tipo=='G');
- $('gOut').innerHTML=`<div class="kpi"><div><b>${f(d.D+d.D2,0)} kg/m² = ${f(m.wD,3)} kN/m²</b><span>Peso propio (caso D): ${f(d.D,0)} de estructura metálica + ${f(d.D2,0)} de otras cargas, por m² de planta</span></div><div><b>${f(m.Lr,3)} kN/m² = ${f(m.kg(m.Lr),1)} kg/m²</b><span>Sobrecarga de cubierta L<sub>r</sub>${m.LrS?', art. '+m.LrS.art:' (valor manual)'}</span></div>${m.LrS?`<div><b>${f(m.LrS.R1,3)}</b><span>R<sub>1</sub>, área tributaria A<sub>t</sub> = ${f(m.trib)} × ${f(d.L)} = ${f(m.At,0)} m²</span></div><div><b>${f(m.LrS.R2,3)}</b><span>R<sub>2</sub>, pendiente ${f(d.pend,1)} %</span></div>`:''}</div>
+ $('gOut').innerHTML=`<div class="kpi"><div><b>${f(d.D+d.D2,0)} kg/m² = ${f(m.wD,3)} kN/m²</b><span>Cubierta (caso D): ${f(d.D,0)} de chapa + ${f(d.D2,0)} de correas, por m² de planta</span></div><div><b>${f(ppSec(secData(d,'r')),1)} / ${f(ppSec(secData(d,'c')),1)} kg/m</b><span>Peso propio de viga / columna, según el perfil elegido (caso D)</span></div>${+d.D3?`<div><b>${f(d.D3,0)} kg/m²</b><span>Cerramiento lateral: ${f(d.D3*m.trib,0)} kg/m a lo largo de cada columna</span></div>`:''}<div><b>${f(m.Lr,3)} kN/m² = ${f(m.kg(m.Lr),1)} kg/m²</b><span>Sobrecarga de cubierta L<sub>r</sub>${m.LrS?', art. '+m.LrS.art:' (valor manual)'}</span></div>${m.LrS?`<div><b>${f(m.LrS.R1,3)}</b><span>R<sub>1</sub>, área tributaria A<sub>t</sub> = ${f(m.trib)} × ${f(d.L)} = ${f(m.At,0)} m²</span></div><div><b>${f(m.LrS.R2,3)}</b><span>R<sub>2</sub>, pendiente ${f(d.pend,1)} %</span></div>`:''}</div>
  ${m.LrS?`<p class="note">L<sub>r</sub> = ${f(m.LrS.c)}·R<sub>1</sub>·R<sub>2</sub> = ${f(m.LrS.c*m.LrS.R1*m.LrS.R2,3)} kN/m², con ${m.LrS.lim} kN/m² de proyección horizontal (CIRSOC 101-25, art. ${m.LrS.art}). Con la otra clasificación daría ${f((m.LrS==m.LrL?m.LrP:m.LrL).v,3)} kN/m².</p>`:''}
- <p class="note">El reglamento llama liviana a la cubierta cuyo peso total (estructura de cubierta más cerramiento) no pasa de 0,5 kN/m² (51 kg/m²). Los ${f(d.D+d.D2,0)} kg/m² del caso D son el peso de la nave completa, para las reacciones; la cubierta sola (chapa, correas y aislación) es liviana, por eso L<sub>r</sub> va por el art. 4.8.1(b).</p>
+ <p class="note">El reglamento llama liviana a la cubierta cuyo peso total (estructura de cubierta más cerramiento) no pasa de 0,5 kN/m² (51 kg/m²). El caso D suma el peso propio de la viga y las columnas (según el perfil elegido en la pestaña 1, con 7850 kg/m³), la chapa y las correas de cubierta (${f(d.D+d.D2,0)} kg/m² de planta) y, si se carga, el cerramiento lateral sobre las columnas. La cubierta sola (chapa, correas y aislación) es liviana, por eso L<sub>r</sub> va por el art. 4.8.1(b).</p>
  <div class="tw"><table><tr><th>Carga</th><th>Faldón izquierdo [kg/m² de planta]</th><th>Faldón derecho [kg/m² de planta]</th><th>Sobre el pórtico, izquierda [t/m horizontal]</th><th>Sobre el pórtico, derecha [t/m horizontal]</th><th>Total sobre el pórtico [t]</th></tr>${gl.map(c=>`<tr><td>${c.nom}</td><td>${f(c.g[0],1)}</td><td>${f(c.g[1],1)}</td><td>${f(c.g[0]*tr,3)}</td><td>${f(c.g[1]*tr,3)}</td><td>${f((c.g[0]+c.g[1])*tr*d.L/2,2)}</td></tr>`).join('')}</table></div><p class="note">Ancho tributario del pórtico ${m.np}: ${f(m.trib)} m. Las cargas gravitatorias se aplican sobre la proyección horizontal de la cubierta.</p>`;
  // reacciones
  const sN=i=>i>0?CATN[i-1]:'armada',sC=d.csel>0?secCat(d.csel):Isec((d.cd0+d.cd1)/2,d.cb,d.ctf,d.ctw),sR=d.rsel>0?secCat(d.rsel):Isec(d.rd,d.rb,d.rtf,d.rtw);
  $('secInfo').innerHTML=` Columna ${sN(d.csel)}${d.csel>0?'':' (sección variable)'}: I = ${f(sC.I*1e8,0)} cm⁴${d.csel>0?'':' en media altura'} · viga ${sN(d.rsel)}: I = ${f(sR.I*1e8,0)} cm⁴ · bases ${d.apo?'empotradas':'articuladas'}.`;
- $('frameInfo').innerHTML=`Pórtico ${m.np} de ${m.nf} · ancho tributario ${f(m.trib)} m · bases ${d.apo?'empotradas':'articuladas'} · peso propio ${f(d.D+d.D2,0)} kg/m² (caso D) · sobrecarga de cubierta ${f(m.kg(m.Lr),1)} kg/m² (caso Lr).`;
+ $('frameInfo').innerHTML=`Pórtico ${m.np} de ${m.nf} · ancho tributario ${f(m.trib)} m · bases ${d.apo?'empotradas':'articuladas'} · cubierta ${f(d.D+d.D2,0)} kg/m² + peso propio de perfiles (caso D) · sobrecarga de cubierta ${f(m.kg(m.Lr),1)} kg/m² (caso Lr).`;
  document.querySelectorAll('.losinfo').forEach(q=>q.innerHTML=A.lo?`D = ${f(d.PD,1)} t y L = ${f(d.PL,1)} t por base, sin mayorar (se editan en Datos). «Permanente» incluye la losa.`:'Las reacciones son solo las de la nave metálica.');
  const AP=A.ms.apo,mh=k=>AP?`<th>M<sub>${k}</sub> [t·m]</th>`:'',mc=v=>AP?`<td>${fs(v)}</td>`:'';
  let rt='<table><tr><th>Caso de carga</th><th>H<sub>A</sub> [t]</th><th>V<sub>A</sub> [t]</th>'+mh('A')+'<th>H<sub>E</sub> [t]</th><th>V<sub>E</sub> [t]</th>'+mh('E')+'<th>Carga horizontal total [t]</th><th>Carga vertical total [t]</th><th>Equilibrio</th></tr>';
@@ -905,13 +910,13 @@ function envBuild(){const cb=A.cb,E=A.ms.E.length,env={};for(const q of ['M','V'
  const R={};for(const k of ['RA','RE'])for(const j of [0,1,2]){let a=[-1e9,-1],b=[1e9,-1];cb.forEach((c,n)=>{const v=c.r[k][j];if(v>a[0])a=[v,n];if(v<b[0])b=[v,n]});R[k+j]={mx:a,mn:b}}
  env.R=R;env.key=A;return env}
 const NODES={A:[0,0],B:[7,1],C:[19,1],D:[31,1],E:[-1,1]};
-function envPick(n){const ev=A.env,[i0,j]=NODES[n],i=i0<0?A.ms.E.length-1:i0,cb=A.cb,nm={M:'Momento M [tm]',V:'Corte V [t]',N:'Normal N [t]'};
+function envPick(n){const ev=A.envE,[i0,j]=NODES[n],i=i0<0?A.ms.E.length-1:i0,cb=A.cb,nm={M:'Momento M [tm]',V:'Corte V [t]',N:'Normal N [t]'};
  const lk=k=>`<span class="lk" onclick="$('selC').value='k:${k}';drawC()">${cb[k].t}</span>`;
  let rows='';for(const q of ['M','V','N']){if(q=='M'&&!A.ms.apo&&(n=='A'||n=='E'))continue;const a=ev[q].mx[i][j],b=ev[q].mn[i][j];rows+=`<tr><td>${nm[q]} máx.</td><td>${fs(a[0],2)}</td><td class="l">${lk(a[1])}</td></tr><tr><td>${nm[q]} mín.</td><td>${fs(b[0],2)}</td><td class="l">${lk(b[1])}</td></tr>`}
  if(n=='A'||n=='E'){const k=n=='A'?'RA':'RE',lb=['Reacción H [t]','Reacción V [t]','Reacción M [tm]'];for(const jj of (A.ms.apo?[0,1,2]:[0,1])){const r=ev.R[k+jj];rows+=`<tr><td>${lb[jj]} máx.</td><td>${fs(r.mx[0],2)}</td><td class="l">${lk(r.mx[1])}</td></tr><tr><td>${lb[jj]} mín.</td><td>${fs(r.mn[0],2)}</td><td class="l">${lk(r.mn[1])}</td></tr>`}}
  $('envInfo').innerHTML=`<div class="tw"><table><tr><th colspan="3">Nudo ${n}: valores extremos y combinación de la que salen (tocá la combinación para verla)</th></tr><tr><th>Esfuerzo</th><th>Valor</th><th>Combinación</th></tr>${rows}</table></div>`;
  $('envInfo').dataset.n=n;document.querySelectorAll('.hot').forEach(h=>h.classList.toggle('sel',h.dataset.n==n))}
-function drawEnv(){const m=A.m,d=m.d,W=960,Hh=520,g=frameGeom(m,W,Hh,240,110,150),ev=A.env[DIAG],COL={M:'var(--acc2)',V:'var(--acc)',N:'var(--ok)'}[DIAG];let o=`<svg viewBox="0 0 ${W} ${Hh}">`;
+function drawEnv(){const m=A.m,d=m.d,W=960,Hh=520,g=frameGeom(m,W,Hh,240,110,150),ev=A.envE[DIAG],COL={M:'var(--acc2)',V:'var(--acc)',N:'var(--ok)'}[DIAG];let o=`<svg viewBox="0 0 ${W} ${Hh}">`;
  let mx=0;ev.mx.forEach((v,i)=>{mx=Math.max(mx,Math.abs(v[0][0]),Math.abs(v[1][0]),Math.abs(ev.mn[i][0][0]),Math.abs(ev.mn[i][1][0]))});const sc=mx>1e-9?46/mx:0;
  for(const [arr,op] of [[ev.mx,30],[ev.mn,15]])A.ms.E.forEach((e,i)=>{const a=A.ms.N[e.i],b=A.ms.N[e.j],nx=-e.s,ny=e.c,M=[arr[i][0][0],arr[i][1][0]];
   const p=[[g.X(a[0]),g.Y(a[1])],[g.X(a[0])-nx*M[0]*sc,g.Y(a[1])+ny*M[0]*sc],[g.X(b[0])-nx*M[1]*sc,g.Y(b[1])+ny*M[1]*sc],[g.X(b[0]),g.Y(b[1])]];
@@ -925,7 +930,7 @@ function drawEnv(){const m=A.m,d=m.d,W=960,Hh=520,g=frameGeom(m,W,Hh,240,110,150
  o+=`<text x="${W/2}" y="18" text-anchor="middle" style="font-weight:600">Envolvente de las ${A.cb.length} combinaciones ELU · ${{M:'momento flector',V:'corte',N:'normal'}[DIAG]}</text><text x="${W/2}" y="36" text-anchor="middle" style="fill:var(--mut)">relleno lleno: máximo · rayado: mínimo · tocá un nudo (A, B, C, D, E) para ver de qué combinación sale cada extremo</text>`;
  return o+frameDims(g,m,W,Hh-8)+'</svg>'}
 function drawC(){quickBtns();const v=$('selC').value;if(!v)return;
- if(v=='env'){if(!A.env||A.env.key!==A)A.env=envBuild();$('svgR').innerHTML=drawEnv();$('rOut').innerHTML='Envolvente: para cada sección, el mayor y el menor valor entre todas las combinaciones mayoradas (CIRSOC 101-25). M dibujado del lado traccionado; N positivo tracción.';const sl=document.querySelector('#envInfo th')?($('envInfo').dataset.n||'B'):'B';envPick(sl);return}
+ if(v=='env'){if(!A.envE||A.envE.key!==A)A.envE=envBuild();$('svgR').innerHTML=drawEnv();$('rOut').innerHTML='Envolvente: para cada sección, el mayor y el menor valor entre todas las combinaciones mayoradas (CIRSOC 101-25). M dibujado del lado traccionado; N positivo tracción.';const sl=document.querySelector('#envInfo th')?($('envInfo').dataset.n||'B'):'B';envPick(sl);return}
  $('envInfo').innerHTML='';$('quick').querySelectorAll('.qb').forEach(b=>b.classList.toggle('sel',b.dataset.v==v));let r,t,ps=null,gl=null;
  if(v[0]=='c'){const x=A.list.find(q=>q.id==v.slice(2));r=A.res[x.id];t=x.id+' · '+x.nom;ps=casePress(A,x);if(x.c.tipo=='G'){gl=x.c.g.slice();if(x.mir)gl.reverse()}}
  else{const c=(v[0]=='s'?A.sv:A.cb)[+v.slice(2)];r=c.r;t=c.t}
@@ -938,7 +943,7 @@ function teoria(m){const d=m.d,qa=model(Object.assign({},d,{crit:0}),d.np),qb=mo
  <h3>3. Viento, CIRSOC 102-2025</h3><ul><li>Velocidad básica: tabla de ciudades del art. 1.5.1, Neuquén: 54,8 / 58,8 / 63,0 m/s para categorías I / II / III y IV. † La tabla del PDF se leyó por orden de filas: conviene confirmar el valor en el mapa de la Figura 1.5-1.</li><li>Presión dinámica (expresión 1.13-1): q<sub>z</sub> = 0,613·K<sub>z</sub>·K<sub>zt</sub>·K<sub>d</sub>·K<sub>e</sub>·V² [N/m²]. K<sub>d</sub> = 0,85 (Tabla 1.6-1). K<sub>e</sub> = 1 permitido (art. 1.12).</li><li>Exposición C: terreno abierto de meseta (art. 1.7). K<sub>z</sub> de la Tabla 1.13-1.</li><li>Edificio rígido: G = 0,85 (art. 1.9.1).</li><li>Presión interna (Tabla 1.11-1): ±0,18 cerrado, ±0,55 parcialmente cerrado. Con el portón corredizo del frente abierto durante una tormenta, la nave puede pasar a parcialmente cerrada: conviene comparar los dos casos.</li><li>Procedimiento direccional (Capítulo 2, Parte 1): p = q·G·C<sub>p</sub> − q<sub>i</sub>·(GC<sub>pi</sub>), con C<sub>p</sub> de la Figura 2.4-1. Pared a barlovento con q<sub>z</sub>; el resto con q<sub>h</sub>.</li><li>Carga mínima (art. 2.1.5): 0,75 kN/m² sobre la pared y 0,40 kN/m² sobre la proyección vertical de la cubierta, como caso aparte.</li><li>Los casos con torsión de la Figura 2.4-8 actúan sobre el conjunto (arriostramientos de cubierta y laterales) y no se evalúan en el pórtico plano.</li><li>Viento longitudinal: sobre el pórtico solo produce succión en las dos paredes laterales y en la cubierta. El empuje sobre los frentes lo toman los arriostramientos longitudinales, que este cálculo no incluye.</li></ul>
  <h3>Losa del nivel de transferencia (opcional)</h3><ul><li>La reacción de la losa y sus vigas sobre la columna se carga como dato, sin mayorar: D = ${f(d.PD,1)} t y L = ${f(d.PL,1)} t. Estado actual: ${['no se suma','se suma en la base A','se suma en las dos bases'][d.los|0]}. Son fuerzas verticales aplicadas en la base: no cambian los momentos ni el empuje horizontal del pórtico.</li><li>La parte permanente lleva siempre el mismo factor que el peso de la nave (1,4; 1,2 o 0,9).</li><li>La sobrecarga L entra según la Tabla 5.3.1 del CIRSOC 201-2025: 1,2D + 1,6L + 0,5(L<sub>r</sub> o S); 1,2D + 1,6(L<sub>r</sub> o S) + 1,0L; 1,2D + 1,0W + 1,0L + 0,5(L<sub>r</sub> o S). No entra en 1,4D ni en 0,9D + 1,0W, que es la que define el levantamiento.</li><li>El factor de L acompañante es 1,0 y no 0,5 porque la sobrecarga de la losa supera 5 kN/m² (art. 5.3.3). Las cargas de vehículos son parte de L (art. 5.3.4).</li><li>Las combinaciones sin L siguen en la lista: representan la losa descargada.</li></ul>
  <h3>4. Nieve, CIRSOC 104-2005</h3><ul><li>p<sub>g</sub> = 0,9 kN/m² para la localidad Neuquén, departamento Confluencia, 265 m sobre el nivel del mar (Tabla 1.9). Es el valor de la capital: en cordillera la misma tabla llega a 3,1 kN/m². Existe un mapa alternativo en el Anexo a la Tabla 1.9.</li><li>El mínimo de p<sub>f</sub> del art. 3.4 solo rige en cubiertas a dos aguas con pendiente menor o igual que 21/W + 0,5 grados; con W = ${f(m.W)} m el límite es ${f(m.limMin,2)}° y la cubierta tiene ${f(m.thd,1)}°: ${m.thd<=m.limMin?'rige':'no rige'}.</li><li>Cubierta plana: p<sub>f</sub> = 0,7·C<sub>e</sub>·C<sub>t</sub>·I·p<sub>g</sub> (expresión 1). C<sub>e</sub> de la Tabla 2: 0,9 para terreno C (abierto) y cubierta totalmente expuesta, que es el caso de una nave aislada sobre un terraplén en la meseta; 1,0 si se la considera parcialmente expuesta. C<sub>t</sub> = 1,2 por ser una nave sin calefacción (Tabla 3). I = 1,0 para categoría II (Tabla 4).</li><li>Cubierta con pendiente: p<sub>s</sub> = C<sub>s</sub>·p<sub>f</sub> (expresión 2, Figura 2), sobre la proyección horizontal.</li><li>Carga no balanceada (art. 6.1), con W &gt; 6 m: 1,2·(1 + β/2)·p<sub>s</sub>/C<sub>e</sub> a sotavento y 0,3·p<sub>s</sub> a barlovento.</li></ul>
- <h3>5. Cargas gravitatorias</h3><ul><li>Peso propio de la estructura metálica: ${f(d.D,0)} kg/m² de planta, valor conservador pedido para esta etapa.</li><li>Se aplica como caso de carga D sobre la proyección horizontal de la cubierta; sus reacciones figuran en la primera fila de la tabla de reacciones y entran en todas las combinaciones.</li><li>Sobrecarga de cubierta (CIRSOC 101-25, art. 4.8.1), por m² de proyección horizontal. Cubierta liviana (peso total ≤ 0,5 kN/m²): L<sub>r</sub> = 0,45·R<sub>1</sub>·R<sub>2</sub>, entre 0,203 y 0,765 kN/m²; R<sub>1</sub> = 1 (A<sub>t</sub> &lt; 20 m²), 1,125 − 0,00625·A<sub>t</sub> (20 a 60 m²), 0,75 (más de 60 m²); R<sub>2</sub> = 1,70 (p &lt; 3 %), 1,04 − 0,008·p (3 a 55 %), 0,60 (p &gt; 55 %). Cubierta pesada: L<sub>r</sub> = 0,96·R<sub>1</sub>·R<sub>2</sub>, entre 0,58 y 0,96 kN/m²; R<sub>1</sub> = 1, 1,2 − 0,01076·A<sub>t</sub>, 0,60; R<sub>2</sub> = 1 (F ≤ 4), 1,2 − 0,05·F (4 a 12), 0,60 (F ≥ 12), con F = 0,12·p.</li><li>Valor actual: L<sub>r</sub> = ${f(m.Lr,3)} kN/m² = ${f(m.kg(m.Lr),1)} kg/m².</li></ul>
+ <h3>5. Cargas gravitatorias</h3><ul><li>Caso D: peso propio de la viga y las columnas calculado con el perfil elegido (área × 7850 kg/m³; en los alveolares, el peso del W original), más chapa ${f(d.D,0)} kg/m² y correas ${f(d.D2,0)} kg/m² de planta${+d.D3?', más cerramiento lateral '+f(d.D3,0)+' kg/m² de pared':''}.</li><li>Se aplica como caso de carga D sobre la proyección horizontal de la cubierta; sus reacciones figuran en la primera fila de la tabla de reacciones y entran en todas las combinaciones.</li><li>Sobrecarga de cubierta (CIRSOC 101-25, art. 4.8.1), por m² de proyección horizontal. Cubierta liviana (peso total ≤ 0,5 kN/m²): L<sub>r</sub> = 0,45·R<sub>1</sub>·R<sub>2</sub>, entre 0,203 y 0,765 kN/m²; R<sub>1</sub> = 1 (A<sub>t</sub> &lt; 20 m²), 1,125 − 0,00625·A<sub>t</sub> (20 a 60 m²), 0,75 (más de 60 m²); R<sub>2</sub> = 1,70 (p &lt; 3 %), 1,04 − 0,008·p (3 a 55 %), 0,60 (p &gt; 55 %). Cubierta pesada: L<sub>r</sub> = 0,96·R<sub>1</sub>·R<sub>2</sub>, entre 0,58 y 0,96 kN/m²; R<sub>1</sub> = 1, 1,2 − 0,01076·A<sub>t</sub>, 0,60; R<sub>2</sub> = 1 (F ≤ 4), 1,2 − 0,05·F (4 a 12), 0,60 (F ≥ 12), con F = 0,12·p.</li><li>Valor actual: L<sub>r</sub> = ${f(m.Lr,3)} kN/m² = ${f(m.kg(m.Lr),1)} kg/m².</li></ul>
  <h3>6. Pórtico y reacciones</h3><ul><li>Pórtico a dos aguas con las dos bases articuladas: es hiperestático de grado uno. Se resuelve por el método de rigidez, con las columnas divididas en 8 tramos y cada viga en 12.</li><li>Cada pórtico toma su ancho tributario: ${f(d.s)} m los interiores y ${f(d.s/2)} m los extremos.</li><li>Control en cada caso: la suma de reacciones es igual a la carga aplicada.</li><li>No se consideran las tornapuntas ni las cartelas del plano. Cambian poco las reacciones, pero sí los momentos en el nudo.</li></ul>
  <h3>7. Combinaciones, CIRSOC 101-25</h3><ul><li>1,4 Permanente</li><li>1,2 Permanente + 1,6 (Sobrecarga de cubierta o Nieve) + 0,5 Viento</li><li>1,2 Permanente + 1,0 Viento + 0,5 (Sobrecarga de cubierta o Nieve)</li><li>0,9 Permanente + 1,0 Viento</li></ul><p>Son las mismas de la Tabla 5.3.1 del CIRSOC 201-25. La sobrecarga de cubierta y la nieve no se suman entre sí: se toma una u otra. El viento lleva factor 1,0 porque la velocidad básica del 102-2025 ya es de nivel último.</p>
  <p class="note">† Valor que conviene confirmar contra el texto o las figuras del reglamento: el PDF no permitió leerlo con certeza, o depende de un dato del sitio que todavía no está medido (altitud, distancia al borde de la barda).</p>`}
