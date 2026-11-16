@@ -65,6 +65,9 @@ details.help{margin-top:8px}details.help .note{margin-top:6px}
 h2.sec{margin:26px 0 4px;padding:6px 0;border-bottom:2px solid var(--acc);color:var(--acc);scroll-margin-top:60px}
 .secg{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:12px}
 code{background:color-mix(in srgb,var(--mut) 15%,transparent);padding:1px 4px;border-radius:4px}
+.nav2{font-size:18px;padding:4px 12px;margin-left:4px;border:1px solid var(--acc);background:var(--card);color:var(--acc);border-radius:6px;cursor:pointer}.nav2:hover{background:var(--acc);color:#fff}
+.hot{cursor:pointer}.hot:hover circle,.hot.sel circle{stroke-width:4}
+#envInfo table{margin-top:8px}#envInfo .lk{color:var(--acc);cursor:pointer;text-decoration:underline}
 </style>
 </head>
 <body>
@@ -124,14 +127,14 @@ code{background:color-mix(in srgb,var(--mut) 15%,transparent);padding:1px 4px;bo
 
 <section class="tab" id="t-esf">
 <div class="card"><h2>Esfuerzos en el pórtico</h2>
-<div class="row"><label>Caso o combinación: <select id="selC" class="big" style="max-width:100%"></select></label></div>
-<div class="row" style="margin:6px 0"><label>Diagrama: <select id="selD" class="big" style="max-width:260px"><option value="M">Momento flector M</option><option value="V">Esfuerzo de corte V</option><option value="N">Esfuerzo normal N</option></select></label><span class="note" id="secInfo"></span></div>
+<div class="row"><label>Caso o combinación: <select id="selC" class="big" style="max-width:100%"></select></label><button type="button" class="nav2" onclick="stepSel('selC',-1)" title="anterior">◀</button><button type="button" class="nav2" onclick="stepSel('selC',1)" title="siguiente">▶</button></div>
+<div class="row" style="margin:6px 0"><label>Diagrama: <select id="selD" class="big" style="max-width:260px"><option value="M">Momento flector M</option><option value="V">Esfuerzo de corte V</option><option value="N">Esfuerzo normal N</option></select></label><span class="note" id="secInfo"></span></div><div id="envInfo"></div>
 <div id="svgR"></div><div id="rOut" class="note"></div></div>
 </section>
 
 <section class="tab" id="t-def">
 <div class="card"><h2>Deformaciones del pórtico</h2>
-<div class="row"><label>Caso o combinación: <select id="selDef" class="big" style="max-width:100%"></select></label><label>Escala del dibujo: <select id="defSc" class="big" style="max-width:160px"><option value="0">automática</option><option value="50">× 50</option><option value="100">× 100</option><option value="200">× 200</option><option value="500">× 500</option></select></label></div>
+<div class="row"><label>Caso o combinación: <select id="selDef" class="big" style="max-width:100%"></select></label><button type="button" class="nav2" onclick="stepSel('selDef',-1)" title="anterior">◀</button><button type="button" class="nav2" onclick="stepSel('selDef',1)" title="siguiente">▶</button><label>Escala del dibujo: <select id="defSc" class="big" style="max-width:160px"><option value="0">automática</option><option value="50">× 50</option><option value="100">× 100</option><option value="200">× 200</option><option value="500">× 500</option></select></label></div>
 <div id="svgDef"></div><div class="tw" id="defTab"></div>
 <div class="note">Análisis elástico de primer orden con las secciones elegidas en la pestaña 1. Los desplazamientos del dibujo están amplificados. Para verificar deformaciones usar las combinaciones de servicio: sin viento, CIRSOC 301-2018 art. B.2.3 ec. B.2.8, D + L + (Lr ó S); con viento, CIRSOC 102-2025: 0,6D + 0,6W y D + 0,75L + 0,45W + 0,75(Lr ó S). F, H, T y R no se consideran porque no existen en esta nave. Las combinaciones mayoradas se muestran solo como referencia.</div></div>
 </section>
@@ -859,10 +862,10 @@ function run(){
  $('rTab').innerHTML=rt+'</table>';
  document.querySelectorAll('.losq').forEach(q=>q.value=d.los|0);
  const sc=$('selC'),pc=sc.value;
- sc.innerHTML='<optgroup label="Casos de carga">'+A.list.map(x=>`<option value="c:${x.id}">${x.id} · ${x.nom}</option>`).join('')+'</optgroup><optgroup label="Combinaciones">'+A.cb.map((c,i)=>`<option value="k:${i}">${c.t}</option>`).join('')+'</optgroup>';
+ sc.innerHTML='<optgroup label="Envolvente"><option value="env">Envolvente de las combinaciones ELU (mayoradas)</option></optgroup><optgroup label="Casos de carga">'+A.list.map(x=>`<option value="c:${x.id}">${x.id} · ${x.nom}</option>`).join('')+'</optgroup><optgroup label="Combinaciones">'+A.cb.map((c,i)=>`<option value="k:${i}">${c.t}</option>`).join('')+'</optgroup>';
  sc.innerHTML+='<optgroup label="Combinaciones de servicio (CIRSOC 301-2018 sin viento · CIRSOC 102-2025 con viento)">'+A.sv.map((c,i)=>`<option value="s:${i}">${c.t}</option>`).join('')+'</optgroup>';
  if([...sc.options].some(o=>o.value==pc))sc.value=pc;drawC();
- {const sd=$('selDef'),pd=sd.value;sd.innerHTML=sc.innerHTML;if([...sd.options].some(o=>o.value==pd))sd.value=pd;else sd.value=sc.value;drawDef()}
+ {const sd=$('selDef'),pd=sd.value;sd.innerHTML=sc.innerHTML.replace(/<optgroup label="Envolvente">.*?<\/optgroup>/,'');if([...sd.options].some(o=>o.value==pd))sd.value=pd;else sd.value=sc.value;drawDef()}
  // combinaciones
  const e=A.env,row=(t,x,q)=>`<tr><td>${t}</td><td><b>${fs(x.v)}</b></td><td class="l">${x.c.t}</td><td>${fs(x.c.r.RA[0])}</td><td>${fs(x.c.r.RA[1])}</td><td>${fs(x.c.r.RE[0])}</td><td>${fs(x.c.r.RE[1])}</td></tr>`;
  $('envTab').innerHTML=`<table><tr><th>Reacción en la base izquierda (A)</th><th>Valor [t]</th><th>Combinación que la produce</th><th>H<sub>A</sub></th><th>V<sub>A</sub></th><th>H<sub>E</sub></th><th>V<sub>E</sub></th></tr>${row('Vertical máxima (compresión sobre la fundación)',e.Vmax)}${row(e.Vmin.v<0?'Vertical mínima (levantamiento: la columna tira de la fundación)':'Vertical mínima (no hay levantamiento)',e.Vmin)}${row('Horizontal máxima hacia adentro de la nave (la columna empuja la fundación hacia afuera)',e.Hin)}${row('Horizontal máxima hacia afuera de la nave (la columna empuja la fundación hacia adentro)',e.Hout)}</table>`;
@@ -896,7 +899,34 @@ function quickBtns(){
  $('qbase').value=QBASE;$('qbase').onchange=e=>{QBASE=e.target.value;drawC()};
  $('qtol').onchange=e=>{const v=parseFloat(e.target.value);QTOL=isFinite(v)?Math.min(Math.max(v,0),100):10;drawC()};
 }
-function drawC(){quickBtns();const v=$('selC').value;if(!v)return;$('quick').querySelectorAll('.qb').forEach(b=>b.classList.toggle('sel',b.dataset.v==v));let r,t,ps=null,gl=null;
+function stepSel(id,k){const e=$(id),op=[...e.options].filter(o=>!o.disabled);let i=op.findIndex(o=>o.value==e.value)+k;i=(i+op.length)%op.length;e.value=op[i].value;e.dispatchEvent(new Event('change'))}
+function envBuild(){const cb=A.cb,E=A.ms.E.length,env={};for(const q of ['M','V','N']){const mx=[],mn=[];for(let i=0;i<E;i++){mx.push([[-1e9,-1],[-1e9,-1]]);mn.push([[1e9,-1],[1e9,-1]])}
+  cb.forEach((c,k)=>c.r[q].forEach((v,i)=>{for(const j of [0,1]){if(v[j]>mx[i][j][0])mx[i][j]=[v[j],k];if(v[j]<mn[i][j][0])mn[i][j]=[v[j],k]}}));env[q]={mx,mn}}
+ const R={};for(const k of ['RA','RE'])for(const j of [0,1,2]){let a=[-1e9,-1],b=[1e9,-1];cb.forEach((c,n)=>{const v=c.r[k][j];if(v>a[0])a=[v,n];if(v<b[0])b=[v,n]});R[k+j]={mx:a,mn:b}}
+ env.R=R;env.key=A;return env}
+const NODES={A:[0,0],B:[7,1],C:[19,1],D:[31,1],E:[-1,1]};
+function envPick(n){const ev=A.env,[i0,j]=NODES[n],i=i0<0?A.ms.E.length-1:i0,cb=A.cb,nm={M:'Momento M [tm]',V:'Corte V [t]',N:'Normal N [t]'};
+ const lk=k=>`<span class="lk" onclick="$('selC').value='k:${k}';drawC()">${cb[k].t}</span>`;
+ let rows='';for(const q of ['M','V','N']){if(q=='M'&&!A.ms.apo&&(n=='A'||n=='E'))continue;const a=ev[q].mx[i][j],b=ev[q].mn[i][j];rows+=`<tr><td>${nm[q]} máx.</td><td>${fs(a[0],2)}</td><td class="l">${lk(a[1])}</td></tr><tr><td>${nm[q]} mín.</td><td>${fs(b[0],2)}</td><td class="l">${lk(b[1])}</td></tr>`}
+ if(n=='A'||n=='E'){const k=n=='A'?'RA':'RE',lb=['Reacción H [t]','Reacción V [t]','Reacción M [tm]'];for(const jj of (A.ms.apo?[0,1,2]:[0,1])){const r=ev.R[k+jj];rows+=`<tr><td>${lb[jj]} máx.</td><td>${fs(r.mx[0],2)}</td><td class="l">${lk(r.mx[1])}</td></tr><tr><td>${lb[jj]} mín.</td><td>${fs(r.mn[0],2)}</td><td class="l">${lk(r.mn[1])}</td></tr>`}}
+ $('envInfo').innerHTML=`<div class="tw"><table><tr><th colspan="3">Nudo ${n}: valores extremos y combinación de la que salen (tocá la combinación para verla)</th></tr><tr><th>Esfuerzo</th><th>Valor</th><th>Combinación</th></tr>${rows}</table></div>`;
+ $('envInfo').dataset.n=n;document.querySelectorAll('.hot').forEach(h=>h.classList.toggle('sel',h.dataset.n==n))}
+function drawEnv(){const m=A.m,d=m.d,W=960,Hh=520,g=frameGeom(m,W,Hh,240,110,150),ev=A.env[DIAG],COL={M:'var(--acc2)',V:'var(--acc)',N:'var(--ok)'}[DIAG];let o=`<svg viewBox="0 0 ${W} ${Hh}">`;
+ let mx=0;ev.mx.forEach((v,i)=>{mx=Math.max(mx,Math.abs(v[0][0]),Math.abs(v[1][0]),Math.abs(ev.mn[i][0][0]),Math.abs(ev.mn[i][1][0]))});const sc=mx>1e-9?46/mx:0;
+ for(const [arr,op] of [[ev.mx,30],[ev.mn,15]])A.ms.E.forEach((e,i)=>{const a=A.ms.N[e.i],b=A.ms.N[e.j],nx=-e.s,ny=e.c,M=[arr[i][0][0],arr[i][1][0]];
+  const p=[[g.X(a[0]),g.Y(a[1])],[g.X(a[0])-nx*M[0]*sc,g.Y(a[1])+ny*M[0]*sc],[g.X(b[0])-nx*M[1]*sc,g.Y(b[1])+ny*M[1]*sc],[g.X(b[0]),g.Y(b[1])]];
+  o+=`<polygon points="${p.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ')}" fill="color-mix(in srgb,${COL} ${op}%,transparent)" stroke="${COL}" stroke-width="0.8" ${op==15?'stroke-dasharray="4 3"':''}/>`});
+ o+=frameLine(g);
+ const pos={A:[0,0],B:[0,m.Hc],C:[d.L/2,m.Hc+m.fr],D:[d.L,m.Hc],E:[d.L,0]},u={M:'tm',V:'t',N:'t'}[DIAG];
+ for(const n in pos){const [i0,j]=NODES[n],i=i0<0?A.ms.E.length-1:i0,x=g.X(pos[n][0]),y=g.Y(pos[n][1]),sg=n=='A'||n=='B'?-1:(n=='C'?0:1);
+  const show=!(DIAG=='M'&&!A.ms.apo&&(n=='A'||n=='E'));
+  if(show)o+=`<text x="${x+sg*16}" y="${y+(n=='C'?-44:(n=='A'||n=='E'?-30:-34))}" text-anchor="${sg<0?'end':(sg>0?'start':'middle')}" style="fill:${COL};font-weight:600">máx ${fs(ev.mx[i][j][0],1)} · mín ${fs(ev.mn[i][j][0],1)} ${u}</text>`;
+  o+=`<g class="hot" data-n="${n}" onclick="envPick('${n}')"><circle cx="${x}" cy="${y}" r="11" fill="color-mix(in srgb,var(--acc) 25%,transparent)" stroke="var(--acc)" stroke-width="2"/><text x="${x}" y="${y+4}" text-anchor="middle" style="font-weight:700;font-size:11px">${n}</text></g>`}
+ o+=`<text x="${W/2}" y="18" text-anchor="middle" style="font-weight:600">Envolvente de las ${A.cb.length} combinaciones ELU · ${{M:'momento flector',V:'corte',N:'normal'}[DIAG]}</text><text x="${W/2}" y="36" text-anchor="middle" style="fill:var(--mut)">relleno lleno: máximo · rayado: mínimo · tocá un nudo (A, B, C, D, E) para ver de qué combinación sale cada extremo</text>`;
+ return o+frameDims(g,m,W,Hh-8)+'</svg>'}
+function drawC(){quickBtns();const v=$('selC').value;if(!v)return;
+ if(v=='env'){if(!A.env||A.env.key!==A)A.env=envBuild();$('svgR').innerHTML=drawEnv();$('rOut').innerHTML='Envolvente: para cada sección, el mayor y el menor valor entre todas las combinaciones mayoradas (CIRSOC 101-25). M dibujado del lado traccionado; N positivo tracción.';const sl=document.querySelector('#envInfo th')?($('envInfo').dataset.n||'B'):'B';envPick(sl);return}
+ $('envInfo').innerHTML='';$('quick').querySelectorAll('.qb').forEach(b=>b.classList.toggle('sel',b.dataset.v==v));let r,t,ps=null,gl=null;
  if(v[0]=='c'){const x=A.list.find(q=>q.id==v.slice(2));r=A.res[x.id];t=x.id+' · '+x.nom;ps=casePress(A,x);if(x.c.tipo=='G'){gl=x.c.g.slice();if(x.mir)gl.reverse()}}
  else{const c=(v[0]=='s'?A.sv:A.cb)[+v.slice(2)];r=c.r;t=c.t}
  $('svgR').innerHTML=drawRes(A,r,t,ps,gl);
