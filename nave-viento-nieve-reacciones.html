@@ -723,7 +723,7 @@ function secSketch(sd,tit){const W=300,Hh=230,hh=sd.var?sd.h1:sd.h,sc=Math.min(1
  o+=dimH(x0-b/2,x0+b/2,y0+h+16,f(sd.b,0))+dimV(x0-b/2-14,y0,y0+h,f(hh,0))+`<text x="${x0+tw/2+4}" y="${y0+h*0.72}" style="font-size:11px">t<tspan baseline-shift="sub" style="font-size:9px">w</tspan> ${f(sd.tw,1)}</text><text x="${x0+b/2+4}" y="${y0+tf+3}" style="font-size:11px">t<tspan baseline-shift="sub" style="font-size:9px">f</tspan> ${f(sd.tf,1)}</text>`;
  return o+'</svg>'}
 function drawBig(m){const d=m.d,W=1100,Hh=440,g=frameGeom(m,W,Hh,170,70,120),sd=[secData(d,'c'),secData(d,'r')];let o=`<svg viewBox="0 0 ${W} ${Hh}">`;
- const P=g.pts.map(p=>[g.X(p[0]),g.Y(p[1])]),wc=Math.max(5,Math.min(16,(sd[0].var?sd[0].h1:sd[0].h)/60))*(sd[0].ho?1.6:1),wr=Math.max(5,Math.min(16,sd[1].h/60))*(sd[1].ho?1.6:1);
+ const P=g.pts.map(p=>[g.X(p[0]),g.Y(p[1])]),pxm=(P[4][0]-P[0][0])/d.L,wc=Math.max(3,(sd[0].var?(sd[0].h+sd[0].h1)/2:sd[0].h)/1000*pxm),wr=Math.max(3,sd[1].h/1000*pxm);
  o+=`<line x1="${P[0][0]}" y1="${P[0][1]}" x2="${P[1][0]}" y2="${P[1][1]}" stroke="var(--acc2)" stroke-width="${wc}" stroke-linecap="square"/><line x1="${P[4][0]}" y1="${P[4][1]}" x2="${P[3][0]}" y2="${P[3][1]}" stroke="var(--acc2)" stroke-width="${wc}" stroke-linecap="square"/>`;
  o+=`<polyline points="${P[1].join(',')} ${P[2].join(',')} ${P[3].join(',')}" fill="none" stroke="var(--acc)" stroke-width="${wr}" stroke-linejoin="round"/>`;
  // alvéolos (esquemáticos) en las barras alveolares
