@@ -76,7 +76,8 @@ code{background:color-mix(in srgb,var(--mut) 15%,transparent);padding:1px 4px;bo
 <button data-t="geo" class="on">1 · Geometría y secciones</button>
 <button data-t="cargas">2 · Análisis de cargas</button>
 <button data-t="esf">3 · Esfuerzos</button>
-<button data-t="reac">4 · Reacciones</button>
+<button data-t="def">4 · Deformaciones</button>
+<button data-t="reac">5 · Reacciones</button>
 <button data-t="teoria">Criterios y reglamento</button>
 </div>
 <main>
@@ -128,6 +129,13 @@ code{background:color-mix(in srgb,var(--mut) 15%,transparent);padding:1px 4px;bo
 <div id="svgR"></div><div id="rOut" class="note"></div></div>
 </section>
 
+<section class="tab" id="t-def">
+<div class="card"><h2>Deformaciones del pórtico</h2>
+<div class="row"><label>Caso o combinación: <select id="selDef" class="big" style="max-width:100%"></select></label><label>Escala del dibujo: <select id="defSc" class="big" style="max-width:160px"><option value="0">automática</option><option value="50">× 50</option><option value="100">× 100</option><option value="200">× 200</option><option value="500">× 500</option></select></label></div>
+<div id="svgDef"></div><div class="tw" id="defTab"></div>
+<div class="note">Análisis elástico de primer orden con las secciones elegidas en la pestaña 1. Los desplazamientos del dibujo están amplificados. Para verificar deformaciones usar las combinaciones de servicio: sin viento, CIRSOC 301-2018 art. B.2.3 ec. B.2.8, D + L + (Lr ó S); con viento, CIRSOC 102-2025: 0,6D + 0,6W y D + 0,75L + 0,45W + 0,75(Lr ó S). F, H, T y R no se consideran porque no existen en esta nave. Las combinaciones mayoradas se muestran solo como referencia.</div></div>
+</section>
+
 <section class="tab" id="t-reac">
 <div class="card"><h2>Reacciones críticas en las bases</h2>
 <div class="opt"><b>Losa del nivel de transferencia</b><select class="losq"><option value="0">No sumar su reacción</option><option value="1">Sumar en la base A</option><option value="2">Sumar en las dos bases</option></select><span class="note losinfo"></span></div>
@@ -153,17 +161,206 @@ code{background:color-mix(in srgb,var(--mut) 15%,transparent);padding:1px 4px;bo
 "use strict";
 const G0=9.80665;
 const CAT={
- 'IPE 200':[200,100,5.6,8.5],'IPE 220':[220,110,5.9,9.2],'IPE 240':[240,120,6.2,9.8],'IPE 270':[270,135,6.6,10.2],'IPE 300':[300,150,7.1,10.7],'IPE 330':[330,160,7.5,11.5],'IPE 360':[360,170,8,12.7],'IPE 400':[400,180,8.6,13.5],'IPE 450':[450,190,9.4,14.6],'IPE 500':[500,200,10.2,16],'IPE 550':[550,210,11.1,17.2],'IPE 600':[600,220,12,19],
- 'HEA 200':[190,200,6.5,10],'HEA 220':[210,220,7,11],'HEA 240':[230,240,7.5,12],'HEA 260':[250,260,7.5,12.5],'HEA 280':[270,280,8,13],'HEA 300':[290,300,8.5,14],'HEA 320':[310,300,9,15.5],'HEA 340':[330,300,9.5,16.5],'HEA 360':[350,300,10,17.5],'HEA 400':[390,300,11,19],'HEA 450':[440,300,11.5,21],'HEA 500':[490,300,12,23],'HEA 600':[590,300,13,25],
- 'HEB 200':[200,200,9,15],'HEB 220':[220,220,9.5,16],'HEB 240':[240,240,10,17],'HEB 260':[260,260,10,17.5],'HEB 280':[280,280,10.5,18],'HEB 300':[300,300,11,19],'HEB 320':[320,300,11.5,20.5],'HEB 340':[340,300,12,21.5],'HEB 360':[360,300,12.5,22.5],'HEB 400':[400,300,13.5,24],'HEB 450':[450,300,14,26],'HEB 500':[500,300,14.5,28],'HEB 600':[600,300,15.5,30],
- 'W 310x38,7':[310,165,5.8,9.7],'W 310x52':[317,167,7.6,13.2],'W 310x60':[303,203,7.5,13.1],'W 310x74':[310,205,9.4,16.3],'W 310x97':[308,305,9.9,15.4],
- 'W 360x51':[355,171,7.2,11.6],'W 360x64':[347,203,7.7,13.5],'W 360x79':[354,205,9.4,16.8],'W 360x101':[357,255,10.5,18.3],
- 'W 410x60':[407,178,7.7,12.8],'W 410x75':[413,180,9.7,16],'W 410x85':[417,181,10.9,18.2],'W 410x100':[415,260,10,16.9],
- 'W 460x74':[457,190,9,14.5],'W 460x89':[463,192,10.5,17.7],'W 460x106':[469,194,12.6,20.6],
- 'W 530x85':[535,166,10.3,16.5],'W 530x101':[537,210,10.9,17.4],'W 530x123':[544,212,13.1,21.2],
- 'W 610x101':[603,228,10.5,14.9],'W 610x125':[612,229,11.9,19.6],'W 610x155':[611,324,12.7,19]};
-// alveolares (castellados) a partir de IPE y HEA: H = 1,5 h, agujero ho = h. Inercia con agujero (sección neta). † a confirmar
-for(const k of ['IPE 300','IPE 330','IPE 360','IPE 400','IPE 450','IPE 500','IPE 550','IPE 600','HEA 300','HEA 340','HEA 400','HEA 450','HEA 500']){const p=CAT[k];CAT['Alveolar '+k+' · H '+(1.5*p[0]).toFixed(0)+' †']=[1.5*p[0],p[1],p[2],p[3],p[0]]}
+ 'W 150 x 13':[148,100,4.3,4.9,0,16.6,635],
+ 'W 150 x 18':[153,102,5.8,7.1,0,23.4,939],
+ 'W 150 x 22,5':[152,152,5.8,6.6,0,29,1229],
+ 'W 150 x 24':[160,102,6.6,10.3,0,31.5,1384],
+ 'W 150 x 29,8':[157,153,6.6,9.3,0,38.5,1739],
+ 'W 150 x 37,1':[162,154,8.1,11.6,0,47.8,2244],
+ 'W 200 x 15,0':[200,100,4.3,5.2,0,19.4,1305],
+ 'W 200 x 19,3':[203,102,5.8,6.5,0,25.1,1686],
+ 'W 200 x 22,5':[206,102,6.2,8,0,29,2029],
+ 'W 200 x 26,6':[207,133,5.8,8.4,0,34.2,2611],
+ 'W 200 x 31,3':[210,134,6.4,10.2,0,40.3,3168],
+ 'W 200 x 35,9':[201,165,6.2,10.2,0,45.7,3437],
+ 'W 200 x 41,7':[205,166,7.2,11.8,0,53.5,4114],
+ 'W 200 x 46,1':[203,203,7.2,11,0,58.6,4543],
+ 'W 200 x 52,0':[206,204,7.9,12.6,0,66.9,5298],
+ 'W 200 x 59,0':[210,205,9.1,14.2,0,76,6140],
+ 'W 200 x 71,0':[216,206,10.2,17.4,0,91,7660],
+ 'W 200 x 86,0':[222,209,13,20.6,0,110.9,9498],
+ 'W 200 x 100,0':[229,210,14.5,23.7,0,127.1,11355],
+ 'W 250 x 17,9':[251,101,4.8,5.3,0,23.1,2291],
+ 'W 250 x 22,3':[254,102,5.8,6.9,0,28.9,2939],
+ 'W 250 x 25,3':[257,102,6.1,8.4,0,32.6,3473],
+ 'W 250 x 28,4':[260,102,6.4,10,0,36.6,4046],
+ 'W 250 x 32,7':[258,146,6.1,9.1,0,42.1,4937],
+ 'W 250 x 38,5':[262,147,6.6,11.2,0,49.6,6057],
+ 'W 250 x 44,8':[266,148,7.6,13,0,57.6,7158],
+ 'W 250 x 73,0':[253,254,8.6,14.2,0,92.7,11257],
+ 'W 250 x 80,0':[256,255,9.4,15.6,0,101.9,12550],
+ 'W 250 x 89,0':[260,256,10.7,17.3,0,113.9,14237],
+ 'W 250 x 101,0':[264,257,11.9,19.6,0,128.7,16352],
+ 'W 250 x 115,0':[269,259,13.5,22.1,0,146.1,18920],
+ 'W 250 x 131,0':[275,261,15.4,25.1,0,167.8,22243],
+ 'W 250 x 149,0':[282,263,17.3,28.4,0,190.5,26027],
+ 'W 250 x 167,0':[289,265,19.2,31.8,0,214,30110],
+ 'W 310 x 21,0':[303,101,5.1,5.7,0,27.2,3776],
+ 'W 310 x 23,8':[305,101,5.6,6.7,0,30.7,4346],
+ 'W 310 x 28,3':[309,102,6,8.9,0,36.5,5500],
+ 'W 310 x 32,7':[313,102,6.6,10.8,0,42.1,6570],
+ 'W 310 x 38,7':[310,165,5.8,9.7,0,49.7,8581],
+ 'W 310 x 44,5':[313,166,6.6,11.2,0,57.2,9997],
+ 'W 310 x 52,0':[317,167,7.6,13.2,0,67,11909],
+ 'W 310 x 60,0':[303,203,7.5,13.1,0,76.1,12908],
+ 'W 310 x 67,0':[306,204,8.5,14.6,0,85.3,14559],
+ 'W 310 x 74,0':[310,205,9.4,16.3,0,95.1,16501],
+ 'W 310 x 97,0':[308,305,9.9,15.4,0,123.6,22284],
+ 'W 310 x 107,0':[311,306,10.9,17,0,136.4,24839],
+ 'W 310 x 117,0':[314,307,11.9,18.7,0,149.9,27563],
+ 'W 310 x 129,0':[318,308,13.1,20.6,0,165.4,30819],
+ 'W 310 x 143,0':[323,309,14,22.9,0,182.5,34812],
+ 'W 310 x 158,0':[327,310,15.5,25.1,0,200.7,38681],
+ 'W 310 x 179,0':[333,313,18,28.1,0,227.9,44580],
+ 'W 310 x 202,0':[341,315,20.1,31.8,0,258.3,52030],
+ 'W 360 x 32,9':[349,127,5.8,8.5,0,42.1,8358],
+ 'W 360 x 39,0':[353,128,6.5,10.7,0,50.2,10331],
+ 'W 360 x 44,6':[352,171,6.9,9.8,0,57.7,12258],
+ 'W 360 x 51,0':[355,171,7.2,11.6,0,64.8,14222],
+ 'W 360 x 58,0':[358,172,7.9,13.1,0,72.5,16143],
+ 'W 360 x 64,0':[347,203,7.7,13.5,0,81.7,17890],
+ 'W 360 x 72,0':[350,204,8.6,15.1,0,91.3,20169],
+ 'W 360 x 79,0':[354,205,9.4,16.8,0,101.2,22713],
+ 'W 360 x 91,0':[353,254,9.5,16.4,0,115.9,26755],
+ 'W 360 x 101,0':[357,255,10.5,18.3,0,129.5,30279],
+ 'W 360 x 110,0':[360,256,11.4,19.9,0,140.6,33155],
+ 'W 360 x 122,0':[363,257,13,21.7,0,155.3,36599],
+ 'W 410 x 38,8':[399,140,6.4,8.8,0,50.3,12777],
+ 'W 410 x 46,1':[403,140,7,11.2,0,59.2,15690],
+ 'W 410 x 53,0':[403,177,7.5,10.9,0,68.4,18734],
+ 'W 410 x 60,0':[407,178,7.7,12.8,0,76.2,21707],
+ 'W 410 x 67,0':[410,179,8.8,14.4,0,86.3,24678],
+ 'W 410 x 75,0':[413,180,9.7,16,0,95.8,27616],
+ 'W 410 x 85,0':[417,181,10.9,18.2,0,108.6,31658],
+ 'W 460 x 52,0':[450,152,7.6,10.8,0,66.6,21370],
+ 'W 460 x 60,0':[455,153,8,13.3,0,76.2,25652],
+ 'W 460 x 68,0':[459,154,9.1,15.4,0,87.6,29851],
+ 'W 460 x 74,0':[457,190,9,14.5,0,94.9,33415],
+ 'W 460 x 82,0':[460,191,9.9,16,0,104.7,37157],
+ 'W 460 x 89,0':[463,192,10.5,17.7,0,114.1,41105],
+ 'W 460 x 97,0':[466,193,11.4,19,0,123.4,44658],
+ 'W 460 x 106,0':[469,194,12.6,20.6,0,135.1,48978],
+ 'W 530 x 66,0':[525,165,8.9,11.4,0,83.6,34971],
+ 'W 530 x 72,0':[524,207,9,10.9,0,91.6,39969],
+ 'W 530 x 74,0':[529,166,9.7,13.6,0,95.1,40969],
+ 'W 530 x 82,0':[528,209,9.5,13.3,0,104.5,47569],
+ 'W 530 x 85,0':[535,166,10.3,16.5,0,107.7,48453],
+ 'W 530 x 92,0':[533,209,10.2,15.6,0,117.6,55157],
+ 'W 530 x 101,0':[537,210,10.9,17.4,0,130,62198],
+ 'W 530 x 109,0':[539,211,11.6,18.8,0,139.7,67226],
+ 'W 530 x 123,0':[544,212,13.1,21.2,0,157.8,76577],
+ 'W 530 x 138,0':[549,214,14.7,23.8,0,177.8,87079],
+ 'W 610 x 82,0':[599,178,10,12.8,0,105.1,56628],
+ 'W 610 x 92,0':[603,179,10.9,15,0,118.4,65277],
+ 'W 610 x 101,0':[603,228,10.5,14.9,0,130.3,77003],
+ 'W 610 x 113,0':[608,228,11.2,17.3,0,145.3,88196],
+ 'W 610 x 125,0':[612,229,11.9,19.6,0,160.1,99184],
+ 'W 610 x 140,0':[617,230,13.1,22.2,0,179.3,112619],
+ 'W 610 x 153':[623,229,14,24.9,0,196.5,125783],
+ 'W 610 x 155,0':[611,324,12.7,19,0,198.1,129583],
+ 'W 610 x 174,0':[616,325,14,21.6,0,222.8,147754],
+ 'W 610 x 195':[622,327,15.4,24.4,0,250.1,168484],
+ 'W 610 x 217':[628,328,16.5,27.7,0,278.4,191395],
+ 'Alveolar W 150 x 13 · H 222':[222,100,4.3,4.9,148,13.42,1381],
+ 'Alveolar W 150 x 18 · H 230':[229.5,102,5.8,7.1,153,18.96,2101],
+ 'Alveolar W 150 x 22,5 · H 228':[228,152,5.8,6.6,152,24.59,2769],
+ 'Alveolar W 150 x 24 · H 240':[240,102,6.6,10.3,160,26.22,3129],
+ 'Alveolar W 150 x 29,8 · H 236':[235.5,153,6.6,9.3,157,33.32,3991],
+ 'Alveolar W 150 x 37,1 · H 243':[243,154,8.1,11.6,162,41.24,5217],
+ 'Alveolar W 200 x 15,0 · H 300':[300,100,4.3,5.2,200,15.10,2843],
+ 'Alveolar W 200 x 19,3 · H 304':[304.5,102,5.8,6.5,203,19.21,3737],
+ 'Alveolar W 200 x 22,5 · H 309':[309,102,6.2,8,206,22.61,4545],
+ 'Alveolar W 200 x 26,6 · H 310':[310.5,133,5.8,8.4,207,28.20,5895],
+ 'Alveolar W 200 x 31,3 · H 315':[315,134,6.4,10.2,210,33.58,7221],
+ 'Alveolar W 200 x 35,9 · H 302':[301.5,165,6.2,10.2,201,39.47,7872],
+ 'Alveolar W 200 x 41,7 · H 308':[307.5,166,7.2,11.8,205,46.12,9424],
+ 'Alveolar W 200 x 46,1 · H 304':[304.5,203,7.2,11,203,51.29,10473],
+ 'Alveolar W 200 x 52,0 · H 309':[309,204,7.9,12.6,206,58.76,12227],
+ 'Alveolar W 200 x 59,0 · H 315':[315,205,9.1,14.2,210,66.44,14262],
+ 'Alveolar W 200 x 71,0 · H 324':[324,206,10.2,17.4,216,79.98,18065],
+ 'Alveolar W 200 x 86,0 · H 333':[333,209,13,20.6,222,96.47,22546],
+ 'Alveolar W 200 x 100,0 · H 344':[343.5,210,14.5,23.7,229,110.50,27183],
+ 'Alveolar W 250 x 17,9 · H 376':[376.5,101,4.8,5.3,251,17.08,5015],
+ 'Alveolar W 250 x 22,3 · H 381':[381,102,5.8,6.9,254,21.53,6526],
+ 'Alveolar W 250 x 25,3 · H 386':[385.5,102,6.1,8.4,257,24.76,7778],
+ 'Alveolar W 250 x 28,4 · H 390':[390,102,6.4,10,260,28.28,9130],
+ 'Alveolar W 250 x 32,7 · H 387':[387,146,6.1,9.1,258,34.23,11165],
+ 'Alveolar W 250 x 38,5 · H 393':[393,147,6.6,11.2,262,40.95,13814],
+ 'Alveolar W 250 x 44,8 · H 399':[399,148,7.6,13,266,47.49,16434],
+ 'Alveolar W 250 x 73,0 · H 380':[379.5,254,8.6,14.2,253,81.82,26019],
+ 'Alveolar W 250 x 80,0 · H 384':[384,255,9.4,15.6,256,89.87,29136],
+ 'Alveolar W 250 x 89,0 · H 390':[390,256,10.7,17.3,260,99.99,33217],
+ 'Alveolar W 250 x 101,0 · H 396':[396,257,11.9,19.6,264,112.99,38395],
+ 'Alveolar W 250 x 115,0 · H 404':[403.5,259,13.5,22.1,269,127.94,44707],
+ 'Alveolar W 250 x 131,0 · H 412':[412.5,261,15.4,25.1,275,146.62,52662],
+ 'Alveolar W 250 x 149,0 · H 423':[423,263,17.3,28.4,282,166.11,62098],
+ 'Alveolar W 250 x 167,0 · H 434':[433.5,265,19.2,31.8,289,186.26,72368],
+ 'Alveolar W 310 x 21,0 · H 454':[454.5,101,5.1,5.7,303,19.47,8313],
+ 'Alveolar W 310 x 23,8 · H 458':[457.5,101,5.6,6.7,305,22.16,9640],
+ 'Alveolar W 310 x 28,3 · H 464':[463.5,102,6,8.9,309,27.23,12333],
+ 'Alveolar W 310 x 32,7 · H 470':[469.5,102,6.6,10.8,313,31.77,14847],
+ 'Alveolar W 310 x 38,7 · H 465':[465,165,5.8,9.7,310,40.71,19428],
+ 'Alveolar W 310 x 44,5 · H 470':[469.5,166,6.6,11.2,313,46.87,22758],
+ 'Alveolar W 310 x 52,0 · H 476':[475.5,167,7.6,13.2,317,54.95,27282],
+ 'Alveolar W 310 x 60,0 · H 454':[454.5,203,7.5,13.1,303,64.74,29086],
+ 'Alveolar W 310 x 67,0 · H 459':[459,204,8.5,14.6,306,72.30,33015],
+ 'Alveolar W 310 x 74,0 · H 465':[465,205,9.4,16.3,310,80.53,37652],
+ 'Alveolar W 310 x 97,0 · H 462':[462,305,9.9,15.4,308,108.35,51064],
+ 'Alveolar W 310 x 107,0 · H 466':[466.5,306,10.9,17,311,119.45,57195],
+ 'Alveolar W 310 x 117,0 · H 471':[471,307,11.9,18.7,314,131.22,63770],
+ 'Alveolar W 310 x 129,0 · H 477':[477,308,13.1,20.6,318,144.57,71651],
+ 'Alveolar W 310 x 143,0 · H 484':[484.5,309,14,22.9,323,159.89,81368],
+ 'Alveolar W 310 x 158,0 · H 490':[490.5,310,15.5,25.1,327,175.36,90858],
+ 'Alveolar W 310 x 179,0 · H 500':[499.5,313,18,28.1,333,197.93,105368],
+ 'Alveolar W 310 x 202,0 · H 512':[511.5,315,20.1,31.8,341,224.03,123830],
+ 'Alveolar W 360 x 32,9 · H 524':[523.5,127,5.8,8.5,349,31.98,18543],
+ 'Alveolar W 360 x 39,0 · H 530':[529.5,128,6.5,10.7,353,38.73,23157],
+ 'Alveolar W 360 x 44,6 · H 528':[528,171,6.9,9.8,352,45.56,27551],
+ 'Alveolar W 360 x 51,0 · H 532':[532.5,171,7.2,11.6,355,52.02,32158],
+ 'Alveolar W 360 x 58,0 · H 537':[537,172,7.9,13.1,358,58.36,36682],
+ 'Alveolar W 360 x 64,0 · H 520':[520.5,203,7.7,13.5,347,68.34,40262],
+ 'Alveolar W 360 x 72,0 · H 525':[525,204,8.6,15.1,350,76.25,45666],
+ 'Alveolar W 360 x 79,0 · H 531':[531,205,9.4,16.8,354,84.56,51711],
+ 'Alveolar W 360 x 91,0 · H 530':[529.5,254,9.5,16.4,353,99.13,61072],
+ 'Alveolar W 360 x 101,0 · H 536':[535.5,255,10.5,18.3,357,110.76,69324],
+ 'Alveolar W 360 x 110,0 · H 540':[540,256,11.4,19.9,360,120.08,76393],
+ 'Alveolar W 360 x 122,0 · H 544':[544.5,257,13,21.7,363,131.71,84707],
+ 'Alveolar W 410 x 38,8 · H 598':[598.5,140,6.4,8.8,399,37.53,28489],
+ 'Alveolar W 410 x 46,1 · H 604':[604.5,140,7,11.2,403,45.09,35288],
+ 'Alveolar W 410 x 53,0 · H 604':[604.5,177,7.5,10.9,403,53.29,42269],
+ 'Alveolar W 410 x 60,0 · H 610':[610.5,178,7.7,12.8,407,60.53,49217],
+ 'Alveolar W 410 x 67,0 · H 615':[615,179,8.8,14.4,410,68.26,56216],
+ 'Alveolar W 410 x 75,0 · H 620':[619.5,180,9.7,16,413,75.77,63156],
+ 'Alveolar W 410 x 85,0 · H 626':[625.5,181,10.9,18.2,417,85.87,72749],
+ 'Alveolar W 460 x 52,0 · H 675':[675,152,7.6,10.8,450,49.50,48110],
+ 'Alveolar W 460 x 60,0 · H 682':[682.5,153,8,13.3,455,58.00,58102],
+ 'Alveolar W 460 x 68,0 · H 688':[688.5,154,9.1,15.4,459,66.72,67975],
+ 'Alveolar W 460 x 74,0 · H 686':[685.5,190,9,14.5,457,74.34,76093],
+ 'Alveolar W 460 x 82,0 · H 690':[690,191,9.9,16,460,81.93,84900],
+ 'Alveolar W 460 x 89,0 · H 694':[694.5,192,10.5,17.7,463,89.79,94220],
+ 'Alveolar W 460 x 97,0 · H 699':[699,193,11.4,19,466,96.84,102626],
+ 'Alveolar W 460 x 106,0 · H 704':[703.5,194,12.6,20.6,469,105.55,112887],
+ 'Alveolar W 530 x 66,0 · H 788':[787.5,165,8.9,11.4,525,60.24,79086],
+ 'Alveolar W 530 x 72,0 · H 786':[786,207,9,10.9,524,68.02,90463],
+ 'Alveolar W 530 x 74,0 · H 794':[793.5,166,9.7,13.6,529,69.44,93073],
+ 'Alveolar W 530 x 82,0 · H 792':[792,209,9.5,13.3,528,79.42,108130],
+ 'Alveolar W 530 x 85,0 · H 802':[802.5,166,10.3,16.5,535,80.15,110585],
+ 'Alveolar W 530 x 92,0 · H 800':[799.5,209,10.2,15.6,533,90.42,125867],
+ 'Alveolar W 530 x 101,0 · H 806':[805.5,210,10.9,17.4,537,100.73,141009],
+ 'Alveolar W 530 x 109,0 · H 808':[808.5,211,11.6,18.8,539,108.44,152863],
+ 'Alveolar W 530 x 123,0 · H 816':[816,212,13.1,21.2,544,122.17,174957],
+ 'Alveolar W 530 x 138,0 · H 824':[823.5,214,14.7,23.8,549,137.45,199859],
+ 'Alveolar W 610 x 82,0 · H 898':[898.5,178,10,12.8,599,75.15,126888],
+ 'Alveolar W 610 x 92,0 · H 904':[904.5,179,10.9,15,603,85.54,147061],
+ 'Alveolar W 610 x 101,0 · H 904':[904.5,228,10.5,14.9,603,98.64,173811],
+ 'Alveolar W 610 x 113,0 · H 912':[912,228,11.2,17.3,608,111.25,199957],
+ 'Alveolar W 610 x 125,0 · H 918':[918,229,11.9,19.6,612,123.69,225735],
+ 'Alveolar W 610 x 140,0 · H 926':[925.5,230,13.1,22.2,617,138.89,257386],
+ 'Alveolar W 610 x 153 · H 934':[934.5,229,14,24.9,623,152.89,288522],
+ 'Alveolar W 610 x 155,0 · H 916':[916.5,324,12.7,19,611,159.30,295586],
+ 'Alveolar W 610 x 174,0 · H 924':[924,325,14,21.6,616,179.68,338335],
+ 'Alveolar W 610 x 195 · H 933':[933,327,15.4,24.4,622,202.21,387257],
+ 'Alveolar W 610 x 217 · H 942':[942,328,16.5,27.7,628,226.59,441641]};
 const CATN=Object.keys(CAT),SECOPT=['Armada (dimensiones de abajo)'].concat(CATN);
 const F=[
  ["Geometría (planos EST-P-PG-006 y ARQ-P-PV-03)",[
@@ -331,7 +528,7 @@ function cases(m){
 
 /* ---------- pórtico: método de rigidez ---------- */
 function Isec(dm,b,tf,tw){b/=1000;tf/=1000;tw/=1000;const hw=dm-2*tf;return {I:(b*dm**3-(b-tw)*hw**3)/12,A:2*b*tf+hw*tw}}
-function secCat(i){const p=CAT[CATN[i-1]],sc=Isec(p[0]/1000,p[1],p[3],p[2]);if(p[4]){const ho=p[4]/1000,tw=p[2]/1000;sc.I-=tw*ho**3/12;sc.A-=tw*ho;sc.alv=1}return sc}
+function secCat(i){const p=CAT[CATN[i-1]];return {I:p[6]*1e-8,A:p[5]*1e-4,alv:p[4]>0}}
 function mesh(m){
  const d=m.d,nc=8,nr=12,N=[],E=[];
  const P=[[0,0],[0,m.Hc],[d.L/2,m.Hc+m.fr],[d.L,m.Hc],[d.L,0]],div=[nc,nr,nr,nc],sf=['cl','rl','rr','cr'];
@@ -379,7 +576,7 @@ function solve(ms,w){ // w: por elemento [wx,wy] t/m global
  const V=ms.E.map(e=>[e._fe[1],-e._fe[4]]),Nn=ms.E.map(e=>[-e._fe[0],e._fe[3]]);
  const nb=8; // nudo del alero izquierdo
  const RA=ms.apo?[R[0],R[1],R[2]]:[R[0],R[1],0],RE=ms.apo?[R[3],R[4],R[5]]:[R[2],R[3],0];
- return {RA,RE,M,V,N:Nn,SF:[SFx,SFy],dx:u[nb*3]};
+ return {RA,RE,M,V,N:Nn,SF:[SFx,SFy],dx:u[nb*3],u:Array.from(u)};
 }
 function loadVec(m,ms,c,mir){
  const tr=m.trib/1000,sn=Math.sin(m.th),cs=Math.cos(m.th),nrm={cl:[-1,0],rl:[-sn,cs],rr:[sn,cs],cr:[1,0]},sw={cl:'cr',cr:'cl',rl:'rr',rr:'rl'};
@@ -398,7 +595,7 @@ function analyze(d,np){
  // combinaciones CIRSOC 101-25
  const Ws=list.filter(x=>x.c.tipo!='G').map(x=>x.id),Ss=list.filter(x=>x.id[0]=='S').map(x=>x.id),nm=id=>list.find(x=>x.id==id).nom;
  const lo=d.los|0;
- if(lo){const z=()=>ms.E.map(()=>[0,0]),mk=P=>({RA:[0,P,0],RE:[0,lo==2?P:0,0],SF:[0,-P*(lo==2?2:1)],dx:0,M:z(),V:z(),N:z()});res.DL=mk(d.PD);res.L=mk(d.PL)}
+ if(lo){const z=()=>ms.E.map(()=>[0,0]),mk=P=>({RA:[0,P,0],RE:[0,lo==2?P:0,0],SF:[0,-P*(lo==2?2:1)],dx:0,M:z(),V:z(),N:z(),u:ms.N.map(()=>[0,0,0]).flat()});res.DL=mk(d.PD);res.L=mk(d.PL)}
  const cb=[],add=(t,o)=>{if(lo&&o.D)o.DL=o.D;cb.push({t,o})};
  const wn=id=>{const x=list.find(q=>q.id==id);return 'Viento '+id+(x.mir?' (desde la derecha)':'')};
  const snn=id=>id=='S'?'Nieve balanceada':(id=='Sn'?'Nieve no balanceada (viento desde la izquierda)':'Nieve no balanceada (viento desde la derecha)');
@@ -417,15 +614,26 @@ function analyze(d,np){
   for(const s of Ss)add('1,2 Permanente + 1,6 '+snn(s)+' + 1,0 '+LL,{D:1.2,[s]:1.6,L:1});
   for(const w of Ws){add('1,2 Permanente + 1,0 '+wn(w)+' + 1,0 '+LL,{D:1.2,[w]:1,L:1});add('1,2 Permanente + 1,0 '+wn(w)+' + 1,0 '+LL+' + 0,5 Sobrecarga de cubierta',{D:1.2,[w]:1,L:1,Lr:0.5});
    for(const s of Ss)add('1,2 Permanente + 1,0 '+wn(w)+' + 1,0 '+LL+' + 0,5 '+snn(s),{D:1.2,[w]:1,L:1,[s]:0.5})}}
- const comb=o=>{const z=()=>ms.E.map(()=>[0,0]),r={RA:[0,0,0],RE:[0,0,0],SF:[0,0],dx:0,M:z(),V:z(),N:z()};
-  for(const k in o){const a=res[k],fc=o[k];for(const q of ['RA','RE','SF'])for(let j=0;j<r[q].length;j++)r[q][j]+=fc*(a[q][j]||0);r.dx+=fc*a.dx;
+ const comb=o=>{const z=()=>ms.E.map(()=>[0,0]),r={RA:[0,0,0],RE:[0,0,0],SF:[0,0],dx:0,M:z(),V:z(),N:z(),u:new Array(ms.N.length*3).fill(0)};
+  for(const k in o){const a=res[k],fc=o[k];for(const q of ['RA','RE','SF'])for(let j=0;j<r[q].length;j++)r[q][j]+=fc*(a[q][j]||0);r.dx+=fc*a.dx;a.u.forEach((v,i)=>r.u[i]+=fc*v);
    for(const q of ['M','V','N'])a[q].forEach((v,i)=>{r[q][i][0]+=fc*v[0];r[q][i][1]+=fc*v[1]})}return r};
  for(const c of cb)c.r=comb(c.o);
+ // combinaciones de servicio sin viento, CIRSOC 301-2018 B.2.8: D + ΣLi, ΣLi = L + (Lr ó S); F, H, T y R no existen en esta nave
+ const sv=[],ads=(t,o)=>{if(lo&&o.D)o.DL=o.D;const r={t,o};r.r=comb(o);sv.push(r)},LLs=(lo&&d.PL>0)?' + 0,75 Sobrecarga de losa':'',Lo=(lo&&d.PL>0)?{L:0.75}:{};
+ {const hl=lo&&d.PL>0,L1=hl?' + 1,0 Sobrecarga de losa':'',Lq=hl?{L:1}:{};
+  ads('Servicio C301 B.2.8: 1,0 Permanente',{D:1});
+  if(hl)ads('Servicio C301 B.2.8: 1,0 Permanente'+L1,{D:1,...Lq});
+  ads('Servicio C301 B.2.8: 1,0 Permanente'+L1+' + 1,0 Sobrecarga de cubierta',{D:1,...Lq,Lr:1});
+  for(const s of Ss)ads('Servicio C301 B.2.8: 1,0 Permanente'+L1+' + 1,0 '+snn(s),{D:1,...Lq,[s]:1})}
+ // combinaciones de servicio con viento, CIRSOC 102-2025
+ for(const w of Ws)ads('Servicio C102: 0,6 Permanente + 0,6 '+wn(w),{D:0.6,[w]:0.6});
+ for(const w of Ws){ads('Servicio C102: 1,0 Permanente'+LLs+' + 0,45 '+wn(w)+' + 0,75 Sobrecarga de cubierta',{D:1,...Lo,[w]:0.45,Lr:0.75});
+  for(const s of Ss)ads('Servicio C102: 1,0 Permanente'+LLs+' + 0,45 '+wn(w)+' + 0,75 '+snn(s),{D:1,...Lo,[w]:0.45,[s]:0.75})}
  const env={Vmax:null,Vmin:null,Hin:null,Hout:null};
  for(const c of cb){const v=c.r.RA[1],h=c.r.RA[0];
   if(!env.Vmax||v>env.Vmax.v)env.Vmax={v,c};if(!env.Vmin||v<env.Vmin.v)env.Vmin={v,c};
   if(!env.Hin||h>env.Hin.v)env.Hin={v:h,c};if(!env.Hout||h<env.Hout.v)env.Hout={v:h,c}}
- return {m,ms,C,res,list,cb,env,lo};
+ return {m,ms,C,res,list,cb,sv,env,lo};
 }
 
 /* ---------- dibujos ---------- */
@@ -505,7 +713,7 @@ function casePress(A,x){const m=A.m,c=x.c;if(c.tipo!='W')return null;const zm=Ma
 /* ---------- geometría grande con perfiles ---------- */
 function secData(d,k){ // k: 'c' columna, 'r' viga
  const i=k=='c'?d.csel:d.rsel;
- if(i>0){const nm=CATN[i-1],p=CAT[nm],sc=secCat(i);return {nm,h:p[0],b:p[1],tw:p[2],tf:p[3],ho:p[4]||0,I:sc.I,A:sc.A,var:false}}
+ if(i>0){const nm=CATN[i-1],p=CAT[nm],sc=secCat(i);return {nm,h:p[0],b:p[1],tw:p[2],tf:p[3],ho:p[4]||0,I:sc.I,A:sc.A,Aw:p[4]?(p[5]+0.5*p[4]*p[2]/100)*1e-4:sc.A,var:false}}
  if(k=='c'){const s0=Isec(d.cd0,d.cb,d.ctf,d.ctw),s1=Isec(d.cd1,d.cb,d.ctf,d.ctw);return {nm:'Armada, sección variable',h:d.cd0*1000,h1:d.cd1*1000,b:d.cb,tw:d.ctw,tf:d.ctf,ho:0,I:s0.I,I1:s1.I,A:s0.A,A1:s1.A,var:true}}
  const s0=Isec(d.rd,d.rb,d.rtf,d.rtw);return {nm:'Armada',h:d.rd*1000,b:d.rb,tw:d.rtw,tf:d.rtf,ho:0,I:s0.I,A:s0.A,var:false}}
 function secSketch(sd,tit){const W=300,Hh=230,hh=sd.var?sd.h1:sd.h,sc=Math.min(150/hh,170/sd.b),x0=W/2,y0=26,b=sd.b*sc,h=hh*sc,tf=Math.max(sd.tf*sc,2),tw=Math.max(sd.tw*sc,1.5);
@@ -535,9 +743,9 @@ function drawBig(m){const d=m.d,W=1100,Hh=440,g=frameGeom(m,W,Hh,170,70,120),sd=
  pos('csel',P[1][0]+150,(P[0][1]+P[1][1])/2);pos('rsel',(P[1][0]+P[2][0])/2-20,(P[1][1]+P[2][1])/2-58);pos('apo',P[0][0]-60,P[0][1]-70);
  return o+'</svg>'}
 function secOut(d){const sd=[secData(d,'c'),secData(d,'r')],pk=a=>a*7850;
- const row=(t,s)=>`<tr><td>${t}</td><td class="l">${s.nm}</td><td>${s.var?f(s.h,0)+' a '+f(s.h1,0):f(s.h,0)}</td><td>${f(s.b,0)}</td><td>${f(s.tw,1)}</td><td>${f(s.tf,1)}</td><td>${s.ho?f(s.ho,0):'—'}</td><td>${s.var?f(s.A*1e4,1)+' a '+f(s.A1*1e4,1):f(s.A*1e4,1)}</td><td>${s.var?f(s.I*1e8,0)+' a '+f(s.I1*1e8,0):f(s.I*1e8,0)}</td><td>${s.var?f(pk(s.A),1)+' a '+f(pk(s.A1),1):f(pk(s.A),1)}</td></tr>`;
+ const row=(t,s)=>`<tr><td>${t}</td><td class="l">${s.nm}</td><td>${s.var?f(s.h,0)+' a '+f(s.h1,0):f(s.h,0)}</td><td>${f(s.b,0)}</td><td>${f(s.tw,1)}</td><td>${f(s.tf,1)}</td><td>${s.ho?f(s.ho,0):'—'}</td><td>${s.var?f(s.A*1e4,1)+' a '+f(s.A1*1e4,1):f(s.A*1e4,1)}</td><td>${s.var?f(s.I*1e8,0)+' a '+f(s.I1*1e8,0):f(s.I*1e8,0)}</td><td>${s.var?f(pk(s.A),1)+' a '+f(pk(s.A1),1):f(pk(s.Aw||s.A),1)}</td></tr>`;
  return `<div class="secg"><div>${secSketch(sd[0],'Columna')}</div><div>${secSketch(sd[1],'Viga')}</div></div><div class="tw"><table><tr><th>Barra</th><th>Perfil</th><th>h [mm]</th><th>b [mm]</th><th>t<sub>w</sub> [mm]</th><th>t<sub>f</sub> [mm]</th><th>Agujero h₀ [mm]</th><th>A [cm²]</th><th>I [cm⁴]</th><th>Peso [kg/m]</th></tr>${row('Columna',sd[0])}${row('Viga',sd[1])}</table></div>
- <p class="note">Propiedades calculadas con alas y alma rectangulares, sin los radios de acuerdo (la inercia da algo menor que la de tabla). Alveolares †: castellados obtenidos de un IPE o HEA, altura H = 1,5 h, agujero h₀ = h; A e I son los de la sección neta en el agujero, valores provisorios a confirmar con el fabricante. El análisis usa estas inercias y áreas; para el pórtico solo importa la rigidez relativa entre columna y viga, y con bases articuladas casi no cambia los momentos.</p>`}
+ <p class="note">Perfiles W: área e inercia de la tabla de perfiles (planilla «Alveolar flexo compresión», hoja Perfiles). Alveolares: obtenidos de un W con altura H = 1,5 d y agujero de altura h₀ = d, como en la hoja «Prop. Alveolar»; A e I son los de la sección neta en el agujero (corte A-A), A = A<sub>W</sub> − 0,5·d·t<sub>w</sub>. La armada usa alas y alma rectangulares. El análisis usa estas inercias y áreas; para el pórtico solo importa la rigidez relativa entre columna y viga, y con bases articuladas casi no cambia los momentos.</p>`}
 
 /* ---------- viento en 3D ---------- */
 function wind3d(A,x,mir){const m=A.m,d=m.d,c=x.c,Lt=m.Lt,L=d.L,Hc=m.Hc,fr=m.fr,W=1100,Hh=520;
@@ -567,6 +775,23 @@ function wind3d(A,x,mir){const m=A.m,d=m.d,c=x.c,Lt=m.Lt,L=d.L,Hc=m.Hc,fr=m.fr,W
  o+=arrow(a0[0],a0[1],a1[0],a1[1],'var(--ink)',4)+`<text x="${a0[0]}" y="${a0[1]-10}" text-anchor="middle" style="font-weight:700">VIENTO</text>`;
  o+=`<text x="${W/2}" y="20" text-anchor="middle" style="font-weight:600">${x.id}${mir?"'":''} · ${x.nom.replace(' · viento desde la derecha','')}${mir?' · viento desde la derecha':''}</text><text x="${W/2}" y="38" text-anchor="middle" style="fill:var(--mut)">presión neta en kg/m² · q<tspan baseline-shift="sub" style="font-size:9px">h</tspan> = ${f(qh,1)} kg/m² · GC<tspan baseline-shift="sub" style="font-size:9px">pi</tspan> = ${sg>0?'+':'−'}${f(gi)}</text>`;
  return o+'</svg>'}
+
+
+/* ---------- deformaciones ---------- */
+function pickRes(v){if(v[0]=='c'){const x=A.list.find(q=>q.id==v.slice(2));return {r:A.res[x.id],t:x.id+' · '+x.nom}}const c=(v[0]=='s'?A.sv:A.cb)[+v.slice(2)];return {r:c.r,t:c.t}}
+function drawDef(){const v=$('selDef').value;if(!v||!A)return;const {r,t}=pickRes(v),m=A.m,d=m.d,ms=A.ms,u=r.u,W=960,Hh=500,g=frameGeom(m,W,Hh,200,90,110);
+ let mx=0;ms.N.forEach((p,i)=>{mx=Math.max(mx,Math.hypot(u[i*3],u[i*3+1]))});
+ const fix=+$('defSc').value,amp=fix||(mx>1e-9?(1.2/mx):1),sc=amp;
+ let o=`<svg viewBox="0 0 ${W} ${Hh}">`+`<g opacity="0.35">${frameLine(g,2)}</g>`;
+ const pts=ms.N.map((p,i)=>[g.X(p[0]+u[i*3]*sc),g.Y(p[1]+u[i*3+1]*sc)]);
+ o+=`<polyline fill="none" stroke="var(--acc)" stroke-width="3" stroke-linejoin="round" points="${pts.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ')}"/>`;
+ const NB={B:8,C:20,D:32},lab={B:'B · alero izquierdo',C:'C · cumbrera',D:'D · alero derecho'};
+ for(const k in NB){const i=NB[k],q=pts[i];o+=`<circle cx="${q[0]}" cy="${q[1]}" r="4.5" fill="var(--acc)"/><text x="${q[0]+(k=='B'?-10:(k=='D'?10:0))}" y="${q[1]-12}" text-anchor="${k=='B'?'end':(k=='D'?'start':'middle')}" style="fill:var(--acc);font-weight:700">${k}: ${fs(u[i*3]*1000,1)} / ${fs(u[i*3+1]*1000,1)} mm</text>`}
+ o+=`<text x="${W/2}" y="18" text-anchor="middle" style="font-weight:600">${t.length>110?t.slice(0,108)+'…':t}</text><text x="${W/2}" y="36" text-anchor="middle" style="fill:var(--mut)">deformada amplificada × ${f(sc,0)} · desplazamientos horizontal / vertical en mm (+ hacia la derecha / + hacia arriba)</text>`+frameDims(g,m,W,Hh-8);
+ $('svgDef').innerHTML=o+'</svg>';
+ const row=k=>{const i=NB[k],ux=u[i*3]*1000,uy=u[i*3+1]*1000;return `<tr><td>${lab[k]}</td><td>${fs(ux,1)}</td><td>${fs(uy,1)}</td><td>${Math.abs(ux)>0.05?'H/'+f(m.Hc*1000/Math.abs(ux),0):'—'}</td><td>${k=='C'&&Math.abs(uy)>0.05?'L/'+f(d.L*1000/Math.abs(uy),0):'—'}</td></tr>`};
+ const dr=(u[32*3]-u[8*3])*1000;
+ $('defTab').innerHTML=`<table><tr><th>Nudo</th><th>Desplazamiento horizontal [mm]</th><th>Desplazamiento vertical [mm]</th><th>Relación con la altura de columna</th><th>Relación con la luz</th></tr>${row('B')}${row('C')}${row('D')}<tr><td>Separación entre aleros (D − B)</td><td>${fs(dr,1)}</td><td>—</td><td>—</td><td>—</td></tr></table>`}
 
 /* ---------- salida ---------- */
 let A=null;
@@ -629,7 +854,9 @@ function run(){
  document.querySelectorAll('.losq').forEach(q=>q.value=d.los|0);
  const sc=$('selC'),pc=sc.value;
  sc.innerHTML='<optgroup label="Casos de carga">'+A.list.map(x=>`<option value="c:${x.id}">${x.id} · ${x.nom}</option>`).join('')+'</optgroup><optgroup label="Combinaciones">'+A.cb.map((c,i)=>`<option value="k:${i}">${c.t}</option>`).join('')+'</optgroup>';
+ sc.innerHTML+='<optgroup label="Combinaciones de servicio (CIRSOC 301-2018 sin viento · CIRSOC 102-2025 con viento)">'+A.sv.map((c,i)=>`<option value="s:${i}">${c.t}</option>`).join('')+'</optgroup>';
  if([...sc.options].some(o=>o.value==pc))sc.value=pc;drawC();
+ {const sd=$('selDef'),pd=sd.value;sd.innerHTML=sc.innerHTML;if([...sd.options].some(o=>o.value==pd))sd.value=pd;else sd.value=sc.value;drawDef()}
  // combinaciones
  const e=A.env,row=(t,x,q)=>`<tr><td>${t}</td><td><b>${fs(x.v)}</b></td><td class="l">${x.c.t}</td><td>${fs(x.c.r.RA[0])}</td><td>${fs(x.c.r.RA[1])}</td><td>${fs(x.c.r.RE[0])}</td><td>${fs(x.c.r.RE[1])}</td></tr>`;
  $('envTab').innerHTML=`<table><tr><th>Reacción en la base izquierda (A)</th><th>Valor [t]</th><th>Combinación que la produce</th><th>H<sub>A</sub></th><th>V<sub>A</sub></th><th>H<sub>E</sub></th><th>V<sub>E</sub></th></tr>${row('Vertical máxima (compresión sobre la fundación)',e.Vmax)}${row(e.Vmin.v<0?'Vertical mínima (levantamiento: la columna tira de la fundación)':'Vertical mínima (no hay levantamiento)',e.Vmin)}${row('Horizontal máxima hacia adentro de la nave (la columna empuja la fundación hacia afuera)',e.Hin)}${row('Horizontal máxima hacia afuera de la nave (la columna empuja la fundación hacia adentro)',e.Hout)}</table>`;
@@ -665,7 +892,7 @@ function quickBtns(){
 }
 function drawC(){quickBtns();const v=$('selC').value;if(!v)return;$('quick').querySelectorAll('.qb').forEach(b=>b.classList.toggle('sel',b.dataset.v==v));let r,t,ps=null,gl=null;
  if(v[0]=='c'){const x=A.list.find(q=>q.id==v.slice(2));r=A.res[x.id];t=x.id+' · '+x.nom;ps=casePress(A,x);if(x.c.tipo=='G'){gl=x.c.g.slice();if(x.mir)gl.reverse()}}
- else{const c=A.cb[+v.slice(2)];r=c.r;t=c.t}
+ else{const c=(v[0]=='s'?A.sv:A.cb)[+v.slice(2)];r=c.r;t=c.t}
  $('svgR').innerHTML=drawRes(A,r,t,ps,gl);
  $('rOut').innerHTML=`${DIAG=='M'?'Diagrama de momentos dibujado del lado traccionado.':(DIAG=='V'?'Corte en cada barra, perpendicular a su eje.':'Normal en cada barra: positivo tracción, negativo compresión.')} Desplazamiento horizontal del alero izquierdo: ${fs(r.dx*1000,1)} mm (análisis elástico de primer orden, con las secciones ingresadas). Suma de reacciones: horizontal ${fs(r.RA[0]+r.RE[0])} t, vertical ${fs(r.RA[1]+r.RE[1])} t.`}
 function teoria(m){const d=m.d,qa=model(Object.assign({},d,{crit:0}),d.np),qb=model(Object.assign({},d,{crit:1}),d.np);
@@ -697,7 +924,7 @@ buildForms();refP();
 const goTab=t=>{document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('on',x.dataset.t==t));document.querySelectorAll('section.tab').forEach(s=>s.classList.toggle('on',s.id=='t-'+t))};
 document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>goTab(b.dataset.t));
 document.querySelectorAll('.frm').forEach(e=>{e.addEventListener('input',run);e.addEventListener('change',run)});
-$('selW').onchange=drawW;$('selWdir').onchange=drawW;$('selC').onchange=drawC;$('selD').onchange=()=>{DIAG=$('selD').value;drawC()};
+$('selW').onchange=drawW;$('selDef').onchange=drawDef;$('defSc').onchange=drawDef;$('selWdir').onchange=drawW;$('selC').onchange=drawC;$('selD').onchange=()=>{DIAG=$('selD').value;drawC()};
 document.querySelectorAll('.losq').forEach(q=>q.onchange=()=>{$('los').value=q.value;run()});
 run();
 </script>
