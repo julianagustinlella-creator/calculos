@@ -169,7 +169,7 @@ details{margin:8px 0}summary{cursor:pointer;color:var(--acc);font-weight:600}
 <section class="tab" id="t-ver">
 <div class="card"><h2>Verificación de elementos</h2><p class="note">Viento sobre componentes y revestimientos (CIRSOC 102-2025, cap. 5), chapas (separación máxima de correas), correas, vigas y columnas. Los datos de cada verificación se cargan abajo.</p></div>
 <div class="card"><h2>Nave en 3D: qué verifica y qué no</h2>
-<div class="row" style="gap:14px;flex-wrap:wrap;margin-bottom:6px"><label><input type="checkbox" id="g3Ch" checked> chapa</label><label><input type="checkbox" id="g3Co" checked> correas de techo</label><label><input type="checkbox" id="g3Pa" checked> correas de pared</label><label><input type="checkbox" id="g3Po" checked> pórticos</label><label><input type="checkbox" id="g3Ar" checked> arriostramientos</label><button type="button" class="nav2" id="g3R" style="font-size:13px">vista inicial</button></div>
+<div class="row" style="gap:14px;flex-wrap:wrap;margin-bottom:6px"><label><input type="checkbox" id="g3Ch" checked> chapa</label><label><input type="checkbox" id="g3Co" checked> correas de techo</label><label><input type="checkbox" id="g3Pa" checked> correas de pared</label><label><input type="checkbox" id="g3Po" checked> pórticos</label><label><input type="checkbox" id="g3Ar" checked> arriostramientos</label><label><input type="checkbox" id="g3Cot" checked> cotas</label><button type="button" class="nav2" id="g3R" style="font-size:13px">vista inicial</button></div>
 <div id="g3" style="position:relative;width:100%;height:560px;border-radius:8px;overflow:hidden;background:#eef1f4"><div id="g3i" style="position:absolute;left:10px;top:10px;background:rgba(255,255,255,.92);color:#222;padding:6px 10px;border-radius:6px;font-size:13px;pointer-events:none">Arrastrá para girar · rueda para acercar · botón derecho para desplazar · tocá un elemento para ver su verificación</div></div>
 <div id="v3d"></div></div>
 <div class="card"><details id="tL31"><summary>Tabla L.3.1 del CIRSOC 301: valores límite de deformaciones (para elegir las flechas admisibles)</summary>
@@ -1289,7 +1289,7 @@ function g3Init(){if(G3.r||typeof THREE=='undefined')return;const el=$('g3');G3.
  G3.r.domElement.addEventListener('pointerdown',e=>down=[e.clientX,e.clientY]);
  G3.r.domElement.addEventListener('pointerup',e=>{if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>4)return;const b=G3.r.domElement.getBoundingClientRect();mv.set((e.clientX-b.left)/b.width*2-1,-(e.clientY-b.top)/b.height*2+1);ray.setFromCamera(mv,G3.cam);
   const h=ray.intersectObjects(G3.grp.children,true).find(x=>x.object.visible&&x.object.parent.visible);$('g3i').innerHTML=h?h.object.userData.t:'Arrastrá para girar · rueda para acercar · botón derecho para desplazar · tocá un elemento para ver su verificación'});
- ['g3Ch','g3Co','g3Pa','g3Po','g3Ar'].forEach(id=>$(id).onchange=()=>{G3.grp.children.forEach(g=>{if(g.userData.k)g.visible=$(g.userData.k).checked})});
+ ['g3Ch','g3Co','g3Pa','g3Po','g3Ar','g3Cot'].forEach(id=>$(id).onchange=()=>{G3.grp.children.forEach(g=>{if(g.userData.k)g.visible=$(g.userData.k).checked})});
  $('g3R').onclick=()=>g3View();
  const loop=()=>{requestAnimationFrame(loop);if(!el.offsetParent)return;G3.ctl.update();G3.r.render(G3.sc,G3.cam)};loop()}
 function g3View(){const c=G3.ctr;G3.cam.position.set(c.x-c.Lt*0.55,c.H*3.2+c.L*0.6,c.z+c.L*1.55);G3.ctl.target.set(c.x,c.H*0.6,c.z);G3.ctl.update()}
@@ -1308,6 +1308,9 @@ function g3Alv(sd,g,p1,p2,up,mat,t){const grp=new THREE.Group(),a=new THREE.Vect
  const u=b.clone().sub(a).normalize(),v=new THREE.Vector3(...up),w=new THREE.Vector3();v.sub(u.clone().multiplyScalar(v.dot(u))).normalize();w.crossVectors(u,v);
  const web=new THREE.Mesh(gw,mat);web.matrixAutoUpdate=false;web.matrix.makeBasis(u,v,w).setPosition(a);web.userData.t=t;grp.add(web);
  grp.children.forEach(c=>c.userData.t=t);return grp}
+function g3Txt(grp,txt,pos,h=0.55){const c=document.createElement('canvas'),x=c.getContext('2d');x.font='bold 44px sans-serif';const w=Math.ceil(x.measureText(txt).width)+24;c.width=w;c.height=64;
+ x.font='bold 44px sans-serif';x.fillStyle='rgba(255,255,255,.9)';x.fillRect(0,0,w,64);x.strokeStyle='#1d4ed8';x.lineWidth=4;x.strokeRect(2,2,w-4,60);x.fillStyle='#1e3a8a';x.textBaseline='middle';x.fillText(txt,12,34);
+ const tx=new THREE.CanvasTexture(c),sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,depthTest:false}));sp.scale.set(h*w/64,h,1);sp.position.set(...pos);sp.renderOrder=10;grp.add(sp)}
 function g3Line(grp,pts,color,r=0.035,t=''){const mat=new THREE.MeshLambertMaterial({color});for(let i=0;i<pts.length-1;i++){const a=new THREE.Vector3(...pts[i]),b=new THREE.Vector3(...pts[i+1]),L=a.distanceTo(b),g=new THREE.CylinderGeometry(r,r,L,6);g.translate(0,L/2,0);g.rotateX(Math.PI/2);
  const ms=new THREE.Mesh(g,mat);ms.position.copy(a);ms.lookAt(b);ms.userData.t=t;grp.add(ms)}}
 function draw3D3(m,d,R){g3Init();if(!G3.r)return false;
@@ -1347,6 +1350,12 @@ function draw3D3(m,d,R){g3Init();if(!G3.r)return false;
  const TB=tecPan(d,sl);if(+d.arPer)for(let i=1;i<=nb;i++){if((d.arTecV||[]).includes(i))continue;const x0=(i-1)*s,x1=i*s,w1=TB[1]*Math.cos(th);for(const [ya,yb2] of [[0,w1],[L,L-w1]]){g3Line(gAr,[[x0,zt(ya)+ro,ya],[x1,zt(yb2)+ro,yb2]],0x16a34a,0.04,'<b>Cruz perimetral de techo</b>, vano '+i);g3Line(gAr,[[x1,zt(ya)+ro,ya],[x0,zt(yb2)+ro,yb2]],0x16a34a,0.04,'<b>Cruz perimetral de techo</b>, vano '+i)}}
  for(const i of d.arTecV||[]){const n=TB.length-1,x0=(i-1)*s,x1=i*s;for(const side of [0,1]){const yy=k=>{const h=TB[k]*Math.cos(th);return side?L-h:h};
   for(let k=0;k<n;k++){const ya=yy(k),yb2=yy(k+1);g3Line(gAr,[[x0,zt(ya)+ro,ya],[x1,zt(yb2)+ro,yb2]],0x16a34a,0.04,'<b>Cruz de techo</b>, vano '+i);g3Line(gAr,[[x1,zt(ya)+ro,ya],[x0,zt(yb2)+ro,yb2]],0x16a34a,0.04,'<b>Cruz de techo</b>, vano '+i)}}}
+ {const gC=gp('g3Cot'),xc=-1.2,cs2=Math.cos(th),ro2=ro+0.15,P2=y=>[xc,zt(y)+ro2,y];
+  for(const side of [0,1]){const yy=v=>{const h=v*cs2;return side?L-h:h};
+   g3Line(gC,[P2(yy(0)),P2(yy(sl))],0x1d4ed8,0.025,'<b>Cota</b>');
+   for(let k=0;k<TB.length;k++){const y=yy(TB[k]);g3Line(gC,[[xc+0.35,zt(y)+ro2-0.35,y],[xc-0.35,zt(y)+ro2+0.35,y]],0x1d4ed8,0.03,'<b>Cota</b>');g3Line(gC,[[xc,zt(y)+ro2,y],[0,zt(y)+ro,y]],0x93c5fd,0.012,'')}
+   for(let k=0;k<TB.length-1;k++){const ym=yy((TB[k]+TB[k+1])/2),PPc=CP(d,sl),nk=PPc.filter(v=>v>TB[k]+1e-6&&v<=TB[k+1]+1e-6).length;g3Txt(gC,`${f(TB[k+1]-TB[k],2)} m (${nk} corr.)`,[xc-0.9,zt(ym)+ro2+0.9,ym])}}
+  g3Txt(gC,`faldón ${f(sl,2)} m`,[xc-0.9,zt(L/2)+ro2+2.2,L/2],0.6)}
  for(let i=0;i<nb;i++)for(let k=1;k<=(+d.arTe|0);k++){const x=i*s+k*s/((+d.arTe)+1);for(const side of [0,1]){const ya=side?L:0;g3Line(gAr,[[x,zt(ya)+ro,ya],[x,zt(L/2)+ro,L/2]],0x6b7280,0.015,'<b>Tilla de correas de techo</b>')}}
  for(let i=0;i<nb;i++)for(let k=1;k<=(+d.arTp|0);k++){const x=i*s+k*s/((+d.arTp)+1);for(const zz of [0,L]){const zw=zz+(zz?1:-1)*offp;g3Line(gAr,[[x,0.2,zw],[x,H,zw]],0x6b7280,0.015,'<b>Tilla de correas de pared</b>')}}
  if(+d.arTnV>0)for(let i=0;i<=nb;i++){const x=i*s;for(let side=0;side<2;side++)for(let c=+d.arTnV;c<=nc;c+=+d.arTnV){const dd=Math.min(CP(d,sl)[c],sl)*Math.cos(th),yy=side?L-dd:dd,yc=zt(yy)+off,yb3=zt(yy)-mm(sr.h)/2;
