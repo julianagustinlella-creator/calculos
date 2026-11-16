@@ -1175,7 +1175,7 @@ function drawVer(m,d){d=Object.assign({},d);for(const [s0,h,b,dd,t] of [['coSel'
   const nP=Math.max(1,+d.arParN|0),nT=Math.max(1,+d.arTecN|0),brC=[...Array(nP-1)].map((_,k)=>H*(k+1)/nP),brV=tecPan(d,sl).slice(1,-1);
   d.LoInfo={tnC,tnV,brC,brV};
   const Lo={vLx:sl,cLx:H,coLbs:d.s/((+d.arTe)+1),coLbi:d.s/((+d.arTe)+1),pLbi:d.s/((+d.arTp)+1),pLs:d.s/((+d.arTp)+1),vLbs:+d.coSep,vLy:gap([...tnV,...brV],sl),vLbi:gap(tnV,sl),cLb:gap([...tnC,...brC],H),cLy:gap([...tnC,...brC],H)};
-  d.LoAuto=Lo;d.LoSrc={};for(const k in Lo){if(+d[k]>0)d.LoSrc[k]='manual';else{d[k]=Lo[k];d.LoSrc[k]='auto'}}}
+  d.LoAuto=Lo;d.LoSrc={};for(const k in Lo){if($(k)&&$(k).dataset.man=='1'&&+d[k]>0)d.LoSrc[k]='manual';else{d[k]=Lo[k];d.LoSrc[k]='auto'}}}
  window.DV=d;try{drawPared(m,d)}catch(e){$('paOut').innerHTML='Error: '+e.message}
  {const Lo=d.LoAuto,r=(n,k,why)=>`<tr><td class="l">${n}</td><td><b>${f(+d[k])}</b></td><td>${d.LoSrc[k]=='manual'?'<span style="color:var(--acc2)">manual</span> (automática: '+f(Lo[k])+')':'automática'}</td><td class="l">${why}</td></tr>`,sec=t=>`<tr><th colspan="4" style="text-align:left">${t}</th></tr>`;
   $('loOut').innerHTML=`<p><button type="button" class="nav2" style="font-size:13px" onclick="loAuto()">Poner todas las longitudes en automático</button></p><p class="note">Cada longitud sale sola de los arriostramientos. Si en el campo del elemento cargás un valor mayor que 0, se usa ese valor manual; con 0 vuelve a la automática.</p><div class="tw"><table><tr><th>Longitud</th><th>Valor usado [m]</th><th>Origen</th><th>Criterio de la automática</th></tr>${sec('Correas')}
@@ -1368,13 +1368,13 @@ function drawArViz(m,d){arVizSlot();const el=$('arViz');if(!el)return;const Lt=m
   hint('arTecN2',+d.arTecN2>0?(T.ok?`→ ${T.a} × ${T.N} + ${T.b} × ${T.N2} = ${T.nc} espacios: cierra justo en la cumbrera`:`<span style="color:#d62828">→ no hay combinación de paneles de ${T.N} y ${T.N2} que sume ${T.nc} espacios: cambiá alguno de los dos</span>`):'→ 0: lo que sobra queda en un solo panel junto a la cumbrera');
   {const W1=wallLv(d,H);hint('pSep',`→ puntales a ${W1.st.map(v=>f(v)).join(' y ')} m; ${W1.g.length} correas de pared por cara, separación real máxima ${f(W1.sep,3)} m`)}
   hint('coSep',`→ ${d.ncs} espacios por faldón: separación real ${f(+d.coSep,3)} m (faldón de ${f(sl)} m)`)}
- for(const k of ['cLx','cLy','cLb','vLx','vLy','vLbs','vLbi','coLbs','coLbi','pLbi','pLs'])if(d.LoAuto)hint(k,d.LoSrc[k]=='manual'?`→ manual: ${f(+d[k])} m (la automática daría ${f(d.LoAuto[k])} m)`:`→ automática: ${f(d.LoAuto[k])} m`);
+ for(const k of ['cLx','cLy','cLb','vLx','vLy','vLbs','vLbi','coLbs','coLbi','pLbi','pLs'])if(d.LoAuto)hint(k,d.LoSrc[k]=='manual'?`→ manual: ${f(+d[k])} m (la automática daría ${f(d.LoAuto[k])} m)`:`→ automática (se recalcula sola; si la escribís pasa a manual, con 0 vuelve)`);
  for(const id of ['chFlG','chFlW','coFlG','coFlW','pFl','vFl','cFl'])hint(id,'<a href="#" onclick="openL31();return false" style="color:var(--acc)">📋 ver la Tabla L.3.1 de flechas admisibles</a>');
  el.innerHTML=`<h2>Esquema de los arriostramientos</h2><div class="row" style="gap:8px;margin:4px 0"><button type="button" class="nav2" style="font-size:13px" onclick="$('arPer').value=+$('arPer').value?0:1;run()">${+d.arPer?'Sacar':'Poner'} X en todo el perímetro del techo</button><button type="button" class="nav2" style="font-size:13px" onclick="$('arTec').value=[...Array(${nb})].map((_,i)=>i+1).join(', ');run()">Cruz de techo en todos los vanos</button><button type="button" class="nav2" style="font-size:13px" onclick="$('arTec').value='1, ${nb}';$('arPar').value='1, ${nb}';run()">Solo vanos extremos</button></div><p class="note">Los vanos se cuentan desde el pórtico 1 (izquierda). Los cambios se aplican al momento: el 3D y las verificaciones se recalculan.</p>${o}${p}${q}
  <p class="note"><b>Cómo se leen los puntos fijos.</b> La correa sola sujeta un ala. Una tornapunta sujeta las dos alas de la columna o de la viga. Un nudo de la cruz (pared o techo) es un punto fijo que las correas trasladan a todos los pórticos. La longitud de pandeo fuera del plano es la mayor distancia entre puntos fijos.</p>`}
 
 function run(){
- const d=read();A=analyze(d,d.np);const m=A.m;try{drawVer(m,d)}catch(e){console.error(e)}try{draw3D(m,window.DV||d)}catch(e){console.error(e)}try{drawArViz(m,window.DV||d)}catch(e){console.error(e)}
+ const d=read();A=analyze(d,d.np);const m=A.m;try{drawVer(m,d)}catch(e){console.error(e)}try{draw3D(m,window.DV||d)}catch(e){console.error(e)}try{drawArViz(m,window.DV||d)}catch(e){console.error(e)}try{loFill()}catch(e){console.error(e)}
  $('svgGeo').innerHTML=drawGeo(m);$('svgPlan').innerHTML=drawPlan(m);$('geoSvg').innerHTML=drawBig(m);$('secOut').innerHTML=secOut(d);
  $('geoOut').innerHTML=`Altura de columna ${f(m.Hc)} m · flecha de cubierta ${f(m.fr)} m · cumbrera ${fs(m.zr)} · nivel de referencia del terreno ${fs(m.zref)} · altura de alero sobre el terreno ${f(m.he)} m · altura de cumbrera ${f(m.hr)} m · <b>altura media de cubierta h = ${f(m.h)} m</b> (θ ${m.thd>=10?'≥':'<'} 10°: ${m.thd>=10?'promedio de alero y cumbrera':'altura del alero'}).`;
  // viento
@@ -1518,9 +1518,12 @@ const LS='nave-vnr-proyectos';
 function getAll(){try{return JSON.parse(localStorage.getItem(LS))||{}}catch(e){return {}}}
 function refP(){const a=getAll();$('plist').innerHTML=Object.keys(a).map(k=>`<option>${k}</option>`).join('')||'<option value="">(sin proyectos guardados)</option>'}
 const LOK=['cLx','cLy','cLb','vLx','vLy','vLbs','vLbi','coLbs','coLbi','pLbi','pLs'];
-function vals(){const o={_lo:1};for(const [,fl] of F)for(const [id] of fl)o[id]=$(id).value;return o}
-function loAuto(){for(const k of LOK)if($(k))$(k).value=0;run()}
-function setVals(o){for(const k in o)if($(k)&&!(!o._lo&&LOK.includes(k)))$(k).value=o[k];run()}
+function vals(){const o={_lo:1,_man:LOK.filter(k=>$(k)&&$(k).dataset.man=='1')};for(const [,fl] of F)for(const [id] of fl)o[id]=$(id).value;return o}
+function loAuto(){for(const k of LOK)if($(k)){$(k).value=0;$(k).dataset.man='0'}run()}
+function loFill(){const D=window.DV;if(!D||!D.LoAuto)return;for(const k of LOK){const e=$(k);if(e&&e.dataset.man!='1'&&document.activeElement!==e)e.value=(+D.LoAuto[k]).toFixed(2)}}
+document.addEventListener('input',ev=>{const e=ev.target;if(e&&LOK.includes(e.id))e.dataset.man=(+String(e.value).replace(',','.')>0)?'1':'0'},true);
+document.addEventListener('focusout',ev=>{const e=ev.target;if(e&&LOK.includes(e.id))loFill()});
+function setVals(o){for(const k of LOK)if($(k))$(k).dataset.man='0';for(const k in o)if($(k)&&!(!o._lo&&LOK.includes(k))){$(k).value=o[k];if(LOK.includes(k))$(k).dataset.man=(o._man?o._man.includes(k):+o[k]>0)?'1':'0'}run()}
 function saveP(){const a=getAll();a[$('pname').value||'sin nombre']=vals();try{localStorage.setItem(LS,JSON.stringify(a))}catch(e){}refP()}
 function loadP(){const a=getAll(),k=$('plist').value;if(a[k]){$('pname').value=k;setVals(a[k])}}
 function delP(){const a=getAll(),k=$('plist').value;if(a[k]&&confirm('¿Borrar "'+k+'"?')){delete a[k];try{localStorage.setItem(LS,JSON.stringify(a))}catch(e){}refP()}}
