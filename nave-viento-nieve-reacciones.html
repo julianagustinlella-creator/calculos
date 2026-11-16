@@ -1330,6 +1330,9 @@ function g3Alv(sd,g,p1,p2,up,mat,t){const grp=new THREE.Group(),a=new THREE.Vect
 function g3Txt(grp,txt,pos,h=0.55){const c=document.createElement('canvas'),x=c.getContext('2d');x.font='bold 44px sans-serif';const w=Math.ceil(x.measureText(txt).width)+24;c.width=w;c.height=64;
  x.font='bold 44px sans-serif';x.fillStyle='rgba(255,255,255,.9)';x.fillRect(0,0,w,64);x.strokeStyle='#1d4ed8';x.lineWidth=4;x.strokeRect(2,2,w-4,60);x.fillStyle='#1e3a8a';x.textBaseline='middle';x.fillText(txt,12,34);
  const tx=new THREE.CanvasTexture(c),sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,depthTest:false}));sp.scale.set(h*w/64,h,1);sp.position.set(...pos);sp.renderOrder=10;grp.add(sp)}
+function g3Dim(grp,a,b,tk,txt,h=0.5,col=0x1d4ed8){const A=new THREE.Vector3(...a),B=new THREE.Vector3(...b),T=new THREE.Vector3(...tk).normalize().multiplyScalar(0.3),D=B.clone().sub(A).normalize().multiplyScalar(0.3);
+ g3Line(grp,[a,b],col,0.02,'<b>Cota</b>: '+txt);for(const P of [A,B])g3Line(grp,[P.clone().sub(T).sub(D).toArray(),P.clone().add(T).add(D).toArray()],col,0.03,'<b>Cota</b>');
+ if(txt)g3Txt(grp,txt,A.clone().add(B).multiplyScalar(0.5).add(T.clone().multiplyScalar(2.6)).toArray(),h)}
 function g3Line(grp,pts,color,r=0.035,t=''){const mat=new THREE.MeshLambertMaterial({color});for(let i=0;i<pts.length-1;i++){const a=new THREE.Vector3(...pts[i]),b=new THREE.Vector3(...pts[i+1]),L=a.distanceTo(b),g=new THREE.CylinderGeometry(r,r,L,6);g.translate(0,L/2,0);g.rotateX(Math.PI/2);
  const ms=new THREE.Mesh(g,mat);ms.position.copy(a);ms.lookAt(b);ms.userData.t=t;grp.add(ms)}}
 function draw3D3(m,d,R){g3Init();if(!G3.r)return false;
@@ -1375,6 +1378,22 @@ function draw3D3(m,d,R){g3Init();if(!G3.r)return false;
    for(let k=0;k<TB.length;k++){const y=yy(TB[k]);g3Line(gC,[[xc+0.35,zt(y)+ro2-0.35,y],[xc-0.35,zt(y)+ro2+0.35,y]],0x1d4ed8,0.03,'<b>Cota</b>');g3Line(gC,[[xc,zt(y)+ro2,y],[0,zt(y)+ro,y]],0x93c5fd,0.012,'')}
    for(let k=0;k<TB.length-1;k++){const ym=yy((TB[k]+TB[k+1])/2),PPc=CP(d,sl),nk=PPc.filter(v=>v>TB[k]+1e-6&&v<=TB[k+1]+1e-6).length;g3Txt(gC,`${f(TB[k+1]-TB[k],2)} m (${nk} corr.)`,[xc-0.9,zt(ym)+ro2+0.9,ym])}}
   g3Txt(gC,`faldón ${f(sl,2)} m`,[xc-0.9,zt(L/2)+ro2+2.2,L/2],0.6)
+  // cotas generales: pórticos, luz, alturas, correas de techo y de pared
+  {const yo=-2.2,xo=-2.2,nbb=Math.round(Lt/s),fr2=(L/2)*Math.tan(th);
+   for(let i=0;i<nbb;i++)g3Dim(gC,[i*s,0,yo],[(i+1)*s,0,yo],[0,0,-1],(i==0||i==nbb-1||i==Math.floor(nbb/2))?f(s,2)+' m':'',0.5,0x7c3aed);
+   g3Dim(gC,[0,0,yo-2],[Lt,0,yo-2],[0,0,-1],`largo ${f(Lt,2)} m · ${nbb} vanos de ${f(s,2)} m (pórticos)`,0.7,0x7c3aed);
+   g3Dim(gC,[xo,0,0],[xo,0,L],[-1,0,0],`luz ${f(L,2)} m`,0.7,0x0f766e);g3Dim(gC,[xo-1.6,0,0],[xo-1.6,0,L/2],[-1,0,0],`${f(L/2,2)} m`,0.5,0x0f766e);g3Dim(gC,[xo-1.6,0,L/2],[xo-1.6,0,L],[-1,0,0],`${f(L/2,2)} m`,0.5,0x0f766e);
+   g3Dim(gC,[xo,0,yo],[xo,H,yo],[-1,0,-1],`columna ${f(H,2)} m`,0.6,0xb45309);g3Dim(gC,[xo,0,L/2],[xo,H+fr2,L/2],[-1,0,0],`cumbrera ${f(H+fr2,2)} m`,0.6,0xb45309);
+   g3Txt(gC,`pendiente ${f(Math.atan(Math.tan(th))*180/Math.PI,1)}° · flecha ${f(fr2,2)} m`,[xo,H+fr2+1.6,L/2],0.5);
+   // correas de techo sobre el faldón (cadena por tramos de igual separación)
+   const PPc=CP(d,sl),xc2=-2.6,cs3=Math.cos(th);let i0=0;const seg=[];for(let i=1;i<PPc.length;i++){const gA=PPc[i]-PPc[i-1],gB=i<PPc.length-1?PPc[i+1]-PPc[i]:null;if(gB==null||Math.abs(gB-gA)>1e-3){seg.push([i0,i]);i0=i}}
+   for(const side of [0,1]){const Py=v=>{const h=v*cs3,y=side?L-h:h;return [xc2,zt(y)+ro+0.5,y]};
+    for(const [p,q] of seg)g3Dim(gC,Py(PPc[p]),Py(PPc[q]),[-1,0.3,0],`correas: ${q-p} × ${f((PPc[q]-PPc[p])/(q-p),3)} m`,0.45,0x2a9d8f);
+    for(const v of PPc){const a=Py(v);g3Line(gC,[a,[a[0]+0.35,a[1]-0.1,a[2]]],0x2a9d8f,0.02,'')}}
+   // correas de pared en la columna del hastial
+   const W1=wallLv(d,H),lv=[0,...W1.g,...W1.st].sort((a,b)=>a-b).filter((v,i,a)=>!i||v-a[i-1]>1e-6);
+   for(let i=1;i<lv.length;i++)g3Dim(gC,[xo+1.2,lv[i-1],-0.6],[xo+1.2,lv[i],-0.6],[-1,0,-1],f(lv[i]-lv[i-1],2)+' m',0.4,0x2a9d8f);
+   g3Txt(gC,'correas de pared',[xo+1.2,H+0.8,-1.4],0.45)}
   // ángulo de las diagonales de la cruz de techo (con la viga), en el primer vano con cruz
   {const vt=(d.arTecV||[])[0];if(vt){const x0=(vt-1)*s,x1=vt*s,V=THREE.Vector3;
    for(const side of [0,1]){const yy=v=>{const h=v*cs2;return side?L-h:h},Pt=(x,y)=>new V(x,zt(y)+ro+0.05,y);
