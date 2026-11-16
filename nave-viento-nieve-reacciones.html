@@ -1293,7 +1293,7 @@ function g3Init(){if(G3.r||typeof THREE=='undefined')return;const el=$('g3');G3.
   const h=ray.intersectObjects(G3.grp.children,true).find(x=>x.object.visible&&x.object.parent.visible);$('g3i').innerHTML=h?h.object.userData.t:'Arrastrá para girar · rueda para acercar · botón derecho para desplazar · tocá un elemento para ver su verificación'});
  ['g3Ch','g3Co','g3Pa','g3Po','g3Ar','g3Cot'].forEach(id=>$(id).onchange=()=>{G3.grp.children.forEach(g=>{if(g.userData.k)g.visible=$(g.userData.k).checked})});
  $('g3R').onclick=()=>g3View();
- const loop=()=>{requestAnimationFrame(loop);if(!el.offsetParent)return;G3.ctl.update();G3.r.render(G3.sc,G3.cam)};loop()}
+ const loop=()=>{requestAnimationFrame(loop);if(!el.getClientRects().length)return;G3.ctl.update();G3.r.render(G3.sc,G3.cam)};loop()}
 function g3Pin(on){const e=$('g3');if(!e)return;const pin=on===undefined?!e.dataset.pin:on;
  if(pin){e.dataset.pin='1';Object.assign(e.style,{position:'fixed',right:'12px',bottom:'48px',width:'46vw',height:'46vh',zIndex:60,boxShadow:'0 6px 24px rgba(0,0,0,.35)',border:'2px solid var(--acc,#ea580c)'});
   if(!$('g3x')){e.insertAdjacentHTML('beforeend','<button id="g3x" type="button" onclick="g3Pin(false)" style="position:absolute;top:6px;right:6px;z-index:5;font-size:13px;padding:2px 8px;border-radius:6px;border:1px solid #999;background:#fff;cursor:pointer">✕ soltar</button>')}}
