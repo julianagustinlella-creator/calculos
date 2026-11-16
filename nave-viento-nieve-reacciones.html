@@ -1374,7 +1374,15 @@ function draw3D3(m,d,R){g3Init();if(!G3.r)return false;
    g3Line(gC,[P2(yy(0)),P2(yy(sl))],0x1d4ed8,0.025,'<b>Cota</b>');
    for(let k=0;k<TB.length;k++){const y=yy(TB[k]);g3Line(gC,[[xc+0.35,zt(y)+ro2-0.35,y],[xc-0.35,zt(y)+ro2+0.35,y]],0x1d4ed8,0.03,'<b>Cota</b>');g3Line(gC,[[xc,zt(y)+ro2,y],[0,zt(y)+ro,y]],0x93c5fd,0.012,'')}
    for(let k=0;k<TB.length-1;k++){const ym=yy((TB[k]+TB[k+1])/2),PPc=CP(d,sl),nk=PPc.filter(v=>v>TB[k]+1e-6&&v<=TB[k+1]+1e-6).length;g3Txt(gC,`${f(TB[k+1]-TB[k],2)} m (${nk} corr.)`,[xc-0.9,zt(ym)+ro2+0.9,ym])}}
-  g3Txt(gC,`faldón ${f(sl,2)} m`,[xc-0.9,zt(L/2)+ro2+2.2,L/2],0.6)}
+  g3Txt(gC,`faldón ${f(sl,2)} m`,[xc-0.9,zt(L/2)+ro2+2.2,L/2],0.6)
+  // ángulo de las diagonales de la cruz de techo (con la viga), en el primer vano con cruz
+  {const vt=(d.arTecV||[])[0];if(vt){const x0=(vt-1)*s,x1=vt*s,V=THREE.Vector3;
+   for(const side of [0,1]){const yy=v=>{const h=v*cs2;return side?L-h:h},Pt=(x,y)=>new V(x,zt(y)+ro+0.05,y);
+    for(let k=0;k<TB.length-1;k++){const A0=Pt(x0,yy(TB[k])),B=Pt(x0,yy(TB[k+1])),C=Pt(x1,yy(TB[k+1]));
+     const u=B.clone().sub(A0).normalize(),w=C.clone().sub(A0).normalize(),ang=Math.acos(Math.max(-1,Math.min(1,u.dot(w))))*180/Math.PI,R=Math.min(1.4,0.3*A0.distanceTo(B)),pts=[];
+     for(let q=0;q<=12;q++){const t=q/12,v=u.clone().multiplyScalar(1-t).add(w.clone().multiplyScalar(t)).normalize().multiplyScalar(R);pts.push(A0.clone().add(v).toArray())}
+     g3Line(gC,pts,0xdc2626,0.02,'<b>Ángulo de la diagonal con la viga</b>: '+f(ang,1)+'°');
+     const mid=u.clone().add(w).normalize().multiplyScalar(R+0.9);g3Txt(gC,f(ang,1)+'°',A0.clone().add(mid).add(new V(0,0.4,0)).toArray(),0.5)}}}}}
  for(let i=0;i<nb;i++)for(let k=1;k<=(+d.arTe|0);k++){const x=i*s+k*s/((+d.arTe)+1);for(const side of [0,1]){const ya=side?L:0;g3Line(gAr,[[x,zt(ya)+ro,ya],[x,zt(L/2)+ro,L/2]],0x6b7280,0.015,'<b>Tilla de correas de techo</b>')}}
  for(let i=0;i<nb;i++)for(let k=1;k<=(+d.arTp|0);k++){const x=i*s+k*s/((+d.arTp)+1);for(const zz of [0,L]){const zw=zz+(zz?1:-1)*offp;g3Line(gAr,[[x,0.2,zw],[x,H,zw]],0x6b7280,0.015,'<b>Tilla de correas de pared</b>')}}
  if(((d.LoInfo||{}).tnV||[]).length)for(let i=0;i<=nb;i++){const x=i*s;for(let side=0;side<2;side++)for(const tv of ((d.LoInfo||{}).tnV||[])){const dd=Math.min(tv,sl)*Math.cos(th),yy=side?L-dd:dd,yc=zt(yy)+off,yb3=zt(yy)-mm(sr.h)/2;
