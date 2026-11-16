@@ -1178,7 +1178,7 @@ function drawVer(m,d){d=Object.assign({},d);for(const [s0,h,b,dd,t] of [['coSel'
   d.LoAuto=Lo;d.LoSrc={};for(const k in Lo){if(+d[k]>0)d.LoSrc[k]='manual';else{d[k]=Lo[k];d.LoSrc[k]='auto'}}}
  window.DV=d;try{drawPared(m,d)}catch(e){$('paOut').innerHTML='Error: '+e.message}
  {const Lo=d.LoAuto,r=(n,k,why)=>`<tr><td class="l">${n}</td><td><b>${f(+d[k])}</b></td><td>${d.LoSrc[k]=='manual'?'<span style="color:var(--acc2)">manual</span> (automática: '+f(Lo[k])+')':'automática'}</td><td class="l">${why}</td></tr>`,sec=t=>`<tr><th colspan="4" style="text-align:left">${t}</th></tr>`;
-  $('loOut').innerHTML=`<p class="note">Cada longitud sale sola de los arriostramientos. Si en el campo del elemento cargás un valor mayor que 0, se usa ese valor manual; con 0 vuelve a la automática.</p><div class="tw"><table><tr><th>Longitud</th><th>Valor usado [m]</th><th>Origen</th><th>Criterio de la automática</th></tr>${sec('Correas')}
+  $('loOut').innerHTML=`<p><button type="button" class="nav2" style="font-size:13px" onclick="loAuto()">Poner todas las longitudes en automático</button></p><p class="note">Cada longitud sale sola de los arriostramientos. Si en el campo del elemento cargás un valor mayor que 0, se usa ese valor manual; con 0 vuelve a la automática.</p><div class="tw"><table><tr><th>Longitud</th><th>Valor usado [m]</th><th>Origen</th><th>Criterio de la automática</th></tr>${sec('Correas')}
   ${r('Correa de techo, L<sub>b</sub> de las dos alas','coLbs',`luz ${f(d.s)} m / (${d.arTe} tillas + 1)`)}
   ${r('Correa de pared, L<sub>b</sub> del ala interior y luz en el eje débil','pLbi',`luz ${f(d.s)} m / (${d.arTp} tillas + 1)`)}
   ${sec('Viga del pórtico')}${r('Viga, k·L<sub>x</sub> (en el plano)','vLx','largo del faldón')}
@@ -1517,8 +1517,10 @@ function teoria(m){const d=m.d,qa=model(Object.assign({},d,{crit:0}),d.np),qb=mo
 const LS='nave-vnr-proyectos';
 function getAll(){try{return JSON.parse(localStorage.getItem(LS))||{}}catch(e){return {}}}
 function refP(){const a=getAll();$('plist').innerHTML=Object.keys(a).map(k=>`<option>${k}</option>`).join('')||'<option value="">(sin proyectos guardados)</option>'}
-function vals(){const o={};for(const [,fl] of F)for(const [id] of fl)o[id]=$(id).value;return o}
-function setVals(o){for(const k in o)if($(k))$(k).value=o[k];run()}
+const LOK=['cLx','cLy','cLb','vLx','vLy','vLbs','vLbi','coLbs','coLbi','pLbi','pLs'];
+function vals(){const o={_lo:1};for(const [,fl] of F)for(const [id] of fl)o[id]=$(id).value;return o}
+function loAuto(){for(const k of LOK)if($(k))$(k).value=0;run()}
+function setVals(o){for(const k in o)if($(k)&&!(!o._lo&&LOK.includes(k)))$(k).value=o[k];run()}
 function saveP(){const a=getAll();a[$('pname').value||'sin nombre']=vals();try{localStorage.setItem(LS,JSON.stringify(a))}catch(e){}refP()}
 function loadP(){const a=getAll(),k=$('plist').value;if(a[k]){$('pname').value=k;setVals(a[k])}}
 function delP(){const a=getAll(),k=$('plist').value;if(a[k]&&confirm('¿Borrar "'+k+'"?')){delete a[k];try{localStorage.setItem(LS,JSON.stringify(a))}catch(e){}refP()}}
