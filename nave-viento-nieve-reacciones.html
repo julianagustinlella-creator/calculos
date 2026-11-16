@@ -183,7 +183,7 @@ details{margin:8px 0}summary{cursor:pointer;color:var(--acc);font-weight:600}
 <tr><td class="l">Desplazamiento de columnas con respecto a la base por acción de viento</td><td>H/150</td><td>Viento</td><td>H/160</td></tr>
 <tr><td class="l">Desplazamiento de columnas con respecto a la base por acción de puente grúa</td><td></td><td>Frenado puente grúa</td><td>H/400 (c)</td></tr></table></div>
 <p class="note">CIRSOC 301, Tabla L.3.1, parte de edificios industriales (las notas (a) a (d) y la parte «para otros edificios» están en el reglamento). Para esta nave, con cubierta de chapa (flexible): chapa, correas y viga L/150 para la flecha total y L/180 para la flecha por sobrecarga; columnas H/150 con viento (H/160 para la parte debida solo al viento).</p></details></div>
-<div id="fver" class="frm"></div>
+<div class="row" style="gap:8px;margin:6px 0"><button type="button" class="nav2" style="font-size:13px" onclick="foldAll(true)">▸ Cerrar todos los datos</button><button type="button" class="nav2" style="font-size:13px" onclick="foldAll(false)">▾ Abrir todos</button><span class="note">o tocá el título de cada recuadro</span></div><div id="fver" class="frm"></div>
 <div class="card"><h2>Viento sobre componentes y revestimientos</h2><div id="crOut"></div></div>
 <div class="card"><h2>Longitudes no arriostradas</h2><div id="loOut"></div></div>
 <div class="card"><h2>Chapas: separación máxima de correas</h2><div id="chOut"></div></div>
@@ -560,6 +560,8 @@ function elSketch(k){const s=13,cx=95,cy=95,c=Math.cos(Math.PI/6),sn=0.5,Pp=(x,y
  const t={ch:'Chapa de cubierta y de pared',co:'Correas de techo',pa:'Correas de pared',col:'Columnas del pórtico',vig:'Vigas del pórtico',ar:'Cruces de pared y techo, tillas'}[k];
  return `<svg viewBox="0 0 250 200" style="width:100%;max-width:260px">${o}<text x="125" y="196" text-anchor="middle" style="font-size:12px;font-weight:600;fill:#ea580c">${t}</text></svg>`}
 const SKK=[['Arriostramientos','ar'],['Chapa','ch'],['Correas de cubierta','co'],['Correas de pared','pa'],['Columnas','col'],['Vigas','vig']];
+function foldT(h,st){const b=h.nextElementSibling,c=st===undefined?b.style.display!='none':st;b.style.display=c?'none':'';h.querySelector('.fi').textContent=c?'▸':'▾'}
+function foldAll(c){document.querySelectorAll('#fver h2.fold').forEach(h=>foldT(h,c))}
 function buildForms(){
  const H={};
  F.forEach(([t,fl],gi)=>{const tg=TGT[gi]||'fgeo';let h='';const vis=fl.filter(x=>!OVF[x[0]]);if(!vis.length)return;
@@ -573,6 +575,7 @@ function buildForms(){
    h+=`</div></div>`;
   }
   const sk=SKK.find(([p])=>t.startsWith(p));if(sk)h=h.replace('<div class="grid">','<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start"><div class="grid" style="flex:1 1 600px">')+`</div><div style="flex:0 0 240px;margin:auto;text-align:center">${elSketch(sk[1])}</div>`;
+  if(tg=='fver'){h=h.replace(`<h2>${t}</h2>`,`<h2 class="fold" onclick="foldT(this)" style="cursor:pointer;user-select:none" title="Tocá para abrir o cerrar"><span class="fi">▾</span> ${t}</h2><div class="fb">`);h+='</div>'}
   h+='</div></div>';H[tg]=(H[tg]||'')+h;
  });
  for(const tg of new Set(TGT))$(tg).innerHTML=H[tg]||'';
