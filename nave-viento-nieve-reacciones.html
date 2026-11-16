@@ -561,7 +561,7 @@ function elSketch(k){const s=13,cx=95,cy=95,c=Math.cos(Math.PI/6),sn=0.5,Pp=(x,y
  return `<svg viewBox="0 0 250 200" style="width:100%;max-width:260px">${o}<text x="125" y="196" text-anchor="middle" style="font-size:12px;font-weight:600;fill:#ea580c">${t}</text></svg>`}
 const SKK=[['Arriostramientos','ar'],['Chapa','ch'],['Correas de cubierta','co'],['Correas de pared','pa'],['Columnas','col'],['Vigas','vig']];
 function foldT(h,st){const b=h.nextElementSibling,c=st===undefined?b.style.display!='none':st;b.style.display=c?'none':'';h.querySelector('.fi').textContent=c?'▸':'▾'}
-function vBadges(){const V=window.VRsum||{};document.querySelectorAll('#fver .vb').forEach(e=>{const r=V[e.dataset.k];
+function vBadges(){const V=window.VRsum||{},PW=window.VRpeso||{};document.querySelectorAll('#fver .vp').forEach(e=>{const p=PW[e.dataset.k];e.style.display=p?'':'none';if(p)e.textContent='⚖ '+p[0].toFixed(1).replace('.',',')+' '+p[1]});document.querySelectorAll('#fver .vb').forEach(e=>{const r=V[e.dataset.k];
  if(e.dataset.k=='ar'){e.textContent='sin verificación todavía';e.style.background='#e5e7eb';e.style.color='#374151';return}
  if(r==null||!isFinite(r)){e.textContent='';return}const ok=r<=1;e.textContent=(ok?'✔ VERIFICA':'✘ NO VERIFICA')+' · '+r.toFixed(2).replace('.',',');e.style.background=ok?'#dcfce7':'#fee2e2';e.style.color=ok?'#166534':'#b91c1c'})}
 function foldAll(c){document.querySelectorAll('#fver h2.fold').forEach(h=>foldT(h,c))}
@@ -578,7 +578,7 @@ function buildForms(){
    h+=`</div></div>`;
   }
   const sk=SKK.find(([p])=>t.startsWith(p));if(sk)h=h.replace('<div class="grid">','<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start"><div class="grid" style="flex:1 1 600px">')+`</div><div style="flex:0 0 240px;margin:auto;text-align:center">${elSketch(sk[1])}</div>`;
-  if(tg=='fver'){h=h.replace(`<h2>${t}</h2>`,`<h2 class="fold" onclick="foldT(this)" style="cursor:pointer;user-select:none" title="Tocá para abrir o cerrar"><span class="fi">▾</span> ${t}<span class="vb" data-k="${sk?sk[1]:''}" style="float:right;font-size:14px;padding:3px 10px;border-radius:12px"></span></h2><div class="fb">`);h+='</div>'}
+  if(tg=='fver'){h=h.replace(`<h2>${t}</h2>`,`<h2 class="fold" onclick="foldT(this)" style="cursor:pointer;user-select:none" title="Tocá para abrir o cerrar"><span class="fi">▾</span> ${t}<span class="vb" data-k="${sk?sk[1]:''}" style="float:right;font-size:14px;padding:3px 10px;border-radius:12px"></span><span class="vp" data-k="${sk?sk[1]:''}" style="font-size:14px;font-weight:600;margin-left:14px;padding:3px 10px;border-radius:12px;background:#e0e7ff;color:#1e3a8a"></span></h2><div class="fb">`);h+='</div>'}
   h+='</div></div>';H[tg]=(H[tg]||'')+h;
  });
  for(const tg of new Set(TGT))$(tg).innerHTML=H[tg]||'';
@@ -1222,6 +1222,8 @@ function drawVer(m,d){d=Object.assign({},d);for(const [s0,h,b,dd,t] of [['coSel'
   d.LoInfo={tnC,tnV,brC,brV};
   const Lo={vLx:sl,cLx:H,coLbs:d.s/((+d.arTe)+1),coLbi:d.s/((+d.arTe)+1),pLbi:d.s/((+d.arTp)+1),pLs:d.s/((+d.arTp)+1),vLbs:+d.coSep,vLy:gap([...tnV,...brV],sl),vLbi:gap(tnV,sl),cLb:gap([...tnC,...brC],H),cLy:gap([...tnC,...brC],H)};
   d.LoAuto=Lo;d.LoSrc={};for(const k in Lo){if($(k)&&$(k).dataset.man=='1'&&+d[k]>0)d.LoSrc[k]='manual';else{d[k]=Lo[k];d.LoSrc[k]='auto'}}}
+ try{const cs=Math.cos(m.th),sl=(d.L/2)/cs,Ws=k=>ppSec(secData(d,k)),cw=(H,B,D,t,tp)=>corrSec(+H,+B,+D,+t,+tp,235).sc.A*7.85e-3,x=CHL[+d.chSel];
+  window.VRpeso={ch:[x.w,'kg/m² de chapa'],co:[cw(d.coH,d.coB,d.coD,d.cot,d.coTipo)/(+d.coSep),'kg/m² de cubierta'],pa:[cw(d.pH,d.pB,d.pD,d.pt,d.pTipo)/(+d.pSep),'kg/m² de pared'],col:[2*m.Hc*Ws('c')/(d.L*d.s),'kg/m² de planta'],vig:[2*sl*Ws('r')/(d.L*d.s),'kg/m² de planta']}}catch(e){console.error(e)}
  window.DV=d;try{drawPared(m,d)}catch(e){$('paOut').innerHTML='Error: '+e.message}
  {const Lo=d.LoAuto,r=(n,k,why)=>`<tr><td class="l">${n}</td><td><b>${f(+d[k])}</b></td><td>${d.LoSrc[k]=='manual'?'<span style="color:var(--acc2)">manual</span> (automática: '+f(Lo[k])+')':'automática'}</td><td class="l">${why}</td></tr>`,sec=t=>`<tr><th colspan="4" style="text-align:left">${t}</th></tr>`;
   $('loOut').innerHTML=`<p><button type="button" class="nav2" style="font-size:13px" onclick="loAuto()">Poner todas las longitudes en automático</button></p><p class="note">Cada longitud sale sola de los arriostramientos. Si en el campo del elemento cargás un valor mayor que 0, se usa ese valor manual; con 0 vuelve a la automática.</p><div class="tw"><table><tr><th>Longitud</th><th>Valor usado [m]</th><th>Origen</th><th>Criterio de la automática</th></tr>${sec('Correas')}
