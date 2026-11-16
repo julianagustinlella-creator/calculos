@@ -73,6 +73,7 @@ code{background:color-mix(in srgb,var(--mut) 15%,transparent);padding:1px 4px;bo
 .vg{border:1px solid color-mix(in srgb,var(--mut) 30%,transparent);border-radius:8px;padding:8px;margin:8px 0}.vgt{font-weight:600;font-size:13px;margin-bottom:4px;color:var(--acc)}
 .vleg{display:flex;flex-wrap:wrap;gap:10px;font-size:12px}.vleg i{display:inline-block;width:12px;height:10px;margin-right:4px;vertical-align:middle}
 details{margin:8px 0}summary{cursor:pointer;color:var(--acc);font-weight:600}
+.hint{font-size:12px;color:var(--acc);margin-top:3px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -1320,6 +1321,13 @@ function drawArViz(m,d){arVizSlot();const el=$('arViz');if(!el)return;const Lt=m
  const Lo=d.LoAuto||{};q+=`<text x="${X2(L)+40}" y="40" style="font-size:12px;font-weight:600">Longitudes que salen</text>`;
  [['Columna, en el plano','cLx'],['Columna, fuera del plano y L<tspan font-size="9">b</tspan>','cLy'],['Viga, ala superior (correas)','vLbs'],['Viga, fuera del plano','vLy'],['Viga, ala inferior','vLbi'],['Correa de techo','coLbs'],['Correa de pared','pLbi']].forEach(([n,k],i)=>q+=`<text x="${X2(L)+40}" y="${60+i*18}" style="font-size:12px">${n}: <tspan font-weight="700">${f(Lo[k]||0)} m</tspan></text>`);
  q+=`<text x="10" y="14" style="font-size:12px;font-weight:600">3 · Corte del pórtico: correas (cuadrados grises), tornapuntas (naranja), nudos de cruces que dan punto fijo (círculos)</text></svg>`;
+ const hint=(id,txt)=>{const fe=$(id)&&$(id).closest('.f');if(!fe)return;let h=fe.querySelector('.hint');if(!h){h=document.createElement('div');h.className='hint';fe.appendChild(h)}h.innerHTML=txt};
+ hint('arTe',`→ tensor cada ${f(s/((+d.arTe)+1))} m: L<sub>b</sub> de la correa de techo = ${f(Lo.coLbs||s/((+d.arTe)+1))} m`);
+ hint('arTp',`→ tensor cada ${f(s/((+d.arTp)+1))} m: L<sub>b</sub> de la correa de pared = ${f(s/((+d.arTp)+1))} m`);
+ hint('arTnV',+d.arTnV>0?`→ correas cada ${f(+d.coSep)} m: tornapunta cada ${f(+d.arTnV*(+d.coSep))} m; L<sub>b</sub> del ala inferior de la viga = ${f(Lo.vLbi)} m`:'→ sin tornapuntas: L<sub>b</sub> del ala inferior = largo del faldón');
+ hint('arTnC',+d.arTnC>0?`→ correas de pared cada ${f(+d.pSep)} m: tornapunta cada ${f(+d.arTnC*(+d.pSep))} m; columna fuera del plano = ${f(Lo.cLy)} m`:`→ sin tornapuntas: columna fuera del plano = ${f(Lo.cLy)} m (nudos de la cruz o altura total)`);
+ hint('arParN',`→ ${(+d.arParN|0)>1?'puntos fijos cada '+f(H/(+d.arParN))+' m en la altura de todas las columnas':'sin punto fijo intermedio en la columna'}`);
+ hint('arTecN',`→ puntos fijos cada ${f(sl/Math.max(1,+d.arTecN|0))} m sobre el faldón; viga fuera del plano = ${f(Lo.vLy)} m`);
  el.innerHTML=`<h2>Esquema de los arriostramientos</h2><p class="note">Los vanos se cuentan desde el pórtico 1 (izquierda). Los cambios se aplican al momento: el 3D y las verificaciones se recalculan.</p>${o}${p}${q}
  <p class="note"><b>Cómo se leen los puntos fijos.</b> La correa sola sujeta un ala. Una tornapunta sujeta las dos alas de la columna o de la viga. Un nudo de la cruz (pared o techo) es un punto fijo que las correas trasladan a todos los pórticos. La longitud de pandeo fuera del plano es la mayor distancia entre puntos fijos.</p>`}
 
