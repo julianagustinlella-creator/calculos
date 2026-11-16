@@ -746,7 +746,7 @@ function drawBig(m){const d=m.d,W=1100,Hh=440,g=frameGeom(m,W,Hh,170,70,120),sd=
  o+=`<text x="${W/2}" y="${Hh-8}" text-anchor="middle" style="fill:var(--mut)">Pórtico ${m.np} de ${m.nf} · separación ${f(d.s)} m · ancho tributario ${f(m.trib)} m · bases ${d.apo?'empotradas':'articuladas'}</text>`;
  // posiciones de los desplegables (en % del dibujo)
  const pos=(id,x,y)=>{const e=$('ov_'+id);if(e){e.style.left=(x/W*100)+'%';e.style.top=(y/Hh*100)+'%'}};
- pos('csel',P[1][0]+150,(P[0][1]+P[1][1])/2);pos('rsel',(P[1][0]+P[2][0])/2-20,(P[1][1]+P[2][1])/2-58);pos('apo',P[0][0]-60,P[0][1]-70);
+ pos('csel',P[1][0]+150,(P[0][1]+P[1][1])/2);pos('rsel',(P[1][0]+P[2][0])/2-20,(P[1][1]+P[2][1])/2-58);pos('apo',P[4][0]-260,(P[0][1]+P[1][1])/2);
  return o+'</svg>'}
 function secOut(d){const sd=[secData(d,'c'),secData(d,'r')],pk=a=>a*7850;
  const row=(t,s)=>`<tr><td>${t}</td><td class="l">${s.nm}</td><td>${s.var?f(s.h,0)+' a '+f(s.h1,0):f(s.h,0)}</td><td>${f(s.b,0)}</td><td>${f(s.tw,1)}</td><td>${f(s.tf,1)}</td><td>${s.ho?f(s.ho,0):'—'}</td><td>${s.var?f(s.A*1e4,1)+' a '+f(s.A1*1e4,1):f(s.A*1e4,1)}</td><td>${s.var?f(s.I*1e8,0)+' a '+f(s.I1*1e8,0):f(s.I*1e8,0)}</td><td>${s.var?f(pk(s.A),1)+' a '+f(pk(s.A1),1):f(pk(s.Aw||s.A),1)}</td></tr>`;
