@@ -553,6 +553,16 @@ function buildForms(){
  let ov='';for(const [,fl] of F)for(const [id,lab,u,def,op] of fl)if(OVF[id])ov+=`<div class="ov" id="ov_${id}"><b>${OVF[id]}</b><select id="${id}">${op.map((o,i)=>`<option value="${i}"${i==def?' selected':''}>${o}</option>`).join('')}</select></div>`;
  $('geoOv').innerHTML=ov;
 }
+
+/* ---------- nombres cortos de combinaciones (el texto completo queda al pasar el mouse) ---------- */
+function ab(t){if(!t)return t;let x=String(t);
+ const R=[[/Servicio C301 B\.2\.8: /,'Serv. C301: '],[/Servicio C102: /,'Serv. C102: '],[/Servicio: /,'Serv.: '],
+  [/Nieve no balanceada \(viento desde la izquierda\)/g,'Sn'],[/Nieve no balanceada \(viento desde la derecha\)/g,"Sn'"],[/Nieve balanceada/g,'S'],
+  [/Sobrecarga de cubierta/g,'Lr'],[/Sobrecarga de losa/g,'L'],[/Permanente/g,'D'],
+  [/Viento (\w+)' \(desde la derecha\)/g,"$1'"],[/Viento (\w+) \(desde la derecha\)/g,"$1'"],[/Viento (\w+)/g,'$1'],
+  [/(\d,\d+) (?=[A-Za-z])/g,'$1']];
+ for(const [a,b] of R)x=x.replace(a,b);return x.replace(/ \+ /g,' + ')}
+const cbT=t=>`<span title="${String(t).replace(/"/g,'&quot;')}" style="border-bottom:1px dotted var(--mut)">${ab(t)}</span>`;
 function read(){const o={};for(const [,fl] of F)for(const [id,,,df] of fl){if(typeof df=='string'){o[id]=$(id).value;continue}const v=parseFloat($(id).value);o[id]=isFinite(v)?v:0}return o}
 
 /* ---------- viento ---------- */
@@ -1053,9 +1063,9 @@ function drawVC(m,d){const ms=A.ms,K=G0/1000*1000/1000,E=200000,Fy=+d.fyW,t2k=9.
   const cl=r=>r<=1?'ok':'bad';UV.push({l:nm+': flexocompresión',r:best.r},{l:nm+': corte',r:bV.r},...bA.map(z=>({l:nm+': '+z.q.replace(/ \(.*\)/,''),r:z.r})));
   out+=`<h3>${nm}: ${sd.nm}</h3><div class="kpi"><div><b>${f(phPn,0)} kN</b><span>φP<sub>n</sub> (E3/E7): k·L<sub>x</sub> = ${f(Lx)} m, k·L<sub>y</sub> = ${f(Ly)} m, λ = ${f(pc.sl,0)}, Q = ${f(pc.Q,3)}</span></div><div><b>${f(0.9*Math.min(MnS.Mn,MnNet),0)} kN·m</b><span>φM<sub>n</sub> ${k=='r'?'ala superior comprimida, L<sub>b</sub> = '+f(+d.vLbs):'L<sub>b</sub> = '+f(+d.cLb)} m (L<sub>p</sub> = ${f(MnS.Lp)} m, L<sub>r</sub> = ${f(MnS.Lr)} m)</span></div>${k=='r'?`<div><b>${f(0.9*Math.min(MnI.Mn,MnNet),0)} kN·m</b><span>φM<sub>n</sub> ala inferior comprimida, L<sub>b</sub> = ${f(+d.vLbi)} m</span></div>`:''}<div><b>${f(vS.phVn,0)} kN</b><span>φV<sub>n</sub> (G2)</span></div></div>
   <div class="tw"><table><tr><th>Verificación</th><th>Solicitación</th><th>Relación</th><th>Combinación que manda</th></tr>
-  <tr><td class="l">Flexocompresión (H1-1)</td><td>P<sub>u</sub> = ${f(best.Pu,0)} kN, M<sub>u</sub> = ${f(best.M,0)} kN·m, φM<sub>n</sub> = ${f(best.phMn,0)} kN·m (C<sub>b</sub> = ${f(best.CbU,2)})${k=='r'?(best.bot?' (ala inferior comprimida)':' (ala superior comprimida)'):''}</td><td class="${cl(best.r)}">${f(best.r,2)}</td><td class="l">${best.c}</td></tr>
-  <tr><td class="l">Corte (G2)</td><td>V<sub>u</sub> = ${f(bV.V,0)} kN</td><td class="${cl(bV.r)}">${f(bV.r,2)}</td><td class="l">${bV.c}</td></tr>
-  ${bA.map(z=>`<tr><td class="l">${z.q}</td><td>${z.x}</td><td class="${cl(z.r)}">${f(z.r,2)}</td><td class="l">${z.c}</td></tr>`).join('')}</table></div>
+  <tr><td class="l">Flexocompresión (H1-1)</td><td>P<sub>u</sub> = ${f(best.Pu,0)} kN, M<sub>u</sub> = ${f(best.M,0)} kN·m, φM<sub>n</sub> = ${f(best.phMn,0)} kN·m (C<sub>b</sub> = ${f(best.CbU,2)})${k=='r'?(best.bot?' (ala inferior comprimida)':' (ala superior comprimida)'):''}</td><td class="${cl(best.r)}">${f(best.r,2)}</td><td class="l">${cbT(best.c)}</td></tr>
+  <tr><td class="l">Corte (G2)</td><td>V<sub>u</sub> = ${f(bV.V,0)} kN</td><td class="${cl(bV.r)}">${f(bV.r,2)}</td><td class="l">${cbT(bV.c)}</td></tr>
+  ${bA.map(z=>`<tr><td class="l">${z.q}</td><td>${z.x}</td><td class="${cl(z.r)}">${f(z.r,2)}</td><td class="l">${cbT(z.c)}</td></tr>`).join('')}</table></div>
   ${CbM>0?`<p class="note">C<sub>b</sub> = ${f(CbM,2)} ingresado a mano.</p>`:cbChart(best.dg,best.sg,`C<sub>b</sub> del tramo que manda la flexocompresión: ${{cl:'columna izquierda (desde la base)',cr:'columna derecha (desde la base)',rl:'faldón izquierdo (desde el alero)',rr:'faldón derecho (desde el alero)'}[best.sf]}, L<sub>b</sub> = ${f(best.Lb)} m${k=='r'?(best.bot?', ala inferior comprimida':', ala superior comprimida'):''}`)}
   ${MnS.web?'':'<p class="note bad">El alma no es compacta en flexión (h/t<sub>w</sub> &gt; 3,76√(E/F<sub>y</sub>)): faltan los capítulos F4/F5.</p>'}
   ${alv?`<p class="note">Alveolar (AISC Design Guide 31): h₀ = ${f(g.ho,0)} mm, θ = ${f(+d.alvT,0)}°, b = ${f(g.b,1)} mm, e = ${f(g.e,1)} mm${+d.alvE>0?'':' (criterio de la planilla, confirmar con el fabricante)'}, paso ${f(g.S,0)} mm, altura de la T ${f(g.dt,1)} mm, d<sub>eff</sub> = ${f(g.deff,0)} mm, e/t<sub>w</sub> = ${f(g.e/sd.tw,1)}. Flexión global: mínimo entre F<sub>y</sub>·Z<sub>neta</sub> y el pandeo lateral con la sección bruta. Corte vertical: sección neta (k<sub>v</sub> = 1,2) y bruta (k<sub>v</sub> = 5,34). No incluye pandeo flexotorsional de la T (E4) ni pandeo lateral de la T.</p>`:''}`}
@@ -1064,8 +1074,8 @@ function drawVC(m,d){const ms=A.ms,K=G0/1000*1000/1000,E=200000,Fy=+d.fyW,t2k=9.
  A.sv.forEach(c=>{const u=c.r.u,vC=Math.abs(u[61]-(u[25]+u[97])/2)*1000,hB=Math.max(Math.abs(u[24]),Math.abs(u[96]))*1000;if(vC>dv.v)dv={v:vC,c:c.t};if(hB>dh.v)dh={v:hB,c:c.t}});
  const va=A.m.d.L*1000/fls[+d.vFl]/2*2,ha=A.m.Hc*1000/flh[+d.cFl];
  out+=`<h3>Deformaciones de servicio</h3><div class="tw"><table><tr><th>Verificación</th><th>Máximo [mm]</th><th>Admisible [mm]</th><th>Resultado</th><th>Combinación</th></tr>
- <tr><td class="l">Flecha de la viga en la cumbrera, relativa a los aleros (L = ${f(A.m.d.L)} m)</td><td>${f(dv.v,1)}</td><td>${f(va,1)} (L/${fls[+d.vFl]})</td><td class="${dv.v<=va?'ok':'bad'}">${dv.v<=va?'cumple':'no cumple'}</td><td class="l">${dv.c}</td></tr>
- <tr><td class="l">Desplazamiento lateral del alero (H = ${f(A.m.Hc)} m)</td><td>${f(dh.v,1)}</td><td>${f(ha,1)} (H/${flh[+d.cFl]})</td><td class="${dh.v<=ha?'ok':'bad'}">${dh.v<=ha?'cumple':'no cumple'}</td><td class="l">${dh.c}</td></tr></table></div>
+ <tr><td class="l">Flecha de la viga en la cumbrera, relativa a los aleros (L = ${f(A.m.d.L)} m)</td><td>${f(dv.v,1)}</td><td>${f(va,1)} (L/${fls[+d.vFl]})</td><td class="${dv.v<=va?'ok':'bad'}">${dv.v<=va?'cumple':'no cumple'}</td><td class="l">${cbT(dv.c)}</td></tr>
+ <tr><td class="l">Desplazamiento lateral del alero (H = ${f(A.m.Hc)} m)</td><td>${f(dh.v,1)}</td><td>${f(ha,1)} (H/${flh[+d.cFl]})</td><td class="${dh.v<=ha?'ok':'bad'}">${dh.v<=ha?'cumple':'no cumple'}</td><td class="l">${cbT(dh.c)}</td></tr></table></div>
  <p class="note">Si la viga o la columna es alveolar, el análisis (esfuerzos y flechas) usa ${f(+d.alvIf||0.9,2)} × I neta de la sección con agujero. Esfuerzos de todas las combinaciones ELU del análisis (CIRSOC 101-2025), en cada extremo de cada tramo de barra. F<sub>y</sub> = ${f(Fy,0)} MPa, E = 200 000 MPa. Compresión: E3 con secciones esbeltas por E7 (Q<sub>s</sub> del ala, Q<sub>a</sub> con ancho efectivo del alma). Flexión: F2 (pandeo lateral-torsional con L<sub>b</sub> y C<sub>b</sub> de cada tramo, F1-1, con el diagrama de momentos de cada combinación) y F3 (pandeo local del ala). En la viga, el ala comprimida se elige según el signo del momento: momento negativo (como en el alero) comprime el ala inferior. Interacción H1-1a/b. Las longitudes de pandeo k·L las define el usuario según el arriostramiento. Las propiedades de los W se calculan con alas y alma rectangulares (sin radios).</p>`;
  const dv2=UV;window.VRvc=UV.concat([{l:'Viga flecha',r:dv.v/va},{l:'Columna desplazamiento',r:dh.v/ha}]);dv2.push({l:'Flecha de la viga',r:dv.v/va},{l:'Desplazamiento lateral del alero',r:dh.v/ha});
  $('vcOut').innerHTML=gWrap('Aprovechamiento de cada verificación (verde ≤ 0,80 · amarillo ≤ 1,00 · rojo > 1,00)',utilBars(dv2.filter((z,i,a)=>!z.l.startsWith('Columna derecha')||true)))+'<details><summary>Detalle del cálculo</summary>'+out+'</details>'}
@@ -1335,19 +1345,19 @@ function run(){
  $('rTab').innerHTML=rt+'</table>';
  document.querySelectorAll('.losq').forEach(q=>q.value=d.los|0);
  const sc=$('selC'),pc=sc.value;
- sc.innerHTML='<optgroup label="Envolvente"><option value="env">Envolvente de las combinaciones ELU (mayoradas)</option></optgroup><optgroup label="Casos de carga">'+A.list.map(x=>`<option value="c:${x.id}">${x.id} · ${x.nom}</option>`).join('')+'</optgroup><optgroup label="Combinaciones">'+A.cb.map((c,i)=>`<option value="k:${i}">${c.t}</option>`).join('')+'</optgroup>';
- sc.innerHTML+='<optgroup label="Combinaciones de servicio (CIRSOC 301-2018 sin viento · CIRSOC 102-2025 con viento)">'+A.sv.map((c,i)=>`<option value="s:${i}">${c.t}</option>`).join('')+'</optgroup>';
+ sc.innerHTML='<optgroup label="Envolvente"><option value="env">Envolvente de las combinaciones ELU (mayoradas)</option></optgroup><optgroup label="Casos de carga">'+A.list.map(x=>`<option value="c:${x.id}">${x.id} · ${x.nom}</option>`).join('')+'</optgroup><optgroup label="Combinaciones">'+A.cb.map((c,i)=>`<option value="k:${i}" title="${c.t}">${ab(c.t)}</option>`).join('')+'</optgroup>';
+ sc.innerHTML+='<optgroup label="Combinaciones de servicio (CIRSOC 301-2018 sin viento · CIRSOC 102-2025 con viento)">'+A.sv.map((c,i)=>`<option value="s:${i}" title="${c.t}">${ab(c.t)}</option>`).join('')+'</optgroup>';
  if([...sc.options].some(o=>o.value==pc))sc.value=pc;drawC();
  {const sd=$('selDef'),pd=sd.value;sd.innerHTML=sc.innerHTML.replace(/<optgroup label="Envolvente">.*?<\/optgroup>/,'');if([...sd.options].some(o=>o.value==pd))sd.value=pd;else sd.value=sc.value;drawDef()}
  // combinaciones
- const e=A.env,row=(t,x,q)=>`<tr><td>${t}</td><td><b>${fs(x.v)}</b></td><td class="l">${x.c.t}</td><td>${fs(x.c.r.RA[0])}</td><td>${fs(x.c.r.RA[1])}</td><td>${fs(x.c.r.RE[0])}</td><td>${fs(x.c.r.RE[1])}</td></tr>`;
+ const e=A.env,row=(t,x,q)=>`<tr><td>${t}</td><td><b>${fs(x.v)}</b></td><td class="l">${cbT(x.c.t)}</td><td>${fs(x.c.r.RA[0])}</td><td>${fs(x.c.r.RA[1])}</td><td>${fs(x.c.r.RE[0])}</td><td>${fs(x.c.r.RE[1])}</td></tr>`;
  $('envTab').innerHTML=`<table><tr><th>Reacción en la base izquierda (A)</th><th>Valor [t]</th><th>Combinación que la produce</th><th>H<sub>A</sub></th><th>V<sub>A</sub></th><th>H<sub>E</sub></th><th>V<sub>E</sub></th></tr>${row('Vertical máxima (compresión sobre la fundación)',e.Vmax)}${row(e.Vmin.v<0?'Vertical mínima (levantamiento: la columna tira de la fundación)':'Vertical mínima (no hay levantamiento)',e.Vmin)}${row('Horizontal máxima hacia adentro de la nave (la columna empuja la fundación hacia afuera)',e.Hin)}${row('Horizontal máxima hacia afuera de la nave (la columna empuja la fundación hacia adentro)',e.Hout)}</table>`;
  const fr=[...new Set([1,2,Math.ceil(m.nf/2),m.np])].filter(i=>i<=m.nf).sort((a,b)=>a-b);
  let st='<table><tr><th>Pórtico</th><th>Ancho tributario [m]</th><th>Vertical máxima [t]</th><th>Vertical mínima [t]</th><th>Horizontal hacia adentro [t]</th><th>Horizontal hacia afuera [t]</th></tr>';
  for(const i of fr){const B=i==m.np?A:analyze(d,i),n=i==1?'extremo':(i==2?'segundo':(i==Math.ceil(m.nf/2)?'central':''));
   st+=`<tr><td>${i}${n?' ('+n+')':''}${i==m.np?' · analizado':''}</td><td>${f(B.m.trib)}</td><td>${fs(B.env.Vmax.v)}</td><td>${fs(B.env.Vmin.v)}</td><td>${fs(B.env.Hin.v)}</td><td>${fs(B.env.Hout.v)}</td></tr>`}
  $('sumTab').innerHTML=st+'</table>';
- $('allTab').innerHTML='<table><tr><th>Combinación</th><th>H<sub>A</sub></th><th>V<sub>A</sub></th>'+mh('A')+'<th>H<sub>E</sub></th><th>V<sub>E</sub></th>'+mh('E')+'</tr>'+A.cb.map(c=>`<tr><td>${c.t}</td><td>${fs(c.r.RA[0])}</td><td>${fs(c.r.RA[1])}</td>${mc(c.r.RA[2])}<td>${fs(c.r.RE[0])}</td><td>${fs(c.r.RE[1])}</td>${mc(c.r.RE[2])}</tr>`).join('')+'</table>';
+ $('allTab').innerHTML='<table><tr><th>Combinación</th><th>H<sub>A</sub></th><th>V<sub>A</sub></th>'+mh('A')+'<th>H<sub>E</sub></th><th>V<sub>E</sub></th>'+mh('E')+'</tr>'+A.cb.map(c=>`<tr><td>${cbT(c.t)}</td><td>${fs(c.r.RA[0])}</td><td>${fs(c.r.RA[1])}</td>${mc(c.r.RA[2])}<td>${fs(c.r.RE[0])}</td><td>${fs(c.r.RE[1])}</td>${mc(c.r.RE[2])}</tr>`).join('')+'</table>';
  $('bar').innerHTML=`<span>Losa <b>${['no sumada','en base A','en las dos bases'][A.lo]}</b></span><span>q<sub>h</sub> <b>${f(m.qh,1)} kg/m²</b></span><span>Nieve p<sub>s</sub> <b>${f(m.kg(m.ps),1)} kg/m²</b></span><span>Pórtico <b>${m.np}</b></span><span>V máx <b>${fs(e.Vmax.v)} t</b></span><span>V mín <b>${fs(e.Vmin.v)} t</b></span><span>H adentro <b>${fs(e.Hin.v)} t</b></span><span>H afuera <b>${fs(e.Hout.v)} t</b></span>`;
  teoria(m);
 }
@@ -1357,7 +1367,7 @@ let QTOL=10,QBASE='AE';
 function quickBtns(){
  const cand=items=>{const o=[];items.forEach(it=>{for(const b of QBASE){const r=b=='A'?it.r.RA:it.r.RE;o.push({it,b,H:r[0],V:r[1],M:r[2]||0})}});return o};
  const best=(c,fn)=>c.reduce((m,x)=>!m||fn(x)>fn(m)?x:m,null);
- const tr=(lab,q,k)=>`<tr class="qb" data-v="${q.it.val}"><td>${lab}</td><td class="${k=='V'?'n':'m'}">${fs(q.V)}</td><td class="${k=='H'?'n':'m'}">${f(Math.abs(q.H))}</td>${A.ms.apo?`<td class="${k=='M'?'n':'m'}">${f(Math.abs(q.M))}</td>`:''}<td style="text-align:center">${q.b}</td><td class="l"><b>${q.it.id}</b> · ${q.it.nom}</td></tr>`;
+ const tr=(lab,q,k)=>`<tr class="qb" data-v="${q.it.val}"><td>${lab}</td><td class="${k=='V'?'n':'m'}">${fs(q.V)}</td><td class="${k=='H'?'n':'m'}">${f(Math.abs(q.H))}</td>${A.ms.apo?`<td class="${k=='M'?'n':'m'}">${f(Math.abs(q.M))}</td>`:''}<td style="text-align:center">${q.b}</td><td class="l"><b>${q.it.id}</b> · ${cbT(q.it.nom)}</td></tr>`;
  const grp=(tit,items)=>{if(!items.length)return'';const c=cand(items),kc=best(c,x=>x.V),kt=best(c,x=>-x.V),kh=best(c,x=>Math.abs(x.H));
   const near=c.filter(x=>Math.abs(x.H)>=Math.abs(kh.H)*(1-QTOL/100)),hN=best(near,x=>x.V),hn=best(near,x=>-x.V);
   return `<div class="tw"><table class="crit"><caption>${tit}</caption><tr><th style="width:25%">Reacción buscada</th><th>V [t]</th><th>H [t]</th>${A.ms.apo?'<th>M [t·m]</th>':''}<th>Base</th><th>Caso o combinación que la produce</th></tr>`
@@ -1379,7 +1389,7 @@ function envBuild(){const cb=A.cb,E=A.ms.E.length,env={};for(const q of ['M','V'
  env.R=R;env.key=A;return env}
 const NODES={A:[0,0],B:[7,1],C:[19,1],D:[31,1],E:[-1,1]};
 function envPick(n){const ev=A.envE,[i0,j]=NODES[n],i=i0<0?A.ms.E.length-1:i0,cb=A.cb,nm={M:'Momento M [tm]',V:'Corte V [t]',N:'Normal N [t]'};
- const lk=k=>`<span class="lk" onclick="$('selC').value='k:${k}';drawC()">${cb[k].t}</span>`;
+ const lk=k=>`<span class="lk" onclick="$('selC').value='k:${k}';drawC()">${cbT(cb[k].t)}</span>`;
  let rows='';for(const q of ['M','V','N']){if(q=='M'&&!A.ms.apo&&(n=='A'||n=='E'))continue;const a=ev[q].mx[i][j],b=ev[q].mn[i][j];rows+=`<tr><td>${nm[q]} máx.</td><td>${fs(a[0],2)}</td><td class="l">${lk(a[1])}</td></tr><tr><td>${nm[q]} mín.</td><td>${fs(b[0],2)}</td><td class="l">${lk(b[1])}</td></tr>`}
  if(n=='A'||n=='E'){const k=n=='A'?'RA':'RE',lb=['Reacción H [t]','Reacción V [t]','Reacción M [tm]'];for(const jj of (A.ms.apo?[0,1,2]:[0,1])){const r=ev.R[k+jj];rows+=`<tr><td>${lb[jj]} máx.</td><td>${fs(r.mx[0],2)}</td><td class="l">${lk(r.mx[1])}</td></tr><tr><td>${lb[jj]} mín.</td><td>${fs(r.mn[0],2)}</td><td class="l">${lk(r.mn[1])}</td></tr>`}}
  $('envInfo').innerHTML=`<div class="tw"><table><tr><th colspan="3">Nudo ${n}: valores extremos y combinación de la que salen (tocá la combinación para verla)</th></tr><tr><th>Esfuerzo</th><th>Valor</th><th>Combinación</th></tr>${rows}</table></div>`;
