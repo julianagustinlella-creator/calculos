@@ -561,6 +561,9 @@ function elSketch(k){const s=13,cx=95,cy=95,c=Math.cos(Math.PI/6),sn=0.5,Pp=(x,y
  return `<svg viewBox="0 0 250 200" style="width:100%;max-width:260px">${o}<text x="125" y="196" text-anchor="middle" style="font-size:12px;font-weight:600;fill:#ea580c">${t}</text></svg>`}
 const SKK=[['Arriostramientos','ar'],['Chapa','ch'],['Correas de cubierta','co'],['Correas de pared','pa'],['Columnas','col'],['Vigas','vig']];
 function foldT(h,st){const b=h.nextElementSibling,c=st===undefined?b.style.display!='none':st;b.style.display=c?'none':'';h.querySelector('.fi').textContent=c?'▸':'▾'}
+function vBadges(){const V=window.VRsum||{};document.querySelectorAll('#fver .vb').forEach(e=>{const r=V[e.dataset.k];
+ if(e.dataset.k=='ar'){e.textContent='sin verificación todavía';e.style.background='#e5e7eb';e.style.color='#374151';return}
+ if(r==null||!isFinite(r)){e.textContent='';return}const ok=r<=1;e.textContent=(ok?'✔ VERIFICA':'✘ NO VERIFICA')+' · '+r.toFixed(2).replace('.',',');e.style.background=ok?'#dcfce7':'#fee2e2';e.style.color=ok?'#166534':'#b91c1c'})}
 function foldAll(c){document.querySelectorAll('#fver h2.fold').forEach(h=>foldT(h,c))}
 function buildForms(){
  const H={};
@@ -575,7 +578,7 @@ function buildForms(){
    h+=`</div></div>`;
   }
   const sk=SKK.find(([p])=>t.startsWith(p));if(sk)h=h.replace('<div class="grid">','<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start"><div class="grid" style="flex:1 1 600px">')+`</div><div style="flex:0 0 240px;margin:auto;text-align:center">${elSketch(sk[1])}</div>`;
-  if(tg=='fver'){h=h.replace(`<h2>${t}</h2>`,`<h2 class="fold" onclick="foldT(this)" style="cursor:pointer;user-select:none" title="Tocá para abrir o cerrar"><span class="fi">▾</span> ${t}</h2><div class="fb">`);h+='</div>'}
+  if(tg=='fver'){h=h.replace(`<h2>${t}</h2>`,`<h2 class="fold" onclick="foldT(this)" style="cursor:pointer;user-select:none" title="Tocá para abrir o cerrar"><span class="fi">▾</span> ${t}<span class="vb" data-k="${sk?sk[1]:''}" style="float:right;font-size:14px;padding:3px 10px;border-radius:12px"></span></h2><div class="fb">`);h+='</div>'}
   h+='</div></div>';H[tg]=(H[tg]||'')+h;
  });
  for(const tg of new Set(TGT))$(tg).innerHTML=H[tg]||'';
@@ -1307,6 +1310,7 @@ function draw3D(m,d){const L=d.L,Lt=m.Lt,H=m.Hc,fr=m.fr,a=crA(m),s=+d.s,sp=+d.co
  const rG=mx(co,/Gravitatoria/),rCo={z1:Math.max(rG,mx(co,/zona 1/)),z2:Math.max(rG,mx(co,/zona 2/)),z3:Math.max(rG,mx(co,/zona 3/))},rPa={w4:mx(pa,/zona 4/),w5:mx(pa,/zona 5/)};
  const rCol=mx(vc,/^Columna/),rVig=mx(vc,/^Viga/);
  const ch=chMax(m,CHL[+d.chSel],d),rCh={z1:sp/ch.z.z1,z2:sp/ch.z.z2,z3:sp/ch.z.z3,w4:ps/ch.z.w4,w5:ps/ch.z.w5};
+ window.VRsum={ch:Math.max(...Object.values(rCh)),co:Math.max(...Object.values(rCo)),pa:Math.max(rPa.w4,rPa.w5),col:rCol,vig:rVig};
  const zr=(x,y)=>{const e=x<a||x>Lt-a,ev=y<a||y>L-a,ri=Math.abs(y-L/2)<a;return e&&(ev||ri)?'z3':(e||ri?'z2':'z1')};
  const zt=y=>H+(y<=L/2?y:L-y)*Math.tan(th);
  const ok3=draw3D3(m,d,{col:rCol,vig:rVig,co:rCo,pa:rPa,ch:rCh});
@@ -1398,7 +1402,7 @@ function drawArViz(m,d){arVizSlot();const el=$('arViz');if(!el)return;const Lt=m
  <p class="note"><b>Cómo se leen los puntos fijos.</b> La correa sola sujeta un ala. Una tornapunta sujeta las dos alas de la columna o de la viga. Un nudo de la cruz (pared o techo) es un punto fijo que las correas trasladan a todos los pórticos. La longitud de pandeo fuera del plano es la mayor distancia entre puntos fijos.</p>`}
 
 function run(){
- const d=read();A=analyze(d,d.np);const m=A.m;try{drawVer(m,d)}catch(e){console.error(e)}try{draw3D(m,window.DV||d)}catch(e){console.error(e)}try{drawArViz(m,window.DV||d)}catch(e){console.error(e)}try{loFill()}catch(e){console.error(e)}
+ const d=read();A=analyze(d,d.np);const m=A.m;try{drawVer(m,d)}catch(e){console.error(e)}try{draw3D(m,window.DV||d)}catch(e){console.error(e)}try{drawArViz(m,window.DV||d)}catch(e){console.error(e)}try{loFill()}catch(e){console.error(e)}try{vBadges()}catch(e){console.error(e)}
  $('svgGeo').innerHTML=drawGeo(m);$('svgPlan').innerHTML=drawPlan(m);$('geoSvg').innerHTML=drawBig(m);$('secOut').innerHTML=secOut(d);
  $('geoOut').innerHTML=`Altura de columna ${f(m.Hc)} m · flecha de cubierta ${f(m.fr)} m · cumbrera ${fs(m.zr)} · nivel de referencia del terreno ${fs(m.zref)} · altura de alero sobre el terreno ${f(m.he)} m · altura de cumbrera ${f(m.hr)} m · <b>altura media de cubierta h = ${f(m.h)} m</b> (θ ${m.thd>=10?'≥':'<'} 10°: ${m.thd>=10?'promedio de alero y cumbrera':'altura del alero'}).`;
  // viento
