@@ -482,6 +482,7 @@ const F=[
   ["arPer","Cruces en todo el perímetro (franja junto a los dos aleros)","",0,["No","Sí"]],
   ["arTe","Correas de techo: tillas en cada vano","",2],
   ["arTp","Correas de pared: tillas en cada vano","",1],
+  ["arTnVM","Viga: dónde van las tornapuntas","",0,["Cada N correas (dato de abajo)","En los nudos de la cruz de techo (coinciden con los tensores)","Ninguna"]],
   ["arTnV","Viga: una tornapunta cada N correas (0 = no hay)","",4],
   ["arTnC","Columna: una tornapunta cada N correas de pared (0 = no hay)","",2]]],
  ["Chapa de cubierta y de pared (verificación)",[
@@ -1260,7 +1261,7 @@ function drawVer(m,d){d=Object.assign({},d);for(const [s0,h,b,dd,t] of [['coSel'
  {const nb=Math.round(m.Lt/d.s),sl=(d.L/2)/Math.cos(m.th),bays=t=>String(t).split(/[,; ]+/).map(Number).filter(x=>x>=1&&x<=nb);d.arParV=bays(d.arPar);d.arTecV=bays(d.arTec);
   const gap=(pts,Lt)=>{const p=[0,...pts.filter(x=>x>1e-6&&x<Lt-1e-6),Lt].sort((a,b)=>a-b);let g=0;for(let i=1;i<p.length;i++)g=Math.max(g,p[i]-p[i-1]);return g};
   const H=m.Hc,ps=+d.pSep,tnC=[],tnV=[];if(+d.arTnC>0){let k=0;for(const hh of wallLv(d,H).g){k++;if(k%(+d.arTnC)==0)tnC.push(hh)}}
-  if(+d.arTnV>0){const P=CP(d,sl),nc=P.length-1;for(let c=+d.arTnV;c<=nc;c+=+d.arTnV)tnV.push(P[c])}
+  if(+d.arTnVM==1){for(const v of tecPan(d,sl).slice(1,-1))tnV.push(v)}else if(+d.arTnVM!=2&&+d.arTnV>0){const P=CP(d,sl),nc=P.length-1;for(let c=+d.arTnV;c<=nc;c+=+d.arTnV)tnV.push(P[c])}
   const nP=Math.max(1,+d.arParN|0),nT=Math.max(1,+d.arTecN|0),brC=[...Array(nP-1)].map((_,k)=>H*(k+1)/nP),brV=tecPan(d,sl).slice(1,-1);
   d.LoInfo={tnC,tnV,brC,brV};
   const Lo={vLx:2*sl,cLx:H,coLbs:d.s/((+d.arTe)+1),coLbi:d.s/((+d.arTe)+1),pLbi:d.s/((+d.arTp)+1),pLs:d.s/((+d.arTp)+1),vLbs:gap([...tnV,...brV],sl),vLy:gap([...tnV,...brV],sl),vLbi:gap(tnV,sl),cLb:gap([...tnC,...brC],H),cLy:gap([...tnC,...brC],H)};
@@ -1275,7 +1276,7 @@ function drawVer(m,d){d=Object.assign({},d);for(const [s0,h,b,dd,t] of [['coSel'
   ${sec('Viga del pórtico')}${r('Viga, k·L<sub>x</sub> (en el plano)','vLx','largo desarrollado de los dos faldones (alero a alero): en el plano del pórtico la cumbrera no es un punto fijo, puede subir y bajar')}
   ${r('Viga, L<sub>b</sub> del ala superior','vLbs','igual que k·L<sub>y</sub>: la correa sola no es punto fijo; solo lo es donde llega a un nudo de la cruz de techo (o hay tornapunta)')}
   ${r('Viga, k·L<sub>y</sub> (fuera del plano)','vLy',`mayor distancia entre puntos fijos: nudos de las cruces de techo (uno cada ${d.arTecN} correas, se trasladan a todos los pórticos por las correas)${+d.arTnV>0?' y tornapuntas':''}`)}
-  ${r('Viga, L<sub>b</sub> del ala inferior','vLbi',+d.arTnV>0?`tornapuntas cada ${d.arTnV} correas`:'sin tornapuntas: largo del faldón')}
+  ${r('Viga, L<sub>b</sub> del ala inferior','vLbi',+d.arTnVM==1?'tornapuntas en los nudos de la cruz de techo':(+d.arTnVM!=2&&+d.arTnV>0?`tornapuntas cada ${d.arTnV} correas`:'sin tornapuntas: largo del faldón'))}
   ${sec('Columna del pórtico')}${r('Columna, k·L<sub>x</sub> (en el plano)','cLx','altura total de la columna (k = 1, como indicaste)')}
   ${r('Columna, L<sub>b</sub>','cLb','igual que k·L<sub>y</sub>: tornapuntas y nudos de la cruz')}${r('Columna, k·L<sub>y</sub> (fuera del plano)','cLy',`mayor distancia entre puntos fijos: ${+d.arTnC>0?'tornapuntas cada '+d.arTnC+' correas de pared':'sin tornapuntas'}${(+d.arParN|0)>1?' y nudos de las cruces de pared ('+d.arParN+' paneles en altura, se trasladan a todas las columnas por la correa)':''}; si no hay ninguno, la altura total`)}
   </table></div><p class="note">La correa sola fija un ala (la exterior) y no cuenta como punto fijo para el pandeo fuera del plano: solo cuentan las tornapuntas (fijan las dos alas) y los nudos de las cruces, que se trasladan a todos los pórticos a través de las correas. Cruces de pared en los vanos ${d.arParV.join(', ')||'—'}; cruces de techo en los vanos ${d.arTecV.join(', ')||'—'}. Las cruces, tillas y tornapuntas todavía no se verifican: por ahora definen longitudes y se dibujan en el 3D.</p>`}try{drawCorrea(m,d)}catch(e){$('coOut').innerHTML='Error: '+e.message}try{drawVC(m,d)}catch(e){$('vcOut').innerHTML='Error: '+e.message}
@@ -1375,7 +1376,7 @@ function draw3D3(m,d,R){g3Init();if(!G3.r)return false;
   g3Txt(gC,`faldón ${f(sl,2)} m`,[xc-0.9,zt(L/2)+ro2+2.2,L/2],0.6)}
  for(let i=0;i<nb;i++)for(let k=1;k<=(+d.arTe|0);k++){const x=i*s+k*s/((+d.arTe)+1);for(const side of [0,1]){const ya=side?L:0;g3Line(gAr,[[x,zt(ya)+ro,ya],[x,zt(L/2)+ro,L/2]],0x6b7280,0.015,'<b>Tilla de correas de techo</b>')}}
  for(let i=0;i<nb;i++)for(let k=1;k<=(+d.arTp|0);k++){const x=i*s+k*s/((+d.arTp)+1);for(const zz of [0,L]){const zw=zz+(zz?1:-1)*offp;g3Line(gAr,[[x,0.2,zw],[x,H,zw]],0x6b7280,0.015,'<b>Tilla de correas de pared</b>')}}
- if(+d.arTnV>0)for(let i=0;i<=nb;i++){const x=i*s;for(let side=0;side<2;side++)for(let c=+d.arTnV;c<=nc;c+=+d.arTnV){const dd=Math.min(CP(d,sl)[c],sl)*Math.cos(th),yy=side?L-dd:dd,yc=zt(yy)+off,yb3=zt(yy)-mm(sr.h)/2;
+ if(((d.LoInfo||{}).tnV||[]).length)for(let i=0;i<=nb;i++){const x=i*s;for(let side=0;side<2;side++)for(const tv of ((d.LoInfo||{}).tnV||[])){const dd=Math.min(tv,sl)*Math.cos(th),yy=side?L-dd:dd,yc=zt(yy)+off,yb3=zt(yy)-mm(sr.h)/2;
   for(const dx of [-0.9,0.9]){const xx=x+dx;if(xx<0||xx>Lt)continue;g3Line(gAr,[[xx,yc,yy],[x,yb3,yy]],0xf97316,0.025,'<b>Tornapunta de la viga</b>')}}}
  if(+d.arTnC>0)for(let i=0;i<=nb;i++){const x=i*s;for(const [zz,sg] of [[0,-1],[L,1]]){let k=0;for(const hh of wallLv(d,H).g){k++;if(k%(+d.arTnC))continue;const zg=zz+sg*offp,zi=zz-sg*mm(sc.var?(sc.h+sc.h1)/2:sc.h)/2;
   for(const dx of [-0.9,0.9]){const xx=x+dx;if(xx<0||xx>Lt)continue;g3Line(gAr,[[xx,hh,zg],[x,hh,zi]],0xf97316,0.025,'<b>Tornapunta de la columna</b>')}}}}
@@ -1473,7 +1474,8 @@ function drawArViz(m,d){arVizSlot();const el=$('arViz');if(!el)return;const Lt=m
  const hint=(id,txt)=>{const fe=$(id)&&$(id).closest('.f');if(!fe)return;let h=fe.querySelector('.hint');if(!h){h=document.createElement('div');h.className='hint';fe.appendChild(h)}h.innerHTML=txt};
  hint('arTe',`→ tilla cada ${f(s/((+d.arTe)+1))} m: L<sub>b</sub> de la correa de techo = ${f(Lo.coLbs||s/((+d.arTe)+1))} m`);
  hint('arTp',`→ tilla cada ${f(s/((+d.arTp)+1))} m: L<sub>b</sub> de la correa de pared = ${f(s/((+d.arTp)+1))} m`);
- hint('arTnV',+d.arTnV>0?`→ correas cada ${f(+d.coSep)} m: tornapunta cada ${f(+d.arTnV*(+d.coSep))} m; L<sub>b</sub> del ala inferior de la viga = ${f(Lo.vLbi)} m`:'→ sin tornapuntas: L<sub>b</sub> del ala inferior = largo del faldón');
+ hint('arTnVM',+d.arTnVM==1?`→ tornapuntas en los nudos de la cruz: a ${(d.LoInfo.tnV||[]).map(v=>f(v)).join(' · ')} m del alero; L<sub>b</sub> del ala inferior = ${f(Lo.vLbi)} m`:(+d.arTnVM==2?'→ sin tornapuntas':'→ según el dato de abajo'));
+ hint('arTnV',+d.arTnVM==1?'→ no se usa (las tornapuntas van en los nudos de la cruz)':+d.arTnVM==2?'→ no se usa':+d.arTnV>0?`→ correas cada ${f(+d.coSep)} m: tornapunta cada ${f(+d.arTnV*(+d.coSep))} m; L<sub>b</sub> del ala inferior de la viga = ${f(Lo.vLbi)} m`:'→ sin tornapuntas: L<sub>b</sub> del ala inferior = largo del faldón');
  hint('arTnC',+d.arTnC>0?`→ correas de pared cada ${f(+d.pSep)} m: tornapunta cada ${f(+d.arTnC*(+d.pSep))} m; columna fuera del plano = ${f(Lo.cLy)} m`:`→ sin tornapuntas: columna fuera del plano = ${f(Lo.cLy)} m (nudos de la cruz o altura total)`);
  hint('arParN',`→ ${(+d.arParN|0)>1?'puntos fijos cada '+f(H/(+d.arParN))+' m en la altura de todas las columnas':'sin punto fijo intermedio en la columna'}`);
  {const T=tecIdx(d,sl),pz=[];if(T.a)pz.push(`${T.a} de ${T.N} correas`);if(T.b)pz.push(`${T.b} de ${T.N2} correas`);if(T.rest)pz.push(`1 de ${T.rest} correas junto a la cumbrera`);
