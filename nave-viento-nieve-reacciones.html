@@ -494,7 +494,7 @@ const F=[
   ["coMod","Modelo de la correa","",0,["Simplemente apoyada (un tramo entre pórticos)","Continua (3 o más tramos)"]],
   ["coLbs","Correa: Lb del ala superior (carga gravitatoria; distancia entre tensores)","m",1.67],
   ["coLbi","Correa: Lb del ala inferior (succión y apoyos de la continua)","m",2.5],
-  ["coCb","Correa: Cb","",1.0],
+  ["coCb","Correa de techo: Cb manual (0 = calcular con F1-1)","",0],
   ["coFlG","Flecha admisible de la correa, carga gravitatoria (Tabla L.3.1)","",1,["L/150","L/180","L/200","L/240","L/250","L/300","L/360"]],
   ["coFlW","Flecha admisible de la correa, viento","",1,["L/150","L/180","L/200","L/240","L/250","L/300","L/360"]]]],
  ["Correas de pared, perfil C o doble C (CIRSOC 303)",[
@@ -507,7 +507,7 @@ const F=[
   ["pMod","Modelo de la correa de pared","",0,["Simplemente apoyada (un tramo entre columnas)","Continua (3 o más tramos)"]],
   ["pLbe","Lb del ala exterior (presión; la chapa la arriostra)","m",0.5],
   ["pLbi","Lb del ala interior (succión; entre tensores o riostras)","m",2.5],
-  ["pCb","Correa de pared: Cb","",1.0],
+  ["pCb","Correa de pared: Cb manual (0 = calcular con F1-1)","",0],
   ["pDc","Peso de la chapa de pared","kg/m²",6],
   ["pLs","Luz en el eje débil (separación de tensores verticales)","m",2.5],
   ["pFl","Flecha admisible de la correa de pared (viento de servicio)","",1,["L/150","L/180","L/200","L/240","L/250","L/300","L/360"]]]],
@@ -516,13 +516,14 @@ const F=[
   ["cLx","Columna: longitud de pandeo en el plano del pórtico, k·Lx","m",11.6],
   ["cLy","Columna: longitud de pandeo fuera del plano, k·Ly (entre riostras)","m",5.8],
   ["cLb","Columna: Lb para pandeo lateral-torsional","m",5.8],
-  ["cCb","Columna: Cb","",1.0],
+  ["cCb","Columna: Cb manual (0 = calcular con F1-1 en cada tramo)","",0],
   ["vLx","Viga: longitud de pandeo en el plano, k·Lx","m",20.6],
   ["vLy","Viga: longitud de pandeo fuera del plano, k·Ly","m",1.2],
   ["vLbs","Viga: Lb con el ala superior comprimida (entre correas)","m",1.2],
   ["vLbi","Viga: Lb con el ala inferior comprimida (entre tornapuntas o riostras)","m",5.0],
-  ["vCb","Viga: Cb","",1.0],
+  ["vCb","Viga: Cb manual (0 = calcular con F1-1 en cada tramo)","",0],
   ["alvT","Alveolar: ángulo del agujero θ","°",60],
+  ["alvIf","Alveolar: inercia usada en el análisis y las flechas, fracción de la I neta (sección con agujero)","",0.9],
   ["alvE","Alveolar: largo del montante e (0 = criterio de la planilla: 0,83·h₀ − 2b)","mm",0],
   ["vFl","Flecha admisible de la viga (combinaciones de servicio, Tabla L.3.1)","",0,["L/150","L/180","L/200","L/240","L/250","L/300","L/360"]],
   ["cFl","Desplazamiento lateral admisible de la columna (combinaciones de servicio)","",1,["H/100","H/150","H/160","H/200","H/300","H/400"]]]]
@@ -651,7 +652,7 @@ function mesh(m){
   let sec;
   if(k==0||k==3){const tm=(t0+t1)/2,u=k==0?tm:1-tm;sec=d.csel>0?secCat(d.csel):Isec(d.cd0+(d.cd1-d.cd0)*u,d.cb,d.ctf,d.ctw)}
   else sec=d.rsel>0?secCat(d.rsel):Isec(d.rd,d.rb,d.rtf,d.rtw);
-  E.push({i:N.length-2,j:N.length-1,sf:sf[k],EI:2.039e7*sec.I,EA:2.039e7*sec.A});
+  E.push({i:N.length-2,j:N.length-1,sf:sf[k],EI:2.039e7*sec.I*(sec.alv?(+d.alvIf||0.9):1),EA:2.039e7*sec.A});
  }
  for(const e of E){const a=N[e.i],b=N[e.j];e.Lx=b[0]-a[0];e.Ly=b[1]-a[1];e.Le=Math.hypot(e.Lx,e.Ly);e.c=e.Lx/e.Le;e.s=e.Ly/e.Le;e.ym=(a[1]+b[1])/2}
  return {N,E,apo:d.apo|0};
@@ -962,6 +963,19 @@ function chMax(m,x,d){const c=x.c,th=m.th,cs=Math.cos(th),sec=chSec(c,x.t,+d.chF
   out.z[z]=z[0]=='w'?L:Math.min(L,LGr)}
  return out}
 
+
+/* ---------- Cb (CIRSOC 301, F1-1): Cb = 12,5·Mmáx / (2,5·Mmáx + 3·MA + 4·MB + 3·MC) ---------- */
+function Mat(dg,x){const S=dg.s,M=dg.M;if(x<=S[0])return M[0];for(let i=1;i<S.length;i++)if(x<=S[i]+1e-9){const t=(x-S[i-1])/Math.max(S[i]-S[i-1],1e-9);return M[i-1]+(M[i]-M[i-1])*t}return M[M.length-1]}
+function cbSeg(dg,a,b){let mx=0;for(let k=0;k<=40;k++)mx=Math.max(mx,Math.abs(Mat(dg,a+(b-a)*k/40)));const q=[0.25,0.5,0.75].map(t=>Math.abs(Mat(dg,a+(b-a)*t)));
+ const Cb=mx>1e-9?Math.min(12.5*mx/(2.5*mx+3*q[0]+4*q[1]+3*q[2]),3):1;return {Cb,Mmax:mx,MA:q[0],MB:q[1],MC:q[2],a,b}}
+function cbChart(dg,sg,tit,un='kN·m'){const W=760,H=190,x0=50,x1=W-20,L=dg.s[dg.s.length-1],X=x=>x0+(x1-x0)*x/L,mx=Math.max(...dg.M.map(Math.abs),1e-9),Y=v=>H/2+10-v/mx*60;
+ let o=`<svg viewBox="0 0 ${W} ${H}"><rect x="${X(sg.a)}" y="18" width="${X(sg.b)-X(sg.a)}" height="${H-46}" fill="color-mix(in srgb,var(--acc) 15%,transparent)"/><line x1="${x0}" y1="${Y(0)}" x2="${x1}" y2="${Y(0)}" stroke="var(--mut)"/>`;
+ o+=`<polyline fill="none" stroke="var(--acc2)" stroke-width="2" points="${dg.s.map((x,i)=>X(x).toFixed(1)+','+Y(dg.M[i]).toFixed(1)).join(' ')}"/>`;
+ [[0.25,'A',sg.MA],[0.5,'B',sg.MB],[0.75,'C',sg.MC]].forEach(([t,n,v])=>{const x=sg.a+(sg.b-sg.a)*t,m=Mat(dg,x);o+=`<line x1="${X(x)}" y1="${Y(0)}" x2="${X(x)}" y2="${Y(m)}" stroke="var(--acc)" stroke-dasharray="3 2"/><text x="${X(x)}" y="${H-12}" text-anchor="middle" style="font-size:10px">M${n} = ${f(v,1)}</text>`});
+ o+=`<text x="${x0}" y="12" style="font-size:11px;font-weight:600">${tit}</text><text x="${x1}" y="12" text-anchor="end" style="font-size:11px">tramo ${f(sg.a)} a ${f(sg.b)} m · M<tspan font-size="8">máx</tspan> = ${f(sg.Mmax,1)} ${un}</text><text x="${x0-4}" y="${Y(0)+4}" text-anchor="end" style="font-size:9px">0</text></svg>`;
+ return o+`<p class="note">C<sub>b</sub> = 12,5·${f(sg.Mmax,1)} / (2,5·${f(sg.Mmax,1)} + 3·${f(sg.MA,1)} + 4·${f(sg.MB,1)} + 3·${f(sg.MC,1)}) = <b>${f(sg.Cb,3)}</b> (CIRSOC 301, expresión F1-1, valores absolutos; máximo 3,0).</p>`}
+function cbBeam(fn,L,Lb){const n=60,dg={s:[],M:[]};for(let i=0;i<=n;i++){const x=L*i/n;dg.s.push(x);dg.M.push(fn(x))}let best=null;
+ for(let a=0;a<L-1e-6;a+=Lb){const sg=cbSeg(dg,a,Math.min(a+Lb,L));if(!best||sg.Mmax>best.Mmax)best=sg}return {dg,sg:best}}
 /* ---------- correa C con labios (CIRSOC 303 / AISI, línea media, sin radios) ---------- */
 function cSec(H,B,D,t){const a=H-t,b=B-t,c=D-t/2,A=t*(a+2*b+2*c);
  const Ix=t*(a**3/12+2*b*(a/2)**2+2*(c**3/12+c*(a/2-c/2)**2));
@@ -973,8 +987,8 @@ function cSec(H,B,D,t){const a=H-t,b=B-t,c=D-t/2,A=t*(a+2*b+2*c);
  return {a,b,c,t,A,Ix,Iy,J,Cw,x0,rx,ry,ro,Sx:Ix/(a/2+t/2)}}
 function cSe(sc,B,t,f){const E=200000,w=B-4*t,lam=1.052/2*(w/t)*Math.sqrt(f/E),rho=lam<=0.673?1:Math.min(1,(1-0.22/lam)/lam),r=(1-rho)*w*t,yb=-r*(sc.a/2)/(sc.A-r);
  const Ie=sc.Ix-r*(sc.a/2)**2-(sc.A-r)*yb*yb;return Ie/(sc.a/2+t/2-yb)}
-function cMn(sc,d,Lb){const E=200000,G=77200,fy=+d.coFy,L=Lb*1000;
- const sey=Math.PI**2*E/(L/sc.ry)**2,st=(G*sc.J+Math.PI**2*E*sc.Cw/L**2)/(sc.A*sc.ro**2),Fe=(+d.coCb)*sc.ro*sc.A*Math.sqrt(sey*st)/sc.Sx;
+function cMn(sc,d,Lb,Cb){const E=200000,G=77200,fy=+d.coFy,L=Lb*1000;
+ const sey=Math.PI**2*E/(L/sc.ry)**2,st=(G*sc.J+Math.PI**2*E*sc.Cw/L**2)/(sc.A*sc.ro**2),Fe=(Cb||+d.coCb||1)*sc.ro*sc.A*Math.sqrt(sey*st)/sc.Sx;
  const Fc=Fe>=2.78*fy?fy:(Fe>0.56*fy?10/9*fy*(1-10*fy/(36*Fe)):Fe);
  const Mny=cSe(sc,+d.coB,+d.cot,fy)*fy,Mnl=cSe(sc,+d.coB,+d.cot,Fc)*Fc;return {Mn:Math.min(Mny,Mnl)/1e6,Fe,Fc,Mny:Mny/1e6}}
 function drawCorrea(m,d){const kN=v=>v*G0/1000,cs=Math.cos(m.th),L=d.s,sp=+d.coSep,sc=cSec(+d.coH,+d.coB,+d.coD,+d.cot),E=200000,cont=+d.coMod==1;
@@ -982,7 +996,9 @@ function drawCorrea(m,d){const kN=v=>v*G0/1000,cs=Math.cos(m.th),L=d.s,sp=+d.coS
  const R2=d.pend<3?1.7:(d.pend<=55?1.04-0.008*d.pend:0.6),Lrc=Math.min(Math.max(0.45*R2*(L*sp<20?1:(L*sp<=60?1.125-0.00625*L*sp:0.75)),0.203),0.765)*1000/G0;
  const S=Math.max(m.kg(m.ps),m.unb?m.kg(m.psLee):0),Dl=(Dch*sp+pp)*cs,LS=Math.max(Lrc,S)*sp*cs*cs; // kg/m normal al faldón
  const fy=+d.coFy,h=+d.coH-4*(+d.cot),tt=+d.cot,kv=5.34,lt=h/tt,Vn=lt<=0.96*Math.sqrt(E*kv/fy)?0.6*fy*h*tt:(lt<=1.415*Math.sqrt(E*kv/fy)?0.64*tt*tt*Math.sqrt(kv*fy*E):0.905*E*kv*tt**3/h),phV=0.95;
- const mS=cMn(sc,d,+d.coLbs),mI=cMn(sc,d,+d.coLbi),MnG=cont?Math.min(mS.Mn,mI.Mn):mS.Mn;
+ const fnS=x=>x*(L-x)/2,fnC=x=>x*(L-x)/2-L*x/10,cbS=cbBeam(cont?fnC:fnS,L,+d.coLbs),cbI=cbBeam(cont?fnC:fnS,L,+d.coLbi);
+ const CbS=+d.coCb>0?+d.coCb:cbS.sg.Cb,CbI=+d.coCb>0?+d.coCb:cbI.sg.Cb;
+ const mS=cMn(sc,d,+d.coLbs,CbS),mI=cMn(sc,d,+d.coLbi,CbI),MnG=cont?Math.min(mS.Mn,mI.Mn):mS.Mn;
  const Aeff=L*Math.max(sp,L/3),I=sc.Ix*1e-12,fl=(w,lim)=>cD*kN(w)*L**4/(E*1e3*I)*1000; // mm
  const rows=[],UT=[];const add=(n,wu,Mn,wsv,lim)=>{const Mu=cM*kN(wu)*L*L,Vu=(cont?0.6:0.5)*kN(wu)*L,dl=fl(wsv),da=L*1000/fls[lim];UT.push({l:n.replace(/<[^>]+>/g,''),r:Math.max(Mu/(0.9*Mn),dl/da)});window.VRco=UT;rows.push(`<tr><td class="l">${n}</td><td>${f(wu,0)}</td><td>${f(Mu,2)}</td><td>${f(0.9*Mn,2)}</td><td class="${Mu<=0.9*Mn?'ok':'bad'}">${f(Mu/(0.9*Mn),2)}</td><td>${f(Vu/(phV*Vn/1000),2)}</td><td>${f(dl,1)} / ${f(da,1)}</td><td class="${dl<=da?'ok':'bad'}">${dl<=da?'cumple':'no cumple'}</td></tr>`)};
  add('Gravitatoria: 1,2D + 1,6(L<sub>r</sub> ó S)',Math.max(1.2*Dl+1.6*LS,1.4*Dl),MnG,Dl+LS,+d.coFlG);
@@ -990,7 +1006,7 @@ function drawCorrea(m,d){const kN=v=>v*G0/1000,cs=Math.cos(m.th),L=d.s,sp=+d.coS
   add(`Presión ${n.replace('Cubierta, ','')}: 1,2D + 1,0W + 0,5S`,1.2*Dl+p.pre*sp+0.5*S*sp*cs*cs,MnG,Dl+0.6*p.pre*sp,+d.coFlW)}
  $('coOut').innerHTML=`<div class="vgrid">${gWrap('Sección de la correa',cSketch(d))}<div class="vg"><div class="vgt">Aprovechamiento (el mayor entre resistencia y flecha)</div>${utilBars(UT)}</div></div><details><summary>Detalle del cálculo</summary><div class="kpi"><div><b>C ${d.coH}×${d.coB}×${d.coD}×${d.cot}</b><span>A = ${f(sc.A/100,2)} cm², I<sub>x</sub> = ${f(sc.Ix/1e4,1)} cm⁴, S<sub>x</sub> = ${f(sc.Sx/1e3,1)} cm³, ${f(pp,2)} kg/m</span></div><div><b>${f(0.9*mS.Mn,2)} kN·m</b><span>φM<sub>n</sub> ala superior comprimida, L<sub>b</sub> = ${f(+d.coLbs)} m (F<sub>e</sub> = ${f(mS.Fe,0)} MPa, F<sub>c</sub> = ${f(mS.Fc,0)} MPa)</span></div><div><b>${f(0.9*mI.Mn,2)} kN·m</b><span>φM<sub>n</sub> ala inferior comprimida, L<sub>b</sub> = ${f(+d.coLbi)} m (F<sub>c</sub> = ${f(mI.Fc,0)} MPa)</span></div><div><b>${f(phV*Vn/1000,1)} kN</b><span>φV<sub>n</sub>, art. C3.2 (φ = 0,95)</span></div></div>
  <div class="tw"><table><tr><th>Combinación</th><th>w<sub>u</sub> normal al faldón [kg/m]</th><th>M<sub>u</sub> [kN·m]</th><th>φM<sub>n</sub> [kN·m]</th><th>M<sub>u</sub>/φM<sub>n</sub></th><th>V<sub>u</sub>/φV<sub>n</sub></th><th>Flecha / admisible [mm]</th><th>Flecha</th></tr>${rows.join('')}</table></div>
- <p class="note">Luz = separación de pórticos ${f(L)} m; ${cont?'correa continua: M<sub>u</sub> ≈ wL²/10 en el apoyo (ala inferior comprimida, se usa L<sub>b</sub> inferior), flecha con 1/145':'simplemente apoyada: M<sub>u</sub> = wL²/8, flecha 5/384'}. Cargas por metro de correa, componente normal al faldón (la componente paralela la toman los tensores): chapa ${f(Dch,0)} kg/m² × ${f(sp)} m + peso de la correa; L<sub>r</sub> con R<sub>1</sub> según A<sub>t</sub> = ${f(L*sp,1)} m²; S = mayor entre balanceada y no balanceada a sotavento. Viento de componentes y revestimientos con A = L·máx(s; L/3) = ${f(Aeff,1)} m². Pandeo lateral-torsional: CIRSOC 303 art. C3.1.2.1(a) con σ<sub>ey</sub> y σ<sub>t</sub>; M<sub>n</sub> = S<sub>c</sub>·F<sub>c</sub> con módulo efectivo (ancho efectivo del ala comprimida, art. B2.1, k = 4; labio supuesto eficaz). φ<sub>b</sub> = 0,90. Flecha de servicio: gravitatoria D + (L<sub>r</sub> ó S); viento 0,6W − 0,6D (succión) y D + 0,6W (presión).</p></details>`}
+ <p class="note">Luz = separación de pórticos ${f(L)} m; ${cont?'correa continua: M<sub>u</sub> ≈ wL²/10 en el apoyo (ala inferior comprimida, se usa L<sub>b</sub> inferior), flecha con 1/145':'simplemente apoyada: M<sub>u</sub> = wL²/8, flecha 5/384'}. Cargas por metro de correa, componente normal al faldón (la componente paralela la toman los tensores): chapa ${f(Dch,0)} kg/m² × ${f(sp)} m + peso de la correa; L<sub>r</sub> con R<sub>1</sub> según A<sub>t</sub> = ${f(L*sp,1)} m²; S = mayor entre balanceada y no balanceada a sotavento. Viento de componentes y revestimientos con A = L·máx(s; L/3) = ${f(Aeff,1)} m². Pandeo lateral-torsional: CIRSOC 303 art. C3.1.2.1(a) con σ<sub>ey</sub> y σ<sub>t</sub>, C<sub>b</sub> = ${f(CbS,3)} (ala superior) y ${f(CbI,3)} (ala inferior)${+d.coCb>0?' ingresado a mano':''}; M<sub>n</sub> = S<sub>c</sub>·F<sub>c</sub> con módulo efectivo (ancho efectivo del ala comprimida, art. B2.1, k = 4; labio supuesto eficaz). φ<sub>b</sub> = 0,90. Flecha de servicio: gravitatoria D + (L<sub>r</sub> ó S); viento 0,6W − 0,6D (succión) y D + 0,6W (presión).</p>${+d.coCb>0?'':cbChart(cbS.dg,cbS.sg,'C<sub>b</sub> de la correa de techo, ala superior (carga uniforme, diagrama por unidad de carga; el tramo que manda es el de mayor momento)','·wL²')+cbChart(cbI.dg,cbI.sg,'C<sub>b</sub> de la correa de techo, ala inferior','·wL²')}</details>`}
 /* ---------- perfiles W / armados / alveolares (CIRSOC 301-2018 = AISC 360) ---------- */
 function wProps(h,b,tw,tf,Ig){const hw=h-2*tf,A=2*b*tf+hw*tw,Ix=Ig||(b*h**3-(b-tw)*hw**3)/12,Iy=2*tf*b**3/12+hw*tw**3/12,Zx=b*tf*(h-tf)+tw*hw*hw/4,Sx=Ix/(h/2),ho=h-tf,J=(2*b*tf**3+ho*tw**3)/3,Cw=Iy*ho*ho/4;
  return {h,b,tw,tf,hw,A,Ix,Iy,Zx,Sx,ho,J,Cw,rx:Math.sqrt(Ix/A),ry:Math.sqrt(Iy/A),rts:Math.sqrt(Math.sqrt(Iy*Cw)/Sx)}}
@@ -1019,23 +1035,28 @@ function drawVC(m,d){const ms=A.ms,K=G0/1000*1000/1000,E=200000,Fy=+d.fyW,t2k=9.
   const Lx=k=='c'?+d.cLx:+d.vLx,Ly=k=='c'?+d.cLy:+d.vLy,Cb=k=='c'?+d.cCb:+d.vCb;
   const pc=Pn_(pg,Fy,Lx,Ly),phPn=0.9*pc.Pn;
   const g=alv?alvGeo(sd,d):null;
-  const MnS=Mn_(pg,Fy,k=='c'?+d.cLb:+d.vLbs,Cb),MnI=Mn_(pg,Fy,k=='c'?+d.cLb:+d.vLbi,Cb);
+  const CbM=Cb,MnS=Mn_(pg,Fy,k=='c'?+d.cLb:+d.vLbs,CbM||1),MnI=Mn_(pg,Fy,k=='c'?+d.cLb:+d.vLbi,CbM||1);
+  const ST={cl:[0,0],rl:[0,A.m.Hc],rr:[A.m.d.L,A.m.Hc],cr:[A.m.d.L,0]},pos=(e,j)=>{const p=ms.N[j?e.j:e.i],o=ST[e.sf];return Math.hypot(p[0]-o[0],p[1]-o[1])};
+  const dgC={},dgOf=(c,ci,sf)=>{const key=ci+sf;if(dgC[key])return dgC[key];const pts=[];ms.E.forEach((e,i)=>{if(e.sf!=sf)return;pts.push([pos(e,0),c.r.M[i][0]*t2k],[pos(e,1),c.r.M[i][1]*t2k])});pts.sort((a,b)=>a[0]-b[0]);return dgC[key]={s:pts.map(p=>p[0]),M:pts.map(p=>p[1])}};
   const MnNet=alv?Fy*g.Znet/1e6:1e9;
   const vS=alv?{phVn:Math.min(Vn_(2*g.dt,sd.tw,Fy,1.2).phVn,Vn_(sd.h-2*sd.tf,sd.tw,Fy,5.34).phVn)}:Vn_(pg.hw,pg.tw,Fy,5);
   let best={r:-1},bV={r:-1},bA=[];
-  A.cb.forEach(c=>{ms.E.forEach((e,i)=>{if(!flt(e))return;for(const j of [0,1]){const M=Math.abs(c.r.M[i][j])*t2k,N=c.r.N[i][j]*t2k,V=Math.abs(c.r.V[i][j])*t2k,Pu=Math.max(-N,0);
-   const bot=k=='r'&&Math.sign(c.r.M[i][j])==hog,Mn=Math.min(bot?MnI.Mn:MnS.Mn,MnNet),phMn=0.9*Mn;
+  A.cb.forEach((c,ci)=>{ms.E.forEach((e,i)=>{if(!flt(e))return;for(const j of [0,1]){const M=Math.abs(c.r.M[i][j])*t2k,N=c.r.N[i][j]*t2k,V=Math.abs(c.r.V[i][j])*t2k,Pu=Math.max(-N,0);
+   const bot=k=='r'&&Math.sign(c.r.M[i][j])==hog,Lb=k=='c'?+d.cLb:(bot?+d.vLbi:+d.vLbs),dg=dgOf(c,ci,e.sf),Lm=dg.s[dg.s.length-1],x=pos(e,j);
+   let a0=Math.min(Math.floor((x-1e-9)/Lb)*Lb,Math.max(Lm-Lb,0));a0=Math.max(a0,0);const sg=cbSeg(dg,a0,Math.min(a0+Lb,Lm)),CbU=CbM>0?CbM:sg.Cb;
+   const Mn=Math.min(Mn_(pg,Fy,Lb,CbU).Mn,MnNet),phMn=0.9*Mn;
    const pr=Pu/phPn,r=pr>=0.2?pr+8/9*M/phMn:pr/2+M/phMn;
-   if(r>best.r)best={r,Pu,M,phMn,c:c.t,bot,V};const rv=V/vS.phVn;if(rv>bV.r)bV={r:rv,V,c:c.t};
+   if(r>best.r)best={r,Pu,M,phMn,c:c.t,bot,V,sg,dg,CbU,Lb,sf:e.sf};const rv=V/vS.phVn;if(rv>bV.r)bV={r:rv,V,c:c.t};
    if(alv){const Pt=M/(g.deff/1000)+Pu/2,Mv=V/2*g.e/2/1000,tp=Pn_({b:sd.b,tf:sd.tf,hw:g.dt-sd.tf,tw:sd.tw,A:g.AT,rx:g.rxT,ry:g.ryT},Fy,0.65*g.e/1000,g.e/1000),phPt=0.9*tp.Pn,phMt=0.9*Fy*g.Sbot/1e6,prt=Pt/phPt,rt=prt>=0.2?prt+8/9*Mv/phMt:prt/2+Mv/phMt;
     const Vh=V*g.S/g.deff,Mh=Vh*g.h/1000,po=alvPost(g,sd.tw,Fy),rp=Mh/(0.9*po.r*po.Mp),rh=Vh/(0.6*Fy*g.e*sd.tw/1000);
     for(const [q,v,x] of [['T: compresión + Vierendeel (DG31 3-1, 3-2, H1)',rt,`P<sub>T</sub> = ${f(Pt,0)} kN, M<sub>v</sub> = ${f(Mv,1)} kN·m`],['Pandeo del montante (DG31 3-19 a 3-29)',rp,`V<sub>h</sub> = ${f(Vh,0)} kN, M<sub>h</sub> = ${f(Mh,1)} kN·m, M<sub>ocr</sub>/M<sub>p</sub> = ${f(po.r,3)}`],['Corte horizontal del montante (J4-3)',rh,`V<sub>h</sub> = ${f(Vh,0)} kN`]]){const o=bA.find(z=>z.q==q);if(!o||v>o.r){if(o)bA.splice(bA.indexOf(o),1);bA.push({q,r:v,x,c:c.t})}}}}})});
   const cl=r=>r<=1?'ok':'bad';UV.push({l:nm+': flexocompresión',r:best.r},{l:nm+': corte',r:bV.r},...bA.map(z=>({l:nm+': '+z.q.replace(/ \(.*\)/,''),r:z.r})));
   out+=`<h3>${nm}: ${sd.nm}</h3><div class="kpi"><div><b>${f(phPn,0)} kN</b><span>φP<sub>n</sub> (E3/E7): k·L<sub>x</sub> = ${f(Lx)} m, k·L<sub>y</sub> = ${f(Ly)} m, λ = ${f(pc.sl,0)}, Q = ${f(pc.Q,3)}</span></div><div><b>${f(0.9*Math.min(MnS.Mn,MnNet),0)} kN·m</b><span>φM<sub>n</sub> ${k=='r'?'ala superior comprimida, L<sub>b</sub> = '+f(+d.vLbs):'L<sub>b</sub> = '+f(+d.cLb)} m (L<sub>p</sub> = ${f(MnS.Lp)} m, L<sub>r</sub> = ${f(MnS.Lr)} m)</span></div>${k=='r'?`<div><b>${f(0.9*Math.min(MnI.Mn,MnNet),0)} kN·m</b><span>φM<sub>n</sub> ala inferior comprimida, L<sub>b</sub> = ${f(+d.vLbi)} m</span></div>`:''}<div><b>${f(vS.phVn,0)} kN</b><span>φV<sub>n</sub> (G2)</span></div></div>
   <div class="tw"><table><tr><th>Verificación</th><th>Solicitación</th><th>Relación</th><th>Combinación que manda</th></tr>
-  <tr><td class="l">Flexocompresión (H1-1)</td><td>P<sub>u</sub> = ${f(best.Pu,0)} kN, M<sub>u</sub> = ${f(best.M,0)} kN·m${k=='r'?(best.bot?' (ala inferior comprimida)':' (ala superior comprimida)'):''}</td><td class="${cl(best.r)}">${f(best.r,2)}</td><td class="l">${best.c}</td></tr>
+  <tr><td class="l">Flexocompresión (H1-1)</td><td>P<sub>u</sub> = ${f(best.Pu,0)} kN, M<sub>u</sub> = ${f(best.M,0)} kN·m, φM<sub>n</sub> = ${f(best.phMn,0)} kN·m (C<sub>b</sub> = ${f(best.CbU,2)})${k=='r'?(best.bot?' (ala inferior comprimida)':' (ala superior comprimida)'):''}</td><td class="${cl(best.r)}">${f(best.r,2)}</td><td class="l">${best.c}</td></tr>
   <tr><td class="l">Corte (G2)</td><td>V<sub>u</sub> = ${f(bV.V,0)} kN</td><td class="${cl(bV.r)}">${f(bV.r,2)}</td><td class="l">${bV.c}</td></tr>
   ${bA.map(z=>`<tr><td class="l">${z.q}</td><td>${z.x}</td><td class="${cl(z.r)}">${f(z.r,2)}</td><td class="l">${z.c}</td></tr>`).join('')}</table></div>
+  ${CbM>0?`<p class="note">C<sub>b</sub> = ${f(CbM,2)} ingresado a mano.</p>`:cbChart(best.dg,best.sg,`C<sub>b</sub> del tramo que manda la flexocompresión: ${{cl:'columna izquierda (desde la base)',cr:'columna derecha (desde la base)',rl:'faldón izquierdo (desde el alero)',rr:'faldón derecho (desde el alero)'}[best.sf]}, L<sub>b</sub> = ${f(best.Lb)} m${k=='r'?(best.bot?', ala inferior comprimida':', ala superior comprimida'):''}`)}
   ${MnS.web?'':'<p class="note bad">El alma no es compacta en flexión (h/t<sub>w</sub> &gt; 3,76√(E/F<sub>y</sub>)): faltan los capítulos F4/F5.</p>'}
   ${alv?`<p class="note">Alveolar (AISC Design Guide 31): h₀ = ${f(g.ho,0)} mm, θ = ${f(+d.alvT,0)}°, b = ${f(g.b,1)} mm, e = ${f(g.e,1)} mm${+d.alvE>0?'':' (criterio de la planilla, confirmar con el fabricante)'}, paso ${f(g.S,0)} mm, altura de la T ${f(g.dt,1)} mm, d<sub>eff</sub> = ${f(g.deff,0)} mm, e/t<sub>w</sub> = ${f(g.e/sd.tw,1)}. Flexión global: mínimo entre F<sub>y</sub>·Z<sub>neta</sub> y el pandeo lateral con la sección bruta. Corte vertical: sección neta (k<sub>v</sub> = 1,2) y bruta (k<sub>v</sub> = 5,34). No incluye pandeo flexotorsional de la T (E4) ni pandeo lateral de la T.</p>`:''}`}
  // deformaciones de servicio
@@ -1045,7 +1066,7 @@ function drawVC(m,d){const ms=A.ms,K=G0/1000*1000/1000,E=200000,Fy=+d.fyW,t2k=9.
  out+=`<h3>Deformaciones de servicio</h3><div class="tw"><table><tr><th>Verificación</th><th>Máximo [mm]</th><th>Admisible [mm]</th><th>Resultado</th><th>Combinación</th></tr>
  <tr><td class="l">Flecha de la viga en la cumbrera, relativa a los aleros (L = ${f(A.m.d.L)} m)</td><td>${f(dv.v,1)}</td><td>${f(va,1)} (L/${fls[+d.vFl]})</td><td class="${dv.v<=va?'ok':'bad'}">${dv.v<=va?'cumple':'no cumple'}</td><td class="l">${dv.c}</td></tr>
  <tr><td class="l">Desplazamiento lateral del alero (H = ${f(A.m.Hc)} m)</td><td>${f(dh.v,1)}</td><td>${f(ha,1)} (H/${flh[+d.cFl]})</td><td class="${dh.v<=ha?'ok':'bad'}">${dh.v<=ha?'cumple':'no cumple'}</td><td class="l">${dh.c}</td></tr></table></div>
- <p class="note">Esfuerzos de todas las combinaciones ELU del análisis (CIRSOC 101-2025), en cada extremo de cada tramo de barra. F<sub>y</sub> = ${f(Fy,0)} MPa, E = 200 000 MPa. Compresión: E3 con secciones esbeltas por E7 (Q<sub>s</sub> del ala, Q<sub>a</sub> con ancho efectivo del alma). Flexión: F2 (pandeo lateral-torsional con L<sub>b</sub> y C<sub>b</sub> ingresados) y F3 (pandeo local del ala). En la viga, el ala comprimida se elige según el signo del momento: momento negativo (como en el alero) comprime el ala inferior. Interacción H1-1a/b. Las longitudes de pandeo k·L las define el usuario según el arriostramiento. Las propiedades de los W se calculan con alas y alma rectangulares (sin radios).</p>`;
+ <p class="note">Si la viga o la columna es alveolar, el análisis (esfuerzos y flechas) usa ${f(+d.alvIf||0.9,2)} × I neta de la sección con agujero. Esfuerzos de todas las combinaciones ELU del análisis (CIRSOC 101-2025), en cada extremo de cada tramo de barra. F<sub>y</sub> = ${f(Fy,0)} MPa, E = 200 000 MPa. Compresión: E3 con secciones esbeltas por E7 (Q<sub>s</sub> del ala, Q<sub>a</sub> con ancho efectivo del alma). Flexión: F2 (pandeo lateral-torsional con L<sub>b</sub> y C<sub>b</sub> de cada tramo, F1-1, con el diagrama de momentos de cada combinación) y F3 (pandeo local del ala). En la viga, el ala comprimida se elige según el signo del momento: momento negativo (como en el alero) comprime el ala inferior. Interacción H1-1a/b. Las longitudes de pandeo k·L las define el usuario según el arriostramiento. Las propiedades de los W se calculan con alas y alma rectangulares (sin radios).</p>`;
  const dv2=UV;window.VRvc=UV.concat([{l:'Viga flecha',r:dv.v/va},{l:'Columna desplazamiento',r:dh.v/ha}]);dv2.push({l:'Flecha de la viga',r:dv.v/va},{l:'Desplazamiento lateral del alero',r:dh.v/ha});
  $('vcOut').innerHTML=gWrap('Aprovechamiento de cada verificación (verde ≤ 0,80 · amarillo ≤ 1,00 · rojo > 1,00)',utilBars(dv2.filter((z,i,a)=>!z.l.startsWith('Columna derecha')||true)))+'<details><summary>Detalle del cálculo</summary>'+out+'</details>'}
 
@@ -1096,10 +1117,11 @@ function drawPared(m,d){const kN=v=>v*G0/1000,E=200000,G=77200,fy=+d.pFy,L=d.s,s
  const SyB=box?sc.Iy/(+d.pB):null;
  sc.ry=Math.sqrt(sc.Iy/sc.A);
  const Sy=box?SyB:(dbl?sc.Iy/(c1.b+t/2):c1.Iy/Math.max(xb,c1.b-xb));
- const Mnx=(Lb)=>{const Lm=Lb*1000;let Fe;
-  if(box){Fe=(+d.pCb)*Math.PI/(sc.Sx*Lm)*Math.sqrt(E*sc.Iy*G*sc.J)}   // C3.1.2.2, sección cajón
-  else if(dbl){const Iyc=sc.Iy/2;Fe=(+d.pCb)*Math.PI**2*E*(+d.pH)*Iyc/(sc.Sx*Lm*Lm)}   // C3.1.2.1(b), doble Te
-  else{const sey=Math.PI**2*E/(Lm/c1.ry)**2,st=(G*c1.J+Math.PI**2*E*c1.Cw/Lm**2)/(c1.A*c1.ro**2);Fe=(+d.pCb)*c1.ro*c1.A*Math.sqrt(sey*st)/c1.Sx}
+ const fnP=cont?(x=>x*(L-x)/2-L*x/10):(x=>x*(L-x)/2),cbE=cbBeam(fnP,L,+d.pLbe),cbIn=cbBeam(fnP,L,+d.pLbi);
+ const Mnx=(Lb)=>{const Lm=Lb*1000,Cbx=+d.pCb>0?+d.pCb:(Lb==+d.pLbe?cbE.sg.Cb:cbIn.sg.Cb);let Fe;
+  if(box){Fe=Cbx*Math.PI/(sc.Sx*Lm)*Math.sqrt(E*sc.Iy*G*sc.J)}   // C3.1.2.2, sección cajón
+  else if(dbl){const Iyc=sc.Iy/2;Fe=Cbx*Math.PI**2*E*(+d.pH)*Iyc/(sc.Sx*Lm*Lm)}   // C3.1.2.1(b), doble Te
+  else{const sey=Math.PI**2*E/(Lm/c1.ry)**2,st=(G*c1.J+Math.PI**2*E*c1.Cw/Lm**2)/(c1.A*c1.ro**2);Fe=Cbx*c1.ro*c1.A*Math.sqrt(sey*st)/c1.Sx}
   const Fc=Fe>=2.78*fy?fy:(Fe>0.56*fy?10/9*fy*(1-10*fy/(36*Fe)):Fe);return {Mn:Math.min(n*cSe(c1,+d.pB,t,fy)*fy,n*cSe(c1,+d.pB,t,Fc)*Fc)/1e6,Fe,Fc}};
  const me=Mnx(+d.pLbe),mi=Mnx(+d.pLbi),Mny=Sy*fy/1e6;
  const h=+d.pH-4*t,kv=5.34,lt=h/t,Vn1=lt<=0.96*Math.sqrt(E*kv/fy)?0.6*fy*h*t:(lt<=1.415*Math.sqrt(E*kv/fy)?0.64*t*t*Math.sqrt(kv*fy*E):0.905*E*kv*t**3/h),phVn=0.95*n*Vn1/1000;
@@ -1112,23 +1134,29 @@ function drawPared(m,d){const kN=v=>v*G0/1000,E=200000,G=77200,fy=+d.pFy,L=d.s,s
  $('paOut').innerHTML=`<div class="vgrid">${gWrap('Sección de la correa de pared',cSketch({coH:d.pH,coB:d.pB,coD:d.pD,cot:d.pt}).replace('</svg>',dbl?`<text x="190" y="185" text-anchor="middle" style="font-size:11px">${box?'doble C en cajón':'doble C, espalda con espalda'}</text></svg>`:'</svg>'))}<div class="vg"><div class="vgt">Aprovechamiento (el mayor entre flexión biaxial, flexión y corte, y flecha)</div>${utilBars(UT)}</div></div>
  <details><summary>Detalle del cálculo</summary><div class="kpi"><div><b>${dbl?'2 × ':''}C ${d.pH}×${d.pB}×${d.pD}×${d.pt}</b><span>A = ${f(sc.A/100,2)} cm², I<sub>x</sub> = ${f(sc.Ix/1e4,1)} cm⁴, I<sub>y</sub> = ${f(sc.Iy/1e4,1)} cm⁴, ${f(pp,2)} kg/m${d.pCCn?` (tabla ${d.pCCn[4]}: A = ${f(d.pCCn[5],2)}, I<sub>x</sub> = ${f(d.pCCn[6],1)}, I<sub>y</sub> = ${f(d.pCCn[7],1)})`:''}</span></div><div><b>${f(0.9*me.Mn,2)} kN·m</b><span>φM<sub>nx</sub> ala exterior comprimida (presión), L<sub>b</sub> = ${f(+d.pLbe)} m, F<sub>c</sub> = ${f(me.Fc,0)} MPa</span></div><div><b>${f(0.9*mi.Mn,2)} kN·m</b><span>φM<sub>nx</sub> ala interior comprimida (succión), L<sub>b</sub> = ${f(+d.pLbi)} m, F<sub>c</sub> = ${f(mi.Fc,0)} MPa</span></div><div><b>${f(0.9*Mny,2)} kN·m</b><span>φM<sub>ny</sub> eje débil (S<sub>y</sub>·F<sub>y</sub>)</span></div><div><b>${f(phVn,1)} kN</b><span>φV<sub>n</sub> (C3.2)</span></div></div>
  <div class="tw"><table><tr><th>Caso</th><th>w<sub>u</sub> de viento [kg/m]</th><th>M<sub>ux</sub> / φM<sub>nx</sub> [kN·m]</th><th>M<sub>uy</sub> / φM<sub>ny</sub> [kN·m]</th><th>Flexión biaxial (C5.2)</th><th>Flexión y corte (C3.3)</th><th>Flecha / admisible [mm]</th></tr>${rows.join('')}</table></div>
- <p class="note">Luz = separación de columnas ${f(L)} m (${cont?'continua: M ≈ wL²/10, flecha 1/145':'simplemente apoyada: M = wL²/8, flecha 5/384'}). Viento de componentes y revestimientos de pared (zonas 4 y 5, Fig. 5.3-1) con A = L·máx(s; L/3) = ${f(Aeff,1)} m². Eje fuerte: viento por la separación vertical ${f(sp)} m. Eje débil: 1,2 × (chapa ${f(+d.pDc,0)} kg/m² × ${f(sp)} m + peso propio) con luz ${f(Ls)} m entre tensores, M = wL²/8. Pandeo lateral-torsional: CIRSOC 303 art. ${box?'C3.1.2.2 (sección cajón, J = 4A<sub>m</sub>²t/p)':(dbl?'C3.1.2.1(b), doble C como doble Te':'C3.1.2.1(a), C simple con σ<sub>ey</sub> y σ<sub>t</sub>')}; M<sub>n</sub> con módulo efectivo del ala comprimida (B2.1). Interacción flexión biaxial: M<sub>ux</sub>/φM<sub>nx</sub> + M<sub>uy</sub>/φM<sub>ny</sub> ≤ 1; flexión y corte: (M/φM<sub>n</sub>)² + (V/φV<sub>n</sub>)² ≤ 1. Flecha con 0,6W.</p></details>`}
+ <p class="note">Luz = separación de columnas ${f(L)} m (${cont?'continua: M ≈ wL²/10, flecha 1/145':'simplemente apoyada: M = wL²/8, flecha 5/384'}). Viento de componentes y revestimientos de pared (zonas 4 y 5, Fig. 5.3-1) con A = L·máx(s; L/3) = ${f(Aeff,1)} m². Eje fuerte: viento por la separación vertical ${f(sp)} m. Eje débil: 1,2 × (chapa ${f(+d.pDc,0)} kg/m² × ${f(sp)} m + peso propio) con luz ${f(Ls)} m entre tensores, M = wL²/8. Pandeo lateral-torsional: CIRSOC 303 art. ${box?'C3.1.2.2 (sección cajón, J = 4A<sub>m</sub>²t/p)':(dbl?'C3.1.2.1(b), doble C como doble Te':'C3.1.2.1(a), C simple con σ<sub>ey</sub> y σ<sub>t</sub>')}; M<sub>n</sub> con módulo efectivo del ala comprimida (B2.1). Interacción flexión biaxial: M<sub>ux</sub>/φM<sub>nx</sub> + M<sub>uy</sub>/φM<sub>ny</sub> ≤ 1; flexión y corte: (M/φM<sub>n</sub>)² + (V/φV<sub>n</sub>)² ≤ 1. Flecha con 0,6W.</p>${+d.pCb>0?'<p class="note">C<sub>b</sub> = '+f(+d.pCb,2)+' ingresado a mano.</p>':cbChart(cbE.dg,cbE.sg,'C<sub>b</sub> de la correa de pared, ala exterior (presión)','·wL²')+cbChart(cbIn.dg,cbIn.sg,'C<sub>b</sub> de la correa de pared, ala interior (succión)','·wL²')}</details>`}
 
 function drawVer(m,d){d=Object.assign({},d);for(const [s0,h,b,dd,t] of [['coSel','coH','coB','coD','cot'],['pSel','pH','pB','pD','pt']]){const i=+d[s0];if(i>0){const c=CCAT[i-1];d[h]=c[0];d[b]=c[1];d[dd]=c[2];d[t]=c[3]}}
  if(+d.pCC>0){const c=CCC[+d.pCC-1];d.pTipo=2;d.pH=c[0];d.pB=c[1];d.pD=c[2];d.pt=c[3];d.pCCn=c}
  {const nb=Math.round(m.Lt/d.s),sl=(d.L/2)/Math.cos(m.th),bays=t=>String(t).split(/[,; ]+/).map(Number).filter(x=>x>=1&&x<=nb);d.arParV=bays(d.arPar);d.arTecV=bays(d.arTec);
-  const Lo={coLbs:d.s/((+d.arTe)+1),coLbi:d.s/((+d.arTe)+1),pLbi:d.s/((+d.arTp)+1),pLs:d.s/((+d.arTp)+1),vLbs:+d.coSep,vLy:+d.coSep,vLbi:+d.arTnV>0?Math.min(+d.arTnV*(+d.coSep),sl):sl,cLb:+d.arTnC>0?Math.min(+d.arTnC*(+d.pSep),m.Hc):m.Hc,cLy:Math.min(+d.pSep,m.Hc)};
+  const gap=(pts,Lt)=>{const p=[0,...pts.filter(x=>x>1e-6&&x<Lt-1e-6),Lt].sort((a,b)=>a-b);let g=0;for(let i=1;i<p.length;i++)g=Math.max(g,p[i]-p[i-1]);return g};
+  const H=m.Hc,ps=+d.pSep,tnC=[],tnV=[];if(+d.arTnC>0){let k=0;for(let hh=ps/2;hh<H;hh+=ps){k++;if(k%(+d.arTnC)==0)tnC.push(hh)}}
+  if(+d.arTnV>0){const nc=Math.floor(sl/(+d.coSep)+1e-9);for(let c=+d.arTnV;c<=nc;c+=+d.arTnV)tnV.push(c*(+d.coSep))}
+  const nP=Math.max(1,+d.arParN|0),nT=Math.max(1,+d.arTecN|0),brC=[...Array(nP-1)].map((_,k)=>H*(k+1)/nP),brV=[...Array(nT-1)].map((_,k)=>sl*(k+1)/nT);
+  d.LoInfo={tnC,tnV,brC,brV};
+  const Lo={cLx:H,coLbs:d.s/((+d.arTe)+1),coLbi:d.s/((+d.arTe)+1),pLbi:d.s/((+d.arTp)+1),pLs:d.s/((+d.arTp)+1),vLbs:+d.coSep,vLy:gap([...tnV,...brV],sl),vLbi:gap(tnV,sl),cLb:gap([...tnC,...brC],H),cLy:gap([...tnC,...brC],H)};
   d.LoAuto=Lo;if(+d.arAuto==1)Object.assign(d,Lo)}
  window.DV=d;try{drawPared(m,d)}catch(e){$('paOut').innerHTML='Error: '+e.message}
  {const A_=+d.arAuto==1,Lo=d.LoAuto,r=(n,k,why)=>`<tr><td class="l">${n}</td><td>${f(+d[k])}</td><td class="l">${why}</td></tr>`;
   $('loOut').innerHTML=`<p class="note">${A_?'<b>Automáticas</b>: salen de los arriostramientos cargados arriba (los campos manuales de cada elemento se ignoran).':'<b>Manuales</b>: se usan los valores cargados en cada elemento. Si elegís «Automáticas», salen de los arriostramientos.'}</p><div class="tw"><table><tr><th>Longitud</th><th>Valor [m]</th><th>Criterio</th></tr>
   ${r('Correa de techo, L<sub>b</sub> de las dos alas','coLbs',`luz ${f(d.s)} m / (${d.arTe} tensores + 1)`)}
   ${r('Correa de pared, L<sub>b</sub> del ala interior y luz en el eje débil','pLbi',`luz ${f(d.s)} m / (${d.arTp} tensores + 1)`)}
-  ${r('Viga, L<sub>b</sub> del ala superior y k·L<sub>y</sub>','vLbs','separación de correas (las correas fijan el ala superior y se vinculan a las cruces de techo)')}
+  ${r('Viga, L<sub>b</sub> del ala superior','vLbs','separación de correas: la correa fija el ala superior, que es la comprimida')}
+  ${r('Viga, k·L<sub>y</sub> (fuera del plano)','vLy',`mayor distancia entre puntos fijos: nudos de las cruces de techo (${d.arTecN} paneles por faldón, se trasladan a todos los pórticos por las correas)${+d.arTnV>0?' y tornapuntas':''}`)}
   ${r('Viga, L<sub>b</sub> del ala inferior','vLbi',+d.arTnV>0?`tornapuntas cada ${d.arTnV} correas`:'sin tornapuntas: largo del faldón')}
-  ${r('Columna, k·L<sub>y</sub> (fuera del plano)','cLy','separación de correas de pared (vinculadas a las cruces de pared)')}
-  ${r('Columna, L<sub>b</sub>','cLb',+d.arTnC>0?`tornapuntas cada ${d.arTnC} correas de pared`:'sin tornapuntas: altura de la columna')}
-  </table></div><p class="note">La longitud de pandeo en el plano del pórtico (k·L<sub>x</sub>) sigue siendo un dato manual. Cruces de pared en los vanos ${d.arParV.join(', ')||'—'}; cruces de techo en los vanos ${d.arTecV.join(', ')||'—'}. Las cruces, tensores y tornapuntas todavía no se verifican: por ahora definen longitudes y se dibujan en el 3D.</p>`}try{drawCorrea(m,d)}catch(e){$('coOut').innerHTML='Error: '+e.message}try{drawVC(m,d)}catch(e){$('vcOut').innerHTML='Error: '+e.message}
+  ${r('Columna, k·L<sub>x</sub> (en el plano)','cLx','altura total de la columna (k = 1, como indicaste)')}
+  ${r('Columna, k·L<sub>y</sub> (fuera del plano) y L<sub>b</sub>','cLy',`mayor distancia entre puntos fijos: ${+d.arTnC>0?'tornapuntas cada '+d.arTnC+' correas de pared':'sin tornapuntas'}${(+d.arParN|0)>1?' y nudos de las cruces de pared ('+d.arParN+' paneles en altura, se trasladan a todas las columnas por la correa)':''}; si no hay ninguno, la altura total`)}
+  </table></div><p class="note">La correa sola fija un ala (la exterior) y no cuenta como punto fijo para el pandeo fuera del plano: solo cuentan las tornapuntas (fijan las dos alas) y los nudos de las cruces, que se trasladan a todos los pórticos a través de las correas. La viga en su plano (k·L<sub>x</sub>) sigue siendo manual. Cruces de pared en los vanos ${d.arParV.join(', ')||'—'}; cruces de techo en los vanos ${d.arTecV.join(', ')||'—'}. Las cruces, tensores y tornapuntas todavía no se verifican: por ahora definen longitudes y se dibujan en el 3D.</p>`}try{drawCorrea(m,d)}catch(e){$('coOut').innerHTML='Error: '+e.message}try{drawVC(m,d)}catch(e){$('vcOut').innerHTML='Error: '+e.message}
  const a=crA(m),As=[1,2,5,10,20,50];
  $('crOut').innerHTML=`<div class="vgrid">${gWrap('Zonas de la cubierta (Fig. 5.3-2B)',zonePlan(m))}${gWrap('Presión de diseño según el área efectiva',gcpChart(m))}</div><div class="kpi"><div><b>${f(m.qh,1)} kg/m²</b><span>q<sub>h</sub> a la altura media h = ${f(m.h)} m (art. 1.13.2, con K<sub>zt</sub>)</span></div><div><b>±${f(m.gcpi,2)}</b><span>GC<sub>pi</sub>, Tabla 1.11-1</span></div><div><b>${f(a,2)} m</b><span>ancho de zona a = mín(0,10·B; 0,4·h) ≥ máx(0,04·B; 1 m)</span></div><div><b>${f(0.8*1000/G0,1)} kg/m²</b><span>presión mínima (0,80 kN/m²)</span></div></div>
  <p class="note">p = q<sub>h</sub>·[(GC<sub>p</sub>) − (GC<sub>pi</sub>)], art. 5.3.2, expresión (5.3-1). GC<sub>p</sub> de la Fig. 5.3-2B (cubierta a dos aguas, 7° &lt; θ ≤ 20°) y Fig. 5.3-1 (paredes), con las ecuaciones de las Tablas C 5.3-3 y C 5.3-1. Área efectiva A = luz × máx(ancho tributario; luz/3), art. 1.2. Zona 2: franjas de ancho a junto a los hastiales y a cada lado de la cumbrera; zona 3: esquinas; zona 5: franjas de ancho a en las esquinas de las paredes.</p>
