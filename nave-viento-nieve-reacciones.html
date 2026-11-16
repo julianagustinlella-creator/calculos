@@ -165,6 +165,18 @@ details{margin:8px 0}summary{cursor:pointer;color:var(--acc);font-weight:600}
 
 <section class="tab" id="t-ver">
 <div class="card"><h2>Verificación de elementos</h2><p class="note">Viento sobre componentes y revestimientos (CIRSOC 102-2025, cap. 5), chapas (separación máxima de correas), correas, vigas y columnas. Los datos de cada verificación se cargan abajo.</p></div>
+<div class="card"><h2>Nave en 3D: qué verifica y qué no</h2><div id="v3d"></div></div>
+<div class="card"><details><summary>Tabla L.3.1 del CIRSOC 301: valores límite de deformaciones (para elegir las flechas admisibles)</summary>
+<div class="tw"><table><tr><th colspan="2">Edificios industriales</th><th>Flecha total</th><th>Flecha por carga variable debida a</th><th>Valor</th></tr>
+<tr><td rowspan="5">Deformaciones verticales</td><td class="l">Miembros que soportan cubiertas rígidas</td><td>L/200</td><td>Sobrecarga útil</td><td>L/240</td></tr>
+<tr><td class="l">Miembros que soportan cubiertas flexibles</td><td>L/150</td><td>Sobrecarga útil</td><td>L/180</td></tr>
+<tr><td class="l">Miembros que soportan pisos</td><td>L/250</td><td>Sobrecarga útil</td><td>L/300</td></tr>
+<tr><td class="l">Vigas carril para grúas de capacidad ≥ 200 kN</td><td></td><td>Rueda sin impacto</td><td>L/800 (c)</td></tr>
+<tr><td class="l">Vigas carril para grúas de capacidad &lt; 200 kN</td><td></td><td>Rueda sin impacto</td><td>L/600 (c)</td></tr>
+<tr><td rowspan="3">Desplazamiento lateral (d)</td><td class="l">Vigas carril</td><td></td><td>Frenado transversal</td><td>L/600 (c)</td></tr>
+<tr><td class="l">Desplazamiento de columnas con respecto a la base por acción de viento</td><td>H/150</td><td>Viento</td><td>H/160</td></tr>
+<tr><td class="l">Desplazamiento de columnas con respecto a la base por acción de puente grúa</td><td></td><td>Frenado puente grúa</td><td>H/400 (c)</td></tr></table></div>
+<p class="note">CIRSOC 301, Tabla L.3.1, parte de edificios industriales (las notas (a) a (d) y la parte «para otros edificios» están en el reglamento). Para esta nave, con cubierta de chapa (flexible): chapa, correas y viga L/150 para la flecha total y L/180 para la flecha por sobrecarga; columnas H/150 con viento (H/160 para la parte debida solo al viento).</p></details></div>
 <div id="fver" class="frm"></div>
 <div class="card"><h2>Viento sobre componentes y revestimientos</h2><div id="crOut"></div></div>
 <div class="card"><h2>Chapas: separación máxima de correas</h2><div id="chOut"></div></div>
@@ -955,7 +967,7 @@ function drawCorrea(m,d){const kN=v=>v*G0/1000,cs=Math.cos(m.th),L=d.s,sp=+d.coS
  const fy=+d.coFy,h=+d.coH-4*(+d.cot),tt=+d.cot,kv=5.34,lt=h/tt,Vn=lt<=0.96*Math.sqrt(E*kv/fy)?0.6*fy*h*tt:(lt<=1.415*Math.sqrt(E*kv/fy)?0.64*tt*tt*Math.sqrt(kv*fy*E):0.905*E*kv*tt**3/h),phV=0.95;
  const mS=cMn(sc,d,+d.coLbs),mI=cMn(sc,d,+d.coLbi),MnG=cont?Math.min(mS.Mn,mI.Mn):mS.Mn;
  const Aeff=L*Math.max(sp,L/3),I=sc.Ix*1e-12,fl=(w,lim)=>cD*kN(w)*L**4/(E*1e3*I)*1000; // mm
- const rows=[],UT=[];const add=(n,wu,Mn,wsv,lim)=>{const Mu=cM*kN(wu)*L*L,Vu=(cont?0.6:0.5)*kN(wu)*L,dl=fl(wsv),da=L*1000/fls[lim];UT.push({l:n.replace(/<[^>]+>/g,''),r:Math.max(Mu/(0.9*Mn),dl/da)});rows.push(`<tr><td class="l">${n}</td><td>${f(wu,0)}</td><td>${f(Mu,2)}</td><td>${f(0.9*Mn,2)}</td><td class="${Mu<=0.9*Mn?'ok':'bad'}">${f(Mu/(0.9*Mn),2)}</td><td>${f(Vu/(phV*Vn/1000),2)}</td><td>${f(dl,1)} / ${f(da,1)}</td><td class="${dl<=da?'ok':'bad'}">${dl<=da?'cumple':'no cumple'}</td></tr>`)};
+ const rows=[],UT=[];const add=(n,wu,Mn,wsv,lim)=>{const Mu=cM*kN(wu)*L*L,Vu=(cont?0.6:0.5)*kN(wu)*L,dl=fl(wsv),da=L*1000/fls[lim];UT.push({l:n.replace(/<[^>]+>/g,''),r:Math.max(Mu/(0.9*Mn),dl/da)});window.VRco=UT;rows.push(`<tr><td class="l">${n}</td><td>${f(wu,0)}</td><td>${f(Mu,2)}</td><td>${f(0.9*Mn,2)}</td><td class="${Mu<=0.9*Mn?'ok':'bad'}">${f(Mu/(0.9*Mn),2)}</td><td>${f(Vu/(phV*Vn/1000),2)}</td><td>${f(dl,1)} / ${f(da,1)}</td><td class="${dl<=da?'ok':'bad'}">${dl<=da?'cumple':'no cumple'}</td></tr>`)};
  add('Gravitatoria: 1,2D + 1,6(L<sub>r</sub> ó S)',Math.max(1.2*Dl+1.6*LS,1.4*Dl),MnG,Dl+LS,+d.coFlG);
  for(const [z,n] of ZN.slice(0,3)){const p=crP(m,z,Aeff);add(`Succión ${n.replace('Cubierta, ','')}: 0,9D − 1,0W`,Math.max(-p.suc*sp-0.9*Dl,0),mI.Mn,Math.max(-0.6*p.suc*sp-0.6*Dl,0),+d.coFlW);
   add(`Presión ${n.replace('Cubierta, ','')}: 1,2D + 1,0W + 0,5S`,1.2*Dl+p.pre*sp+0.5*S*sp*cs*cs,MnG,Dl+0.6*p.pre*sp,+d.coFlW)}
@@ -1017,7 +1029,7 @@ function drawVC(m,d){const ms=A.ms,K=G0/1000*1000/1000,E=200000,Fy=+d.fyW,t2k=9.
  <tr><td class="l">Flecha de la viga en la cumbrera, relativa a los aleros (L = ${f(A.m.d.L)} m)</td><td>${f(dv.v,1)}</td><td>${f(va,1)} (L/${fls[+d.vFl]})</td><td class="${dv.v<=va?'ok':'bad'}">${dv.v<=va?'cumple':'no cumple'}</td><td class="l">${dv.c}</td></tr>
  <tr><td class="l">Desplazamiento lateral del alero (H = ${f(A.m.Hc)} m)</td><td>${f(dh.v,1)}</td><td>${f(ha,1)} (H/${flh[+d.cFl]})</td><td class="${dh.v<=ha?'ok':'bad'}">${dh.v<=ha?'cumple':'no cumple'}</td><td class="l">${dh.c}</td></tr></table></div>
  <p class="note">Esfuerzos de todas las combinaciones ELU del análisis (CIRSOC 101-2025), en cada extremo de cada tramo de barra. F<sub>y</sub> = ${f(Fy,0)} MPa, E = 200 000 MPa. Compresión: E3 con secciones esbeltas por E7 (Q<sub>s</sub> del ala, Q<sub>a</sub> con ancho efectivo del alma). Flexión: F2 (pandeo lateral-torsional con L<sub>b</sub> y C<sub>b</sub> ingresados) y F3 (pandeo local del ala). En la viga, el ala comprimida se elige según el signo del momento: momento negativo (como en el alero) comprime el ala inferior. Interacción H1-1a/b. Las longitudes de pandeo k·L las define el usuario según el arriostramiento. Las propiedades de los W se calculan con alas y alma rectangulares (sin radios).</p>`;
- const dv2=UV;dv2.push({l:'Flecha de la viga',r:dv.v/va},{l:'Desplazamiento lateral del alero',r:dh.v/ha});
+ const dv2=UV;window.VRvc=UV.concat([{l:'Viga flecha',r:dv.v/va},{l:'Columna desplazamiento',r:dh.v/ha}]);dv2.push({l:'Flecha de la viga',r:dv.v/va},{l:'Desplazamiento lateral del alero',r:dh.v/ha});
  $('vcOut').innerHTML=gWrap('Aprovechamiento de cada verificación (verde ≤ 0,80 · amarillo ≤ 1,00 · rojo > 1,00)',utilBars(dv2.filter((z,i,a)=>!z.l.startsWith('Columna derecha')||true)))+'<details><summary>Detalle del cálculo</summary>'+out+'</details>'}
 
 
@@ -1078,7 +1090,7 @@ function drawPared(m,d){const kN=v=>v*G0/1000,E=200000,G=77200,fy=+d.pFy,L=d.s,s
  const fls=[150,180,200,240,250,300,360],da=L*1000/fls[+d.pFl],rows=[],UT=[];
  for(const [z,nm] of ZN.slice(3)){const p=crP(m,z,Aeff);
   for(const [lab,w,mm] of [['presión',p.pre,me],['succión',-p.suc,mi]]){const wx=w*sp,Mux=cM*kN(wx)*L*L,Vu=(cont?0.6:0.5)*kN(wx)*L,rb=Mux/(0.9*mm.Mn)+Muy/(0.9*Mny),rv=(Mux/(0.9*mm.Mn))**2+(Vu/phVn)**2,fl=cD*kN(0.6*wx)*L**4/(E*1e3*sc.Ix*1e-12)*1000;
-   UT.push({l:`${nm.replace('Pared, ','')}, ${lab}`,r:Math.max(rb,Math.sqrt(rv),fl/da)});
+   UT.push({l:`${nm.replace('Pared, ','')}, ${lab}`,r:Math.max(rb,Math.sqrt(rv),fl/da)});window.VRpa=UT;
    rows.push(`<tr><td class="l">${nm}, ${lab}: 1,2D + 1,0W</td><td>${f(wx,0)}</td><td>${f(Mux,2)} / ${f(0.9*mm.Mn,2)}</td><td>${f(Muy,2)} / ${f(0.9*Mny,2)}</td><td class="${rb<=1?'ok':'bad'}">${f(rb,2)}</td><td class="${rv<=1?'ok':'bad'}">${f(rv,2)}</td><td class="${fl<=da?'ok':'bad'}">${f(fl,1)} / ${f(da,1)}</td></tr>`)}}
  $('paOut').innerHTML=`<div class="vgrid">${gWrap('Sección de la correa de pared',cSketch({coH:d.pH,coB:d.pB,coD:d.pD,cot:d.pt}).replace('</svg>',dbl?`<text x="190" y="185" text-anchor="middle" style="font-size:11px">${box?'doble C en cajón':'doble C, espalda con espalda'}</text></svg>`:'</svg>'))}<div class="vg"><div class="vgt">Aprovechamiento (el mayor entre flexión biaxial, flexión y corte, y flecha)</div>${utilBars(UT)}</div></div>
  <details><summary>Detalle del cálculo</summary><div class="kpi"><div><b>${dbl?'2 × ':''}C ${d.pH}×${d.pB}×${d.pD}×${d.pt}</b><span>A = ${f(sc.A/100,2)} cm², I<sub>x</sub> = ${f(sc.Ix/1e4,1)} cm⁴, I<sub>y</sub> = ${f(sc.Iy/1e4,1)} cm⁴, ${f(pp,2)} kg/m${d.pCCn?` (tabla ${d.pCCn[4]}: A = ${f(d.pCCn[5],2)}, I<sub>x</sub> = ${f(d.pCCn[6],1)}, I<sub>y</sub> = ${f(d.pCCn[7],1)})`:''}</span></div><div><b>${f(0.9*me.Mn,2)} kN·m</b><span>φM<sub>nx</sub> ala exterior comprimida (presión), L<sub>b</sub> = ${f(+d.pLbe)} m, F<sub>c</sub> = ${f(me.Fc,0)} MPa</span></div><div><b>${f(0.9*mi.Mn,2)} kN·m</b><span>φM<sub>nx</sub> ala interior comprimida (succión), L<sub>b</sub> = ${f(+d.pLbi)} m, F<sub>c</sub> = ${f(mi.Fc,0)} MPa</span></div><div><b>${f(0.9*Mny,2)} kN·m</b><span>φM<sub>ny</sub> eje débil (S<sub>y</sub>·F<sub>y</sub>)</span></div><div><b>${f(phVn,1)} kN</b><span>φV<sub>n</sub> (C3.2)</span></div></div>
@@ -1098,8 +1110,40 @@ function drawVer(m,d){d=Object.assign({},d);for(const [s0,h,b,dd,t] of [['coSel'
  <p class="note">Separación máxima = la menor luz que cumple resistencia (M<sub>u</sub> ≤ φ·M<sub>n</sub>, φ = 0,90) y flecha. Cubierta: M<sub>u</sub> = c·w·L² con c = ${['1/8','1/8 (apoyo central)','1/10'][+d.chTr]}; flecha con coeficiente ${['5/384','1/185','1/145'][+d.chTr]}. Gravitatorias: 1,2D + 1,6(L<sub>r</sub> ó S) y 1,4D sobre la chapa (D = peso de la chapa; L<sub>r</sub> con R<sub>1</sub> = 1 por área chica, S = el mayor de balanceada y no balanceada a sotavento), flecha con D + (L<sub>r</sub> ó S) y límite ${['L/100','L/120','L/150','L/180','L/200','L/240','L/300','L/360'][+d.chFlG]}. Viento: 0,9D − 1,0W de succión y 1,0W de presión de componentes y revestimientos, con A = L²/3; flecha con 0,6W − 0,6D y límite ${['L/100','L/120','L/150','L/180','L/200','L/240','L/300','L/360'][+d.chFlW]}. Las zonas de cubierta también cumplen la gravitatoria.</p></details>
  <p class="note">Propiedades calculadas con la geometría del folleto (altura, paso, ancho útil, espesor) y fy = ${f(+d.chFy,0)} MPa. En las trapezoidales, el ancho de la cresta y la proyección del alma no figuran en el folleto († supuestos: T-98 35/16 mm, T-101 40/20 mm, T-90 40/70 mm). Las partes planas comprimidas usan ancho efectivo (CIRSOC 303, art. B2.1, k = 4). La T-90 autoportante depende mucho del pandeo de sus paredes: tomar su valor como orientativo y confirmar con el fabricante.</p>`}
 
+/* ---------- 3D de la nave con el estado de verificación ---------- */
+function draw3D(m,d){const L=d.L,Lt=m.Lt,H=m.Hc,fr=m.fr,a=crA(m),s=+d.s,sp=+d.coSep,ps=+d.pSep,th=m.th;
+ const mx=(arr,re)=>Math.max(0,...(arr||[]).filter(z=>re.test(z.l)).map(z=>z.r));
+ const co=window.VRco||[],pa=window.VRpa||[],vc=window.VRvc||[];
+ const rG=mx(co,/Gravitatoria/),rCo={z1:Math.max(rG,mx(co,/zona 1/)),z2:Math.max(rG,mx(co,/zona 2/)),z3:Math.max(rG,mx(co,/zona 3/))},rPa={w4:mx(pa,/zona 4/),w5:mx(pa,/zona 5/)};
+ const rCol=mx(vc,/^Columna/),rVig=mx(vc,/^Viga/);
+ const ch=chMax(m,CHL[+d.chSel],d),rCh={z1:sp/ch.z.z1,z2:sp/ch.z.z2,z3:sp/ch.z.z3,w4:ps/ch.z.w4,w5:ps/ch.z.w5};
+ const zr=(x,y)=>{const e=x<a||x>Lt-a,ev=y<a||y>L-a,ri=Math.abs(y-L/2)<a;return e&&(ev||ri)?'z3':(e||ri?'z2':'z1')};
+ const zt=y=>H+(y<=L/2?y:L-y)*Math.tan(th);
+ const W=1000,Hh=560,P=(x,y,z)=>[x*0.92-y*0.78,-z*1.15-x*0.16-y*0.36];
+ const pts=[[0,0,0],[Lt,0,0],[0,L,0],[Lt,L,0],[0,L/2,H+fr],[Lt,L/2,H+fr]].map(p=>P(...p));const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);
+ const k=Math.min((W-60)/(Math.max(...xs)-Math.min(...xs)),(Hh-80)/(Math.max(...ys)-Math.min(...ys))),ox=30-Math.min(...xs)*k,oy=50-Math.min(...ys)*k;
+ const Q=(x,y,z)=>{const p=P(x,y,z);return (ox+p[0]*k).toFixed(1)+','+(oy+p[1]*k).toFixed(1)};
+ const col=r=>r<=1?'#2a9d8f':'#d62828',ln=(p1,p2,c,w,ex='')=>`<line x1="${Q(...p1).split(',')[0]}" y1="${Q(...p1).split(',')[1]}" x2="${Q(...p2).split(',')[0]}" y2="${Q(...p2).split(',')[1]}" stroke="${c}" stroke-width="${w}" stroke-linecap="round" ${ex}/>`;
+ let o=`<svg viewBox="0 0 ${W} ${Hh}">`;const nb=Math.round(Lt/s);
+ // chapa de cubierta (por paño y franja de zona)
+ const yb=[0,a,L/2-a,L/2,L/2+a,L-a,L];
+ for(let i=0;i<nb;i++){const x0=i*s,x1=(i+1)*s;for(let j=0;j<6;j++){const y0=yb[j],y1=yb[j+1],z=zr((x0+x1)/2,(y0+y1)/2),r=rCh[z];
+  o+=`<polygon points="${Q(x0,y0,zt(y0))} ${Q(x1,y0,zt(y0))} ${Q(x1,y1,zt(y1))} ${Q(x0,y1,zt(y1))}" fill="${col(r)}" fill-opacity="${r<=1?0.10:0.30}" stroke="none"><title>Chapa, ${z.replace('z','zona ')}: ${f(r,2)}</title></polygon>`}}
+ // correas de pared (caras y = 0 e y = L)
+ for(const yy of [L,0])for(let zz=ps/2;zz<H;zz+=ps)for(let i=0;i<nb;i++){const x0=i*s,x1=(i+1)*s,z=(x0<a||x1>Lt-a)?'w5':'w4';o+=ln([x0,yy,zz],[x1,yy,zz],col(rPa[z]),1.6,`opacity="0.85"`)}
+ // correas de techo
+ const sl=(L/2)/Math.cos(th),nc=Math.floor(sl/sp+1e-9);
+ for(let side=0;side<2;side++)for(let c=0;c<=nc;c++){const dd=Math.min(c*sp,sl)*Math.cos(th),yy=side?L-dd:dd;
+  for(let i=0;i<nb;i++){const x0=i*s,x1=(i+1)*s,z=zr((x0+x1)/2,yy);o+=ln([x0,yy,zt(yy)],[x1,yy,zt(yy)],col(rCo[z]),1.8)}}
+ // pórticos
+ for(let i=0;i<=nb;i++){const x=i*s;o+=ln([x,0,0],[x,0,H],col(rCol),4)+ln([x,L,0],[x,L,H],col(rCol),4)+ln([x,0,H],[x,L/2,H+fr],col(rVig),3.5)+ln([x,L/2,H+fr],[x,L,H],col(rVig),3.5)}
+ o+=`<text x="${W/2}" y="20" text-anchor="middle" style="font-weight:600">Nave ${f(Lt,0)} × ${f(L,0)} m · pórticos cada ${f(s)} m · correas de techo cada ${f(sp)} m · correas de pared cada ${f(ps)} m</text>`;
+ o+=`<g transform="translate(20,${Hh-20})"><rect width="14" height="10" fill="#2a9d8f"/><text x="20" y="9" style="font-size:12px">verifica (relación ≤ 1)</text><rect x="170" width="14" height="10" fill="#d62828"/><text x="190" y="9" style="font-size:12px">no verifica</text><text x="320" y="9" style="font-size:12px;fill:var(--mut)">chapa: relleno de los paños, por zona de viento · pasá el mouse sobre un paño para ver la relación</text></g></svg>`;
+ const T=(n,r)=>`<tr><td class="l">${n}</td><td class="${r<=1?'ok':'bad'}">${f(r,2)}</td></tr>`;
+ $('v3d').innerHTML=o+`<div class="tw"><table><tr><th>Elemento</th><th>Relación máxima</th></tr>${T('Columnas',rCol)}${T('Vigas',rVig)}${T('Correas de techo, zona 1',rCo.z1)}${T('Correas de techo, zona 2',rCo.z2)}${T('Correas de techo, zona 3',rCo.z3)}${T('Correas de pared, zona 4',rPa.w4)}${T('Correas de pared, zona 5',rPa.w5)}${T('Chapa de techo, zona 1 (separación / separación máxima)',rCh.z1)}${T('Chapa de techo, zona 2',rCh.z2)}${T('Chapa de techo, zona 3',rCh.z3)}${T('Chapa de pared, zona 4',rCh.w4)}${T('Chapa de pared, zona 5',rCh.w5)}</table></div><p class="note">Todos los pórticos se pintan con el resultado del pórtico analizado (pórtico ${m.np}); los extremos tienen la mitad de ancho tributario. Las correas de techo se pintan según la zona de viento de cada tramo (Fig. 5.3-2B) y las de pared según zona 4 o 5 (Fig. 5.3-1). La chapa usa la separación de correas cargada.</p>`}
+
 function run(){
- const d=read();A=analyze(d,d.np);const m=A.m;try{drawVer(m,d)}catch(e){console.error(e)}
+ const d=read();A=analyze(d,d.np);const m=A.m;try{drawVer(m,d)}catch(e){console.error(e)}try{draw3D(m,d)}catch(e){console.error(e)}
  $('svgGeo').innerHTML=drawGeo(m);$('svgPlan').innerHTML=drawPlan(m);$('geoSvg').innerHTML=drawBig(m);$('secOut').innerHTML=secOut(d);
  $('geoOut').innerHTML=`Altura de columna ${f(m.Hc)} m · flecha de cubierta ${f(m.fr)} m · cumbrera ${fs(m.zr)} · nivel de referencia del terreno ${fs(m.zref)} · altura de alero sobre el terreno ${f(m.he)} m · altura de cumbrera ${f(m.hr)} m · <b>altura media de cubierta h = ${f(m.h)} m</b> (θ ${m.thd>=10?'≥':'<'} 10°: ${m.thd>=10?'promedio de alero y cumbrera':'altura del alero'}).`;
  // viento
