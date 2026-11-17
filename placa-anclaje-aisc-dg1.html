@@ -94,8 +94,34 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:12px}
 .kpi{background:var(--panel2);border-radius:10px;padding:8px 12px}
 .kpi b{display:block;font-size:18px;font-family:var(--mono)} .kpi span{font-size:11.5px;color:var(--muted)}
+
+.fund{padding:16px 18px;margin-top:18px}
+.fh{font-size:16px;margin:0 0 4px}.fl{color:var(--muted);margin:0 0 12px;font-size:13px}
+.fcard{border:1px solid var(--line);border-radius:10px;margin:10px 0;background:var(--panel)}
+.fcard.star{border-color:var(--accent2);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent2) 18%,transparent)}
+.fcard>summary{cursor:pointer;padding:11px 14px;font-weight:600;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.fcard>summary small{color:var(--muted);font-weight:400;font-size:12px}
+.fn{width:26px;height:26px;border-radius:50%;background:var(--accent2);color:#fff;display:inline-grid;place-items:center;font-size:13px;flex:none}
+.fcard>*:not(summary){margin-left:16px;margin-right:16px}
+.fcard>.fgrid{display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start;margin-bottom:14px}
+@media (max-width:900px){.fcard>.fgrid{grid-template-columns:1fr}}
+.fcard p,.fcard li{font-size:13.5px;line-height:1.55}
+.fcard h4{margin:16px 0 6px;font-size:14px;color:var(--accent2)}
+.feq{font-family:"Cambria Math",Cambria,"Times New Roman",serif;font-size:15px;background:var(--panel2);border-left:3px solid var(--accent);padding:8px 12px;border-radius:0 8px 8px 0;margin:8px 0}
+.feq.in{display:inline-block;margin:4px 0}
+.fnote{font-size:12.5px;color:var(--muted);background:var(--panel2);padding:8px 10px;border-radius:8px}
+.fsvg{width:100%;max-width:340px;height:auto}
+.fsvg.wide{max-width:100%;margin:6px 0 4px}
+.fsvg text{font-family:"Segoe UI",system-ui,sans-serif}
+.ftab{border-collapse:collapse;width:calc(100% - 32px);font-size:13px;margin-bottom:6px}
+.ftab th,.ftab td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+.ftab th{color:var(--muted)}
+.live{color:var(--accent);font-weight:700;font-family:var(--mono);font-size:12.5px}
+.fref li{font-size:12.5px}
+.flink{margin-left:8px;font-size:12px;font-weight:600;color:var(--accent2);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:2px 9px;white-space:nowrap}
+.flink:hover{border-color:var(--accent2)}
 @media print{
-  header .btn,aside,.fig h2 .tg{display:none!important} main{grid-template-columns:1fr} .step{break-inside:avoid} details.step{display:block} details.step>.body{display:block}
+  header .btn,aside,.fig h2 .tg{display:none!important} main{grid-template-columns:1fr} .step{break-inside:avoid} details.step{display:block} details.step>.body{display:block} details.fcard>*{display:block}
   body{background:#fff} .card,.step{box-shadow:none}
 }
 </style>
@@ -245,6 +271,281 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
   </div>
 
   <div class="steps" id="steps"></div>
+  <div class="card fund" id="fundamentos">
+    <svg width="0" height="0" style="position:absolute"><defs>
+      <marker id="farr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker>
+      <marker id="farrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker>
+      <marker id="farrT" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--tens)"/></marker>
+    </defs></svg>
+    <h2 class="fh">📖 Fundamentos de cada verificación</h2>
+    <p class="fl">Qué se verifica, de qué norma sale cada ecuación y qué hipótesis hay detrás. Los valores en <span class="live">azul</span> son los de la placa que tenés cargada.</p>
+
+    <!-- ===================== 1 ===================== -->
+    <details class="fcard" id="f-aplast"><summary><span class="fn">1</span> Aplastamiento del hormigón <small>AISC 360-16 §J8 · DG1 §3.1.1 · ACI 318-19 §22.8</small></summary>
+      <div class="fgrid">
+        <div>
+          <p>La placa reparte la compresión sobre el hormigón. La resistencia nominal al aplastamiento es:</p>
+          <div class="feq">P<sub>p</sub> = 0,85 · f′<sub>c</sub> · A<sub>1</sub> · √(A<sub>2</sub>/A<sub>1</sub>) ≤ 1,7 · f′<sub>c</sub> · A<sub>1</sub>&nbsp;&nbsp;&nbsp;&nbsp;φ<sub>c</sub> = 0,65</div>
+          <ul>
+            <li><b>A<sub>1</sub></b>: área de la placa (B·N).</li>
+            <li><b>A<sub>2</sub></b>: mayor área de la cara del hormigón <b>geométricamente semejante</b> a A<sub>1</sub> y concéntrica con ella. Se obtiene con una pirámide de pendiente 1:2 que baja desde la placa.</li>
+            <li>√(A<sub>2</sub>/A<sub>1</sub>) es el <b>efecto de confinamiento</b>: el hormigón que rodea la zona cargada la zuncha y le permite tomar más presión. Se limita a 2.</li>
+            <li>En términos de presión: <b>f<sub>p,máx</sub> = φ<sub>c</sub>·0,85·f′<sub>c</sub>·√(A<sub>2</sub>/A<sub>1</sub>)</b> = <span class="live" id="fx-fpmax">—</span>.</li>
+          </ul>
+          <p class="fnote">φ = 0,65 es el de ACI 318 para aplastamiento; la DG1 lo adopta en todos sus ejemplos (la Especificación AISC 2005 decía 0,60, error que la propia guía señala).</p>
+        </div>
+        <svg viewBox="0 0 320 230" class="fsvg">
+          <defs><pattern id="fh1" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="var(--conc)" stroke-width="1"/></pattern></defs>
+          <polygon points="20,200 300,200 300,70 20,70" fill="var(--conc2)" stroke="var(--conc)" stroke-width="2"/>
+          <polygon points="20,200 300,200 300,70 20,70" fill="url(#fh1)" opacity=".5"/>
+          <polygon points="120,70 200,70 260,190 60,190" fill="var(--area)" opacity=".15" stroke="var(--area)" stroke-dasharray="5 4"/>
+          <rect x="120" y="58" width="80" height="12" fill="var(--plate)"/>
+          <line x1="160" y1="10" x2="160" y2="54" stroke="var(--accent)" stroke-width="3" marker-end="url(#farrA)"/>
+          <text x="166" y="28" font-size="12" style="fill:var(--accent)">P<tspan baseline-shift="sub" font-size="8">u</tspan></text>
+          <text x="160" y="52" text-anchor="middle" font-size="11" style="fill:var(--plate)">A₁</text>
+          <text x="160" y="215" text-anchor="middle" font-size="11" style="fill:var(--area)">A₂ (pendiente 1:2)</text>
+          <text x="232" y="128" font-size="11" style="fill:var(--area)">2</text><text x="240" y="150" font-size="11" style="fill:var(--area)">1</text>
+        </svg>
+      </div>
+    </details>
+
+    <!-- ===================== 2 ===================== -->
+    <details class="fcard" id="f-dist"><summary><span class="fn">2</span> Distribución de presiones con momento <small>DG1 §3.3 y §3.4</small></summary>
+      <div class="fgrid">
+        <div>
+          <p>Con momento, la DG1 reemplaza la distribución triangular por un <b>bloque rectangular</b> de presión q en una longitud Y, igual que el bloque de Whitney en hormigón armado.</p>
+          <ul>
+            <li><b>e = M<sub>u</sub>/P<sub>u</sub></b> (excentricidad) y <b>e<sub>crít</sub> = N/2 − P<sub>u</sub>/(2·q<sub>máx</sub>)</b>, con q<sub>máx</sub> = f<sub>p,máx</sub>·B.</li>
+            <li><b>Momento chico (e ≤ e<sub>crít</sub>)</b>: alcanza con la compresión; Y = N − 2e y q = P<sub>u</sub>/Y ≤ q<sub>máx</sub>. Los anclajes no traccionan.</li>
+            <li><b>Momento grande (e &gt; e<sub>crít</sub>)</b>: el hormigón llega a q<sub>máx</sub> y los anclajes traccionan. Por equilibrio de fuerzas y momentos respecto de la fila traccionada:<br>
+              <span class="feq in">Y = (f + N/2) − √[(f + N/2)² − 2·P<sub>u</sub>·(e + f)/q<sub>máx</sub>] &nbsp;&nbsp; T<sub>u</sub> = q<sub>máx</sub>·Y − P<sub>u</sub></span></li>
+            <li><b>Tracción neta</b>: no hay compresión; cada fila toma |P<sub>u</sub>|/2 ± M<sub>u</sub>/(2f).</li>
+          </ul>
+        </div>
+        <svg viewBox="0 0 320 210" class="fsvg">
+          <rect x="40" y="90" width="240" height="10" fill="var(--plate)"/>
+          <rect x="120" y="20" width="80" height="70" fill="var(--steel)" opacity=".5"/>
+          <rect x="40" y="100" width="95" height="40" fill="var(--press)" opacity=".45" stroke="var(--press)"/>
+          
+          <line x1="250" y1="100" x2="250" y2="150" stroke="var(--tens)" stroke-width="3" marker-end="url(#farrT)"/>
+          <text x="256" y="140" font-size="11" style="fill:var(--tens)">T<tspan baseline-shift="sub" font-size="8">u</tspan></text>
+          <text x="88" y="158" text-anchor="middle" font-size="11" style="fill:var(--press)">q·Y</text>
+          <line x1="40" y1="172" x2="135" y2="172" stroke="var(--muted)" marker-start="url(#farr)" marker-end="url(#farr)"/><text x="88" y="186" text-anchor="middle" font-size="11" style="fill:var(--muted)">Y</text>
+          <line x1="160" y1="196" x2="250" y2="196" stroke="var(--muted)" marker-start="url(#farr)" marker-end="url(#farr)"/><text x="205" y="208" text-anchor="middle" font-size="11" style="fill:var(--muted)">f</text>
+          <line x1="160" y1="4" x2="160" y2="30" stroke="var(--accent)" stroke-width="3" marker-end="url(#farrA)"/><path d="M128,40 A 32 16 0 0 1 192,40" fill="none" stroke="var(--accent)" stroke-width="2" marker-end="url(#farrA)"/>
+          <text x="166" y="14" font-size="11" style="fill:var(--accent)">P<tspan baseline-shift="sub" font-size="8">u</tspan> , M<tspan baseline-shift="sub" font-size="8">u</tspan></text>
+        </svg>
+      </div>
+    </details>
+
+    <!-- ===================== 3 ===================== -->
+    <details class="fcard" id="f-dg1"><summary><span class="fn">3</span> Espesor de placa — método AISC DG1 <small>DG1 §3.1.2 · §3.3.2 · Thornton (1990)</small></summary>
+      <div class="fgrid">
+        <div>
+          <p>La DG1 supone que la presión es <b>uniforme</b> en toda la placa (placa rígida) y que la placa trabaja como un <b>voladizo</b> empotrado en una <b>línea crítica</b> cerca del perfil:</p>
+          <ul>
+            <li>Perfil I: a 0,95·d (alas) y 0,8·b<sub>f</sub> (bordes del ala). Tubo rectangular: 0,95·d y 0,95·b. Tubo circular: 0,8·D.</li>
+            <li>Voladizos: <b>m = (N − 0,95d)/2</b>, <b>n = (B − 0,8b<sub>f</sub>)/2</b> y, en compresión centrada, <b>λn′ = λ·√(d·b<sub>f</sub>)/4</b> (líneas de fluencia entre alas, Thornton 1990).</li>
+          </ul>
+          <p>Por unidad de ancho, el momento en el empotramiento y la resistencia plástica de la chapa son:</p>
+          <div class="feq">M<sub>u</sub> = f<sub>p</sub>·ℓ²/2 &nbsp;&nbsp;&nbsp; φM<sub>n</sub> = φ·F<sub>y</sub>·t²/4 &nbsp;(φ = 0,90)</div>
+          <p>Igualando: <b>t<sub>req</sub> = ℓ·√[2·f<sub>p</sub>/(0,9·F<sub>y</sub>)]</b> ≈ 1,5·ℓ·√(f<sub>p</sub>/F<sub>y</sub>). Cuando Y &lt; m (momento grande) se usa la presión sólo sobre Y: t = 2,11·√[f<sub>p</sub>·Y·(m − Y/2)/F<sub>y</sub>].</p>
+          <p class="fnote"><b>Hipótesis clave:</b> la presión llega uniforme hasta el borde de la placa. Eso sólo es cierto si la placa es lo bastante rígida; por eso, cuando el voladizo es largo, la DG1 pide placas gruesas. En una contraplaca los "perfiles" son las arandelas: hay voladizos hacia los bordes (M = f<sub>p</sub>c²/2) y tramos empotrados entre arandelas (M = f<sub>p</sub>s²/12).</p>
+        </div>
+        <svg viewBox="0 0 320 250" class="fsvg">
+          <rect x="30" y="20" width="260" height="210" fill="var(--plate)" fill-opacity=".15" stroke="var(--plate)" stroke-width="2"/>
+          <rect x="100" y="60" width="120" height="130" fill="none" stroke="var(--press)" stroke-dasharray="4 3"/>
+          <polygon points="94,66 226,66 226,78 166,78 166,172 226,172 226,184 94,184 94,172 154,172 154,78 94,78" fill="var(--steel)" transform="rotate(90 160 125)"/>
+          <line x1="30" y1="125" x2="100" y2="125" stroke="var(--muted)" marker-start="url(#farr)" marker-end="url(#farr)"/><text x="65" y="119" text-anchor="middle" font-size="12" style="fill:var(--muted)">m</text>
+          <line x1="160" y1="20" x2="160" y2="60" stroke="var(--muted)" marker-start="url(#farr)" marker-end="url(#farr)"/><text x="168" y="44" font-size="12" style="fill:var(--muted)">n</text>
+          <text x="160" y="244" text-anchor="middle" font-size="11" style="fill:var(--press)">líneas críticas 0,95·d y 0,8·b<tspan baseline-shift="sub" font-size="8">f</tspan></text>
+        </svg>
+      </div>
+    </details>
+
+    <!-- ===================== 4 HIBRIDO ===================== -->
+    <details class="fcard star" id="f-hyb" open><summary><span class="fn">4</span> Espesor por área efectiva: método híbrido AISC + EN 1993-1-8 <small>justificación completa</small></summary>
+      <h4>4.1 El problema que resuelve</h4>
+      <p>La DG1 supone que la presión es uniforme hasta el borde de la placa. Si los apoyos rígidos son chicos (una arandela, la pared delgada de un tubo) y la placa se extiende lejos de ellos, una chapa delgada <b>no puede</b> llevar la presión hasta el borde: se flexiona, el borde se despega y la presión se concentra cerca del apoyo. El método de la DG1 tapa esto exigiendo el espesor necesario para que <i>toda</i> la placa trabaje, lo que da espesores muy grandes.</p>
+      <p>El Eurocódigo 3 trata el mismo problema con otro enfoque: <b>sólo cuenta como resistente la parte de la placa a una distancia c del elemento rígido</b> (el <i>área efectiva</i> o "T equivalente en compresión", EN 1993-1-8 §6.2.5). Dentro de esa franja el hormigón trabaja a su resistencia máxima; afuera se supone que no hay contacto.</p>
+
+      <h4>4.2 Las tres maneras de distribuir la presión</h4>
+      <svg viewBox="0 0 960 230" class="fsvg wide" id="figHyb">
+        <defs><pattern id="hfx" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#334155" stroke-width="1.6"/></pattern></defs>
+        <g transform="translate(10,0)">
+          <text x="150" y="18" text-anchor="middle" font-size="13" font-weight="700" style="fill:var(--text)">AISC DG1 (placa rígida)</text>
+          <rect x="120" y="32" width="60" height="60" fill="url(#hfx)" stroke="#334155"/>
+          <rect x="20" y="92" width="260" height="10" fill="var(--plate)"/>
+          <rect x="20" y="102" width="260" height="34" fill="var(--press)" opacity=".4" stroke="var(--press)"/>
+          <text x="150" y="152" text-anchor="middle" font-size="11" style="fill:var(--press)">f<tspan baseline-shift="sub" font-size="8">p</tspan> uniforme = P/A₁ en toda la placa</text>
+          <line x1="20" y1="170" x2="120" y2="170" stroke="var(--muted)" marker-start="url(#farr)" marker-end="url(#farr)"/><text x="70" y="184" text-anchor="middle" font-size="11" style="fill:var(--muted)">voladizo ℓ = m</text>
+          <text x="150" y="208" text-anchor="middle" font-size="11" style="fill:var(--muted)">M = f<tspan baseline-shift="sub" font-size="8">p</tspan>·ℓ²/2 ≤ 0,9·F<tspan baseline-shift="sub" font-size="8">y</tspan>·t²/4</text>
+        </g>
+        <g transform="translate(330,0)">
+          <text x="150" y="18" text-anchor="middle" font-size="13" font-weight="700" style="fill:var(--accent2)">HÍBRIDO (este método)</text>
+          <rect x="120" y="32" width="60" height="60" fill="url(#hfx)" stroke="#334155"/>
+          <path d="M20,80 Q70,90 110,96 L120,97 L180,97 L190,96 Q230,90 280,80" fill="none" stroke="var(--accent2)" stroke-width="3"/>
+          <rect x="20" y="92" width="260" height="10" fill="var(--plate)" opacity=".35"/>
+          <rect x="75" y="102" width="150" height="34" fill="var(--press)" opacity=".5" stroke="var(--press)"/>
+          <text x="40" y="122" font-size="10" style="fill:var(--muted)">sin</text><text x="36" y="133" font-size="10" style="fill:var(--muted)">contacto</text>
+          <text x="150" y="152" text-anchor="middle" font-size="11" style="fill:var(--press)">f<tspan baseline-shift="sub" font-size="8">p,máx</tspan> AISC sólo en c alrededor del apoyo</text>
+          <line x1="75" y1="170" x2="120" y2="170" stroke="var(--accent2)" marker-start="url(#farr)" marker-end="url(#farr)"/><text x="97" y="184" text-anchor="middle" font-size="12" style="fill:var(--accent2);font-weight:700">c</text>
+          <text x="150" y="208" text-anchor="middle" font-size="11" style="fill:var(--muted)">f<tspan baseline-shift="sub" font-size="8">p,máx</tspan>·c²/2 = 0,9·F<tspan baseline-shift="sub" font-size="8">y</tspan>·t²/4 &nbsp;(momento plástico)</text>
+        </g>
+        <g transform="translate(650,0)">
+          <text x="150" y="18" text-anchor="middle" font-size="13" font-weight="700" style="fill:var(--text)">EN 1993-1-8 §6.2.5</text>
+          <rect x="120" y="32" width="60" height="60" fill="url(#hfx)" stroke="#334155"/>
+          <rect x="20" y="92" width="260" height="10" fill="var(--plate)" opacity=".35"/>
+          <rect x="88" y="102" width="124" height="34" fill="var(--press)" opacity=".5" stroke="var(--press)"/>
+          <text x="150" y="152" text-anchor="middle" font-size="11" style="fill:var(--press)">f<tspan baseline-shift="sub" font-size="8">jd</tspan> (EC2) sólo en c alrededor del apoyo</text>
+          <line x1="88" y1="170" x2="120" y2="170" stroke="var(--muted)" marker-start="url(#farr)" marker-end="url(#farr)"/><text x="104" y="184" text-anchor="middle" font-size="12" style="fill:var(--muted)">c</text>
+          <text x="150" y="208" text-anchor="middle" font-size="11" style="fill:var(--muted)">f<tspan baseline-shift="sub" font-size="8">jd</tspan>·c²/2 = F<tspan baseline-shift="sub" font-size="8">y</tspan>·t²/6 &nbsp;(momento elástico)</text>
+        </g>
+      </svg>
+
+      <h4>4.3 De dónde sale cada parte</h4>
+      <p>El método híbrido <b>no tiene ninguna ecuación nueva</b>: combina piezas de dos normas reconocidas.</p>
+      <table class="ftab">
+        <thead><tr><th>Ingrediente</th><th>Qué se usa</th><th>Fuente</th></tr></thead>
+        <tbody>
+          <tr><td>Idea de área efectiva</td><td>Sólo resiste la franja de ancho c alrededor del elemento rígido; afuera no hay presión</td><td>EN 1993-1-8:2005 §6.2.5 y Fig. 6.4 (T equivalente en compresión)</td></tr>
+          <tr><td>Resistencia del hormigón</td><td>f<sub>p,máx</sub> = 0,65·0,85·f′<sub>c</sub>·√(A₂/A₁)</td><td>AISC 360-16 §J8, DG1 §3.1.1, ACI 318</td></tr>
+          <tr><td>Resistencia de la placa</td><td>Momento plástico por unidad de ancho φM<sub>p</sub> = 0,9·F<sub>y</sub>·t²/4</td><td>AISC 360-16 §F11 (barra rectangular), la misma que usa DG1 §3.1.2</td></tr>
+          <tr><td>Ancho c</td><td>Voladizo de la DG1 despejado en ℓ: t = ℓ·√(2f<sub>p</sub>/0,9F<sub>y</sub>) ⇒ <b>c = t·√[0,9·F<sub>y</sub>/(2·f<sub>p,máx</sub>)]</b></td><td>DG1 §3.1.2 (misma ecuación, despejada)</td></tr>
+          <tr><td>Verificación</td><td>P<sub>u</sub> ≤ f<sub>p,máx</sub>·A<sub>eff</sub>(c)</td><td>Equilibrio, como EN 1993-1-8 §6.2.5(3): F<sub>C,Rd</sub> = f<sub>jd</sub>·b<sub>eff</sub>·ℓ<sub>eff</sub></td></tr>
+        </tbody>
+      </table>
+      <p>Dicho en una frase: <b>c es el voladizo más largo que una placa de espesor t puede resistir —según la propia ecuación de la DG1— cuando el hormigón trabaja a su máxima resistencia AISC.</b> Con tus datos: t = <span class="live" id="fx-t">—</span>, F<sub>y</sub> = <span class="live" id="fx-fy">—</span>, f<sub>p,máx</sub> = <span class="live" id="fx-fp2">—</span> → <b>c = <span class="live" id="fx-c">—</span></b>.</p>
+
+      <h4>4.4 Por qué es seguro: teorema del límite inferior</h4>
+      <p>La justificación formal es el <b>teorema estático (del límite inferior) de la teoría de la plasticidad</b>: si se encuentra <i>una</i> distribución de esfuerzos que (1) está en equilibrio con las cargas y (2) no supera la resistencia en ningún punto, la estructura resiste esas cargas, aunque la distribución real sea otra. El método híbrido arma exactamente eso:</p>
+      <ol>
+        <li><b>Equilibrio:</b> la presión supuesta (f<sub>p,máx</sub> sobre A<sub>eff</sub>) equilibra la carga: P<sub>u</sub> ≤ f<sub>p,máx</sub>·A<sub>eff</sub>.</li>
+        <li><b>Hormigón:</b> en ningún punto la presión supera f<sub>p,máx</sub> (que ya incluye φ = 0,65).</li>
+        <li><b>Placa:</b> el mayor momento, en el borde del apoyo, vale f<sub>p,máx</sub>·c²/2 = φ·F<sub>y</sub>·t²/4: no supera la resistencia plástica de diseño.</li>
+        <li><b>Ductilidad:</b> el teorema exige que los elementos puedan redistribuir. La chapa de acero es dúctil; el hormigón en aplastamiento confinado bajo placa tiene capacidad de redistribución local y además se usa con φ = 0,65.</li>
+      </ol>
+      <p>El mismo teorema es el que justifica la DG1 (bloque rectangular de presión, momento plástico de la chapa) y las líneas de fluencia de Thornton. La diferencia es que el híbrido no supone una presión que la placa no puede generar.</p>
+
+      <h4>4.5 Diferencia con el Eurocódigo (por qué el EC3 da más espesor)</h4>
+      <ul>
+        <li><b>Placa:</b> el EC3 usa c = t·√(f<sub>y</sub>/(3·f<sub>jd</sub>)). El "3" sale de igualar f<sub>jd</sub>·c²/2 al <b>momento elástico</b> f<sub>y</sub>·t²/6, para que la placa quede casi elástica en el borde del área efectiva (criterio de deformación del modelo de componentes, Wald et&nbsp;al. 2008). El híbrido usa el <b>momento plástico con φ = 0,9</b>, igual que la DG1. Relación: c<sub>híb</sub>/c<sub>EC3</sub> = √(1,35·f<sub>jd</sub>/f<sub>p,máx</sub>).</li>
+        <li><b>Hormigón:</b> el EC3 usa f<sub>jd</sub> = β<sub>j</sub>·f<sub>ck</sub>/γ<sub>c</sub>·√(A₂/A₁) = 0,44·f′<sub>c</sub>·√(A₂/A₁); AISC usa 0,65·0,85 = 0,55·f′<sub>c</sub>·√(A₂/A₁).</li>
+        <li>Por eso, con los mismos datos: <b>t<sub>EC3</sub> &gt; t<sub>híbrido</sub></b>, y casi siempre <b>t<sub>DG1</sub> &gt; t<sub>híbrido</sub></b> cuando los voladizos son largos.</li>
+      </ul>
+      <p>Con tus datos: <span class="live" id="fx-cmp">—</span></p>
+
+      <h4>4.6 Límites de aplicación (decirlo antes de que lo pregunten)</h4>
+      <ul>
+        <li>Es un método de <b>resistencia última</b>: no controla deformaciones. Para cargas de servicio la placa puede plastificar localmente en el borde del apoyo; para cargas cíclicas o de fatiga conviene el EC3 (elástico).</li>
+        <li>Requiere que el elemento rígido (alas, pared del tubo, arandela + tuerca) sea efectivamente rígido y que las soldaduras o roscas transmitan la carga.</li>
+        <li>Supone hormigón bien compactado bajo la placa (grout o asiento completo); si hay vacíos, ninguno de los tres métodos vale.</li>
+        <li>No reemplaza la verificación del aplastamiento medio (paso de presión media) ni la del hormigón de la columna (punzonado, fisuración por tracción transversal bajo cargas concentradas).</li>
+        <li>Para defenderlo conviene presentar <b>los tres métodos lado a lado</b> (paso "Comparación de métodos"): el híbrido queda entre el EC3 (más conservador, elástico) y la DG1 (placa rígida).</li>
+      </ul>
+      <h4>4.7 Bibliografía</h4>
+      <ol class="fref">
+        <li>Fisher, J. M. y Kloiber, L. A. (2006). <i>Steel Design Guide 1: Base Plate and Anchor Rod Design</i>, 2ª ed. AISC. §3.1.1, §3.1.2, §3.3.</li>
+        <li>AISC 360-16. <i>Specification for Structural Steel Buildings</i>. §J8 (aplastamiento), §F11 (flexión de barras rectangulares).</li>
+        <li>EN 1993-1-8:2005. <i>Eurocode 3 – Design of joints</i>. §6.2.5 (T equivalente en compresión), §6.2.8 (bases de columnas), Tabla 6.4.</li>
+        <li>Wald, F., Sokol, Z., Steenhuis, M. y Jaspart, J.-P. (2008). Component method for steel column bases. <i>HERON</i>, 53(1/2).</li>
+        <li>Thornton, W. A. (1990). Design of small base plates for wide flange columns. <i>AISC Engineering Journal</i>, 27(3).</li>
+        <li>Neal, B. G. (1977). <i>The Plastic Methods of Structural Analysis</i>. Chapman &amp; Hall (teoremas límite).</li>
+      </ol>
+    </details>
+
+    <!-- ===================== 5 ===================== -->
+    <details class="fcard" id="f-ten"><summary><span class="fn">5</span> Flexión de la placa por tracción de anclajes <small>DG1 §3.2 · EN 1993-1-8 §6.2.4 y Tabla 6.6 · híbrido</small></summary>
+      <div class="fgrid">
+        <div>
+          <p>La fuerza del anclaje flexiona la placa en voladizo desde la cara del perfil. La DG1 toma un <b>ancho efectivo</b> con reparto a 45° desde el eje del anclaje hasta la cara del perfil:</p>
+          <div class="feq">b<sub>eff</sub> = mín(B ; n<sub>fila</sub>·2x) &nbsp;&nbsp; M<sub>u</sub> = T<sub>u</sub>·x / b<sub>eff</sub> &nbsp;&nbsp; t = √[4·M<sub>u</sub>/(0,9·F<sub>y</sub>)]</div>
+          <p>x es la distancia del anclaje al eje del ala (perfil I: f − d/2 + t<sub>f</sub>/2). Se desprecia el efecto palanca (DG1 lo justifica por la flexibilidad de la barra de anclaje).</p>
+          <p><b>EN 1993-1-8</b>: la placa es un <b>T equivalente</b> en tracción. Las líneas de fluencia posibles alrededor del anclaje dan una longitud efectiva Σℓ<sub>eff</sub> (Tabla 6.6, fila fuera del ala): patrones circulares ℓ<sub>cp</sub> = mín(2πm; πm + w; πm + 2e) y no circulares ℓ<sub>nc</sub> = mín(4m + 1,25e<sub>x</sub>; e + 2m + 0,625e<sub>x</sub>; 0,5b<sub>p</sub>; 0,5w + 2m + 0,625e<sub>x</sub>). Con anclajes largos no hay efecto palanca y, para una sola fila fuera del ala, <b>F<sub>T,Rd</sub> = M<sub>pl,Rd</sub>/m</b> con M<sub>pl,Rd</sub> = 0,25·Σℓ<sub>eff</sub>·t²·f<sub>y</sub>. m se mide hasta la cara del ala menos 0,8·√2 veces el cateto de la soldadura.</p>
+          <p><b>Híbrido</b>: mismas líneas de fluencia del EC3 (Σℓ<sub>eff</sub> y m) con la resistencia AISC φ·F<sub>y</sub>·t²/4 (φ = 0,90). Es el mismo criterio que en compresión: geometría del EC3, resistencias AISC.</p>
+          <p class="fnote">Con momento, en los métodos EC3 e híbrido la tracción de los anclajes sale del equilibrio con la resultante de compresión ubicada en el centro del área efectiva comprimida (brazo z<sub>c</sub> + f, EN 1993-1-8 Tabla 6.7). En DG1 sale del bloque rectangular Y. La tracción del método elegido es la que se usa para verificar los anclajes.</p>
+        </div>
+        <svg viewBox="0 0 300 180" class="fsvg">
+          <rect x="20" y="20" width="260" height="140" fill="var(--plate)" fill-opacity=".15" stroke="var(--plate)"/>
+          <rect x="20" y="70" width="110" height="40" fill="var(--steel)" opacity=".5"/>
+          <circle cx="220" cy="90" r="7" fill="var(--tens)"/>
+          <polygon points="220,90 130,20 130,160" fill="var(--tens)" opacity=".12" stroke="var(--tens)" stroke-dasharray="4 3"/>
+          <line x1="130" y1="172" x2="220" y2="172" stroke="var(--muted)" marker-start="url(#farr)" marker-end="url(#farr)"/><text x="175" y="168" text-anchor="middle" font-size="11" style="fill:var(--muted)">x</text>
+          <text x="138" y="38" font-size="11" style="fill:var(--tens)">b<tspan baseline-shift="sub" font-size="8">eff</tspan> = 2x</text>
+        </svg>
+      </div>
+    </details>
+
+    <!-- ===================== 6 ===================== -->
+    <details class="fcard" id="f-anc"><summary><span class="fn">6</span> Anclajes a tracción <small>ACI 318-19 Cap. 17 (= CIRSOC 201-2025 Cap. 17) · DG1 §3.2</small></summary>
+      <div class="fgrid">
+        <div>
+          <p>Se verifican todos los modos de falla y gobierna el menor:</p>
+          <ul>
+            <li><b>Acero (§17.6.1):</b> φN<sub>sa</sub> = 0,75·A<sub>se,N</sub>·f<sub>uta</sub>, con f<sub>uta</sub> ≤ 1,9·f<sub>ya</sub> y ≤ 860 MPa, A<sub>se,N</sub> = π/4·(d − 0,9382·p)².</li>
+            <li><b>Cono de hormigón (§17.6.2):</b> superficie de falla a ~35° que se proyecta 1,5·h<sub>ef</sub> alrededor de cada anclaje. N<sub>b</sub> = 10·λ·√f′<sub>c</sub>·h<sub>ef</sub><sup>1,5</sup> (o 3,9·λ·√f′<sub>c</sub>·h<sub>ef</sub><sup>5/3</sup> si h<sub>ef</sub> ≥ 280 mm); se corrige por área proyectada A<sub>Nc</sub>/A<sub>Nco</sub>, bordes ψ<sub>ed</sub> y fisuración ψ<sub>c</sub>. φ = 0,70.</li>
+            <li><b>Arrancamiento (§17.6.3):</b> aplastamiento bajo la cabeza: N<sub>p</sub> = 8·A<sub>brg</sub>·f′<sub>c</sub>; para gancho N<sub>p</sub> = 0,9·f′<sub>c</sub>·e<sub>h</sub>·d<sub>a</sub>.</li>
+            <li><b>Descascaramiento lateral (§17.6.4):</b> si el anclaje está cerca de un borde (h<sub>ef</sub> &gt; 2,5·c<sub>a1</sub>).</li>
+          </ul>
+          <p class="fnote">El cono considera el grupo de anclajes traccionados; cuando hay 3 o más bordes cerca, h<sub>ef</sub> se reduce según §17.6.2.1.2.</p>
+        </div>
+        <svg viewBox="0 0 300 200" class="fsvg">
+          <rect x="10" y="40" width="280" height="150" fill="var(--conc2)" stroke="var(--conc)"/>
+          <polygon points="150,150 40,40 260,40" fill="var(--area)" opacity=".18" stroke="var(--area)" stroke-dasharray="5 4"/>
+          <line x1="150" y1="20" x2="150" y2="150" stroke="var(--tens)" stroke-width="5"/>
+          <rect x="138" y="146" width="24" height="7" fill="var(--tens)"/>
+          <line x1="150" y1="26" x2="150" y2="4" stroke="var(--tens)" stroke-width="2.5" marker-end="url(#farrT)"/>
+          <line x1="40" y1="30" x2="150" y2="30" stroke="var(--muted)" marker-start="url(#farr)" marker-end="url(#farr)"/><text x="95" y="26" text-anchor="middle" font-size="11" style="fill:var(--muted)">1,5·h<tspan baseline-shift="sub" font-size="8">ef</tspan></text>
+          <line x1="270" y1="40" x2="270" y2="150" stroke="var(--muted)" marker-start="url(#farr)" marker-end="url(#farr)"/><text x="262" y="100" text-anchor="end" font-size="11" style="fill:var(--muted)">h<tspan baseline-shift="sub" font-size="8">ef</tspan></text>
+          <text x="196" y="122" font-size="11" style="fill:var(--area)">≈ 35°</text>
+        </svg>
+      </div>
+    </details>
+
+    <!-- ===================== 7 ===================== -->
+    <details class="fcard" id="f-corte"><summary><span class="fn">7</span> Transferencia del corte <small>DG1 §3.5 · ACI 318-19 §17.7</small></summary>
+      <div class="fgrid">
+        <div>
+          <ul>
+            <li><b>Fricción:</b> φV = 0,75·μ·P<sub>u</sub> (μ = 0,55 placa sobre grout; 0,70 sobre hormigón). Sólo con compresión. <b>No se suma</b> con el corte de los anclajes (criterio DG1/ACI).</li>
+            <li><b>Acero (§17.7.1):</b> φV<sub>sa</sub> = 0,65·0,6·A<sub>se</sub>·f<sub>uta</sub>, × 0,8 si hay grout (flexión de la barra).</li>
+            <li><b>Arrancamiento del borde (§17.7.2):</b> cuña de hormigón hacia el borde libre, proyectada 1,5·c<sub>a1</sub>. Se supone todo el corte en la fila más cercana al borde (conservador).</li>
+            <li><b>Desprendimiento por palanca (§17.7.3):</b> V<sub>cp</sub> = k<sub>cp</sub>·N<sub>cb</sub>.</li>
+          </ul>
+          <p>Si el borde no alcanza: <b>armadura de anclaje</b> (horquillas o estribos que cosan la cuña, §17.5.2.1) o <b>llave de corte</b> soldada bajo la placa (DG1 §3.5.2).</p>
+        </div>
+        <svg viewBox="0 0 300 180" class="fsvg">
+          <rect x="10" y="20" width="280" height="150" fill="var(--conc2)" stroke="var(--conc)"/>
+          <polygon points="120,95 290,20 290,170" fill="#0ea5e9" opacity=".18" stroke="#0ea5e9" stroke-dasharray="5 4"/>
+          <circle cx="120" cy="95" r="7" fill="var(--anchor)"/>
+          <line x1="128" y1="95" x2="200" y2="95" stroke="#0ea5e9" stroke-width="3" marker-end="url(#farrA)"/>
+          <text x="160" y="88" font-size="11" style="fill:#0284c7">V<tspan baseline-shift="sub" font-size="8">u</tspan></text>
+          <line x1="120" y1="158" x2="290" y2="158" stroke="var(--muted)" marker-start="url(#farr)" marker-end="url(#farr)"/><text x="205" y="154" text-anchor="middle" font-size="11" style="fill:var(--muted)">c<tspan baseline-shift="sub" font-size="8">a1</tspan></text>
+          <text x="240" y="40" font-size="11" style="fill:#0284c7">borde</text>
+        </svg>
+      </div>
+    </details>
+
+    <!-- ===================== 8 ===================== -->
+    <details class="fcard" id="f-inter"><summary><span class="fn">8</span> Interacción tracción + corte <small>ACI 318-19 §17.8</small></summary>
+      <div class="fgrid">
+        <div>
+          <p>ζ<sub>N</sub> = máx(N<sub>ua</sub>/φN<sub>n</sub>) y ζ<sub>V</sub> = máx(V<sub>ua</sub>/φV<sub>n</sub>) entre todos los modos.</p>
+          <ul><li>Si ζ<sub>N</sub> ≤ 0,2 se verifica el corte solo; si ζ<sub>V</sub> ≤ 0,2, la tracción sola.</li><li>Si no: <b>ζ<sub>N</sub> + ζ<sub>V</sub> ≤ 1,2</b> (aproximación trilineal de la interacción elíptica).</li></ul>
+        </div>
+        <svg viewBox="0 0 220 200" class="fsvg">
+          <line x1="30" y1="170" x2="210" y2="170" stroke="var(--muted)"/><line x1="30" y1="170" x2="30" y2="10" stroke="var(--muted)"/>
+          <polyline points="30,30 62,30 170,138 170,170" fill="var(--ok)" fill-opacity=".12" stroke="var(--ok)" stroke-width="2"/>
+          <path d="M30,30 A140 140 0 0 1 170,170" fill="none" stroke="var(--muted)" stroke-dasharray="4 3"/>
+          <text x="120" y="190" text-anchor="middle" font-size="11" style="fill:var(--muted)">ζ<tspan baseline-shift="sub" font-size="8">V</tspan></text>
+          <text x="10" y="100" font-size="11" style="fill:var(--muted)">ζ<tspan baseline-shift="sub" font-size="8">N</tspan></text>
+          <text x="66" y="24" font-size="10" style="fill:var(--ok)">0,2</text><text x="176" y="140" font-size="10" style="fill:var(--ok)">0,2</text>
+          <text x="98" y="80" font-size="11" style="fill:var(--ok)">ζ<tspan baseline-shift="sub" font-size="8">N</tspan>+ζ<tspan baseline-shift="sub" font-size="8">V</tspan> = 1,2</text>
+        </svg>
+      </div>
+    </details>
+  </div>
+
   <footer>Basado en AISC Design Guide 1, 2ª ed. (Fisher & Kloiber, 2006) — placa base — y ACI 318 Cap. 17 (= CIRSOC 201-2025 Cap. 17) — anclajes, con ecuaciones en unidades SI (N, mm). Herramienta de apoyo al cálculo: verificar siempre el criterio profesional, el armado del pedestal y los detalles constructivos.</footer>
 </section>
 </main>
@@ -274,11 +575,12 @@ const PRESETS = {
   ck:{Pu:60,Mu:0,Vu:30.6,ctype:'C',d:355.6,bf:355.6,tf:6.35,tw:6.35,N:400,B:400,Fy:235,tp:15.9,fc:30,N2:800,B2:400,ha:800,cracked:'1',lam:1,phic:0.65,mat:'ADN',da:16,thr:'0',atype:'J',hef:500,eh:200,nrow:'2',aN:100,g:200,fric:'0',mu:0.55,grout:'0',nV:'all'}
 };
 const METH = {
-  dg1: { n: 'AISC DG1', src: 'DG1 §3.1.2 / §3.3 — presión uniforme bajo la placa, voladizo desde la línea crítica' },
-  hyb: { n: 'Área efectiva (híbrido)', src: 'Área efectiva de EN 1993-1-8 §6.2.5 con f<sub>p,máx</sub> y φ de AISC: c = t·√(0,9·F<sub>y</sub> / 2·f<sub>p,máx</sub>)' },
-  ec3: { n: 'EN 1993-1-8 §6.2.5', src: 'T equivalente en compresión: f<sub>jd</sub> = β<sub>j</sub>·f<sub>cd</sub>·√(A₂/A₁) ≤ 3f<sub>cd</sub>, c = t·√(f<sub>y</sub> / 3·f<sub>jd</sub>·γ<sub>M0</sub>)' }
+  dg1: { n: 'AISC DG1', src: 'DG1 §3.1.2 / §3.3 — presión uniforme bajo la placa, voladizo desde la línea crítica; tracción: voladizo con reparto a 45° (§3.2)' },
+  hyb: { n: 'Área efectiva (híbrido)', src: 'Geometría de EN 1993-1-8 (área efectiva §6.2.5 y líneas de fluencia Tabla 6.6) con resistencias AISC: f<sub>p,máx</sub> J8 y φM<sub>p</sub> = 0,9·F<sub>y</sub>·t²/4' },
+  ec3: { n: 'EN 1993-1-8', src: 'T equivalente: compresión §6.2.5 (f<sub>jd</sub> = β<sub>j</sub>·f<sub>cd</sub>·√(A₂/A₁), c = t·√(f<sub>y</sub>/3f<sub>jd</sub>)) y tracción §6.2.4 + Tabla 6.6 (F<sub>T,Rd</sub> = M<sub>pl,Rd</sub>/m, sin efecto palanca)' }
 };
 const IDS = Object.keys(PRESETS.base);
+const FUND = { geo: 'f-aplast', dist: 'f-dist', media: 'f-aplast', carga: 'f-hyb', tp: 'f-dg1', tpalt: 'f-hyb', cmp: 'f-hyb', anc: 'f-anc', corte: 'f-corte', inter: 'f-inter', det: null };
 
 /* ===================== Utilidades ===================== */
 const $ = id => document.getElementById(id);
@@ -430,8 +732,9 @@ function calc(v) {
     }
   } else { caseName = 'Sin cargas'; }
   R.caseName = caseName; R.Y = Y; R.q = q; R.Tu = Tu; R.e = e; R.ecrit = ecrit; R.fp = fp; R.tensionRows = tensionRows;
-  R.steps.push({ id: 'dist', t: 'Distribución de presiones y tracción en anclajes', sub: `Caso: ${caseName} · DG1 §3.3 / §3.4`, eqs: eqs2 });
-  if (Pu > 0) R.checks.push({ n: 'Aplastamiento del hormigón (q ≤ q<sub>máx</sub>)', u: bearingRatio, d: `${n1(q)} / ${n1(qmax)} N/mm`, step: 'dist' });
+  if ((v.pm || 'dg1') !== 'dg1' && Pu > 0) eqs2.push({ note: 'Método elegido distinto de DG1: este paso queda como referencia. La compresión y la tracción de diseño se recalculan en el paso «Espesor — área efectiva y T equivalente» y son las que se usan en los anclajes.' });
+  R.steps.push({ id: 'dist', t: 'Distribución de presiones y tracción en anclajes (DG1)', sub: `Caso: ${caseName} · DG1 §3.3 / §3.4`, eqs: eqs2 });
+  if (Pu > 0 && (v.pm || 'dg1') === 'dg1') R.checks.push({ n: 'Aplastamiento del hormigón (q ≤ q<sub>máx</sub>)', u: bearingRatio, d: `${n1(q)} / ${n1(qmax)} N/mm`, step: 'dist' });
 
   /* ---- 3. Espesor de placa ---- */
   const eqs3 = [];
@@ -506,19 +809,44 @@ function calc(v) {
     const zc = E.zc || d / 2, ev = Pu > 0 ? Mu / Pu : Infinity;
     if (Pu > 0 && ev <= zc) return { C: Pu / 2 + Mu / (2 * zc), A: E.Al, txt: 'P<sub>u</sub>/2 + M<sub>u</sub>/(2·z<sub>c</sub>)  (ambos lados comprimidos)' };
     const C = (Pu * f + Mu) / (zc + f);
-    return { C: max(0, C), A: E.Al, txt: '(P<sub>u</sub>·f + M<sub>u</sub>) / (z<sub>c</sub> + f)  (lado traccionado en los anclajes)' };
+    return { C: max(0, C), A: E.Al, tens: true, txt: '(P<sub>u</sub>·f + M<sub>u</sub>) / (z<sub>c</sub> + f)  (lado traccionado en los anclajes)' };
   };
   const altM = meth => {
     const fj = meth === 'ec3' ? fjdE : fpmax, kf = cFac(meth, Fy, fj);
     let lo = 0.5, hi = 200; const cap = t => { const E = effCol(t * kf), D = demand(E); return { E, D, ok: fj * D.A >= D.C }; };
-    if (Pu <= 0 && demand(effCol(0)).C <= 0) return { fj, kf, tC: 0, none: true };
+    if (Pu <= 0 && demand(effCol(0)).C <= 0) return { fj, kf, tC: 0, none: true, Dm: null };
     if (!cap(hi).ok) return { fj, kf, tC: NaN };
     for (let i = 0; i < 30; i++) { const mid = (lo + hi) / 2; if (cap(mid).ok) hi = mid; else lo = mid; }
-    return { fj, kf, tC: hi, at: tAdopt ? cap(tAdopt) : null };
+    const Dm = demand(effCol((tAdopt || hi) * kf));
+    return { fj, kf, tC: hi, at: tAdopt ? cap(tAdopt) : null, Dm };
   };
-  const ALT = { dg1: { t: tReqD, tC: tReqC }, hyb: altM('hyb'), ec3: altM('ec3') };
-  ['hyb', 'ec3'].forEach(k => { ALT[k].t = isFinite(ALT[k].tC) ? max(ALT[k].tC, tReqT) : NaN; });
-  const eqs3b = [{ note: 'La placa no reparte la presión en toda su superficie: sólo trabaja una franja de ancho <b>c</b> alrededor de las paredes/alas de la columna (puntos fijos). c es el voladizo que la placa resiste con la presión de diseño. La flexión por la tracción de los anclajes se toma igual que en DG1.' }];
+  const ALT = { dg1: { t: tReqD, tC: tReqC, tT: tReqT, T: Tu }, hyb: altM('hyb'), ec3: altM('ec3') };
+  /* ---- tracción en la placa por método ----
+     DG1: voladizo x hasta el eje del ala, ancho b_eff a 45° (DG1 §3.2).
+     EN 1993-1-8: T equivalente unilateral sin efecto palanca (anclajes largos), m al borde del ala, longitudes efectivas Tabla 6.6
+                  (fila fuera del ala): F_T,Rd = M_pl,Rd / m, M_pl,Rd = 0,25·Σℓ_eff·t²·f_y/γ_M0 (γ_M0 = 1).
+     Híbrido: mismas líneas de fluencia del EC3 con la resistencia AISC φ·F_y·t²/4 (φ = 0,90). */
+  const mxT = f - d / 2 - 0.8 * Math.SQRT2 * (v.aw || 0);
+  const geoT = (() => {
+    if (!(mxT > 0)) return null;
+    const ex = v.aN, eB = B / 2 - (nrow > 1 ? v.g / 2 : 0), w = nrow > 1 ? v.g / (nrow - 1) : Infinity;
+    const cp = min(2 * PI * mxT, PI * mxT + w, PI * mxT + 2 * eB);
+    const nc = min(4 * mxT + 1.25 * ex, eB + 2 * mxT + 0.625 * ex, 0.5 * B, isFinite(w) ? 0.5 * w + 2 * mxT + 0.625 * ex : Infinity);
+    const l1 = min(cp, nc), Sl = min(B, nrow * l1);
+    return { ex, eB, w, cp, nc, l1, Sl };
+  })();
+  R.geoT = geoT; R.mxT = mxT;
+  for (const k of ['hyb', 'ec3']) {
+    const a = ALT[k];
+    // tracción del método: equilibrio con la resultante de compresión en el centro del área efectiva comprimida
+    let T = 0;
+    if (a.Dm && a.Dm.tens) T = max(0, a.Dm.C - Pu);
+    else if (Pu <= 0 && Tu > 0) T = Tu;             // tracción neta: mismo reparto por filas
+    a.T = T;
+    a.tT = (T > 0 && geoT) ? sqrt(4 * T * mxT / ((k === 'ec3' ? 1 : 0.9) * Fy * geoT.Sl)) : 0;
+    a.t = isFinite(a.tC) ? max(a.tC, a.tT) : NaN;
+  }
+  const eqs3b = [{ note: '<b>Compresión:</b> la placa no reparte la presión en toda su superficie; sólo trabaja una franja de ancho <b>c</b> alrededor de las paredes/alas de la columna (puntos fijos). <b>Tracción:</b> la placa se verifica como T equivalente unilateral con las líneas de fluencia de EN 1993-1-8 Tabla 6.6 (fila de anclajes fuera del ala, sin efecto palanca por ser anclajes largos).' }];
   for (const k of ['hyb', 'ec3']) {
     const a = ALT[k];
     eqs3b.push({ ref: METH[k].n });
@@ -531,11 +859,27 @@ function calc(v) {
       eqs3b.push({ l: 'C<sub>u</sub>', f: D.txt, s: '', r: `${n1(D.C / 1e3)} kN` });
       eqs3b.push({ l: 'C<sub>u</sub> ≤ f · A<sub>eff</sub>', f: '', s: `${n1(D.C / 1e3)} ≤ ${n2(a.fj)} · ${n0(D.A)} / 1000`, r: `${n1(a.fj * D.A / 1e3)} kN → ${a.at.ok ? 'verifica' : 'NO verifica'}`, ok: a.at.ok });
     }
-    eqs3b.push({ l: 't<sub>req</sub>', f: 'máx(t para C<sub>u</sub> = f·A<sub>eff</sub>(t) ; t<sub>req</sub> tracción DG1)', s: `máx(${n1(a.tC)} ; ${n1(tReqT)})`, r: isFinite(a.t) ? `${n1(a.t)} mm` : 'no alcanza: agrandar la placa' });
+    eqs3b.push({ l: 't<sub>req,C</sub>', f: 'mínimo t con C<sub>u</sub> ≤ f · A<sub>eff</sub>(t)', s: 'por iteración', r: isFinite(a.tC) ? `${n1(a.tC)} mm` : 'no alcanza' });
+    if (a.T > 0) {
+      eqs3b.push({ l: 'T<sub>u</sub>', f: a.Dm && a.Dm.tens ? 'C<sub>u</sub> − P<sub>u</sub>  (equilibrio con brazo z<sub>c</sub> + f, EN 1993-1-8 Tabla 6.7)' : 'tracción de la fila más cargada (tracción neta)', s: a.Dm && a.Dm.tens ? `${n1(a.Dm.C / 1e3)} − ${n1(Pu / 1e3)}` : '', r: `${n1(a.T / 1e3)} kN` });
+      if (geoT) {
+        eqs3b.push({ l: 'm', f: 'eje del anclaje → cara exterior del ala/pared − 0,8·√2·a<sub>w</sub>', s: `${n1(f)} − ${n1(d)}/2`, r: `${n1(mxT)} mm` });
+        eqs3b.push({ l: 'ℓ<sub>eff,cp</sub>', f: 'mín(2π·m ; π·m + w ; π·m + 2e)   (patrones circulares)', s: `e = ${n0(geoT.eB)} · w = ${isFinite(geoT.w) ? n0(geoT.w) : '—'}`, r: `${n0(geoT.cp)} mm` });
+        eqs3b.push({ l: 'ℓ<sub>eff,nc</sub>', f: 'mín(4m + 1,25e<sub>x</sub> ; e + 2m + 0,625e<sub>x</sub> ; 0,5b<sub>p</sub> ; 0,5w + 2m + 0,625e<sub>x</sub>)', s: `e<sub>x</sub> = ${n0(geoT.ex)}`, r: `${n0(geoT.nc)} mm` });
+        eqs3b.push({ l: 'Σℓ<sub>eff</sub>', f: 'mín(B ; n<sub>fila</sub> · mín(ℓ<sub>eff,cp</sub> ; ℓ<sub>eff,nc</sub>))   (modo 1)', s: `mín(${n0(B)} ; ${nrow} · ${n0(geoT.l1)})`, r: `${n0(geoT.Sl)} mm` });
+        eqs3b.push({ l: 't<sub>req,T</sub>', f: k === 'ec3' ? '√[4 · T<sub>u</sub> · m / (F<sub>y</sub> · Σℓ<sub>eff</sub>)]   (T ≤ M<sub>pl</sub>/m, γ<sub>M0</sub> = 1)' : '√[4 · T<sub>u</sub> · m / (0,9 · F<sub>y</sub> · Σℓ<sub>eff</sub>)]   (T ≤ φM<sub>p</sub>/m)', s: `√[4 · ${n0(a.T)} · ${n1(mxT)} / (${k === 'ec3' ? '' : '0,9 · '}${n0(Fy)} · ${n0(geoT.Sl)})]`, r: `${n1(a.tT)} mm` });
+      } else eqs3b.push({ note: 'Anclajes dentro de la huella de la columna: la flexión de la placa por tracción no gobierna.' });
+    }
+    eqs3b.push({ l: 't<sub>req</sub>', f: 'máx(compresión ; tracción)', s: `máx(${n1(a.tC)} ; ${n1(a.tT)})`, r: isFinite(a.t) ? `${n1(a.t)} mm` : 'no alcanza: agrandar la placa' });
   }
-  R.steps.push({ id: 'tpalt', t: 'Espesor de la placa — área efectiva', sub: 'Híbrido AISC / EN 1993-1-8 §6.2.5 (T equivalente en compresión)', eqs: eqs3b });
+  R.steps.push({ id: 'tpalt', t: 'Espesor de la placa — área efectiva y T equivalente', sub: 'Híbrido AISC / EN 1993-1-8 §6.2.5 (compresión) y §6.2.4 + Tabla 6.6 (tracción)', eqs: eqs3b });
   const sel = v.pm || 'dg1', tReq = ALT[sel].t;
   R.tReq = tReq; R.m = m; R.n = n; R.lamn = lamn; R.x = x; R.beff = beff; R.ALT = ALT; R.sel = sel; R.fjdE = fjdE;
+  if (sel !== 'dg1') {
+    const a = ALT[sel];
+    if (a.Dm && a.Dm.tens) { Tu = a.T; TuGroup = a.T; tensionRows = a.T > 0 ? 1 : 0; R.Tu = Tu; R.tensionRows = tensionRows; }
+    if (a.at && !a.none) { const D = a.at.D; R.checks.unshift({ n: `Aplastamiento en el área efectiva — ${METH[sel].n}`, u: D.C / (a.fj * D.A), d: `${n1(D.C / 1e3)} / ${n1(a.fj * D.A / 1e3)} kN`, step: 'tpalt' }); }
+  }
   R.steps.push(compareStep(ALT, sel, tAdopt));
   if (tAdopt) R.checks.push({ n: `Espesor de placa — ${METH[sel].n}`, u: tReq / tAdopt, d: `${n1(tReq)} / ${n1(tAdopt)} mm`, step: 'cmp' });
   else R.checks.push({ n: `Espesor de placa requerido — ${METH[sel].n}`, u: NaN, d: `t<sub>req</sub> = ${n1(tReq)} mm`, step: 'cmp', info: true });
@@ -546,8 +890,8 @@ function calc(v) {
     const L = dir === 'N' ? N : B, half = L / 2;
     const anch = [];
     if (dir === 'N') {
-      if (Tu > 0) anch.push({ x: half + f, P: -Tu / max(beff, 1) });
-      if (R.tensionRows === 2 && R.Tc > 0) anch.push({ x: half - f, P: -R.Tc / max(beff, 1) });
+      if (Tu > 0) anch.push({ x: half + f, P: -Tu / max(sel === 'dg1' ? beff : (geoT ? geoT.Sl : beff), 1) });
+      if (R.tensionRows === 2 && R.Tc > 0) anch.push({ x: half - f, P: -R.Tc / max(sel === 'dg1' ? beff : (geoT ? geoT.Sl : beff), 1) });
     }
     if (sel === 'dg1') {
       const sup = dir === 'N' ? [[half - mL, half + mL]] : [[half - nL, half + nL]];
@@ -732,7 +1076,8 @@ function compareStep(ALT, sel, tA) {
   for (const k of ['dg1', 'hyb', 'ec3']) {
     const a = ALT[k]; if (!a) continue;
     const okk = tA && isFinite(a.t) ? tA >= a.t : undefined;
-    eqs.push({ l: (k === sel ? '▶ ' : '') + METH[k].n, f: METH[k].src, s: tA && isFinite(a.t) ? `aprovechamiento ${n0(a.t / tA * 100)} % con t<sub>p</sub> = ${n1(tA)} mm` : '', r: isFinite(a.t) ? `t<sub>req</sub> = ${n1(a.t)} mm${k === sel ? '  (MÉTODO ELEGIDO)' : ''}` : 'no alcanza', ok: k === sel ? okk : undefined });
+    const parts = (a.tC != null || a.tT != null) ? `compresión ${isFinite(a.tC) ? n1(a.tC || 0) : '—'} mm · tracción ${n1(a.tT || 0)} mm` : '';
+    eqs.push({ l: (k === sel ? '▶ ' : '') + METH[k].n, f: METH[k].src, s: [parts, tA && isFinite(a.t) ? `aprovechamiento ${n0(a.t / tA * 100)} % con t<sub>p</sub> = ${n1(tA)} mm` : ''].filter(Boolean).join(' · '), r: isFinite(a.t) ? `t<sub>req</sub> = ${n1(a.t)} mm${k === sel ? '  (MÉTODO ELEGIDO)' : ''}` : 'no alcanza', ok: k === sel ? okk : undefined });
   }
   return { id: 'cmp', t: 'Comparación de métodos de espesor', sub: 'AISC DG1 · área efectiva híbrida · EN 1993-1-8', eqs };
 }
@@ -840,7 +1185,7 @@ function calcP(v) {
   else R.checks.push({ n: `Espesor de placa requerido — ${METH[sel].n}`, u: NaN, d: `t<sub>req</sub> = ${n1(tReq)} mm`, step: 'cmp', info: true });
   const kcs = sel === 'dg1' ? 0 : ALT[sel].kf, cA = sel === 'dg1' ? 0 : (tA || tReq || 20) * kcs;
   const Aeff = sel === 'dg1' ? A1 : effArea(v, rows, xs, cA);
-  R.cA = cA; R.Aeff = Aeff; R.tReq = tReq; R.Y = N; R.q = fp * B; R.Tu = 0; R.ALT = ALT; R.sel = sel;
+  R.cA = cA; R.Aeff = Aeff; R.tReq = tReq; R.Y = N; R.q = fp * B; R.Tu = 0; R.ALT = ALT; R.sel = sel; R.fjdE = fjdE;
   R.caseName = sel === 'dg1' ? 'Contraplaca · presión uniforme' : 'Contraplaca · área efectiva';
   // franjas para el gráfico
   const tE = tA || (isFinite(tReq) ? tReq : 20), EI = 200000 * tE ** 3 / 12;
@@ -900,6 +1245,13 @@ function run(ev) {
   if (R.mode === 'P') { drawPlanP(v, R); drawElevP(v, R); } else { drawPlan(v, R); drawElev(v, R); }
   document.querySelectorAll('.grid2 .fig h2 .tg, .grid2 .fig .legend').forEach(el => el.style.display = R.mode === 'P' ? 'none' : '');
   drawMech(v, R);
+  { const t = v.tp > 0 ? v.tp : R.tReq, fpm = R.fpmax, kh = Math.sqrt(0.9 * v.Fy / (2 * fpm));
+    const set = (id, h) => { const e = $(id); if (e) e.innerHTML = h; };
+    set('fx-fpmax', `${n2(fpm)} MPa (√(A₂/A₁) = ${n2(R.ratio)})`); set('fx-t', `${n1(t)} mm`); set('fx-fy', `${n0(v.Fy)} MPa`); set('fx-fp2', `${n2(fpm)} MPa`);
+    set('fx-c', `${n1(t)} · √[0,9 · ${n0(v.Fy)} / (2 · ${n2(fpm)})] = ${n1(t * kh)} mm`);
+    if (R.ALT) { const a = R.ALT; const fmt = k => isFinite(a[k].t) ? n1(a[k].t) + ' mm' : 'no alcanza';
+      set('fx-cmp', `t<sub>req</sub> DG1 = ${fmt('dg1')} · híbrido = ${fmt('hyb')} · EC3 = ${fmt('ec3')}${R.fjdE ? ` · f<sub>jd</sub> = ${n2(R.fjdE)} MPa vs f<sub>p,máx</sub> = ${n2(fpm)} MPa` : ''}.`); }
+  }
   $('pmHint').innerHTML = METH[v.pm || 'dg1'].src; renderDash(v, R); renderSteps(R);
   const vd = $('verdict'); vd.className = 'verdict ' + (R.ok ? 'ok' : 'bad'); vd.textContent = R.ok ? '✔ VERIFICA' : '✘ NO VERIFICA';
 }
@@ -935,7 +1287,9 @@ function renderSteps(R) {
     const body = s.eqs.map(e => e.ref ? `<div class="ref" style="margin-top:12px">${e.ref}</div>` : e.note ? `<div class="note">${e.note}</div>` :
       `<div class="eq ${e.ok === true ? 'ok' : e.ok === false ? 'bad' : ''}"><span class="lhs">${e.l} =</span><span class="f">${e.f || ''}</span>${e.s ? `<span class="s">= ${e.s}</span>` : ''}<span class="r">= ${e.r}</span></div>`).join('');
     const open = first ? (i < 3) : openIds.has('st-' + s.id);
-    return `<details class="step" id="st-${s.id}" ${open ? 'open' : ''}><summary><span class="num">${i + 1}</span><span class="tt">${s.t}<small>${s.sub || ''}</small></span><span class="st">${tag}</span></summary><div class="body">${body}</div></details>`;
+    const fid = FUND[s.id];
+    const fl = fid ? `<a class="flink" href="#${fid}" onclick="event.stopPropagation();const d=document.getElementById('${fid}');d.open=true;">📖 de dónde sale</a>` : '';
+    return `<details class="step" id="st-${s.id}" ${open ? 'open' : ''}><summary><span class="num">${i + 1}</span><span class="tt">${s.t}<small>${s.sub || ''}</small></span>${fl}<span class="st">${tag}</span></summary><div class="body">${body}</div></details>`;
   }).join('');
 }
 
