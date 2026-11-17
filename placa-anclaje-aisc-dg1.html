@@ -143,6 +143,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
     <div class="fld"><label>M<sub>u</sub> momento<small>kN·m (en dirección N)</small></label><input id="Mu" type="number" step="0.1"></div>
     <div class="fld"><label>V<sub>u</sub> corte<small>kN (en dirección N)</small></label><input id="Vu" type="number" step="0.1"></div>
     <div class="note">Unidades: P y V en kN · M en kN·m.</div>
+    <div class="warnbox" id="pLoadNote" style="display:none"></div>
   </div>
 
   <div class="pane" id="p-col">
@@ -887,6 +888,14 @@ function run(ev) {
   $('fP').style.display = isP ? '' : 'none'; ['fd', 'fbf', 'ftf'].forEach(id => $(id).style.display = isP ? 'none' : (id === 'fbf' && t === 'C' ? 'none' : ''));
   if (isP) { $('fW').style.display = 'none'; $('ftw').style.display = 'none'; }
   const R = calc(v);
+  { const isP = v.ctype === 'P', auto = isP && v.pAuto === '1';
+    $('Pu').disabled = auto; $('Mu').disabled = isP; $('Vu').disabled = isP;
+    if (auto) $('Pu').value = n0(R.Pu / 1e3).replace(/\./g, '');
+    $('pLoadNote').style.display = isP ? '' : 'none';
+    $('pLoadNote').innerHTML = !isP ? '' : auto
+      ? `Modo <b>contraplaca</b>: la carga se calcula sola como la suma de la fluencia de las barras: ${R.nb} × ${n1(R.Pu / R.nb / 1e3)} kN = <b>${n0(R.Pu / 1e3)} kN</b>. Para cargar otro valor, en la pestaña <b>Columna</b> cambiá «Carga de compresión» a «Usar P<sub>u</sub>». M<sub>u</sub> y V<sub>u</sub> no se usan en este modo.`
+      : `Modo <b>contraplaca</b> con carga manual: P<sub>u</sub> es la compresión <b>total</b> que las tuercas transmiten a esta placa (suma de todas las barras). M<sub>u</sub> y V<sub>u</sub> no se usan en este modo.`;
+  }
   $('layoutNote').innerHTML = R.mode === 'P' ? `${R.nb} barras (${R.rows.length} filas × ${+v.nrow}) · g = ${n0(v.g)} mm` : `${2 * +v.nrow} anclajes · f = ${n0(R.geom.f)} mm · s = ${n0(R.geom.s)} mm · bordes del pedestal: c<sub>N</sub> = ${n0(R.edge.cN)} mm, c<sub>B</sub> = ${n0(R.edge.cB)} mm`;
   if (R.mode === 'P') { drawPlanP(v, R); drawElevP(v, R); } else { drawPlan(v, R); drawElev(v, R); }
   document.querySelectorAll('.grid2 .fig h2 .tg, .grid2 .fig .legend').forEach(el => el.style.display = R.mode === 'P' ? 'none' : '');
