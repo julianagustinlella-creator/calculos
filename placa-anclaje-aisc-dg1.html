@@ -178,7 +178,8 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
       <div class="hint">Placa apoyada contra el hormigón y <b>empujada por las tuercas</b> de barras pasantes (p. ej. contraplaca de una unión viga–columna de H°A°). No hay columna: la carga entra por las arandelas. Las barras en dirección B se toman de la pestaña <b>Anclajes</b> (cantidad por fila y separación g); el material y diámetro también.</div>
       <div class="fld"><label>Posición de las filas de barras<small>mm desde el borde superior, en dirección N, separadas por coma. Se recentran solas al cambiar N.</small></label><input id="pRows" type="text"></div>
       <div class="fld wide"><button class="btn" id="btnCenter" type="button">⇕ Centrar filas en la placa</button></div>
-      <div class="fld"><label>Ø de arandela / tuerca de apoyo<small>mm (zona rígida bajo cada barra)</small></label><input id="Dw" type="number" step="0.1"></div>
+      <div class="fld"><label>Arandela de apoyo<small>automática: ASTM F436 (barras en pulgadas) / ISO 7089 (métricas)</small></label><select id="dwAuto"><option value="1">Automática</option><option value="0">Manual</option></select></div>
+      <div class="fld"><label>Ø exterior de la arandela D<sub>w</sub><small>mm (zona rígida bajo cada barra)</small></label><input id="Dw" type="number" step="0.1"></div>
       <div class="fld"><label>Carga de compresión</label><select id="pAuto"><option value="1">Automática: Σ fluencia de barras (n·A<sub>se</sub>·f<sub>ya</sub>)</option><option value="0">Usar P<sub>u</sub> de la pestaña Cargas</option></select></div>
     </div>
     <div class="fld" id="fW"><label>Perfil I (catálogo)<small>completa d, bf, tf, tw</small></label><select id="wcat"></select></div>
@@ -562,7 +563,7 @@ const MAT = { F36:{n:'ASTM F1554 Gr.36',fy:248,fu:400}, F55:{n:'ASTM F1554 Gr.55
 // diámetro nominal (mm) → paso de rosca gruesa ISO (mm)
 const DIAS = [[12,1.75],[16,2],[19.05,2.54],[20,2.5],[22,2.5],[24,3],[25.4,3.175],[27,3],[30,3.5],[31.75,3.629],[33,3.5],[36,4],[38.1,4.233],[42,4.5],[48,5],[50.8,5.644],[56,5.5],[64,6]];
 const PRESETS = {
-  base:{Pu:600,Mu:90,Vu:60,ctype:'W',d:308,bf:305,tf:15.4,tw:9.9,N:500,B:500,Fy:250,tp:0,fc:25,N2:700,B2:700,ha:900,cracked:'1',lam:1,phic:0.65,mat:'F36',da:24,thr:'1',atype:'H',hef:400,eh:90,nrow:'2',aN:60,g:380,fric:'1',mu:0.55,grout:'1',nV:'all',pRows:'100,190,280',Dw:50.8,pAuto:'1',pm:'dg1'},
+  base:{Pu:600,Mu:90,Vu:60,ctype:'W',d:308,bf:305,tf:15.4,tw:9.9,N:500,B:500,Fy:250,tp:0,fc:25,N2:700,B2:700,ha:900,cracked:'1',lam:1,phic:0.65,mat:'F36',da:24,thr:'1',atype:'H',hef:400,eh:90,nrow:'2',aN:60,g:380,fric:'1',mu:0.55,grout:'1',nV:'all',pRows:'100,190,280',Dw:50.8,pAuto:'1',pm:'dg1',dwAuto:'1'},
   dg46:{Pu:1672.5,Mu:106.2,Vu:0,ctype:'W',d:322.6,bf:309.9,tf:22.9,tw:14.0,N:482.6,B:482.6,Fy:248.2,tp:0,fc:27.58,N2:482.6,B2:482.6,ha:900,cracked:'1',lam:1,phic:0.65,mat:'F36',da:19.05,thr:'1',atype:'H',hef:305,eh:60,nrow:'2',aN:50,g:380,fric:'1',mu:0.55,grout:'1',nV:'all'},
   dg41:{Pu:3113.8,Mu:0,Vu:0,ctype:'W',d:322.6,bf:309.9,tf:22.9,tw:14.0,N:558.8,B:508,Fy:248.2,tp:44.45,fc:20.68,N2:558.8,B2:508,ha:900,cracked:'1',lam:1,phic:0.65,mat:'F36',da:19.05,thr:'1',atype:'H',hef:305,eh:60,nrow:'2',aN:50,g:400,fric:'1',mu:0.55,grout:'1',nV:'all'},
   uplift:{Pu:-120,Mu:10,Vu:15,ctype:'W',d:257,bf:204,tf:15.7,tw:8.9,N:400,B:350,Fy:250,tp:25.4,fc:25,N2:800,B2:700,ha:900,cracked:'1',lam:1,phic:0.65,mat:'F36',da:24,thr:'1',atype:'H',hef:500,eh:80,nrow:'2',aN:50,g:250,fric:'1',mu:0.55,grout:'1',nV:'all'},
@@ -686,7 +687,7 @@ const sqrt = Math.sqrt, min = Math.min, max = Math.max, PI = Math.PI;
   run();
 })();
 function setVals(o) { IDS.forEach(k => { if (o[k] !== undefined && $(k)) $(k).value = o[k]; }); }
-function getVals() { const o = {}; IDS.forEach(k => { const el = $(k); o[k] = el.tagName === 'SELECT' && isNaN(+el.value) ? el.value : (el.type === 'number' || !isNaN(+el.value) ? +el.value : el.value); }); o.ctype = $('ctype').value; o.mat = $('mat').value; o.nV = $('nV').value; o.cracked = $('cracked').value; o.thr = $('thr').value; o.atype = $('atype').value; o.fric = $('fric').value; o.grout = $('grout').value; o.nrow = $('nrow').value; o.pRows = $('pRows').value; o.pAuto = $('pAuto').value; o.pm = $('pm').value; return o; }
+function getVals() { const o = {}; IDS.forEach(k => { const el = $(k); o[k] = el.tagName === 'SELECT' && isNaN(+el.value) ? el.value : (el.type === 'number' || !isNaN(+el.value) ? +el.value : el.value); }); o.ctype = $('ctype').value; o.mat = $('mat').value; o.nV = $('nV').value; o.cracked = $('cracked').value; o.thr = $('thr').value; o.atype = $('atype').value; o.fric = $('fric').value; o.grout = $('grout').value; o.nrow = $('nrow').value; o.pRows = $('pRows').value; o.pAuto = $('pAuto').value; o.pm = $('pm').value; o.dwAuto = $('dwAuto').value; return o; }
 
 
 /* ===================== Franja de placa (viga por unidad de ancho) =====================
@@ -1297,7 +1298,13 @@ function recenterRows() {
   const mn = Math.min(...rows), mx = Math.max(...rows), sh = (N - (mx - mn)) / 2 - mn;
   $('pRows').value = rows.map(r => +(r + sh).toFixed(1)).join(',');
 }
+// Ø exterior de arandela: ASTM F436 para diámetros en pulgadas, ISO 7089 para métricos; si no está en tabla, 2·d
+function washerOD(da) {
+  const T = [[12, 24], [12.7, 27.0], [15.875, 33.3], [16, 30], [19.05, 37.3], [20, 37], [22, 39], [22.225, 44.5], [24, 44], [25.4, 50.8], [27, 50], [28.575, 57.2], [30, 56], [31.75, 63.5], [33, 60], [36, 66], [38.1, 76.2], [42, 78], [48, 92], [50.8, 101.6], [56, 105]];
+  const r = T.find(t => Math.abs(t[0] - da) < 0.3); return r ? r[1] : 2 * da;
+}
 function run(ev) {
+  if ($('dwAuto') && $('dwAuto').value === '1') { $('Dw').value = washerOD(+$('da').value); $('Dw').disabled = true; } else if ($('Dw')) $('Dw').disabled = false;
   if ($('ctype').value === 'P' && prevType === 'P' && prevN != null && +$('N').value !== prevN && ev && ev.target && ev.target.id === 'N') recenterRows();
   prevN = +$('N').value; prevType = $('ctype').value;
   const v = getVals();
@@ -1720,7 +1727,7 @@ function drawPlan(v, R) {
 /* ---------------- PLANTA (contraplaca) ---------------- */
 function drawPlanP(v, R) {
   const el = $('plan'), W = 600, H = 600; el.setAttribute('viewBox', `0 0 ${W} ${H}`);
-  const L = 95, Rm = 95, T = 70, Bm = 80;
+  const L = 110, Rm = 95, T = 70, Bm = 125;
   const sc = Math.min((W - L - Rm) / v.B, (H - T - Bm) / v.N);
   const ox = L + (W - L - Rm - v.B * sc) / 2, oy = T + (H - T - Bm - v.N * sc) / 2;
   const X = x => ox + x * sc, Y = y => oy + y * sc;
@@ -1735,15 +1742,31 @@ function drawPlanP(v, R) {
     const half = v.Dw / 2 + R.cA, iy = G.intervals(R.rows, half, v.N), ix = G.intervals(R.xs, half, v.B);
     const rects = []; iy.forEach(([a, b]) => ix.forEach(([p, q]) => rects.push([X(p), Y(a), (q - p) * sc, (b - a) * sc])));
     s += G.union(rects, 'var(--press)', .42, 'var(--press)');
-    s += G.txt(X(v.B / 2), Y(v.N) + 30, `área efectiva = ${n0(R.Aeff / R.A1 * 100)} % de la placa · c = ${n1(R.cA)} mm alrededor de cada arandela`, { col: 'var(--press)', bold: 1, size: 12 });
-    // cota c en la primera arandela
-    const r0 = R.rows[0], x0 = R.xs[0];
-    s += G.dimH(X(x0 - v.Dw / 2 - R.cA), X(x0 - v.Dw / 2), Y(r0) , `c = ${n0(R.cA)}`, Y(r0), Y(r0), { col: '#b45309' });
+    const OR = '#b45309';
+    s += G.txt(X(v.B / 2), Y(v.N) + 66, `área efectiva = ${n0(R.Aeff / R.A1 * 100)} % de la placa · cuadrado de (D<tspan baseline-shift="sub" font-size="8">w</tspan> + 2c) = ${n0(v.Dw + 2 * R.cA)} mm por arandela`, { col: 'var(--press)', bold: 1, size: 12 });
+    // cuadrado individual de una arandela (la de arriba a la izquierda), con c a cada lado
+    const r0 = Math.min(...R.rows), x0 = Math.min(...R.xs), hw = v.Dw / 2;
+    const xa = Math.max(0, x0 - half), xb = Math.min(v.B, x0 + half), ya = Math.max(0, r0 - half), yb = Math.min(v.N, r0 + half);
+    s += `<rect x="${X(xa)}" y="${Y(ya)}" width="${(xb - xa) * sc}" height="${(yb - ya) * sc}" fill="none" stroke="${OR}" stroke-width="1.8" stroke-dasharray="7 3"/>`;
+    const lab = (val, full) => Math.abs(val - full) < 0.5 ? `c = ${n0(full)}` : `c = ${n0(val)} (recortado)`;
+    s += G.dimH(X(xa), X(x0 - hw), Y(r0) + 2, lab(x0 - hw - xa, R.cA), Y(r0), Y(r0), { col: OR });
+    s += G.dimH(X(x0 + hw), X(xb), Y(r0) + 2, lab(xb - x0 - hw, R.cA), Y(r0), Y(r0), { col: OR });
+    s += G.dimV(Y(ya), Y(r0 - hw), X(x0) - 2, lab(r0 - hw - ya, R.cA), X(x0), X(x0), { col: OR });
+    s += G.dimV(Y(r0 + hw), Y(yb), X(x0) - 2, lab(yb - r0 - hw, R.cA), X(x0), X(x0), { col: OR });
+    // cadenas: zonas con contacto (naranja) y sin contacto (gris) en B (abajo) y en N (izquierda)
+    const chainSeg = (ivs, L) => { const pts = [0]; ivs.forEach(([a, b]) => { if (a > pts[pts.length - 1] + .5) pts.push(a); pts.push(b); }); if (pts[pts.length - 1] < L - .5) pts.push(L); return pts; };
+    const inEff = (ivs, a, b) => ivs.some(([p, q]) => a >= p - .5 && b <= q + .5);
+    const pB = chainSeg(ix, v.B), yc = Y(v.N) + 20;
+    for (let i = 0; i < pB.length - 1; i++) { const eff = inEff(ix, pB[i], pB[i + 1]); s += G.dimH(X(pB[i]), X(pB[i + 1]), yc, eff ? n0(pB[i + 1] - pB[i]) : `${n0(pB[i + 1] - pB[i])} s/c`, Y(v.N), Y(v.N), { col: eff ? OR : 'var(--muted)' }); }
+    const pN = chainSeg(iy, v.N), xc = X(0) - 20;
+    for (let i = 0; i < pN.length - 1; i++) { const eff = inEff(iy, pN[i], pN[i + 1]); s += G.dimV(Y(pN[i]), Y(pN[i + 1]), xc, eff ? n0(pN[i + 1] - pN[i]) : `${n0(pN[i + 1] - pN[i])} s/c`, X(0), X(0), { col: eff ? OR : 'var(--muted)' }); }
+    s += G.txt(X(v.B / 2), Y(v.N) + 44, 'naranja: ancho con contacto · gris "s/c": sin contacto', { col: 'var(--muted)', size: 10.5 });
   }
   // arandelas y barras
   const rr = Math.max(3.5, v.da / 2 * sc), rw = v.Dw / 2 * sc;
   R.rows.forEach(r => R.xs.forEach(x => { const out = r - v.Dw / 2 < 0 || r + v.Dw / 2 > v.N || x - v.Dw / 2 < 0 || x + v.Dw / 2 > v.B; s += out ? `<rect x="${X(x) - rw}" y="${Y(r) - rw}" width="${2 * rw}" height="${2 * rw}" fill="var(--bad)" fill-opacity=".25" stroke="var(--bad)" stroke-width="2"/>` : ''; s += G.anchor(X(x), Y(r), rr, rw, true); }));
-  s += G.leader(X(R.xs[R.xs.length - 1]) + rw * .7, Y(R.rows[R.rows.length - 1]) + rw * .7, X(v.B * 0.62), Y(v.N) + 54, `arandela Ø${n0(v.Dw)} · barra Ø${n1(+v.da)}`, { size: 11 });
+  s += G.txt(X(v.B / 2), Y(v.N) + 90, `arandela Ø${n0(v.Dw)}${v.dwAuto == 1 ? ' (automática según Ø barra)' : ''} · barra Ø${n1(+v.da)} mm`, { size: 11.5, col: 'var(--text)', w: 600 });
+  { const x1 = Math.min(...R.xs), r1 = Math.max(...R.rows); s += G.dimH(X(x1 - v.Dw / 2), X(x1 + v.Dw / 2), Y(r1) + rw + 12, `D<tspan baseline-shift="sub" font-size="8">w</tspan> = ${n0(v.Dw)}`, Y(r1) + rw, Y(r1) + rw, { col: 'var(--text)' }); }
   // cotas: arriba posiciones en B, derecha filas en N
   const yt1 = Y(0) - 18, yt2 = yt1 - 22;
   const xsS = [...R.xs].sort((a, b) => a - b);
@@ -1752,7 +1775,7 @@ function drawPlanP(v, R) {
   const rS = [...R.rows].sort((a, b) => a - b), xr1 = X(v.B) + 20, xr2 = xr1 + 24;
   s += G.chainV([Y(0), ...rS.map(Y), Y(v.N)], xr1, X(v.B), [n0(rS[0]), ...rS.slice(1).map((q, i) => n0(q - rS[i])), n0(v.N - rS[rS.length - 1])]);
   s += G.dimV(Y(0), Y(v.N), xr2, `N = ${n0(v.N)}`, X(v.B), X(v.B));
-  s += G.txt(X(0) - 18, Y(v.N / 2), `t = ${n1(v.tp || R.tReq)} mm · F<tspan baseline-shift="sub" font-size="8">y</tspan> = ${n0(v.Fy)}`, { rot: -90, col: 'var(--plate)', bold: 1 });
+  s += G.txt(X(0) - 52, Y(v.N / 2), `placa t = ${n1(v.tp || R.tReq)} mm · F<tspan baseline-shift="sub" font-size="8">y</tspan> = ${n0(v.Fy)}`, { rot: -90, col: 'var(--plate)', bold: 1 });
   s += G.legend([['var(--plate)', 'Placa', 'op'], ['var(--press)', R.sel === 'dg1' ? 'Presión uniforme' : 'Área efectiva', 'op'], ['var(--tens)', 'Barra / tuerca']], 16, H - 10);
   el.innerHTML = s;
 }
@@ -1779,8 +1802,8 @@ function drawElevP(v, R) {
     });
     s += G.txt(xP + tp + hp + 6, Y(v.N) + 18, `${n2(w)} MPa en el área efectiva`, { anchor: 'start', col: 'var(--press)', bold: 1 });
     // zonas sin contacto
-    let c0 = 0; iv.forEach(([a, b]) => { if (a - c0 > 14 / sc) s += G.txt(xP + tp + hp / 2 + 30, Y((a + c0) / 2) + 4, 'sin contacto', { col: 'var(--muted)', size: 10.5, anchor: 'start' }); c0 = b; });
-    if (v.N - c0 > 14 / sc) s += G.txt(xP + tp + hp / 2 + 30, Y((v.N + c0) / 2) + 4, 'sin contacto', { col: 'var(--muted)', size: 10.5, anchor: 'start' });
+    let c0 = 0; iv.forEach(([a, b]) => { if (a - c0 > 14 / sc) s += G.txt(xP + tp + 8, Y((a + c0) / 2) + 4, 'sin contacto', { col: 'var(--muted)', size: 10.5, anchor: 'start' }); c0 = b; });
+    if (v.N - c0 > 14 / sc) s += G.txt(xP + tp + 8, Y((v.N + c0) / 2) + 4, 'sin contacto', { col: 'var(--muted)', size: 10.5, anchor: 'start' });
   }
   // placa
   s += `<rect x="${xP}" y="${Y(0)}" width="${tp}" height="${v.N * sc}" fill="var(--plate)" stroke="#1d4ed8" stroke-width="1.2"/>`;
@@ -1799,7 +1822,20 @@ function drawElevP(v, R) {
   s += G.chainV([Y(0), ...rS.map(Y), Y(v.N)], xd + 0, xP, [n0(rS[0]), ...rS.slice(1).map((q, i) => n0(q - rS[i])), n0(v.N - rS[rS.length - 1])]);
   s += G.dimV(Y(0), Y(v.N), xd - 26, `N = ${n0(v.N)}`, xP, xP);
   s += G.dimH(xP, xP + tp, Y(0) - 14, `t = ${n1(v.tp || R.tReq)}`, Y(0), Y(0), { col: 'var(--plate)' });
-  if (R.cA) s += G.dimV(Y(rS[0] + v.Dw / 2), Y(rS[0] + v.Dw / 2 + R.cA), xP + tp + hp + 10, `c = ${n0(R.cA)}`, xP + tp + hp, xP + tp + hp, { col: '#b45309' });
+  if (R.cA) {
+    const OR = '#b45309', half = v.Dw / 2 + R.cA, x1 = xP + tp + hp + 18, x2 = x1 + 34;
+    // c – Dw – c de la primera fila (las demás son iguales)
+    [rS[0]].forEach(r => {
+      const a = Math.max(0, r - half), b = Math.min(v.N, r + half), pts = [a, r - v.Dw / 2, r + v.Dw / 2, b];
+      const lbl = [r - v.Dw / 2 - a, v.Dw, b - r - v.Dw / 2];
+      for (let i = 0; i < 3; i++) s += G.dimV(Y(pts[i]), Y(pts[i + 1]), x1, i === 1 ? `D<tspan baseline-shift="sub" font-size="8">w</tspan> ${n0(lbl[i])}` : `c ${n0(lbl[i])}`, xP + tp + hp, xP + tp + hp, { col: i === 1 ? 'var(--text)' : OR, size: 10.5 });
+    });
+    // ancho con contacto total
+    const iv = G.intervals(R.rows, half, v.N), pts = [0]; iv.forEach(([a, b]) => { if (a > pts[pts.length - 1] + .5) pts.push(a); pts.push(b); }); if (pts[pts.length - 1] < v.N - .5) pts.push(v.N);
+    for (let i = 0; i < pts.length - 1; i++) { const eff = iv.some(([p, q]) => pts[i] >= p - .5 && pts[i + 1] <= q + .5); s += G.dimV(Y(pts[i]), Y(pts[i + 1]), x2, eff ? n0(pts[i + 1] - pts[i]) : `${n0(pts[i + 1] - pts[i])} s/c`, x1, x1, { col: eff ? OR : 'var(--muted)' }); }
+  } else {
+    const x1 = xP + tp + 52; rS.forEach(r => s += G.dimV(Y(r - v.Dw / 2), Y(r + v.Dw / 2), x1, `D<tspan baseline-shift="sub" font-size="8">w</tspan> ${n0(v.Dw)}`, xP, xP, { size: 10.5 }));
+  }
   el.innerHTML = s;
 }
 
