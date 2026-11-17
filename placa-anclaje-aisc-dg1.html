@@ -10,16 +10,16 @@
   --bg:#f4f6f9; --panel:#ffffff; --panel2:#f0f3f7; --line:#dbe1e8; --text:#17212b; --muted:#5d6b7a;
   --accent:#2563eb; --accent2:#7c3aed; --ok:#15803d; --okbg:#e7f6ec; --bad:#b91c1c; --badbg:#fde8e8; --warn:#b45309; --warnbg:#fff4e0;
   --steel:#7b8ea3; --plate:#3b82f6; --conc:#c9c2b4; --conc2:#e9e4da; --anchor:#111827; --press:#f97316; --tens:#dc2626; --area:#a855f7;
-  --shadow:0 6px 20px rgba(20,30,40,.08); --r:12px;
+  --shadow:0 6px 20px rgba(20,30,40,.08); --r:12px; --dim:#475569;
   --mono: ui-monospace,"Cascadia Code",Consolas,monospace;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --bg:#0e1319; --panel:#151c25; --panel2:#1b2430; --line:#28323f; --text:#e6edf5; --muted:#93a3b5;
-  --okbg:#10291a; --badbg:#2d1414; --warnbg:#2d2210; --conc:#5b564c; --conc2:#2d2a25; --anchor:#e5e7eb; --shadow:0 6px 20px rgba(0,0,0,.35);
+  --okbg:#10291a; --badbg:#2d1414; --warnbg:#2d2210; --conc:#5b564c; --conc2:#2d2a25; --anchor:#e5e7eb; --shadow:0 6px 20px rgba(0,0,0,.35); --dim:#9fb0c3;
 }}
 :root[data-theme="dark"]{
   --bg:#0e1319; --panel:#151c25; --panel2:#1b2430; --line:#28323f; --text:#e6edf5; --muted:#93a3b5;
-  --okbg:#10291a; --badbg:#2d1414; --warnbg:#2d2210; --conc:#5b564c; --conc2:#2d2a25; --anchor:#e5e7eb; --shadow:0 6px 20px rgba(0,0,0,.35);
+  --okbg:#10291a; --badbg:#2d1414; --warnbg:#2d2210; --conc:#5b564c; --conc2:#2d2a25; --anchor:#e5e7eb; --shadow:0 6px 20px rgba(0,0,0,.35); --dim:#9fb0c3;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 "Segoe UI",Inter,system-ui,-apple-system,Roboto,sans-serif}
@@ -248,12 +248,10 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
     <div class="card fig">
       <h2>Planta <span class="tg"><label><input type="checkbox" id="showANc" checked> Cono tracción</label><label><input type="checkbox" id="showAVc" checked> Cuña de corte</label></span></h2>
       <svg id="plan" viewBox="0 0 520 520"></svg>
-      <div class="legend"><span><i style="background:var(--conc2);border:1px solid var(--conc)"></i>Pedestal</span><span><i style="background:var(--plate);opacity:.35"></i>Placa</span><span><i style="background:var(--steel)"></i>Columna</span><span><i style="background:var(--tens)"></i>Anclaje traccionado</span><span><i style="background:var(--area);opacity:.35"></i>A<sub>Nc</sub></span><span><i style="background:#0ea5e9;opacity:.3"></i>A<sub>Vc</sub></span></div>
     </div>
     <div class="card fig">
       <h2>Elevación y presiones</h2>
       <svg id="elev" viewBox="0 0 520 420"></svg>
-      <div class="legend"><span><i style="background:var(--press);opacity:.6"></i>Presión de contacto q</span><span><i style="background:var(--tens)"></i>T<sub>u</sub> anclajes</span><span><i style="background:var(--accent)"></i>P<sub>u</sub>, M<sub>u</sub></span></div>
     </div>
   </div>
 
@@ -579,6 +577,84 @@ const METH = {
   hyb: { n: 'Área efectiva (híbrido)', src: 'Geometría de EN 1993-1-8 (área efectiva §6.2.5 y líneas de fluencia Tabla 6.6) con resistencias AISC: f<sub>p,máx</sub> J8 y φM<sub>p</sub> = 0,9·F<sub>y</sub>·t²/4' },
   ec3: { n: 'EN 1993-1-8', src: 'T equivalente: compresión §6.2.5 (f<sub>jd</sub> = β<sub>j</sub>·f<sub>cd</sub>·√(A₂/A₁), c = t·√(f<sub>y</sub>/3f<sub>jd</sub>)) y tracción §6.2.4 + Tabla 6.6 (F<sub>T,Rd</sub> = M<sub>pl,Rd</sub>/m, sin efecto palanca)' }
 };
+const G = {
+  halo: 'paint-order:stroke;stroke:var(--panel);stroke-width:4px;stroke-linejoin:round',
+  txt(x, y, t, o = {}) {
+    const a = o.anchor || 'middle', sz = o.size || 11.5, col = o.col || 'var(--dim)', w = o.bold ? 700 : (o.w || 500);
+    const rot = o.rot ? ` transform="rotate(${o.rot} ${x} ${y})"` : '';
+    return `<text x="${x}" y="${y}" text-anchor="${a}" font-size="${sz}" font-weight="${w}"${rot} style="fill:${col};${G.halo}">${t}</text>`;
+  },
+  tick(x, y) { return `<line x1="${x - 4}" y1="${y + 4}" x2="${x + 4}" y2="${y - 4}" stroke="var(--dim)" stroke-width="1.4"/>`; },
+  // cota horizontal: x1..x2 a la altura y; e1/e2 = y de origen de las líneas de referencia
+  dimH(x1, x2, y, label, e1, e2, o = {}) {
+    if (Math.abs(x2 - x1) < 0.5) return '';
+    e1 = e1 ?? y; e2 = e2 ?? y; const sgn = y < e1 ? -1 : 1, col = o.col || 'var(--dim)';
+    let s = `<g>`;
+    s += `<line x1="${x1}" y1="${e1 + sgn * 3}" x2="${x1}" y2="${y + sgn * 5}" stroke="${col}" stroke-width=".8"/>`;
+    s += `<line x1="${x2}" y1="${e2 + sgn * 3}" x2="${x2}" y2="${y + sgn * 5}" stroke="${col}" stroke-width=".8"/>`;
+    s += `<line x1="${x1 - 5}" y1="${y}" x2="${x2 + 5}" y2="${y}" stroke="${col}" stroke-width=".9"/>` + G.tick(x1, y) + G.tick(x2, y);
+    const w = Math.abs(x2 - x1), mid = (x1 + x2) / 2, small = w < label.replace(/<[^>]+>/g, '').length * 6.2 + 6;
+    s += G.txt(small ? Math.max(x1, x2) + 6 : mid, y - 4, label, { anchor: small ? 'start' : 'middle', col, size: o.size || 11 });
+    return s + `</g>`;
+  },
+  dimV(y1, y2, x, label, e1, e2, o = {}) {
+    if (Math.abs(y2 - y1) < 0.5) return '';
+    e1 = e1 ?? x; e2 = e2 ?? x; const sgn = x < e1 ? -1 : 1, col = o.col || 'var(--dim)';
+    let s = `<g>`;
+    s += `<line x1="${e1 + sgn * 3}" y1="${y1}" x2="${x + sgn * 5}" y2="${y1}" stroke="${col}" stroke-width=".8"/>`;
+    s += `<line x1="${e2 + sgn * 3}" y1="${y2}" x2="${x + sgn * 5}" y2="${y2}" stroke="${col}" stroke-width=".8"/>`;
+    s += `<line x1="${x}" y1="${y1 - 5}" x2="${x}" y2="${y2 + 5}" stroke="${col}" stroke-width=".9"/>` + G.tick(x, y1) + G.tick(x, y2);
+    const h = Math.abs(y2 - y1), mid = (y1 + y2) / 2, small = h < label.replace(/<[^>]+>/g, '').length * 6.2 + 6;
+    const tx = x - 5;
+    s += small ? G.txt(x + (sgn < 0 ? -8 : 8), Math.min(y1, y2) - 6, label, { anchor: sgn < 0 ? 'end' : 'start', col, size: o.size || 11 })
+               : G.txt(tx, mid, label, { rot: -90, col, size: o.size || 11 });
+    return s + `</g>`;
+  },
+  chainH(xs, y, e, lbls, o) { let s = ''; for (let i = 0; i < xs.length - 1; i++) s += G.dimH(xs[i], xs[i + 1], y, lbls[i], e, e, o); return s; },
+  chainV(ys, x, e, lbls, o) { let s = ''; for (let i = 0; i < ys.length - 1; i++) s += G.dimV(ys[i], ys[i + 1], x, lbls[i], e, e, o); return s; },
+  leader(x, y, tx, ty, label, o = {}) {
+    const col = o.col || 'var(--text)';
+    return `<polyline points="${x},${y} ${tx},${ty} ${tx + (tx > x ? 10 : -10)},${ty}" fill="none" stroke="${col}" stroke-width=".9"/><circle cx="${x}" cy="${y}" r="2" fill="${col}"/>` +
+      G.txt(tx + (tx > x ? 13 : -13), ty + 4, label, { anchor: tx > x ? 'start' : 'end', col, size: o.size || 11.5, w: 600 });
+  },
+  // unión de rectángulos dibujada con opacidad de GRUPO (sin tonos distintos donde se superponen)
+  union(rects, fill, op, stroke) {
+    return `<g opacity="${op}">${rects.map(r => `<rect x="${r[0]}" y="${r[1]}" width="${r[2]}" height="${r[3]}" fill="${fill}"/>`).join('')}</g>` +
+      (stroke ? `<g fill="none" stroke="${stroke}" stroke-width="1.2" stroke-dasharray="5 3">${rects.map(r => `<rect x="${r[0]}" y="${r[1]}" width="${r[2]}" height="${r[3]}"/>`).join('')}</g>` : '');
+  },
+  intervals(cs, half, L) {
+    const iv = cs.map(c => [Math.max(0, c - half), Math.min(L, c + half)]).filter(a => a[1] > a[0]).sort((a, b) => a[0] - b[0]);
+    const out = []; for (const [a, b] of iv) { const l = out[out.length - 1]; if (l && a <= l[1]) l[1] = Math.max(l[1], b); else out.push([a, b]); }
+    return out;
+  },
+  breakV(x, y1, y2) { const m = (y1 + y2) / 2; return `<polyline points="${x},${y1} ${x},${m - 10} ${x - 7},${m - 4} ${x + 7},${m + 4} ${x},${m + 10} ${x},${y2}" fill="none" stroke="var(--conc)" stroke-width="2"/>`; },
+  defs() {
+    return `<defs>
+      <pattern id="gConc" width="22" height="22" patternUnits="userSpaceOnUse"><rect width="22" height="22" fill="var(--conc2)"/><circle cx="4" cy="5" r="1.1" fill="var(--conc)"/><circle cx="15" cy="9" r="1.6" fill="var(--conc)" opacity=".7"/><circle cx="9" cy="17" r="1" fill="var(--conc)"/><path d="M17 18 l3 -2 l1 3 z" fill="var(--conc)" opacity=".6"/></pattern>
+      <pattern id="gSteel" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="var(--steel)"/><line x1="0" y1="0" x2="0" y2="6" stroke="#475569" stroke-width="1.2"/></pattern>
+      <pattern id="gFix" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#334155" stroke-width="1.6"/></pattern>
+      <marker id="gA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker>
+      <marker id="gT" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--tens)"/></marker>
+      <marker id="gP" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--press)"/></marker>
+      <marker id="gV" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0ea5e9"/></marker>
+    </defs>`;
+  },
+  anchor(cx, cy, r, rw, tens, o = {}) {
+    const c = tens ? 'var(--tens)' : 'var(--anchor)';
+    return `<rect x="${cx - rw}" y="${cy - rw}" width="${2 * rw}" height="${2 * rw}" rx="2" fill="var(--panel)" fill-opacity=".55" stroke="${c}" stroke-width="1.3"/>` +
+      `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c}"/><circle cx="${cx}" cy="${cy}" r="${Math.max(1, r * .35)}" fill="var(--panel)" opacity=".6"/>`;
+  },
+  legend(items, x, y) { // items: [color, label, kind]
+    let s = '', cx = x;
+    items.forEach(([c, l, k]) => {
+      const w = l.replace(/<[^>]+>/g, '').length * 6.3 + 30;
+      s += k === 'line' ? `<line x1="${cx}" y1="${y - 4}" x2="${cx + 16}" y2="${y - 4}" stroke="${c}" stroke-width="2" stroke-dasharray="5 3"/>` : `<rect x="${cx}" y="${y - 10}" width="14" height="12" rx="2" fill="${c}" ${k === 'op' ? 'fill-opacity=".45"' : ''} stroke="${c}"/>`;
+      s += G.txt(cx + 20, y, l, { anchor: 'start', size: 11, col: 'var(--muted)' }); cx += w;
+    });
+    return s;
+  }
+};
+
 const IDS = Object.keys(PRESETS.base);
 const FUND = { geo: 'f-aplast', dist: 'f-dist', media: 'f-aplast', carga: 'f-hyb', tp: 'f-dg1', tpalt: 'f-hyb', cmp: 'f-hyb', anc: 'f-anc', corte: 'f-corte', inter: 'f-inter', det: null };
 
@@ -883,6 +959,10 @@ function calc(v) {
   R.steps.push(compareStep(ALT, sel, tAdopt));
   if (tAdopt) R.checks.push({ n: `Espesor de placa — ${METH[sel].n}`, u: tReq / tAdopt, d: `${n1(tReq)} / ${n1(tAdopt)} mm`, step: 'cmp' });
   else R.checks.push({ n: `Espesor de placa requerido — ${METH[sel].n}`, u: NaN, d: `t<sub>req</sub> = ${n1(tReq)} mm`, step: 'cmp', info: true });
+  if (sel !== 'dg1' && !ALT[sel].none && isFinite(ALT[sel].tC)) {
+    const a = ALT[sel], cD = (tAdopt || a.tC || 20) * a.kf, E = effCol(cD), D = demand(E);
+    R.effDraw = { c: cD, rects: shapes(cD), ri: d / 2 - tf - cD, ro: d / 2 + cD, leftOnly: D.A !== E.At, w: D.C > 0 ? D.C / D.A : 0 };
+  }
   /* ---- franjas para el gráfico ---- */
   const tE = tAdopt || (isFinite(tReq) ? tReq : 20), EI = 200000 * tE ** 3 / 12;
   const mL = typ === 'C' ? 0.4 * d : 0.475 * d, nL = typ === 'W' ? 0.4 * bf : typ === 'R' ? 0.475 * bf : 0.4 * d;
@@ -1548,6 +1628,249 @@ function drawElev(v, R) {
   s += `<text x="${X(f) + 8}" y="${pedTop + hefPx - 6}" font-size="11" style="fill:var(--muted)">h<tspan baseline-shift="sub" font-size="8">ef</tspan> = ${n0(v.hef)}</text>`;
   $('elev').innerHTML = s;
 }
+
+/* =====================================================================
+   GRÁFICOS v2 — cotas de arquitectura, tramas, área efectiva sin solapes
+   (estas funciones reemplazan a las versiones anteriores de igual nombre)
+   ===================================================================== */
+
+/* ---------------- PLANTA (columna) ---------------- */
+function drawPlan(v, R) {
+  const el = $('plan'), W = 600, H = 600; el.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const t = v.ctype, d = v.d, bf = t === 'C' ? v.d : v.bf, tf = v.tf, nrow = +v.nrow, g = nrow > 1 ? v.g : 0, f = R.geom.f;
+  // recorte del pedestal si es mucho mayor que la placa
+  const maxN = Math.max(v.N * 2.0, v.N + 2 * Math.min(v.hef * 1.5, v.N)), maxB = Math.max(v.B * 2.0, v.B + 300);
+  const sN = Math.min(v.N2, maxN), sB = Math.min(v.B2, maxB), cutN = v.N2 > sN + 1, cutB = v.B2 > sB + 1;
+  const L = 95, Rm = 60, T = 60, Bm = 105;
+  const sc = Math.min((W - L - Rm) / sN, (H - T - Bm) / sB);
+  const cx = L + (W - L - Rm) / 2, cy = T + (H - T - Bm) / 2;
+  const X = x => cx + x * sc, Y = y => cy - y * sc;
+  let s = G.defs();
+  // pedestal
+  s += `<rect x="${X(-sN / 2)}" y="${Y(sB / 2)}" width="${sN * sc}" height="${sB * sc}" fill="url(#gConc)" stroke="var(--conc)" stroke-width="2"/>`;
+  if (cutN) { s += G.breakV(X(-sN / 2), Y(sB / 2), Y(-sB / 2)) + G.breakV(X(sN / 2), Y(sB / 2), Y(-sB / 2)); }
+  // conos de anclaje / cuña de corte
+  if ($('showANc').checked && R.tensionRows && R.bo) {
+    const bo = R.bo, x0 = R.tensionRows === 2 ? -f - bo.F2 : f - bo.F2, x1 = f + bo.F1;
+    s += `<rect x="${X(Math.max(x0, -sN / 2))}" y="${Y(Math.min(g / 2 + bo.L1, sB / 2))}" width="${(Math.min(x1, sN / 2) - Math.max(x0, -sN / 2)) * sc}" height="${(Math.min(g / 2 + bo.L1, sB / 2) + Math.min(g / 2 + bo.L2, sB / 2)) * sc}" fill="var(--area)" fill-opacity=".14" stroke="var(--area)" stroke-dasharray="6 4"/>`;
+    s += G.txt(X(Math.min(x1, sN / 2)) - 6, Y(Math.min(g / 2 + bo.L1, sB / 2)) + 15, 'A<tspan baseline-shift="sub" font-size="8">Nc</tspan>', { anchor: 'end', col: 'var(--area)', bold: 1 });
+  }
+  if ($('showAVc').checked && R.shear) {
+    const ca1 = R.shear.ca1, ca2 = R.edge.cB, wv = Math.min(ca2, 1.5 * ca1);
+    s += `<polygon points="${X(f)},${Y(g / 2)} ${X(Math.min(v.N2 / 2, sN / 2))},${Y(Math.min(g / 2 + wv, sB / 2))} ${X(Math.min(v.N2 / 2, sN / 2))},${Y(-Math.min(g / 2 + wv, sB / 2))} ${X(f)},${Y(-g / 2)}" fill="#0ea5e9" fill-opacity=".14" stroke="#0ea5e9" stroke-dasharray="5 3"/>`;
+  }
+  // placa
+  s += `<rect x="${X(-v.N / 2)}" y="${Y(v.B / 2)}" width="${v.N * sc}" height="${v.B * sc}" fill="var(--plate)" fill-opacity=".14" stroke="var(--plate)" stroke-width="2.2"/>`;
+  // zona que trabaja según el método
+  const clipId = 'clpPl';
+  s += `<clipPath id="${clipId}"><rect x="${X(-v.N / 2)}" y="${Y(v.B / 2)}" width="${v.N * sc}" height="${v.B * sc}"/></clipPath>`;
+  if (R.sel === 'dg1') {
+    const mL = t === 'C' ? 0.4 * d : 0.475 * d, nL = t === 'W' ? 0.4 * bf : t === 'R' ? 0.475 * bf : 0.4 * d;
+    if (R.Pu > 0 && R.Y > 0) s += `<rect x="${X(-v.N / 2)}" y="${Y(v.B / 2)}" width="${Math.min(R.Y, v.N) * sc}" height="${v.B * sc}" fill="var(--press)" fill-opacity=".30"/>`;
+    s += `<rect x="${X(-mL)}" y="${Y(nL)}" width="${2 * mL * sc}" height="${2 * nL * sc}" fill="none" stroke="var(--press)" stroke-width="1.6" stroke-dasharray="7 4"/>`;
+    s += G.dimH(X(-v.N / 2), X(-mL), cy, `m = ${n0(R.m)}`, cy, cy, { col: '#c2410c' });
+    s += G.dimV(Y(v.B / 2), Y(nL), X(0) + (t === 'W' ? 14 : 0), `n = ${n0(R.n)}`, X(0), X(0), { col: '#c2410c' });
+  } else if (R.effDraw) {
+    const e = R.effDraw;
+    let shape = '';
+    if (t === 'C') {
+      const ro = e.ro, ri = Math.max(0, e.ri);
+      shape = `<path d="M${X(-ro)},${cy} a${ro * sc},${ro * sc} 0 1,0 ${2 * ro * sc},0 a${ro * sc},${ro * sc} 0 1,0 ${-2 * ro * sc},0 Z M${X(-ri)},${cy} a${ri * sc},${ri * sc} 0 1,1 ${2 * ri * sc},0 a${ri * sc},${ri * sc} 0 1,1 ${-2 * ri * sc},0 Z" fill-rule="evenodd" fill="var(--press)"/>`;
+    } else shape = e.rects.map(q => `<rect x="${X(q[0])}" y="${Y(q[3])}" width="${(q[1] - q[0]) * sc}" height="${(q[3] - q[2]) * sc}" fill="var(--press)"/>`).join('');
+    const clipHalf = e.leftOnly ? `<clipPath id="clpHalf"><rect x="${X(-v.N / 2)}" y="${Y(v.B / 2)}" width="${v.N / 2 * sc}" height="${v.B * sc}"/></clipPath>` : '';
+    s += clipHalf + `<g clip-path="url(#${clipId})"><g ${e.leftOnly ? 'clip-path="url(#clpHalf)"' : ''} opacity=".42">${shape}</g></g>`;
+    // cota de c sobre el ala izquierda
+    const xa = t === 'C' ? -d / 2 : -d / 2;
+    s += G.dimH(X(xa - e.c), X(xa), Y(v.B / 2) + 16, `c = ${n0(e.c)}`, Y(v.B / 2) + 16, Y(v.B / 2) + 16, { col: 'var(--press)' });
+    s += G.txt(X(-v.N / 4), Y(-v.B / 2) - 10, `área efectiva${e.leftOnly ? ' (lado comprimido)' : ''}`, { col: 'var(--press)', bold: 1, size: 11 });
+  }
+  // columna
+  if (t === 'W') {
+    const tw = v.tw, P = [[-d / 2, -bf / 2], [-d / 2 + tf, -bf / 2], [-d / 2 + tf, -tw / 2], [d / 2 - tf, -tw / 2], [d / 2 - tf, -bf / 2], [d / 2, -bf / 2], [d / 2, bf / 2], [d / 2 - tf, bf / 2], [d / 2 - tf, tw / 2], [-d / 2 + tf, tw / 2], [-d / 2 + tf, bf / 2], [-d / 2, bf / 2]];
+    s += `<polygon points="${P.map(p => X(p[0]) + ',' + Y(p[1])).join(' ')}" fill="url(#gSteel)" stroke="#1e293b" stroke-width="1.2"/>`;
+  } else if (t === 'R') {
+    s += `<path d="M${X(-d / 2)},${Y(bf / 2)} h${d * sc} v${bf * sc} h${-d * sc} Z M${X(-d / 2 + tf)},${Y(bf / 2 - tf)} v${(bf - 2 * tf) * sc} h${(d - 2 * tf) * sc} v${-(bf - 2 * tf) * sc} Z" fill-rule="evenodd" fill="url(#gSteel)" stroke="#1e293b" stroke-width="1.2"/>`;
+  } else {
+    const ro = d / 2, ri = d / 2 - tf;
+    s += `<path d="M${X(-ro)},${cy} a${ro * sc},${ro * sc} 0 1,0 ${2 * ro * sc},0 a${ro * sc},${ro * sc} 0 1,0 ${-2 * ro * sc},0 Z M${X(-ri)},${cy} a${ri * sc},${ri * sc} 0 1,1 ${2 * ri * sc},0 a${ri * sc},${ri * sc} 0 1,1 ${-2 * ri * sc},0 Z" fill-rule="evenodd" fill="url(#gSteel)" stroke="#1e293b" stroke-width="1.2"/>`;
+  }
+  // anclajes
+  const ys = Array.from({ length: nrow }, (_, i) => nrow > 1 ? -g / 2 + i * g / (nrow - 1) : 0);
+  const rr = Math.max(3.5, v.da / 2 * sc), rw = Math.max(rr + 3, 1.1 * v.da * sc);
+  for (const side of [1, -1]) ys.forEach(y => { const tens = R.tensionRows === 2 || (R.tensionRows === 1 && side === 1); s += G.anchor(X(side * f), Y(y), rr, rw, tens); });
+  // ---- cotas ----
+  const yb1 = Y(-sB / 2) + 22, yb2 = yb1 + 22, yb3 = yb2 + 22, eBot = Y(-v.B / 2);
+  s += G.chainH([X(-v.N / 2), X(-f), X(f), X(v.N / 2)], yb1, eBot, [n0(v.aN), n0(2 * f), n0(v.aN)]);
+  s += G.dimH(X(-v.N / 2), X(v.N / 2), yb2, `N = ${n0(v.N)}`, eBot, eBot);
+  s += G.dimH(X(-sN / 2), X(sN / 2), yb3, `N₂ = ${n0(v.N2)}${cutN ? ' (cortado)' : ''}`, Y(-sB / 2), Y(-sB / 2));
+  const xl1 = X(-sN / 2) - 22, xl2 = xl1 - 22, xl3 = xl2 - 22, eL = X(-v.N / 2);
+  const eB = v.B / 2 - g / 2;
+  s += G.chainV([Y(v.B / 2), Y(g / 2), Y(-g / 2), Y(-v.B / 2)].filter((q, i, a) => i === 0 || Math.abs(q - a[i - 1]) > .5), xl1, eL, nrow > 1 ? [n0(eB), n0(g), n0(eB)] : [n0(v.B / 2), n0(v.B / 2)]);
+  s += G.dimV(Y(v.B / 2), Y(-v.B / 2), xl2, `B = ${n0(v.B)}`, eL, eL);
+  s += G.dimV(Y(sB / 2), Y(-sB / 2), xl3, `B₂ = ${n0(v.B2)}${cutB ? ' (cortado)' : ''}`, X(-sN / 2), X(-sN / 2));
+  // bordes del pedestal desde anclajes
+  if (!cutN) s += G.dimH(X(f), X(v.N2 / 2), Y(sB / 2) - 14, `c<tspan baseline-shift="sub" font-size="8">a1</tspan> = ${n0(R.edge.cN)}`, Y(g / 2), Y(sB / 2) - 14, { col: '#0284c7' });
+  // rótulos
+  s += G.leader(X(0), Y(0), X(v.N / 2) + 18, Y(v.B / 2) + 26 < T ? T : Y(v.B / 2) - 26, t === 'W' ? 'Columna' : 'Tubo', { size: 11 });
+  s += G.txt(W - 10, cy + 4, 'N →', { anchor: 'end', col: 'var(--muted)', size: 12, bold: 1 }) + G.txt(cx, 18, 'B ↑', { col: 'var(--muted)', size: 12, bold: 1 });
+  s += G.legend([['var(--plate)', 'Placa', 'op'], ['var(--press)', R.sel === 'dg1' ? 'Zona comprimida / líneas críticas' : 'Área efectiva', 'op'], ['var(--tens)', 'Anclaje traccionado']], 16, H - 12);
+  el.innerHTML = s;
+}
+
+/* ---------------- PLANTA (contraplaca) ---------------- */
+function drawPlanP(v, R) {
+  const el = $('plan'), W = 600, H = 600; el.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const L = 95, Rm = 95, T = 70, Bm = 80;
+  const sc = Math.min((W - L - Rm) / v.B, (H - T - Bm) / v.N);
+  const ox = L + (W - L - Rm - v.B * sc) / 2, oy = T + (H - T - Bm - v.N * sc) / 2;
+  const X = x => ox + x * sc, Y = y => oy + y * sc;
+  let s = G.defs();
+  s += `<rect x="${X(0) - 14}" y="${Y(0) - 14}" width="${v.B * sc + 28}" height="${v.N * sc + 28}" fill="url(#gConc)" opacity=".55" rx="4"/>`;
+  s += `<rect x="${X(0)}" y="${Y(0)}" width="${v.B * sc}" height="${v.N * sc}" fill="var(--plate)" fill-opacity=".14" stroke="var(--plate)" stroke-width="2.2"/>`;
+  // zona que trabaja
+  if (R.sel === 'dg1') {
+    s += `<rect x="${X(0)}" y="${Y(0)}" width="${v.B * sc}" height="${v.N * sc}" fill="var(--press)" fill-opacity=".30"/>`;
+    s += G.txt(X(v.B / 2), Y(v.N) + 30, `presión uniforme f<tspan baseline-shift="sub" font-size="8">p</tspan> = ${n2(R.Pu / R.A1)} MPa en toda la placa`, { col: 'var(--press)', bold: 1, size: 12 });
+  } else if (R.cA) {
+    const half = v.Dw / 2 + R.cA, iy = G.intervals(R.rows, half, v.N), ix = G.intervals(R.xs, half, v.B);
+    const rects = []; iy.forEach(([a, b]) => ix.forEach(([p, q]) => rects.push([X(p), Y(a), (q - p) * sc, (b - a) * sc])));
+    s += G.union(rects, 'var(--press)', .42, 'var(--press)');
+    s += G.txt(X(v.B / 2), Y(v.N) + 30, `área efectiva = ${n0(R.Aeff / R.A1 * 100)} % de la placa · c = ${n1(R.cA)} mm alrededor de cada arandela`, { col: 'var(--press)', bold: 1, size: 12 });
+    // cota c en la primera arandela
+    const r0 = R.rows[0], x0 = R.xs[0];
+    s += G.dimH(X(x0 - v.Dw / 2 - R.cA), X(x0 - v.Dw / 2), Y(r0) , `c = ${n0(R.cA)}`, Y(r0), Y(r0), { col: '#b45309' });
+  }
+  // arandelas y barras
+  const rr = Math.max(3.5, v.da / 2 * sc), rw = v.Dw / 2 * sc;
+  R.rows.forEach(r => R.xs.forEach(x => { const out = r - v.Dw / 2 < 0 || r + v.Dw / 2 > v.N || x - v.Dw / 2 < 0 || x + v.Dw / 2 > v.B; s += out ? `<rect x="${X(x) - rw}" y="${Y(r) - rw}" width="${2 * rw}" height="${2 * rw}" fill="var(--bad)" fill-opacity=".25" stroke="var(--bad)" stroke-width="2"/>` : ''; s += G.anchor(X(x), Y(r), rr, rw, true); }));
+  s += G.leader(X(R.xs[R.xs.length - 1]) + rw * .7, Y(R.rows[R.rows.length - 1]) + rw * .7, X(v.B * 0.62), Y(v.N) + 54, `arandela Ø${n0(v.Dw)} · barra Ø${n1(+v.da)}`, { size: 11 });
+  // cotas: arriba posiciones en B, derecha filas en N
+  const yt1 = Y(0) - 18, yt2 = yt1 - 22;
+  const xsS = [...R.xs].sort((a, b) => a - b);
+  s += G.chainH([X(0), ...xsS.map(X), X(v.B)], yt1, Y(0), [n0(xsS[0]), ...xsS.slice(1).map((q, i) => n0(q - xsS[i])), n0(v.B - xsS[xsS.length - 1])]);
+  s += G.dimH(X(0), X(v.B), yt2, `B = ${n0(v.B)}`, Y(0), Y(0));
+  const rS = [...R.rows].sort((a, b) => a - b), xr1 = X(v.B) + 20, xr2 = xr1 + 24;
+  s += G.chainV([Y(0), ...rS.map(Y), Y(v.N)], xr1, X(v.B), [n0(rS[0]), ...rS.slice(1).map((q, i) => n0(q - rS[i])), n0(v.N - rS[rS.length - 1])]);
+  s += G.dimV(Y(0), Y(v.N), xr2, `N = ${n0(v.N)}`, X(v.B), X(v.B));
+  s += G.txt(X(0) - 18, Y(v.N / 2), `t = ${n1(v.tp || R.tReq)} mm · F<tspan baseline-shift="sub" font-size="8">y</tspan> = ${n0(v.Fy)}`, { rot: -90, col: 'var(--plate)', bold: 1 });
+  s += G.legend([['var(--plate)', 'Placa', 'op'], ['var(--press)', R.sel === 'dg1' ? 'Presión uniforme' : 'Área efectiva', 'op'], ['var(--tens)', 'Barra / tuerca']], 16, H - 10);
+  el.innerHTML = s;
+}
+
+/* ---------------- ELEVACIÓN (contraplaca) ---------------- */
+function drawElevP(v, R) {
+  const el = $('elev'), W = 560, H = 460; el.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const top = 60, bot = H - 60, sc = (bot - top) / v.N, xP = 250;
+  const Y = y => top + y * sc, tp = Math.max(10, (v.tp || R.tReq || 19) * 2.2);
+  let s = G.defs();
+  s += `<rect x="${xP + tp}" y="${top - 30}" width="${W - xP - tp - 20}" height="${bot - top + 60}" fill="url(#gConc)" stroke="var(--conc)" stroke-width="2"/>`;
+  s += G.txt((xP + tp + W - 20) / 2, top - 38, 'hormigón (cara de la columna)', { col: 'var(--muted)', size: 11 });
+  // presión
+  const hp = 40;
+  if (R.sel === 'dg1') {
+    s += `<rect x="${xP + tp}" y="${Y(0)}" width="${hp}" height="${v.N * sc}" fill="var(--press)" fill-opacity=".38"/>`;
+    for (let i = 0; i <= 10; i++) { const yy = Y(v.N * i / 10); s += `<line x1="${xP + tp + hp}" y1="${yy}" x2="${xP + tp + 3}" y2="${yy}" stroke="var(--press)" stroke-width="1.2" marker-end="url(#gP)"/>`; }
+    s += G.txt(xP + tp + hp + 6, Y(v.N) + 18, `f<tspan baseline-shift="sub" font-size="8">p</tspan> = ${n2(R.Pu / R.A1)} MPa`, { anchor: 'start', col: 'var(--press)', bold: 1 });
+  } else {
+    const half = v.Dw / 2 + R.cA, iv = G.intervals(R.rows, half, v.N), w = R.Pu / R.Aeff;
+    iv.forEach(([a, b]) => {
+      s += `<rect x="${xP + tp}" y="${Y(a)}" width="${hp}" height="${(b - a) * sc}" fill="var(--press)" fill-opacity=".42"/>`;
+      const n = Math.max(2, Math.round((b - a) * sc / 18)); for (let i = 0; i <= n; i++) { const yy = Y(a + (b - a) * i / n); s += `<line x1="${xP + tp + hp}" y1="${yy}" x2="${xP + tp + 3}" y2="${yy}" stroke="var(--press)" stroke-width="1.2" marker-end="url(#gP)"/>`; }
+    });
+    s += G.txt(xP + tp + hp + 6, Y(v.N) + 18, `${n2(w)} MPa en el área efectiva`, { anchor: 'start', col: 'var(--press)', bold: 1 });
+    // zonas sin contacto
+    let c0 = 0; iv.forEach(([a, b]) => { if (a - c0 > 14 / sc) s += G.txt(xP + tp + hp / 2 + 30, Y((a + c0) / 2) + 4, 'sin contacto', { col: 'var(--muted)', size: 10.5, anchor: 'start' }); c0 = b; });
+    if (v.N - c0 > 14 / sc) s += G.txt(xP + tp + hp / 2 + 30, Y((v.N + c0) / 2) + 4, 'sin contacto', { col: 'var(--muted)', size: 10.5, anchor: 'start' });
+  }
+  // placa
+  s += `<rect x="${xP}" y="${Y(0)}" width="${tp}" height="${v.N * sc}" fill="var(--plate)" stroke="#1d4ed8" stroke-width="1.2"/>`;
+  // barras
+  R.rows.forEach(r => {
+    const y = Y(r), hb = Math.max(5, v.da * sc * .9);
+    s += `<rect x="${xP - 70}" y="${y - hb / 2}" width="${W - 20 - xP + 70}" height="${hb}" fill="var(--tens)" opacity=".85"/>`;
+    s += `<rect x="${xP - 16}" y="${y - v.Dw / 2 * sc}" width="16" height="${v.Dw * sc}" fill="#1e293b"/>`;
+    s += `<rect x="${xP - 24}" y="${y - v.Dw / 2 * sc * .8}" width="8" height="${v.Dw * sc * .8}" fill="#334155"/>`;
+    s += `<line x1="${xP - 120}" y1="${y}" x2="${xP - 28}" y2="${y}" stroke="var(--tens)" stroke-width="3" marker-end="url(#gT)"/>`;
+  });
+  s += G.txt(xP - 120, Y(R.rows[0]) - 14, `${R.nb} × ${n1(R.Pu / R.nb / 1e3)} kN`, { anchor: 'start', col: 'var(--tens)', bold: 1 });
+  s += G.txt(xP - 120, Y(R.rows[0]) - 30, `Σ = ${n0(R.Pu / 1e3)} kN`, { anchor: 'start', col: 'var(--tens)', bold: 1, size: 13 });
+  // cotas
+  const rS = [...R.rows].sort((a, b) => a - b), xd = xP - 140;
+  s += G.chainV([Y(0), ...rS.map(Y), Y(v.N)], xd + 0, xP, [n0(rS[0]), ...rS.slice(1).map((q, i) => n0(q - rS[i])), n0(v.N - rS[rS.length - 1])]);
+  s += G.dimV(Y(0), Y(v.N), xd - 26, `N = ${n0(v.N)}`, xP, xP);
+  s += G.dimH(xP, xP + tp, Y(0) - 14, `t = ${n1(v.tp || R.tReq)}`, Y(0), Y(0), { col: 'var(--plate)' });
+  if (R.cA) s += G.dimV(Y(rS[0] + v.Dw / 2), Y(rS[0] + v.Dw / 2 + R.cA), xP + tp + hp + 10, `c = ${n0(R.cA)}`, xP + tp + hp, xP + tp + hp, { col: '#b45309' });
+  el.innerHTML = s;
+}
+
+/* ---------------- ELEVACIÓN (columna) ---------------- */
+function drawElev(v, R) {
+  const el = $('elev'), W = 560, H = 460; el.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const shN = Math.min(v.N2, Math.max(v.N * 1.9, v.N + 300)), cutN = v.N2 > shN + 1;
+  const sc = (W - 120) / shN, cx = W / 2, X = x => cx + x * sc;
+  const f = R.geom.f, d = v.d, tpPx = Math.max(10, (v.tp || R.tReq || 20) * sc * 1.6);
+  const yPl = 205, pedTop = yPl + tpPx + 7, pedBot = H - 70;
+  let s = G.defs();
+  // pedestal
+  s += `<rect x="${X(-shN / 2)}" y="${pedTop}" width="${shN * sc}" height="${pedBot - pedTop}" fill="url(#gConc)" stroke="var(--conc)" stroke-width="2"/>`;
+  if (cutN) s += G.breakV(X(-shN / 2), pedTop, pedBot) + G.breakV(X(shN / 2), pedTop, pedBot);
+  s += `<rect x="${X(-v.N / 2)}" y="${yPl + tpPx}" width="${v.N * sc}" height="7" fill="var(--conc)" opacity=".7"/>`;
+  s += G.txt(X(v.N / 2) + 8, yPl + tpPx + 7, 'grout', { anchor: 'start', size: 10, col: 'var(--muted)' });
+  // cono
+  if (R.tensionRows && $('showANc').checked) {
+    const xa = X(f), hp = v.hef * sc, sp = 1.5 * v.hef * sc, xL = xa - (R.tensionRows === 2 ? 2 * f * sc : 0);
+    s += `<clipPath id="clpPed2"><rect x="${X(-shN / 2)}" y="${pedTop}" width="${shN * sc}" height="${pedBot - pedTop}"/></clipPath>`;
+    s += `<polygon clip-path="url(#clpPed2)" points="${xa},${pedTop + hp} ${xa + sp},${pedTop} ${xL - sp},${pedTop} ${xL},${pedTop + hp}" fill="var(--area)" fill-opacity=".08" stroke="var(--area)" stroke-dasharray="5 3"/>`;
+  }
+  // anclajes
+  const hefPx = Math.min(pedBot - pedTop - 12, v.hef * sc);
+  for (const side of [1, -1]) {
+    const tens = R.tensionRows === 2 || (R.tensionRows === 1 && side === 1), c = tens ? 'var(--tens)' : 'var(--anchor)', xa = X(side * f), wa = Math.max(3, v.da * sc);
+    s += `<rect x="${xa - wa / 2}" y="${yPl - 16}" width="${wa}" height="${pedTop + hefPx - yPl + 16}" fill="${c}"/>`;
+    if (v.atype === 'H') s += `<rect x="${xa - 10}" y="${pedTop + hefPx - 3}" width="20" height="8" rx="1" fill="${c}"/>`;
+    else s += `<path d="M${xa},${pedTop + hefPx} q0,12 ${-side * 16},12" fill="none" stroke="${c}" stroke-width="${wa}"/>`;
+    s += `<rect x="${xa - 9}" y="${yPl - 13}" width="18" height="8" rx="1.5" fill="#1e293b"/><rect x="${xa - 11}" y="${yPl - 4}" width="22" height="4" fill="#475569"/>`;
+  }
+  // presión según método
+  const hq = 46;
+  if (R.sel === 'dg1' && R.Pu > 0 && R.Y > 0) {
+    const xa = X(-v.N / 2), xb = X(-v.N / 2 + Math.min(R.Y, v.N)), hh = 14 + hq * Math.min(1, R.q / R.qmax);
+    s += `<rect x="${xa}" y="${pedTop}" width="${xb - xa}" height="${hh}" fill="var(--press)" fill-opacity=".42" stroke="var(--press)"/>`;
+    const n = Math.max(3, Math.round((xb - xa) / 18)); for (let i = 0; i <= n; i++) { const xx = xa + (xb - xa) * i / n; s += `<line x1="${xx}" y1="${pedTop + hh}" x2="${xx}" y2="${pedTop + 3}" stroke="var(--press)" stroke-width="1.2" marker-end="url(#gP)"/>`; }
+    s += G.txt((xa + xb) / 2, pedTop + hh + 14, `q = ${n0(R.q)} N/mm (f<tspan baseline-shift="sub" font-size="8">p</tspan> = ${n2(R.fp)} MPa)`, { col: 'var(--press)', bold: 1 });
+    s += G.dimH(xa, xb, pedBot + 16, `Y = ${n0(R.Y)}`, pedTop + hh, pedTop + hh, { col: 'var(--press)' });
+  } else if (R.sel !== 'dg1' && R.effDraw && R.effDraw.w > 0) {
+    const e = R.effDraw, walls = v.ctype === 'W' || v.ctype === 'R' || v.ctype === 'C' ? [[-d / 2, -d / 2 + v.tf], [d / 2 - v.tf, d / 2]] : [];
+    walls.forEach(([p0, p1], i) => {
+      if (e.leftOnly && i === 1) return;
+      const a = Math.max(-v.N / 2, p0 - e.c), b = Math.min(v.N / 2, p1 + e.c), xa = X(a), xb = X(b), hh = hq;
+      s += `<rect x="${xa}" y="${pedTop}" width="${xb - xa}" height="${hh}" fill="var(--press)" fill-opacity=".42" stroke="var(--press)"/>`;
+      const n = Math.max(2, Math.round((xb - xa) / 16)); for (let k = 0; k <= n; k++) { const xx = xa + (xb - xa) * k / n; s += `<line x1="${xx}" y1="${pedTop + hh}" x2="${xx}" y2="${pedTop + 3}" stroke="var(--press)" stroke-width="1.2" marker-end="url(#gP)"/>`; }
+      s += G.dimH(xa, X(p0), pedBot + 16, `c = ${n0(e.c)}`, pedTop + hh, pedTop + hh, { col: 'var(--press)' });
+    });
+    s += G.txt(cx, pedTop + hq + 16, `${n2(e.w)} MPa en el área efectiva`, { col: 'var(--press)', bold: 1 });
+  }
+  // placa
+  s += `<rect x="${X(-v.N / 2)}" y="${yPl}" width="${v.N * sc}" height="${tpPx}" fill="var(--plate)" stroke="#1d4ed8" stroke-width="1.2"/>`;
+  // columna
+  if (v.ctype === 'W') {
+    s += `<rect x="${X(-d / 2)}" y="34" width="${v.tf * sc}" height="${yPl - 34}" fill="url(#gSteel)" stroke="#1e293b"/><rect x="${X(d / 2 - v.tf)}" y="34" width="${v.tf * sc}" height="${yPl - 34}" fill="url(#gSteel)" stroke="#1e293b"/><rect x="${X(-d / 2 + v.tf)}" y="34" width="${(d - 2 * v.tf) * sc}" height="${yPl - 34}" fill="var(--steel)" opacity=".35"/>`;
+  } else {
+    s += `<rect x="${X(-d / 2)}" y="34" width="${d * sc}" height="${yPl - 34}" fill="var(--steel)" opacity=".28"/><rect x="${X(-d / 2)}" y="34" width="${Math.max(2, v.tf * sc)}" height="${yPl - 34}" fill="url(#gSteel)"/><rect x="${X(d / 2) - Math.max(2, v.tf * sc)}" y="34" width="${Math.max(2, v.tf * sc)}" height="${yPl - 34}" fill="url(#gSteel)"/>`;
+  }
+  // cargas
+  if (R.Pu !== 0) s += `<line x1="${cx}" y1="${R.Pu > 0 ? 6 : 58}" x2="${cx}" y2="${R.Pu > 0 ? 54 : 8}" stroke="var(--accent)" stroke-width="3.5" marker-end="url(#gA)"/>` + G.txt(cx + 10, 22, `P<tspan baseline-shift="sub" font-size="8">u</tspan> = ${n1(v.Pu)} kN`, { anchor: 'start', col: 'var(--accent)', bold: 1, size: 12.5 });
+  if (v.Mu) s += `<path d="M${cx - 44},68 A 44 22 0 0 1 ${cx + 44},68" fill="none" stroke="var(--accent)" stroke-width="2.6" marker-end="url(#gA)"/>` + G.txt(cx - 52, 62, `M<tspan baseline-shift="sub" font-size="8">u</tspan> = ${n1(v.Mu)} kN·m`, { anchor: 'end', col: 'var(--accent)', bold: 1, size: 12.5 });
+  if (v.Vu) s += `<line x1="${X(-d / 2) - 70}" y1="${yPl - 30}" x2="${X(-d / 2) - 6}" y2="${yPl - 30}" stroke="var(--accent)" stroke-width="3.5" marker-end="url(#gA)"/>` + G.txt(X(-d / 2) - 70, yPl - 38, `V<tspan baseline-shift="sub" font-size="8">u</tspan> = ${n1(v.Vu)} kN`, { anchor: 'start', col: 'var(--accent)', bold: 1, size: 12 });
+  if (R.Tu > 0) { const xa = X(f); s += `<line x1="${xa + 18}" y1="${yPl - 8}" x2="${xa + 18}" y2="${yPl - 58}" stroke="var(--tens)" stroke-width="3.5" marker-end="url(#gT)"/>` + G.txt(xa + 26, yPl - 40, `T<tspan baseline-shift="sub" font-size="8">u</tspan> = ${n1(R.Tu / 1e3)} kN`, { anchor: 'start', col: 'var(--tens)', bold: 1, size: 12.5 }); }
+  // cotas
+  s += G.dimH(X(-v.N / 2), X(v.N / 2), pedBot + 40, `N = ${n0(v.N)}`, yPl + tpPx, yPl + tpPx);
+  s += G.chainH([X(-v.N / 2), X(-f), X(f), X(v.N / 2)], yPl - 70 > 90 ? 96 : 96, yPl - 16, [n0(v.aN), n0(2 * f), n0(v.aN)]);
+  s += G.dimV(pedTop, pedTop + hefPx, X(f) + 30, `h<tspan baseline-shift="sub" font-size="8">ef</tspan> = ${n0(v.hef)}`, X(f) + 6, X(f) + 6);
+  s += G.dimV(yPl, yPl + tpPx, X(-v.N / 2) - 14, `t = ${n1(v.tp || R.tReq)}`, X(-v.N / 2), X(-v.N / 2), { col: 'var(--plate)' });
+  el.innerHTML = s;
+}
+
 </script>
 </body>
 </html>
