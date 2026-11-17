@@ -120,6 +120,25 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
 .fref li{font-size:12.5px}
 .flink{margin-left:8px;font-size:12px;font-weight:600;color:var(--accent2);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:2px 9px;white-space:nowrap}
 .flink:hover{border-color:var(--accent2)}
+
+.skm{position:fixed;inset:0;background:rgba(10,15,25,.55);z-index:50;display:grid;place-items:center;padding:16px}
+.skm[hidden]{display:none}
+.skbox{width:min(1250px,100%);max-height:94vh;overflow:auto}
+.skhead{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.skhead .sp{flex:1}
+.skbody{display:grid;grid-template-columns:1fr 340px;gap:16px;padding:14px 16px}
+@media (max-width:900px){.skbody{grid-template-columns:1fr}}
+.skdrop{border:2px dashed var(--line);border-radius:12px;padding:40px 20px;text-align:center;color:var(--muted)}
+.skdrop.over{border-color:var(--accent);background:var(--panel2)}
+.skwrap{overflow:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+.skwrap canvas{display:block;cursor:crosshair;max-width:100%}
+.sksteps{padding-left:18px;margin:0 0 10px;font-size:13px}
+.sksteps li{margin:4px 0;color:var(--muted)} .sksteps li.on{color:var(--text)}
+.skocr{background:var(--panel2);border-radius:8px;padding:8px;margin-bottom:8px}
+#skChips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.chip{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:999px;padding:2px 9px;font-size:12px;cursor:pointer;font-family:var(--mono)}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.skbtns{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
 @media print{
   header .btn,aside,.fig h2 .tg{display:none!important} main{grid-template-columns:1fr} .step{break-inside:avoid} details.step{display:block} details.step>.body{display:block} details.fcard>*{display:block}
   body{background:#fff} .card,.step{box-shadow:none}
@@ -144,6 +163,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
     <option value="pl1d">Contraplaca PL1-d 400×250 (4 barras B7 Ø1")</option>
     <option value="pl1e">Contraplaca PL1-e 400×150 (2 barras B7 Ø1")</option>
   </select>
+  <button class="btn pri" id="btnSketch" title="Subir una foto o captura del croquis y generar el modelo">📷 Desde croquis</button>
   <button class="btn" id="btnSave" title="Descargar los datos como JSON">💾 Guardar</button>
   <button class="btn" id="btnLoad" title="Cargar un JSON guardado">📂 Abrir</button>
   <button class="btn" id="btnPrint">🖨 Imprimir</button>
@@ -1908,5 +1928,205 @@ function drawElev(v, R) {
 }
 
 </script>
+
+<!-- ===================== Asistente: modelo desde croquis ===================== -->
+<div id="skModal" class="skm" hidden>
+  <div class="skbox card">
+    <div class="skhead">
+      <b>📷 Generar el modelo desde un croquis</b>
+      <span class="sp"></span>
+      <button class="btn" id="skClose">✕</button>
+    </div>
+    <div class="skbody">
+      <div class="skleft">
+        <div id="skDrop" class="skdrop">
+          <p><b>Arrastrá acá la foto o captura del croquis</b><br>(vista de frente de la placa, con las barras y las cotas)</p>
+          <label class="btn pri">Elegir imagen<input type="file" id="skFile" accept="image/*" hidden></label>
+          <p class="note">También podés pegarla con Ctrl+V. Todo se procesa en tu navegador: la imagen no se sube a ningún servidor.</p>
+        </div>
+        <div id="skWrap" class="skwrap" hidden><canvas id="skCanvas"></canvas></div>
+      </div>
+      <div class="skright">
+        <ol class="sksteps">
+          <li id="sk1"><b>Placa:</b> hacé clic en la <b>esquina superior izquierda</b> y después en la <b>inferior derecha</b> de la placa.</li>
+          <li id="sk2"><b>Barras:</b> hacé clic en el <b>centro de cada barra</b>. Clic sobre una marcada la borra.</li>
+          <li id="sk3"><b>Cotas:</b> revisá los valores (los leídos del croquis aparecen solos) y tocá <b>Generar</b>.</li>
+        </ol>
+        <div class="skocr"><span id="skOcrState" class="note">Esperando imagen…</span><div id="skChips"></div></div>
+        <div class="fld"><label>B ancho total<small>mm (horizontal en el croquis)</small></label><input id="skB" type="number"></div>
+        <div class="fld"><label>N alto total<small>mm (vertical en el croquis)</small></label><input id="skN" type="number"></div>
+        <div class="fld"><label>Espesor t<small>mm (opcional)</small></label><input id="skT" type="number" step="0.1"></div>
+        <div class="fld"><label>Ø barra<small>mm (opcional)</small></label><input id="skD" type="number" step="0.01"></div>
+        <div class="fld"><label>Ajustar a cotas leídas<small>redondea separaciones a los números del croquis (±6 mm)</small></label><select id="skSnap"><option value="1">Sí</option><option value="0">No</option></select></div>
+        <div id="skPreview" class="note"></div>
+        <div class="skbtns">
+          <button class="btn" id="skUndo">↶ Deshacer</button>
+          <button class="btn" id="skReset">Reiniciar</button>
+          <button class="btn pri" id="skGo" disabled>Generar modelo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+/* ===================== Asistente de croquis =====================
+   Gratis y local: OCR con Tesseract.js (se carga sólo al usarlo) + marcado de placa y barras con clics.
+   Convierte píxeles a mm con las cotas B y N, agrupa las barras en filas y columnas y ajusta las
+   separaciones a los números leídos del croquis. */
+(function () {
+  const $s = id => document.getElementById(id);
+  const cv = $s('skCanvas'), ctx = cv.getContext('2d');
+  let img = null, scale = 1, corners = [], bars = [], hist = [];
+  const open = () => { $s('skModal').hidden = false; };
+  const close = () => { $s('skModal').hidden = true; };
+  $s('skClose').onclick = close;
+  $s('skModal').addEventListener('click', e => { if (e.target.id === 'skModal') close(); });
+  document.getElementById('btnSketch').onclick = open;
+
+  function loadFile(f) {
+    if (!f || !f.type.startsWith('image/')) return;
+    const r = new FileReader();
+    r.onload = () => { const im = new Image(); im.onload = () => { img = im; corners = []; bars = []; hist = []; autoBN = true; ['skB', 'skN', 'skT', 'skD'].forEach(k => $s(k).value = ''); $s('skDrop').hidden = true; $s('skWrap').hidden = false; fit(); draw(); ocr(im); }; im.src = r.result; };
+    r.readAsDataURL(f);
+  }
+  $s('skFile').onchange = e => loadFile(e.target.files[0]);
+  const dz = $s('skDrop');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+  dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('over'); loadFile(e.dataTransfer.files[0]); });
+  window.addEventListener('paste', e => { if ($s('skModal').hidden) return; const it = [...(e.clipboardData || {}).items || []].find(i => i.type.startsWith('image/')); if (it) loadFile(it.getAsFile()); });
+
+  function fit() { const maxW = Math.min(820, window.innerWidth * 0.62), maxH = window.innerHeight * 0.72; scale = Math.min(maxW / img.width, maxH / img.height, 2); cv.width = img.width * scale; cv.height = img.height * scale; }
+  function step() { const k = corners.length < 2 ? 1 : 2; ['sk1', 'sk2', 'sk3'].forEach((id, i) => $s(id).classList.toggle('on', i + 1 === k || (k === 2 && i === 2 && bars.length))); $s('skGo').disabled = !(corners.length === 2 && bars.length && +$s('skB').value > 0 && +$s('skN').value > 0); preview(); }
+  var draw = function () {
+    if (!img) return;
+    ctx.clearRect(0, 0, cv.width, cv.height); ctx.drawImage(img, 0, 0, cv.width, cv.height);
+    ctx.lineWidth = 2.5;
+    if (corners.length) { ctx.fillStyle = '#2563eb'; corners.forEach(p => { ctx.beginPath(); ctx.arc(p[0] * scale, p[1] * scale, 6, 0, 7); ctx.fill(); }); }
+    if (corners.length === 2) { const [a, b] = corners; ctx.strokeStyle = '#2563eb'; ctx.setLineDash([8, 5]); ctx.strokeRect(a[0] * scale, a[1] * scale, (b[0] - a[0]) * scale, (b[1] - a[1]) * scale); ctx.setLineDash([]); ctx.fillStyle = 'rgba(37,99,235,.08)'; ctx.fillRect(a[0] * scale, a[1] * scale, (b[0] - a[0]) * scale, (b[1] - a[1]) * scale); }
+    bars.forEach((p, i) => { ctx.strokeStyle = '#dc2626'; ctx.fillStyle = 'rgba(220,38,38,.25)'; ctx.beginPath(); ctx.arc(p[0] * scale, p[1] * scale, 10, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#dc2626'; ctx.font = 'bold 12px Segoe UI'; ctx.fillText(i + 1, p[0] * scale + 12, p[1] * scale - 8); });
+    step();
+  };
+  cv.addEventListener('click', e => {
+    const r = cv.getBoundingClientRect(), x = (e.clientX - r.left) / scale * (cv.width / r.width) , y = (e.clientY - r.top) / scale * (cv.height / r.height);
+    hist.push(JSON.stringify([corners, bars]));
+    if (corners.length < 2) { corners.push([x, y]); if (corners.length === 2) { const [a, b] = corners; corners = [[Math.min(a[0], b[0]), Math.min(a[1], b[1])], [Math.max(a[0], b[0]), Math.max(a[1], b[1])]]; } }
+    else { const k = bars.findIndex(p => Math.hypot(p[0] - x, p[1] - y) < 14 / scale); if (k >= 0) bars.splice(k, 1); else bars.push([x, y]); }
+    draw();
+  });
+  $s('skUndo').onclick = () => { if (hist.length) { [corners, bars] = JSON.parse(hist.pop()); draw(); } };
+  $s('skReset').onclick = () => { hist.push(JSON.stringify([corners, bars])); corners = []; bars = []; draw(); };
+  ['skB', 'skN', 'skT', 'skD', 'skSnap'].forEach(id => $s(id).addEventListener('input', step));
+
+  /* ---------- OCR (Tesseract.js, gratis, en el navegador) ----------
+     Dos pasadas: imagen normal (cotas horizontales) y girada 90° (cotas verticales, que en CAD se escriben giradas).
+     Cada número queda con su posición en la imagen original para asignarlo a la placa marcada. */
+  let words = [], fullText = '', autoBN = true;
+  function loadTess() { return window.Tesseract ? Promise.resolve() : new Promise((ok, ko) => { const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js'; sc.onload = ok; sc.onerror = ko; document.head.appendChild(sc); }); }
+  function prep(im, rot) {
+    const k = Math.max(1, Math.min(5, 2600 / Math.max(im.width, im.height)));
+    const W = im.width * k, H = im.height * k, cnv = document.createElement('canvas');
+    cnv.width = rot ? H : W; cnv.height = rot ? W : H;
+    const c2 = cnv.getContext('2d'); c2.fillStyle = '#fff'; c2.fillRect(0, 0, cnv.width, cnv.height);
+    if (rot) { c2.translate(H, 0); c2.rotate(Math.PI / 2); }
+    c2.imageSmoothingQuality = 'high'; c2.drawImage(im, 0, 0, W, H); c2.setTransform(1, 0, 0, 1, 0, 0);
+    const d = c2.getImageData(0, 0, cnv.width, cnv.height), a = d.data; let sum = 0;
+    for (let q = 0; q < a.length; q += 4) sum += (a[q] + a[q + 1] + a[q + 2]) / 3;
+    const dark = sum / (a.length / 4) < 110;
+    for (let q = 0; q < a.length; q += 4) { let g = dark ? 255 - Math.max(a[q], a[q + 1], a[q + 2]) : (a[q] + a[q + 1] + a[q + 2]) / 3; g = g > 170 ? 255 : g < 120 ? 0 : g; a[q] = a[q + 1] = a[q + 2] = g; }
+    c2.putImageData(d, 0, 0);
+    return { cnv, k, H };
+  }
+  async function ocr(im) {
+    const st = $s('skOcrState'); st.textContent = 'Leyendo las cotas del croquis… (la primera vez descarga el lector, ~10 MB)';
+    words = []; fullText = '';
+    try {
+      await loadTess();
+      const worker = await Tesseract.createWorker('eng');
+      await worker.setParameters({ tessedit_char_whitelist: '0123456789.,=eEØø/"xXdbDBmt()- ', tessedit_pageseg_mode: '11' });
+      for (const rot of [false, true]) {
+        const { cnv, k, H } = prep(im, rot);
+        const { data } = await worker.recognize(cnv);
+        fullText += ' ' + (data.text || '');
+        (data.words || []).forEach(w => {
+          const tx = w.text.replace(',', '.').replace(/[^\d.]/g, ''); if (!/^\d+(\.\d+)?$/.test(tx)) return;
+          const val = +tx; if (val < 5 || val > 5000) return;
+          const bb = w.bbox; let cx = (bb.x0 + bb.x1) / 2, cy = (bb.y0 + bb.y1) / 2;
+          if (rot) { const ox = cy, oy = H - cx; cx = ox; cy = oy; }
+          words.push({ val, x: cx / k, y: cy / k, rot, conf: w.confidence });
+        });
+      }
+      await worker.terminate();
+      parse();
+      st.textContent = words.length ? `Cotas leídas: ${words.length}. Tocá un número para usarlo en el campo activo.` : 'No se pudieron leer cotas: cargalas a mano.';
+    } catch (err) { console.error(err); st.textContent = 'Sin conexión para el lector de cotas: cargá B y N a mano (el resto funciona igual).'; }
+  }
+  let lastField = 'skB';
+  ['skB', 'skN', 'skT', 'skD'].forEach(id => $s(id).addEventListener('focus', () => lastField = id));
+  ['skB', 'skN'].forEach(id => $s(id).addEventListener('input', () => autoBN = false));
+  function near() { // números cercanos a la placa marcada, separados por orientación
+    if (corners.length < 2) return { H: words.filter(w => !w.rot), V: words.filter(w => w.rot) };
+    const [a, b] = corners, W = b[0] - a[0], Hh = b[1] - a[1];
+    const H = words.filter(w => !w.rot && w.x > a[0] - 0.25 * W && w.x < b[0] + 0.25 * W && (w.y < a[1] + 0.1 * Hh || w.y > b[1] - 0.1 * Hh) && w.y > a[1] - 1.2 * Hh && w.y < b[1] + 1.2 * Hh);
+    const V = words.filter(w => w.rot && w.y > a[1] - 0.25 * Hh && w.y < b[1] + 0.25 * Hh && (w.x < a[0] + 0.1 * W || w.x > b[0] - 0.1 * W) && w.x > a[0] - 1.2 * W && w.x < b[0] + 1.2 * W);
+    return { H, V };
+  }
+  function autoDims() {
+    if (!autoBN || corners.length < 2 || !words.length) return;
+    const nr = near();
+    if (nr.H.length) $s('skB').value = Math.max(...nr.H.map(w => w.val));
+    if (nr.V.length) $s('skN').value = Math.max(...nr.V.map(w => w.val));
+  }
+  function parse() {
+    const t = fullText.replace(/,/g, '.');
+    const mT = t.match(/e\s*=\s*(\d+(\.\d+)?)/i); if (mT && !$s('skT').value) $s('skT').value = +mT[1];
+    const mD = t.match(/(?:[Øø]|db\s*=\s*)\s*(\d+(\.\d+)?)/i); if (mD && !$s('skD').value) $s('skD').value = +mD[1];
+    autoDims(); chips(); step();
+  }
+  function chips() {
+    const nr = near(), all = [...new Set([...nr.H, ...nr.V].map(w => w.val))].sort((a, b) => a - b);
+    $s('skChips').innerHTML = all.map(n => `<button class="chip" data-n="${n}">${n}</button>`).join('');
+    $s('skChips').querySelectorAll('.chip').forEach(b => b.onclick = () => { $s(lastField).value = b.dataset.n; if (lastField === 'skB' || lastField === 'skN') autoBN = false; step(); });
+  }
+  // al marcar la placa se vuelven a asignar B y N con los números que la rodean
+  const drawBase = draw; draw = function () { drawBase(); if (corners.length === 2 && words.length) { autoDims(); chips(); } };
+
+  /* ---------- generar el modelo ---------- */
+  function cluster(vals, tol) { const s = [...vals].sort((a, b) => a - b), g = []; s.forEach(v => { const l = g[g.length - 1]; if (l && v - l[l.length - 1] <= tol) l.push(v); else g.push([v]); }); return g.map(c => c.reduce((a, b) => a + b, 0) / c.length); }
+  function snapChain(pos, L, list) { // ajusta separaciones (borde→1ª, entre ejes) a cotas leídas cercanas
+    const nums = (list || []).map(w => w.val);
+    if ($s('skSnap').value !== '1' || !nums.length) return pos.map(p => Math.round(p));
+    const pts = [0, ...pos], out = [0];
+    for (let i = 1; i < pts.length; i++) { const d = pts[i] - pts[i - 1]; const c = nums.filter(n => Math.abs(n - d) <= 6).sort((a, b) => Math.abs(a - d) - Math.abs(b - d))[0]; out.push(out[i - 1] + (c ?? Math.round(d))); }
+    return out.slice(1);
+  }
+  function model() {
+    const B = +$s('skB').value, N = +$s('skN').value; if (!(B > 0 && N > 0) || corners.length < 2 || !bars.length) return null;
+    const [a, b] = corners, sx = B / (b[0] - a[0]), sy = N / (b[1] - a[1]);
+    const mm = bars.map(p => [(p[0] - a[0]) * sx, (p[1] - a[1]) * sy]);
+    const nr = near(), rows = snapChain(cluster(mm.map(p => p[1]), 0.06 * N), N, nr.V), cols = snapChain(cluster(mm.map(p => p[0]), 0.06 * B), B, nr.H);
+    return { B, N, rows, cols };
+  }
+  function preview() {
+    const m = model(); if (!m) { $s('skPreview').innerHTML = ''; return; }
+    const centered = m.cols.length < 2 || Math.abs((m.cols[0] + m.cols[m.cols.length - 1]) / 2 - m.B / 2) < 3;
+    $s('skPreview').innerHTML = `<b>Modelo:</b> placa ${m.N} × ${m.B} mm · ${m.rows.length} filas (a ${m.rows.join(', ')} mm del borde superior) × ${m.cols.length} barras (a ${m.cols.join(', ')} mm del borde izquierdo).` + (centered ? '' : '<br><span style="color:var(--warn)">Las columnas de barras no están centradas en B: la calculadora las centra (usa la separación entre las extremas).</span>');
+  }
+  $s('skGo').onclick = () => {
+    const m = model(); if (!m) return;
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined && val !== '' && !Number.isNaN(val)) el.value = val; };
+    set('ctype', 'P'); set('N', m.N); set('B', m.B); set('pRows', m.rows.join(','));
+    set('nrow', String(Math.min(4, Math.max(1, m.cols.length)))); if (m.cols.length > 1) set('g', +(m.cols[m.cols.length - 1] - m.cols[0]).toFixed(1));
+    if (+$s('skT').value > 0) set('tp', +$s('skT').value);
+    if (+$s('skD').value > 0) { const da = +$s('skD').value, opts = [...document.getElementById('da').options].map(o => +o.value); const best = opts.reduce((p, q) => Math.abs(q - da) < Math.abs(p - da) ? q : p, opts[0]); set('da', String(best)); }
+    set('dwAuto', '1'); set('pAuto', '1');
+    if (m.cols.length > 4) alert('La calculadora admite hasta 4 barras por fila: se tomaron 4.');
+    prevN = +m.N; prevType = 'P';
+    close(); run();
+    document.getElementById('p-col').scrollIntoView && document.querySelector('#tabs button[data-p="col"]').click();
+  };
+})();
+</script>
+
 </body>
 </html>
