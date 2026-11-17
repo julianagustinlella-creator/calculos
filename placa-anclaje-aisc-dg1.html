@@ -139,6 +139,17 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
 .chip{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:999px;padding:2px 9px;font-size:12px;cursor:pointer;font-family:var(--mono)}
 .chip:hover{border-color:var(--accent);color:var(--accent)}
 .skbtns{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+
+.ftab.val td.num{text-align:right;font-family:var(--mono)}
+.ftab.val tr.v-bad td{background:var(--badbg)}
+.ftab.val .note{margin:2px 0 0;font-size:11.5px}
+
+.fquad{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 16px}
+@media (max-width:1100px){.fquad{grid-template-columns:1fr}}
+.fq{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--panel)}
+.fq h5{margin:0 0 6px;font-size:13.5px;color:var(--accent2)}
+.fq .fsvg{max-width:100%}
+.fq ul{margin:6px 0 0;padding-left:18px}
 @media print{
   header .btn,aside,.fig h2 .tg{display:none!important} main{grid-template-columns:1fr} .step{break-inside:avoid} details.step{display:block} details.step>.body{display:block} details.fcard>*{display:block}
   body{background:#fff} .card,.step{box-shadow:none}
@@ -213,6 +224,9 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
     <div class="fld"><label>N largo<small>mm (dirección del momento)</small></label><input id="N" type="number"></div>
     <div class="fld"><label>B ancho<small>mm</small></label><input id="B" type="number"></div>
     <div class="fld"><label>F<sub>y</sub> placa<small>MPa (F-24 = 235, F-36 = 355)</small></label><input id="Fy" type="number"></div>
+    <div class="fld"><label>Ancho de flexión por tracción<small>DG1 §3.2: reparto a 45° · Ej. 4.7: ancho B completo</small></label><select id="tbeff"><option value="45">Reparto a 45° (§3.2, conservador)</option><option value="B">Ancho B completo (Ej. 4.7)</option></select></div>
+    <div class="fld"><label>Soldadura columna–placa<small>cateto del filete, mm (E70)</small></label><input id="aw" type="number" step="0.5"></div>
+    <div class="fld"><label>F<sub>y</sub> de la columna<small>MPa (para la tensión en el alma)</small></label><input id="Fyc" type="number"></div>
     <div class="fld"><label>Espesor adoptado t<sub>p</sub><small>mm (0 = sólo calcular el requerido)</small></label><input id="tp" type="number" step="0.1"></div>
     <h3 class="sec">Método para el espesor (compresión)</h3>
     <div class="fld wide"><select id="pm">
@@ -243,6 +257,7 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
       <option value="F24">Barra lisa F-24 / SAE 1010 (235 / 370)</option>
     </select></div>
     <div class="fld"><label>Diámetro d<sub>a</sub><small>mm</small></label><select id="da"></select></div>
+    <div class="fld"><label>Resistencia del acero del anclaje</label><select id="steelM"><option value="aci">ACI 318-19 §17 (A<sub>se</sub>·f<sub>uta</sub>)</option><option value="aisc">DG1 2ª ed.: AISC 360-05 (0,75·F<sub>u</sub>·A<sub>b</sub>; 0,40·F<sub>u</sub>·A<sub>b</sub>; J3.7) + ACI 318-02</option></select></div>
     <div class="fld"><label>Zona roscada</label><select id="thr"><option value="1">Sí (A<sub>se</sub> por rosca)</option><option value="0">No (barra soldada, A<sub>se</sub>=A<sub>g</sub>)</option></select></div>
     <div class="fld"><label>Tipo de anclaje en el hormigón</label><select id="atype"><option value="H">Con cabeza / tuerca + arandela</option><option value="J">Con gancho (L o J)</option></select></div>
     <div class="fld"><label>h<sub>ef</sub> profundidad efectiva<small>mm</small></label><input id="hef" type="number"></div>
@@ -260,6 +275,17 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
     <div class="fld"><label>Hay grout bajo la placa</label><select id="grout"><option value="1">Sí (corte de acero × 0,8)</option><option value="0">No</option></select></div>
     <div class="fld"><label>Anclajes que toman corte<small>con agujeros agrandados AISC sugiere la mitad</small></label><select id="nV"><option value="all">Todos</option><option value="half">La mitad</option></select></div>
     <div class="hint">El corte se supone dirigido hacia el borde del pedestal más cercano en la dirección N (caso más desfavorable).</div>
+    <h3 class="sec">Llave de corte / empotramiento (DG1 §3.5.2, Ej. 4.8 y 4.9)</h3>
+    <div class="fld"><label>Transferencia adicional</label><select id="lug"><option value="none">Ninguna</option><option value="lug">Llave de corte soldada bajo la placa</option><option value="emb">Placa y ala empotradas (apoyo lateral)</option></select></div>
+    <div id="lugF">
+      <div class="fld"><label>Ancho de la llave b<sub>l</sub><small>mm</small></label><input id="lb" type="number"></div>
+      <div class="fld"><label>Empotramiento en el hormigón d<sub>l</sub><small>mm (sin contar el grout)</small></label><input id="ld" type="number"></div>
+      <div class="fld"><label>Espesor del grout G<small>mm</small></label><input id="lG" type="number"></div>
+      <div class="fld"><label>Espesor de la llave t<sub>l</sub><small>mm (0 = sólo calcular)</small></label><input id="lt" type="number" step="0.1"></div>
+      <div class="fld"><label>Soldadura llave–placa<small>cateto del filete, mm (a ambos lados)</small></label><input id="lw" type="number" step="0.5"></div>
+      <div class="fld"><label>Cara de la llave → borde libre<small>mm (en la dirección del corte)</small></label><input id="lc" type="number"></div>
+      <div class="fld"><label>Ancho del pedestal ⟂ al corte<small>mm</small></label><input id="lBp" type="number"></div>
+    </div>
   </div>
  </div>
 </aside>
@@ -298,6 +324,13 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
     </defs></svg>
     <h2 class="fh">📖 Fundamentos de cada verificación</h2>
     <p class="fl">Qué se verifica, de qué norma sale cada ecuación y qué hipótesis hay detrás. Los valores en <span class="live">azul</span> son los de la placa que tenés cargada.</p>
+
+
+    <details class="fcard star" id="f-val"><summary><span class="fn">✓</span> Validación contra los ejemplos 4.1 a 4.11 de la DG1 <small>mismo motor de cálculo, datos del ejemplo convertidos a SI</small></summary>
+      <p>Cada fila arma los datos del ejemplo de la guía, corre la calculadora y compara con el valor impreso. Se usa la opción de anclajes <b>"DG1 2ª ed."</b> (AISC 360-05 + ACI 318-02), que es la que aplica la guía. Tolerancia: ±1,5 % (la guía redondea a 2–3 cifras).</p>
+      <p><button class="btn pri" id="btnVal" type="button">Correr validación</button> <span id="valSum" class="note"></span></p>
+      <div style="overflow:auto"><table class="ftab val" id="valTable"></table></div>
+    </details>
 
     <!-- ===================== 1 ===================== -->
     <details class="fcard" id="f-aplast"><summary><span class="fn">1</span> Aplastamiento del hormigón <small>AISC 360-16 §J8 · DG1 §3.1.1 · ACI 318-19 §22.8</small></summary>
@@ -474,25 +507,52 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
     </details>
 
     <!-- ===================== 5 ===================== -->
-    <details class="fcard" id="f-ten"><summary><span class="fn">5</span> Flexión de la placa por tracción de anclajes <small>DG1 §3.2 · EN 1993-1-8 §6.2.4 y Tabla 6.6 · híbrido</small></summary>
-      <div class="fgrid">
-        <div>
-          <p>La fuerza del anclaje flexiona la placa en voladizo desde la cara del perfil. La DG1 toma un <b>ancho efectivo</b> con reparto a 45° desde el eje del anclaje hasta la cara del perfil:</p>
-          <div class="feq">b<sub>eff</sub> = mín(B ; n<sub>fila</sub>·2x) &nbsp;&nbsp; M<sub>u</sub> = T<sub>u</sub>·x / b<sub>eff</sub> &nbsp;&nbsp; t = √[4·M<sub>u</sub>/(0,9·F<sub>y</sub>)]</div>
-          <p>x es la distancia del anclaje al eje del ala (perfil I: f − d/2 + t<sub>f</sub>/2). Se desprecia el efecto palanca (DG1 lo justifica por la flexibilidad de la barra de anclaje).</p>
-          <p><b>EN 1993-1-8</b>: la placa es un <b>T equivalente</b> en tracción. Las líneas de fluencia posibles alrededor del anclaje dan una longitud efectiva Σℓ<sub>eff</sub> (Tabla 6.6, fila fuera del ala): patrones circulares ℓ<sub>cp</sub> = mín(2πm; πm + w; πm + 2e) y no circulares ℓ<sub>nc</sub> = mín(4m + 1,25e<sub>x</sub>; e + 2m + 0,625e<sub>x</sub>; 0,5b<sub>p</sub>; 0,5w + 2m + 0,625e<sub>x</sub>). Con anclajes largos no hay efecto palanca y, para una sola fila fuera del ala, <b>F<sub>T,Rd</sub> = M<sub>pl,Rd</sub>/m</b> con M<sub>pl,Rd</sub> = 0,25·Σℓ<sub>eff</sub>·t²·f<sub>y</sub>. m se mide hasta la cara del ala menos 0,8·√2 veces el cateto de la soldadura.</p>
-          <p><b>Híbrido</b>: mismas líneas de fluencia del EC3 (Σℓ<sub>eff</sub> y m) con la resistencia AISC φ·F<sub>y</sub>·t²/4 (φ = 0,90). Es el mismo criterio que en compresión: geometría del EC3, resistencias AISC.</p>
-          <p class="fnote">Con momento, en los métodos EC3 e híbrido la tracción de los anclajes sale del equilibrio con la resultante de compresión ubicada en el centro del área efectiva comprimida (brazo z<sub>c</sub> + f, EN 1993-1-8 Tabla 6.7). En DG1 sale del bloque rectangular Y. La tracción del método elegido es la que se usa para verificar los anclajes.</p>
+    <details class="fcard star" id="f-ten"><summary><span class="fn">5</span> Flexión de la placa por la tracción de los anclajes <small>DG1 §3.2 · Ej. 4.5 · Ej. 4.7 · Apéndice B · EN 1993-1-8 · híbrido</small></summary>
+      <h4>5.1 Qué se verifica</h4>
+      <p>Cuando un anclaje tracciona, tira de la placa hacia arriba. La placa queda <b>empotrada en el perfil</b> (ala o alma) y trabaja como un <b>voladizo</b> cargado en la punta por la fuerza T del anclaje. Hay que definir dos cosas: <b>dónde está el empotramiento</b> (de ahí sale el brazo x) y <b>qué ancho de placa colabora</b> (b<sub>eff</sub>). Con eso:</p>
+      <div class="feq">M<sub>u</sub> = T<sub>u</sub> · x &nbsp;&nbsp;&nbsp; φM<sub>n</sub> = φ · F<sub>y</sub> · b<sub>eff</sub> · t²/4 &nbsp;(φ = 0,90) &nbsp;&nbsp;⇒&nbsp;&nbsp; t<sub>req</sub> = √[4 · T<sub>u</sub> · x / (0,9 · F<sub>y</sub> · b<sub>eff</sub>)] = 2,11 · √[T<sub>u</sub> · x / (b<sub>eff</sub> · F<sub>y</sub>)]</div>
+      <p>La DG1 no da una única regla para x y b<sub>eff</sub>: aparece en <b>cuatro lugares</b> y no dicen exactamente lo mismo. Los cuatro, con su dibujo:</p>
+
+      <div class="fquad">
+        <div class="fq">
+          <h5>① §3.2, paso 3 (pág. 19) — regla general</h5>
+          <svg viewBox="0 0 320 250" class="fsvg"><defs><pattern id="gSteelF" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="var(--steel)"/><line x1="0" y1="0" x2="0" y2="5" stroke="#475569" stroke-width="1"/></pattern></defs><rect x="20" y="20" width="280" height="200" fill="var(--plate)" fill-opacity=".14" stroke="var(--plate)" stroke-width="2"/><polygon points="55.0,60.0 55.0,180.0 67.0,180.0 67.0,124.0 193.0,124.0 193.0,180.0 205.0,180.0 205.0,60.0 193.0,60.0 193.0,116.0 67.0,116.0 67.0,60.0" fill="url(#gSteelF)" stroke="#1e293b" stroke-width="1"/><polygon points="262,120 205,63 205,177" fill="var(--tens)" fill-opacity=".14" stroke="var(--tens)" stroke-dasharray="5 3"/><line x1="205" y1="63" x2="205" y2="177" stroke="#c2410c" stroke-width="3"/><circle cx="262" cy="120" r="5.5" fill="var(--tens)"/><circle cx="262" cy="120" r="2" fill="var(--panel)"/><line x1="205" y1="200" x2="262" y2="200" stroke="var(--dim)" stroke-width="1" marker-start="url(#farr)" marker-end="url(#farr)"/><text x="233.5" y="195.0" font-size="11" text-anchor="middle" style="fill:var(--dim);paint-order:stroke;stroke:var(--panel);stroke-width:3px">x</text><line x1="185" y1="63" x2="185" y2="177" stroke="#c2410c" stroke-width="1" marker-start="url(#farr)" marker-end="url(#farr)"/><line x1="185" y1="63" x2="205" y2="63" stroke="#c2410c" stroke-dasharray="2 2"/><line x1="185" y1="177" x2="205" y2="177" stroke="#c2410c" stroke-dasharray="2 2"/><text x="179" y="104" font-size="11" text-anchor="end" style="fill:#c2410c;paint-order:stroke;stroke:var(--panel);stroke-width:3px">b<tspan baseline-shift="sub" font-size="8">eff</tspan> = 2x</text><text x="232" y="92" font-size="11" font-weight="400" text-anchor="middle" style="fill:var(--tens);paint-order:stroke;stroke:var(--panel);stroke-width:3px">45°</text><text x="160" y="240" font-size="11" font-weight="400" text-anchor="middle" style="fill:#c2410c;paint-order:stroke;stroke:var(--panel);stroke-width:3px">sección de flexión: cara del ala</text></svg>
+          <p><i>"El ancho efectivo de flexión puede aproximarse conservadoramente con una distribución a 45° desde el eje del anclaje hasta la cara del ala o del alma de la columna."</i></p>
+          <ul><li><b>x</b> = del eje del anclaje a la <b>cara</b> del ala.</li><li>A 45° la fuerza se abre igual que x hacia cada lado: <b>b<sub>eff</sub> = 2x</b> por anclaje (sin pasar el ancho de la placa).</li><li>Es la opción <b>"Reparto a 45° (§3.2)"</b> de la calculadora.</li></ul>
         </div>
-        <svg viewBox="0 0 300 180" class="fsvg">
-          <rect x="20" y="20" width="260" height="140" fill="var(--plate)" fill-opacity=".15" stroke="var(--plate)"/>
-          <rect x="20" y="70" width="110" height="40" fill="var(--steel)" opacity=".5"/>
-          <circle cx="220" cy="90" r="7" fill="var(--tens)"/>
-          <polygon points="220,90 130,20 130,160" fill="var(--tens)" opacity=".12" stroke="var(--tens)" stroke-dasharray="4 3"/>
-          <line x1="130" y1="172" x2="220" y2="172" stroke="var(--muted)" marker-start="url(#farr)" marker-end="url(#farr)"/><text x="175" y="168" text-anchor="middle" font-size="11" style="fill:var(--muted)">x</text>
-          <text x="138" y="38" font-size="11" style="fill:var(--tens)">b<tspan baseline-shift="sub" font-size="8">eff</tspan> = 2x</text>
-        </svg>
+        <div class="fq">
+          <h5>② Ejemplo 4.5 (pág. 35) — anclajes dentro del perfil</h5>
+          <svg viewBox="0 0 320 250" class="fsvg"><defs><pattern id="gSteelF" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="var(--steel)"/><line x1="0" y1="0" x2="0" y2="5" stroke="#475569" stroke-width="1"/></pattern></defs><rect x="40" y="15" width="240" height="220" fill="var(--plate)" fill-opacity=".14" stroke="var(--plate)" stroke-width="2"/><polygon points="85.0,35.0 235.0,35.0 235.0,47.0 164.5,47.0 164.5,203.0 235.0,203.0 235.0,215.0 85.0,215.0 85.0,203.0 155.5,203.0 155.5,47.0 85.0,47.0" fill="url(#gSteelF)" stroke="#1e293b" stroke-width="1"/><polygon points="128,93 155.5,65.5 155.5,120.5" fill="var(--tens)" fill-opacity=".14" stroke="var(--tens)" stroke-dasharray="4 3"/><polygon points="192,93 164.5,65.5 164.5,120.5" fill="var(--tens)" fill-opacity=".14" stroke="var(--tens)" stroke-dasharray="4 3"/><polygon points="128,157 155.5,129.5 155.5,184.5" fill="var(--tens)" fill-opacity=".14" stroke="var(--tens)" stroke-dasharray="4 3"/><polygon points="192,157 164.5,129.5 164.5,184.5" fill="var(--tens)" fill-opacity=".14" stroke="var(--tens)" stroke-dasharray="4 3"/><line x1="155.5" y1="45" x2="155.5" y2="205" stroke="#c2410c" stroke-width="2.5"/><line x1="164.5" y1="45" x2="164.5" y2="205" stroke="#c2410c" stroke-width="2.5"/><circle cx="128" cy="93" r="5.5" fill="var(--tens)"/><circle cx="128" cy="93" r="2" fill="var(--panel)"/><circle cx="192" cy="93" r="5.5" fill="var(--tens)"/><circle cx="192" cy="93" r="2" fill="var(--panel)"/><circle cx="128" cy="157" r="5.5" fill="var(--tens)"/><circle cx="128" cy="157" r="2" fill="var(--panel)"/><circle cx="192" cy="157" r="5.5" fill="var(--tens)"/><circle cx="192" cy="157" r="2" fill="var(--panel)"/><line x1="128" y1="120" x2="155.5" y2="120" stroke="var(--dim)" stroke-width="1" marker-start="url(#farr)" marker-end="url(#farr)"/><text x="141.75" y="116.0" font-size="11" text-anchor="middle" style="fill:var(--dim);paint-order:stroke;stroke:var(--panel);stroke-width:3px">x</text><line x1="100" y1="65.5" x2="100" y2="120.5" stroke="#c2410c" stroke-width="1" marker-start="url(#farr)" marker-end="url(#farr)"/><text x="94.0" y="97.0" font-size="11" text-anchor="end" style="fill:#c2410c;paint-order:stroke;stroke:var(--panel);stroke-width:3px">2x</text><text x="160" y="246" font-size="11" font-weight="400" text-anchor="middle" style="fill:#c2410c;paint-order:stroke;stroke:var(--panel);stroke-width:3px">sección de flexión: caras del alma</text></svg>
+          <p>4 anclajes en un cuadrado de 4" entre las alas de un W10×45. La guía supone <b>flexión en una dirección respecto del alma</b>: el empotramiento son las caras del alma.</p>
+          <ul><li><b>x</b> = 2" − t<sub>w</sub>/2 = 1,825" (del anclaje a la cara del alma).</li><li><b>b<sub>eff</sub></b> = 2x = 3,65" por anclaje (45°).</li><li>M<sub>u</sub> = 17,5 kips · 1,825" = 31,9 kip-in → <b>t = 1,04"</b>.</li><li>Agrega la <b>soldadura del alma</b> (T/b<sub>eff</sub> = 4,79 kips/in) y la <b>tensión en el alma</b> (2·4,79/0,35 = 27,4 ksi).</li></ul>
+        </div>
+        <div class="fq">
+          <h5>③ Ejemplo 4.7 (pág. 39) — anclajes fuera del ala, ancho B</h5>
+          <svg viewBox="0 0 320 250" class="fsvg"><defs><pattern id="gSteelF" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="var(--steel)"/><line x1="0" y1="0" x2="0" y2="5" stroke="#475569" stroke-width="1"/></pattern></defs><rect x="20" y="20" width="280" height="200" fill="var(--plate)" fill-opacity=".14" stroke="var(--plate)" stroke-width="2"/><polygon points="55.0,60.0 55.0,180.0 67.0,180.0 67.0,124.0 193.0,124.0 193.0,180.0 205.0,180.0 205.0,60.0 193.0,60.0 193.0,116.0 67.0,116.0 67.0,60.0" fill="url(#gSteelF)" stroke="#1e293b" stroke-width="1"/><rect x="205" y="20" width="57" height="200" fill="var(--tens)" fill-opacity=".14" stroke="var(--tens)" stroke-dasharray="5 3"/><line x1="205" y1="20" x2="205" y2="220" stroke="#c2410c" stroke-width="3"/><circle cx="262" cy="60" r="5.5" fill="var(--tens)"/><circle cx="262" cy="60" r="2" fill="var(--panel)"/><circle cx="262" cy="120" r="5.5" fill="var(--tens)"/><circle cx="262" cy="120" r="2" fill="var(--panel)"/><circle cx="262" cy="180" r="5.5" fill="var(--tens)"/><circle cx="262" cy="180" r="2" fill="var(--panel)"/><line x1="205" y1="232" x2="262" y2="232" stroke="var(--dim)" stroke-width="1" marker-start="url(#farr)" marker-end="url(#farr)"/><text x="233.5" y="228.0" font-size="11" text-anchor="middle" style="fill:var(--dim);paint-order:stroke;stroke:var(--panel);stroke-width:3px">x</text><line x1="282" y1="20" x2="282" y2="220" stroke="#c2410c" stroke-width="1" marker-start="url(#farr)" marker-end="url(#farr)"/><text x="276.0" y="200.0" font-size="11" text-anchor="end" style="fill:#c2410c;paint-order:stroke;stroke:var(--panel);stroke-width:3px">B</text><text x="110" y="240" font-size="11" font-weight="400" text-anchor="middle" style="fill:#c2410c;paint-order:stroke;stroke:var(--panel);stroke-width:3px">ancho de flexión = B completo</text></svg>
+          <p>Base con momento grande, 3 anclajes por lado fuera del ala. La guía toma <b>todo el ancho de la placa</b>:</p>
+          <ul><li><b>x</b> = N/2 − d/2 − 1,5" = 2,15" (a la cara del ala).</li><li><b>b<sub>eff</sub> = B</b> = 20".</li><li>t = 2,11·√(156 · 2,15 / (20 · 36)) = <b>1,44"</b>.</li><li>Es la opción <b>"Ancho B completo (Ej. 4.7)"</b>. Vale cuando los anclajes están repartidos a lo largo de todo el ancho; con pocos anclajes es menos conservadora que la regla de 45°.</li></ul>
+        </div>
+        <div class="fq">
+          <h5>④ Apéndice B (pág. 61, Fig. B.5) — línea a 0,95·d</h5>
+          <svg viewBox="0 0 320 250" class="fsvg"><defs><pattern id="gSteelF" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="var(--steel)"/><line x1="0" y1="0" x2="0" y2="5" stroke="#475569" stroke-width="1"/></pattern></defs><rect x="20" y="20" width="280" height="200" fill="var(--plate)" fill-opacity=".14" stroke="var(--plate)" stroke-width="2"/><polygon points="55.0,60.0 55.0,180.0 67.0,180.0 67.0,124.0 193.0,124.0 193.0,180.0 205.0,180.0 205.0,60.0 193.0,60.0 193.0,116.0 67.0,116.0 67.0,60.0" fill="url(#gSteelF)" stroke="#1e293b" stroke-width="1"/><line x1="201" y1="20" x2="201" y2="220" stroke="var(--press)" stroke-width="1.5" stroke-dasharray="6 4"/><polygon points="256,78 201,23 201,133" fill="var(--tens)" fill-opacity=".12" stroke="var(--tens)" stroke-dasharray="4 3"/><polygon points="256,162 201,107 201,217" fill="var(--tens)" fill-opacity=".12" stroke="var(--tens)" stroke-dasharray="4 3"/><circle cx="256" cy="78" r="5.5" fill="var(--tens)"/><circle cx="256" cy="78" r="2" fill="var(--panel)"/><circle cx="256" cy="162" r="5.5" fill="var(--tens)"/><circle cx="256" cy="162" r="2" fill="var(--panel)"/><line x1="201" y1="236" x2="256" y2="236" stroke="var(--dim)" stroke-width="1" marker-start="url(#farr)" marker-end="url(#farr)"/><text x="231.5" y="232.0" font-size="11" text-anchor="middle" style="fill:var(--dim);paint-order:stroke;stroke:var(--panel);stroke-width:3px">distancia a 0,95·d</text><text x="196" y="14" font-size="10.5" font-weight="400" text-anchor="end" style="fill:var(--press);paint-order:stroke;stroke:var(--panel);stroke-width:3px">0,95·d</text><text x="100" y="236" font-size="10.5" font-weight="400" text-anchor="middle" style="fill:#c2410c;paint-order:stroke;stroke:var(--panel);stroke-width:3px">ancho = 2 × distancia, por anclaje</text><text x="240" y="120" font-size="9.5" font-weight="400" text-anchor="middle" style="fill:var(--muted);paint-order:stroke;stroke:var(--panel);stroke-width:3px">superposición</text></svg>
+          <p><i>"La carga se reparte a 45° hasta una ubicación a 0,95·d de la columna. El ancho es el doble de la distancia del anclaje a la sección crítica, por anclaje, siempre que la sección crítica no corte el borde de la placa."</i></p>
+          <ul><li>La sección crítica es la <b>misma línea 0,95·d</b> que se usa del lado comprimido (m).</li><li>Ancho = 2 × distancia, por anclaje; donde dos anclajes se superponen no se cuenta dos veces y no puede pasar el borde.</li><li>Da un x un poco mayor que el de la cara del ala (0,025·d más).</li></ul>
+        </div>
       </div>
+
+      <h4>5.2 Cuál usar</h4>
+      <table class="ftab"><thead><tr><th>Caso</th><th>x hasta</th><th>b<sub>eff</sub></th><th>En la calculadora</th></tr></thead><tbody>
+        <tr><td>Anclajes fuera del ala, criterio general</td><td>cara del ala</td><td>2x por anclaje (45°), ≤ B</td><td>Placa → "Reparto a 45° (§3.2)" — <b>por defecto</b></td></tr>
+        <tr><td>Anclajes fuera del ala, repartidos en todo el ancho</td><td>cara del ala</td><td>B</td><td>Placa → "Ancho B completo (Ej. 4.7)"</td></tr>
+        <tr><td>Anclajes dentro del perfil (entre alas)</td><td>cara del alma</td><td>2x por anclaje</td><td>automático (Ej. 4.5) + soldadura y alma</td></tr>
+        <tr><td>Tubos con anclajes dentro</td><td>—</td><td>—</td><td>no se calcula: verificar la pared y su soldadura</td></tr>
+      </tbody></table>
+      <p class="fnote">En todos los casos la guía <b>desprecia el efecto palanca</b> (prying): la justifica porque las barras de anclaje son largas y flexibles y porque la placa se dimensiona en voladizo desde el perfil. Si la placa fuera muy flexible y los anclajes cortos, aparecería una fuerza de palanca en el borde que aumenta la tracción de la barra.</p>
+
+      <h4>5.3 Los otros dos métodos</h4>
+      <p><b>EN 1993-1-8</b>: la placa es un <b>T equivalente</b> en tracción. En lugar del reparto a 45° calcula las <b>líneas de fluencia</b> posibles alrededor del anclaje y toma la de menor largo (Tabla 6.6, fila fuera del ala): patrones circulares ℓ<sub>cp</sub> = mín(2πm; πm + w; πm + 2e) y no circulares ℓ<sub>nc</sub> = mín(4m + 1,25e<sub>x</sub>; e + 2m + 0,625e<sub>x</sub>; 0,5b<sub>p</sub>; 0,5w + 2m + 0,625e<sub>x</sub>). Sin efecto palanca, <b>F<sub>T,Rd</sub> = M<sub>pl,Rd</sub>/m</b> con M<sub>pl,Rd</sub> = 0,25·Σℓ<sub>eff</sub>·t²·f<sub>y</sub>; m va a la cara del ala menos 0,8·√2 veces el cateto de la soldadura.</p>
+      <p><b>Híbrido</b>: las mismas líneas de fluencia del EC3 con la resistencia AISC φ·F<sub>y</sub>·t²/4.</p>
+      <p class="fnote">Con momento, en EC3 e híbrido la tracción sale del equilibrio con la compresión en el centro del área efectiva comprimida (brazo z<sub>c</sub> + f, EN 1993-1-8 Tabla 6.7); en DG1 sale del bloque rectangular Y. La tracción del método elegido es la que se usa en los anclajes.</p>
     </details>
 
     <!-- ===================== 6 ===================== -->
@@ -563,6 +623,99 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
         </svg>
       </div>
     </details>
+
+    <!-- ===================== 9 ===================== -->
+    <details class="fcard" id="f-steel"><summary><span class="fn">9</span> Acero del anclaje: AISC 360 o ACI 318 <small>DG1 §3.2.1 · Tabla 3.1 · AISC J3 · ACI 17.6.1 / 17.7.1</small></summary>
+      <p>La guía señala que hay <b>dos maneras</b> de calcular la resistencia de la barra y pide no mezclarlas:</p>
+      <table class="ftab"><thead><tr><th></th><th>AISC 360-05 (la que usa la DG1)</th><th>ACI 318 §17</th></tr></thead><tbody>
+        <tr><td>Área</td><td>A<sub>b</sub> = área bruta nominal (π·d²/4); el efecto de la rosca está en el factor 0,75</td><td>A<sub>se</sub> = área resistente de la rosca π/4·(d − 0,9382·p)²</td></tr>
+        <tr><td>Tracción</td><td>φR<sub>n</sub> = 0,75 · 0,75·F<sub>u</sub>·A<sub>b</sub> (Ej. 4.3: 14,4 kips para ¾" Gr.36)</td><td>φN<sub>sa</sub> = 0,75 · A<sub>se</sub>·f<sub>uta</sub>, f<sub>uta</sub> ≤ 1,9·f<sub>ya</sub> y ≤ 860 MPa</td></tr>
+        <tr><td>Corte</td><td>φR<sub>n</sub> = 0,75 · 0,40·F<sub>u</sub>·A<sub>b</sub> (rosca en el plano de corte, Ej. 4.10)</td><td>φV<sub>sa</sub> = 0,65 · 0,6·A<sub>se</sub>·f<sub>uta</sub>, × 0,8 si hay grout</td></tr>
+        <tr><td>Tracción + corte</td><td>J3.7: F′<sub>nt</sub> = 1,3·F<sub>nt</sub> − F<sub>nt</sub>/(φF<sub>nv</sub>)·f<sub>v</sub> ≤ F<sub>nt</sub>; f<sub>t</sub> ≤ φ·F′<sub>nt</sub></td><td>§17.8: ζ<sub>N</sub> + ζ<sub>V</sub> ≤ 1,2</td></tr>
+      </tbody></table>
+      <svg viewBox="0 0 520 230" class="fsvg wide" style="max-width:640px"><defs><pattern id="gSteelF" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="var(--steel)"/><line x1="0" y1="0" x2="0" y2="5" stroke="#475569" stroke-width="1"/></pattern></defs>
+  <rect x="20" y="150" width="250" height="70" fill="var(--conc2)" stroke="var(--conc)"/>
+  <rect x="20" y="136" width="250" height="14" fill="var(--conc)" opacity=".7"/><text x="275" y="147" font-size="10" style="fill:var(--muted)">grout</text>
+  <rect x="20" y="112" width="250" height="24" fill="var(--plate)"/>
+  <rect x="120" y="100" width="44" height="12" fill="#475569"/><text x="168" y="108" font-size="10" style="fill:var(--muted)">arandela soldada</text>
+  <rect x="133" y="40" width="18" height="185" fill="var(--anchor)"/>
+  <rect x="126" y="80" width="32" height="20" fill="#1e293b"/>
+  <line x1="60" y1="124" x2="128" y2="124" stroke="var(--accent)" stroke-width="3" marker-end="url(#farrA)"/><text x="60" y="118" font-size="11" style="fill:var(--accent)">V/n</text>
+  <line x1="165" y1="106" x2="165" y2="143" stroke="var(--dim)" marker-start="url(#farr)" marker-end="url(#farr)"/><text x="170" y="128" font-size="11" style="fill:var(--dim)">ℓ = (t<tspan baseline-shift="sub" font-size="8">p</tspan> + 3,2)/2</text>
+  <path d="M142,106 Q 100,125 142,143" fill="none" stroke="#0ea5e9" stroke-width="2" stroke-dasharray="4 3"/><text x="70" y="150" font-size="10.5" style="fill:#0284c7">M = (V/n)·ℓ</text>
+  <line x1="142" y1="20" x2="142" y2="38" stroke="var(--tens)" stroke-width="3" marker-end="url(#farrT)" transform="rotate(180 142 29)"/><text x="150" y="30" font-size="11" style="fill:var(--tens)">T/n</text>
+  <circle cx="380" cy="110" r="52" fill="var(--anchor)" opacity=".85"/><circle cx="380" cy="110" r="43" fill="none" stroke="var(--panel)" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="380" y="180" text-anchor="middle" font-size="11" style="fill:var(--text)">A<tspan baseline-shift="sub" font-size="8">b</tspan> = π·d²/4 (AISC)</text>
+  <text x="380" y="196" text-anchor="middle" font-size="11" style="fill:var(--text)">A<tspan baseline-shift="sub" font-size="8">se</tspan> = π/4·(d − 0,9382·p)² (ACI, línea punteada)</text>
+</svg>
+      <p><b>Flexión de la barra (Ej. 4.11).</b> Cuando el corte se transmite por arandelas soldadas sobre la placa, la barra trabaja en voladizo entre la arandela y el grout: M = (V/n)·ℓ con ℓ = (t<sub>p</sub> + 3,2 mm)/2, y la tensión f<sub>tb</sub> = M/(d³/6) se suma a la de tracción. Si no hay arandelas soldadas (agujeros agrandados), la guía sugiere que sólo la <b>mitad</b> de los anclajes tome el corte, sin flexión, y amplifica el corte × 1,25 en vez de reducir la resistencia × 0,8.</p>
+      <p class="fnote">En la Argentina rige el CIRSOC 201-2025 Cap. 17 (= ACI 318-19): la opción ACI es la normativa. La opción "DG1 2ª ed." reproduce la guía (AISC 360-05 + ACI 318-02, sin el tope 3,7·√f′c·c<sub>a1</sub><sup>1,5</sup> en V<sub>b</sub> que agregó ACI 318-11) y es la que se usa en la validación.</p>
+    </details>
+
+    <!-- ===================== 10 ===================== -->
+    <details class="fcard" id="f-lug"><summary><span class="fn">10</span> Llave de corte y placa empotrada <small>DG1 §3.5.2 · Ej. 4.8 y 4.9 · ACI 349-01 App. B</small></summary>
+      <div class="fgrid">
+        <div>
+          <p>Cuando la fricción y los anclajes no alcanzan, el corte se lleva al hormigón por <b>apoyo lateral</b>:</p>
+          <ul>
+            <li><b>Aplastamiento contra la llave:</b> V<sub>u</sub> ≤ 0,8·f′<sub>c</sub>·A<sub>l</sub>, con A<sub>l</sub> = ancho × empotramiento en el hormigón (sin contar el grout).</li>
+            <li><b>Corte del hormigón al frente:</b> V<sub>u</sub> ≤ 4·φ·√f′<sub>c</sub>[psi]·A<sub>v</sub> (φ = 0,75), sobre el plano a 45° que va del borde de la llave a la cara libre, descontando el área de la llave.</li>
+            <li><b>Flexión de la llave:</b> voladizo M<sub>l</sub> = V<sub>u</sub>·(G + d<sub>l</sub>/2) con G = espesor del grout; t = √[4M<sub>l</sub>/(0,9·F<sub>y</sub>·b<sub>l</sub>)]. La guía recomienda que la placa sea al menos tan gruesa como la llave.</li>
+            <li><b>Soldadura llave–placa:</b> cupla f<sub>c</sub> = M<sub>l</sub>/(s·b<sub>l</sub>) con s = t<sub>l</sub> + 2a/3 y corte f<sub>v</sub> = V<sub>u</sub>/(2·b<sub>l</sub>); resultante ≤ φ·0,6·F<sub>EXX</sub>·0,707·a.</li>
+            <li><b>Placa empotrada (Ej. 4.8):</b> el borde de la placa toma 0,6·0,85·f′<sub>c</sub>·(t<sub>p</sub>·B) y el resto lo toma el ala de la columna empotrada: d = resto/(0,6·0,85·f′<sub>c</sub>·b<sub>f</sub>).</li>
+          </ul>
+        </div>
+        <svg viewBox="0 0 300 200" class="fsvg">
+          <rect x="10" y="80" width="280" height="110" fill="var(--conc2)" stroke="var(--conc)"/>
+          <rect x="40" y="62" width="200" height="12" fill="var(--plate)"/>
+          <rect x="40" y="74" width="200" height="8" fill="var(--conc)" opacity=".7"/>
+          <rect x="132" y="74" width="16" height="50" fill="var(--steel)" stroke="#1e293b"/>
+          <polygon points="148,124 148,82 230,82" fill="#0ea5e9" opacity=".18" stroke="#0ea5e9" stroke-dasharray="4 3"/>
+          <line x1="60" y1="50" x2="128" y2="50" stroke="var(--accent)" stroke-width="3" marker-end="url(#farrA)"/>
+          <text x="62" y="44" font-size="11" style="fill:var(--accent)">V<tspan baseline-shift="sub" font-size="8">u</tspan></text>
+          <g stroke="var(--press)" stroke-width="1.3"><line x1="175" y1="95" x2="152" y2="95" marker-end="url(#farr)"/><line x1="175" y1="110" x2="152" y2="110" marker-end="url(#farr)"/></g>
+          <text x="180" y="104" font-size="10" style="fill:var(--press)">0,8·f′c</text>
+          <text x="200" y="140" font-size="10" style="fill:#0284c7">plano a 45°</text>
+          <text x="150" y="150" font-size="10" style="fill:var(--muted)">d<tspan baseline-shift="sub" font-size="7">l</tspan></text>
+        </svg>
+      </div>
+    </details>
+
+    <!-- ===================== 11 ===================== -->
+    <details class="fcard star" id="f-lim"><summary><span class="fn">11</span> Lista completa de estados límite <small>qué verifica la calculadora y qué queda a cargo del proyectista</small></summary>
+      <table class="ftab"><thead><tr><th>Elemento</th><th>Estado límite</th><th>Norma</th><th>¿Verifica?</th></tr></thead><tbody>
+        <tr><td rowspan="2">Hormigón bajo la placa</td><td>Aplastamiento (con confinamiento A₂/A₁)</td><td>AISC J8 · ACI 22.8</td><td>Sí</td></tr>
+        <tr><td>Aplastamiento en el área efectiva</td><td>EN 1993-1-8 §6.2.5 / híbrido</td><td>Sí (según método)</td></tr>
+        <tr><td rowspan="3">Placa base</td><td>Fluencia por flexión del lado comprimido</td><td>DG1 §3.1.2, §3.3, §3.4</td><td>Sí</td></tr>
+        <tr><td>Fluencia por flexión del lado traccionado</td><td>DG1 §3.2 · EN 1993-1-8 Tabla 6.6</td><td>Sí</td></tr>
+        <tr><td>Rigidez / rotación de la base (modelo de pórtico)</td><td>EN 1993-1-8 §6.3</td><td>No (supone base articulada o empotrada según el modelo global)</td></tr>
+        <tr><td rowspan="2">Unión columna–placa</td><td>Soldadura por tracción de anclajes</td><td>AISC J2.4 · DG1 Ej. 4.5</td><td>Sí (si se carga el cateto)</td></tr>
+        <tr><td>Tensión en el alma / pared de la columna</td><td>DG1 Ej. 4.5</td><td>Sí para perfil I con anclajes dentro; tubos: a verificar</td></tr>
+        <tr><td rowspan="5">Anclaje (acero)</td><td>Tracción</td><td>AISC J3 · ACI 17.6.1</td><td>Sí</td></tr>
+        <tr><td>Corte (con grout × 0,8)</td><td>AISC J3 · ACI 17.7.1</td><td>Sí</td></tr>
+        <tr><td>Tracción + corte + flexión de la barra</td><td>AISC J3.7 · DG1 Ej. 4.11</td><td>Sí (opción DG1)</td></tr>
+        <tr><td>Aplastamiento de la placa en el agujero</td><td>AISC J3.10</td><td>No (con arandelas de placa no gobierna, DG1 Ej. 4.11)</td></tr>
+        <tr><td>Fatiga de barras (equipos, cargas cíclicas)</td><td>DG1 §2.5 · Frank (1980)</td><td>No</td></tr>
+        <tr><td rowspan="5">Anclaje (hormigón, tracción)</td><td>Arrancamiento del cono (grupo)</td><td>ACI 17.6.2</td><td>Sí</td></tr>
+        <tr><td>Arrancamiento de la cabeza / gancho (pullout)</td><td>ACI 17.6.3</td><td>Sí</td></tr>
+        <tr><td>Descascaramiento lateral (blowout)</td><td>ACI 17.6.4</td><td>Sí</td></tr>
+        <tr><td>Armadura de anclaje (cuando el cono no alcanza)</td><td>ACI 17.5.2.1 · DG1 Ej. 4.5 (empalme con barras del pedestal)</td><td>No (se indica cuándo hace falta)</td></tr>
+        <tr><td>Adherencia (anclajes adhesivos)</td><td>ACI 17.6.5</td><td>No aplica (sólo preinstalados)</td></tr>
+        <tr><td rowspan="5">Corte</td><td>Fricción</td><td>DG1 §3.5.1</td><td>Sí</td></tr>
+        <tr><td>Arrancamiento del borde</td><td>ACI 17.7.2</td><td>Sí</td></tr>
+        <tr><td>Desprendimiento por palanca (pryout)</td><td>ACI 17.7.3</td><td>Sí</td></tr>
+        <tr><td>Llave de corte (aplastamiento, hormigón, flexión, soldadura)</td><td>DG1 §3.5.2 · ACI 349</td><td>Sí</td></tr>
+        <tr><td>Placa empotrada (apoyo lateral)</td><td>DG1 Ej. 4.8</td><td>Sí</td></tr>
+        <tr><td>Interacción</td><td>Tracción + corte en hormigón</td><td>ACI 17.8</td><td>Sí</td></tr>
+        <tr><td rowspan="3">Sismo</td><td>Factor 0,75 a la resistencia del hormigón (zona sísmica)</td><td>ACI 17.10.5.4 · DG1 Ej. 4.7</td><td>No (aplicarlo reduciendo φ o mayorando la acción)</td></tr>
+        <tr><td>Anclaje dúctil (que fluya el acero antes que el hormigón)</td><td>ACI 17.10.5.3 · AISC 341</td><td>No (comparar a mano φN<sub>sa</sub> con las de hormigón)</td></tr>
+        <tr><td>Diseño por capacidad de la columna (sistemas con R &gt; 3)</td><td>AISC 341 · DG1 §3.2.2</td><td>No</td></tr>
+        <tr><td rowspan="2">Pedestal</td><td>Fisuración / hendimiento por cargas concentradas, punzonado</td><td>ACI 17.9 · 22.8</td><td>No</td></tr>
+        <tr><td>Desarrollo de las barras del pedestal que reciben la tracción</td><td>ACI 25.4</td><td>No</td></tr>
+        <tr><td>Detalles</td><td>Agujeros agrandados, arandelas, distancias mínimas, tolerancias de colocación</td><td>DG1 §2.6–2.8 · ACI 17.9</td><td>Parcial (aviso por distancias)</td></tr>
+      </tbody></table>
+      <p class="fnote">Los estados marcados "No" no son errores del cálculo: son verificaciones que dependen del resto de la estructura o del armado del pedestal y quedan a cargo del proyectista.</p>
+    </details>
   </div>
 
   <footer>Basado en AISC Design Guide 1, 2ª ed. (Fisher & Kloiber, 2006) — placa base — y ACI 318 Cap. 17 (= CIRSOC 201-2025 Cap. 17) — anclajes, con ecuaciones en unidades SI (N, mm). Herramienta de apoyo al cálculo: verificar siempre el criterio profesional, el armado del pedestal y los detalles constructivos.</footer>
@@ -581,9 +734,9 @@ const WCAT = [
 const MAT = { F36:{n:'ASTM F1554 Gr.36',fy:248,fu:400}, F55:{n:'ASTM F1554 Gr.55',fy:380,fu:517}, F105:{n:'ASTM F1554 Gr.105',fy:724,fu:862},
   B7:{n:'ASTM A193 B7',fy:724,fu:862}, ADN:{n:'ADN-420',fy:420,fu:500}, F24:{n:'F-24',fy:235,fu:370} };
 // diámetro nominal (mm) → paso de rosca gruesa ISO (mm)
-const DIAS = [[12,1.75],[16,2],[19.05,2.54],[20,2.5],[22,2.5],[24,3],[25.4,3.175],[27,3],[30,3.5],[31.75,3.629],[33,3.5],[36,4],[38.1,4.233],[42,4.5],[48,5],[50.8,5.644],[56,5.5],[64,6]];
+const DIAS = [[12,1.75],[16,2],[19.05,2.54],[20,2.5],[22,2.5],[22.225,2.822],[24,3],[25.4,3.175],[27,3],[28.575,3.629],[30,3.5],[31.75,3.629],[33,3.5],[36,4],[38.1,4.233],[42,4.5],[48,5],[50.8,5.644],[56,5.5],[64,6]];
 const PRESETS = {
-  base:{Pu:600,Mu:90,Vu:60,ctype:'W',d:308,bf:305,tf:15.4,tw:9.9,N:500,B:500,Fy:250,tp:0,fc:25,N2:700,B2:700,ha:900,cracked:'1',lam:1,phic:0.65,mat:'F36',da:24,thr:'1',atype:'H',hef:400,eh:90,nrow:'2',aN:60,g:380,fric:'1',mu:0.55,grout:'1',nV:'all',pRows:'100,190,280',Dw:50.8,pAuto:'1',pm:'dg1',dwAuto:'1'},
+  base:{Pu:600,Mu:90,Vu:60,ctype:'W',d:308,bf:305,tf:15.4,tw:9.9,N:500,B:500,Fy:250,tp:0,fc:25,N2:700,B2:700,ha:900,cracked:'1',lam:1,phic:0.65,mat:'F36',da:24,thr:'1',atype:'H',hef:400,eh:90,nrow:'2',aN:60,g:380,fric:'1',mu:0.55,grout:'1',nV:'all',pRows:'100,190,280',Dw:50.8,pAuto:'1',pm:'dg1',dwAuto:'1',steelM:'aci',tbeff:'45',Fyc:345,aw:8,lug:'none',lb:230,ld:40,lG:50,lt:0,lw:8,lc:240,lBp:500},
   dg46:{Pu:1672.5,Mu:106.2,Vu:0,ctype:'W',d:322.6,bf:309.9,tf:22.9,tw:14.0,N:482.6,B:482.6,Fy:248.2,tp:0,fc:27.58,N2:482.6,B2:482.6,ha:900,cracked:'1',lam:1,phic:0.65,mat:'F36',da:19.05,thr:'1',atype:'H',hef:305,eh:60,nrow:'2',aN:50,g:380,fric:'1',mu:0.55,grout:'1',nV:'all'},
   dg41:{Pu:3113.8,Mu:0,Vu:0,ctype:'W',d:322.6,bf:309.9,tf:22.9,tw:14.0,N:558.8,B:508,Fy:248.2,tp:44.45,fc:20.68,N2:558.8,B2:508,ha:900,cracked:'1',lam:1,phic:0.65,mat:'F36',da:19.05,thr:'1',atype:'H',hef:305,eh:60,nrow:'2',aN:50,g:400,fric:'1',mu:0.55,grout:'1',nV:'all'},
   uplift:{Pu:-120,Mu:10,Vu:15,ctype:'W',d:257,bf:204,tf:15.7,tw:8.9,N:400,B:350,Fy:250,tp:25.4,fc:25,N2:800,B2:700,ha:900,cracked:'1',lam:1,phic:0.65,mat:'F36',da:24,thr:'1',atype:'H',hef:500,eh:80,nrow:'2',aN:50,g:250,fric:'1',mu:0.55,grout:'1',nV:'all'},
@@ -677,7 +830,7 @@ const G = {
 };
 
 const IDS = Object.keys(PRESETS.base);
-const FUND = { geo: 'f-aplast', dist: 'f-dist', media: 'f-aplast', carga: 'f-hyb', tp: 'f-dg1', tpalt: 'f-hyb', cmp: 'f-hyb', anc: 'f-anc', corte: 'f-corte', inter: 'f-inter', det: null };
+const FUND = { lug: 'f-lug', geo: 'f-aplast', dist: 'f-dist', media: 'f-aplast', carga: 'f-hyb', tp: 'f-dg1', tpalt: 'f-hyb', cmp: 'f-hyb', anc: 'f-anc', corte: 'f-corte', inter: 'f-inter', det: null };
 
 /* ===================== Utilidades ===================== */
 const $ = id => document.getElementById(id);
@@ -699,6 +852,7 @@ const sqrt = Math.sqrt, min = Math.min, max = Math.max, PI = Math.PI;
   $('preset').onchange = () => { if (PRESETS[$('preset').value]) setVals(PRESETS[$('preset').value]); $('preset').value = ''; run(); };
   $('btnCenter').onclick = () => { recenterRows(); run(); };
   $('showANc').onchange = run; $('showAVc').onchange = run; $('strip').onchange = run;
+  $('btnVal').onclick = runValidation;
   $('btnPrint').onclick = () => { document.querySelectorAll('details.step').forEach(d => d.open = true); window.print(); };
   $('btnTheme').onclick = () => { const r = document.documentElement; const dark = matchMedia('(prefers-color-scheme: dark)').matches; const cur = r.dataset.theme || (dark ? 'dark' : 'light'); r.dataset.theme = cur === 'dark' ? 'light' : 'dark'; };
   $('btnSave').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(getVals(), null, 1)], { type: 'application/json' })); a.download = 'placa-anclaje.json'; a.click(); };
@@ -707,7 +861,7 @@ const sqrt = Math.sqrt, min = Math.min, max = Math.max, PI = Math.PI;
   run();
 })();
 function setVals(o) { IDS.forEach(k => { if (o[k] !== undefined && $(k)) $(k).value = o[k]; }); }
-function getVals() { const o = {}; IDS.forEach(k => { const el = $(k); o[k] = el.tagName === 'SELECT' && isNaN(+el.value) ? el.value : (el.type === 'number' || !isNaN(+el.value) ? +el.value : el.value); }); o.ctype = $('ctype').value; o.mat = $('mat').value; o.nV = $('nV').value; o.cracked = $('cracked').value; o.thr = $('thr').value; o.atype = $('atype').value; o.fric = $('fric').value; o.grout = $('grout').value; o.nrow = $('nrow').value; o.pRows = $('pRows').value; o.pAuto = $('pAuto').value; o.pm = $('pm').value; o.dwAuto = $('dwAuto').value; return o; }
+function getVals() { const o = {}; IDS.forEach(k => { const el = $(k); o[k] = el.tagName === 'SELECT' && isNaN(+el.value) ? el.value : (el.type === 'number' || !isNaN(+el.value) ? +el.value : el.value); }); o.ctype = $('ctype').value; o.mat = $('mat').value; o.nV = $('nV').value; o.cracked = $('cracked').value; o.thr = $('thr').value; o.atype = $('atype').value; o.fric = $('fric').value; o.grout = $('grout').value; o.nrow = $('nrow').value; o.pRows = $('pRows').value; o.pAuto = $('pAuto').value; o.pm = $('pm').value; o.dwAuto = $('dwAuto').value; o.steelM = $('steelM').value; o.tbeff = $('tbeff').value; o.lug = $('lug').value; return o; }
 
 
 /* ===================== Franja de placa (viga por unidad de ancho) =====================
@@ -855,27 +1009,45 @@ function calc(v) {
     }
     eqs3.push({ l: 'ℓ', f: Mu === 0 && typ !== 'C' ? 'máx(m; n; λn′)' : 'máx(m; n)', s: '', r: `${n1(l)} mm` });
     if (Y >= l || Mu === 0) {
-      tReqC = l * sqrt(2 * fp / (0.9 * Fy));
-      eqs3.push({ l: 't<sub>req</sub> (compresión)', f: 'ℓ · √[2 · f<sub>p</sub> / (φ · F<sub>y</sub>)]   (φ = 0,90;  ≈ 1,5·ℓ·√(f<sub>p</sub>/F<sub>y</sub>))', s: `${n1(l)} · √[2 · ${n2(fp)} / (0,9 · ${n0(Fy)})]`, r: `${n1(tReqC)} mm` });
+      if (Mu === 0) { tReqC = l * sqrt(2 * fp / (0.9 * Fy)); eqs3.push({ l: 't<sub>req</sub> (compresión)', f: 'ℓ · √[2 · P<sub>u</sub> / (φ · F<sub>y</sub> · B · N)]   (φ = 0,90; DG1 Ej. 4.1)', s: `${n1(l)} · √[2 · ${n2(fp)} / (0,9 · ${n0(Fy)})]`, r: `${n1(tReqC)} mm` }); }
+      else { tReqC = 1.5 * l * sqrt(fp / Fy); eqs3.push({ l: 't<sub>req</sub> (compresión)', f: '1,5 · ℓ · √(f<sub>p</sub> / F<sub>y</sub>)   (DG1 ec. 3.3.14, Y ≥ ℓ)', s: `1,5 · ${n1(l)} · √(${n2(fp)} / ${n0(Fy)})`, r: `${n1(tReqC)} mm` }); }
     } else {
       tReqC = max(2.11 * sqrt(fp * Y * (m - Y / 2) / Fy), n * sqrt(2 * fp / (0.9 * Fy)));
       eqs3.push({ l: 't<sub>req</sub> (compresión)', f: '2,11 · √[f<sub>p</sub> · Y · (m − Y/2) / F<sub>y</sub>]   (Y &lt; m)', s: `2,11 · √[${n2(fp)} · ${n1(Y)} · (${n1(m)} − ${n1(Y)}/2) / ${n0(Fy)}]`, r: `${n1(tReqC)} mm` });
     }
   }
-  // lado traccionado
-  let x = 0, beff = B;
+  // lado traccionado — DG1 §3.2 (reparto a 45° desde el eje del anclaje hasta la cara del ala o del alma),
+  // Ej. 4.5 (anclajes dentro del perfil: flexión respecto del alma) y Ej. 4.7 / App. B (anclajes fuera: palanca a la cara del ala)
+  let x = 0, beff = B; R.weldT = null;
+  const FEXX = 482, wcap = 0.75 * 0.6 * FEXX * 0.707 * (v.aw || 0) * 1.5; // N/mm, filete E70 con aumento 1,5 por carga transversal (AISC J2.4)
   if (Tu > 0) {
-    x = typ === 'W' ? f - d / 2 + tf / 2 : f - d / 2;
-    if (x > 0) {
-      beff = min(B, nrow * 2 * x);
-      const MuPl = (Tu) * x / beff; // N·mm/mm
-      tReqT = sqrt(4 * MuPl / (0.9 * Fy));
-      eqs3.push({ l: 'x', f: typ === 'W' ? 'f − d/2 + t<sub>f</sub>/2' : 'f − d/2', s: typ === 'W' ? `${n1(f)} − ${n1(d)}/2 + ${n1(tf)}/2` : `${n1(f)} − ${n1(d)}/2`, r: `${n1(x)} mm (palanca anclaje → cara de columna)` });
-      eqs3.push({ l: 'b<sub>eff</sub>', f: 'mín(B; n<sub>fila</sub> · 2x)   (reparto a 45°)', s: `mín(${n0(B)}; ${nrow} · 2 · ${n1(x)})`, r: `${n0(beff)} mm` });
-      eqs3.push({ l: 't<sub>req</sub> (tracción)', f: '√[4 · T<sub>u</sub> · x / (φ · F<sub>y</sub> · b<sub>eff</sub>)]   (φ = 0,90)', s: `√[4 · ${n0(Tu)} · ${n1(x)} / (0,9 · ${n0(Fy)} · ${n0(beff)})]`, r: `${n1(tReqT)} mm` });
+    const xFace = f - d / 2;
+    if (xFace > 0) {
+      x = xFace; beff = v.tbeff === 'B' ? B : min(B, nrow * 2 * x);
+      const MuPl = Tu * x / beff; tReqT = sqrt(4 * MuPl / (0.9 * Fy));
+      eqs3.push({ ref: 'Flexión por tracción de los anclajes (fila fuera del perfil)' });
+      eqs3.push({ l: 'x', f: 'f − d/2   (eje del anclaje → cara del ala, DG1 Ej. 4.7)', s: `${n1(f)} − ${n1(d)}/2`, r: `${n1(x)} mm` });
+      eqs3.push({ l: 'b<sub>eff</sub>', f: v.tbeff === 'B' ? 'B   (ancho completo, DG1 Ej. 4.7)' : 'mín(B ; n<sub>fila</sub> · 2x)   (reparto a 45°, DG1 §3.2)', s: v.tbeff === 'B' ? '' : `mín(${n0(B)} ; ${nrow} · 2 · ${n1(x)})`, r: `${n0(beff)} mm` });
+      eqs3.push({ l: 't<sub>req</sub> (tracción)', f: '√[4 · T<sub>u</sub> · x / (φ · F<sub>y</sub> · b<sub>eff</sub>)]  = 2,11·√[T<sub>u</sub>·x/(b<sub>eff</sub>·F<sub>y</sub>)]', s: `√[4 · ${n0(Tu)} · ${n1(x)} / (0,9 · ${n0(Fy)} · ${n0(beff)})]`, r: `${n1(tReqT)} mm` });
+      if (v.aw > 0) { const lw = typ === 'W' ? min(bf, beff) : min(B, beff), fw = Tu / lw; R.weldT = { fw, wcap, lw }; eqs3.push({ l: 'f<sub>w</sub> soldadura del ala', f: 'T<sub>u</sub> / mín(b<sub>f</sub>; b<sub>eff</sub>)  ≤ φ·0,6·F<sub>EXX</sub>·0,707·a·1,5', s: `${n0(Tu)} / ${n0(lw)}`, r: `${n1(fw)} N/mm ≤ ${n1(wcap)} → ${fw <= wcap ? 'verifica' : 'NO verifica'}`, ok: fw <= wcap }); }
+    } else if (typ === 'W' && nrow === 2 && v.g / 2 - v.tw / 2 > 0) {
+      // anclajes dentro del perfil: flexión en una dirección respecto del alma (DG1 Ej. 4.5)
+      x = v.g / 2 - v.tw / 2; const Trod = Tu / nrow; beff = 2 * x;
+      const MuR = Trod * x; tReqT = sqrt(4 * MuR / (0.9 * Fy * beff));
+      eqs3.push({ ref: 'Flexión por tracción — anclajes dentro del perfil (DG1 Ej. 4.5)' });
+      eqs3.push({ l: 'x', f: 'g/2 − t<sub>w</sub>/2   (eje del anclaje → cara del alma)', s: `${n1(v.g)}/2 − ${n1(v.tw)}/2`, r: `${n1(x)} mm` });
+      eqs3.push({ l: 'M<sub>u</sub> por anclaje', f: 'T<sub>barra</sub> · x', s: `${n1(Trod / 1e3)} kN · ${n1(x)}`, r: `${n2(MuR / 1e6)} kN·m` });
+      eqs3.push({ l: 'b<sub>eff</sub>', f: '2·x   (reparto a 45° hasta la cara del alma)', s: `2 · ${n1(x)}`, r: `${n1(beff)} mm` });
+      eqs3.push({ l: 't<sub>req</sub> (tracción)', f: '√[4 · M<sub>u</sub> / (φ · F<sub>y</sub> · b<sub>eff</sub>)]', s: `√[4 · ${n0(MuR)} / (0,9 · ${n0(Fy)} · ${n1(beff)})]`, r: `${n1(tReqT)} mm` });
+      if (v.aw > 0) {
+        const fw = Trod / beff, sw = 2 * fw / v.tw, swl = 0.9 * (v.Fyc || 345); R.weldT = { fw, wcap, lw: beff, sw, swl };
+        eqs3.push({ l: 'f<sub>w</sub> soldadura del alma', f: 'T<sub>barra</sub> / b<sub>eff</sub>  ≤ φ·0,6·F<sub>EXX</sub>·0,707·a·1,5   (a = ' + n1(v.aw) + ' mm)', s: `${n0(Trod)} / ${n1(beff)}`, r: `${n1(fw)} N/mm ≤ ${n1(wcap)} → ${fw <= wcap ? 'verifica' : 'NO verifica'}`, ok: fw <= wcap });
+        eqs3.push({ l: 'tensión en el alma', f: '2 · f<sub>w</sub> / t<sub>w</sub>  ≤ 0,9 · F<sub>y,col</sub>', s: `2 · ${n1(fw)} / ${n1(v.tw)}`, r: `${n1(sw)} MPa ≤ ${n0(swl)} → ${sw <= swl ? 'verifica' : 'NO verifica'}`, ok: sw <= swl });
+      }
     } else {
-      eqs3.push({ l: 'x', f: 'anclajes dentro de la huella de la columna', s: '', r: 'la flexión de la placa por tracción no gobierna (verificar la unión al alma/pared)' });
+      eqs3.push({ l: 'x', f: 'anclajes dentro de la huella del tubo', s: '', r: 'verificar la pared del tubo y su soldadura con la tracción de los anclajes' });
     }
+    if (R.weldT) { R.checks.push({ n: 'Soldadura columna–placa (tracción)', u: R.weldT.fw / R.weldT.wcap, d: `${n1(R.weldT.fw)} / ${n1(R.weldT.wcap)} N/mm`, step: 'tp' }); if (R.weldT.sw) R.checks.push({ n: 'Tensión en el alma de la columna', u: R.weldT.sw / R.weldT.swl, d: `${n1(R.weldT.sw)} / ${n0(R.weldT.swl)} MPa`, step: 'tp' }); }
   }
   const tReqD = max(tReqC, tReqT);
   const tAdopt = v.tp > 0 ? v.tp : 0;
@@ -1027,7 +1199,8 @@ function calc(v) {
   const NuaRod = nT ? (tensionRows === 2 ? max(Tu, 0) / nrow : Tu / nrow) : 0; // por anclaje de la fila más cargada
   const NuaGroup = tensionRows === 2 ? TuGroup : Tu;
   // acero
-  const phiNsa = 0.75 * Ase * futa;
+  const aisc = v.steelM === 'aisc';
+  const phiNsa = aisc ? 0.75 * 0.75 * mat.fu * Ag : 0.75 * Ase * futa;
   // arrancamiento (grupo traccionado)
   function breakout(rows, hefIn) {
     let hefE = hefIn;
@@ -1070,8 +1243,8 @@ function calc(v) {
     { l: 'N<sub>ua</sub>', f: 'tracción del anclaje más cargado', s: tensionRows ? `${n1((tensionRows === 2 ? Tu : Tu) / 1e3)} kN / ${nrow} anclajes por fila` : 'no hay tracción', r: `${n1(NuaRod / 1e3)} kN` },
   ];
   if (nT) {
-    eqs4.push({ ref: 'Resistencia del acero · ACI 17.6.1' });
-    eqs4.push({ l: 'φN<sub>sa</sub>', f: 'φ · A<sub>se,N</sub> · f<sub>uta</sub>   (φ = 0,75)', s: `0,75 · ${n0(Ase)} · ${n0(futa)}`, r: `${n1(phiNsa / 1e3)} kN ≥ ${n1(NuaRod / 1e3)} → ${phiNsa >= NuaRod ? 'verifica' : 'NO verifica'}`, ok: phiNsa >= NuaRod });
+    eqs4.push({ ref: aisc ? 'Resistencia del acero · AISC 360-05 J3 (DG1 §3.2.1, Tabla 3.1)' : 'Resistencia del acero · ACI 17.6.1' });
+    eqs4.push({ l: 'φN<sub>sa</sub>', f: aisc ? 'φ · 0,75 · F<sub>u</sub> · A<sub>b</sub>   (φ = 0,75; A<sub>b</sub> = área bruta nominal)' : 'φ · A<sub>se,N</sub> · f<sub>uta</sub>   (φ = 0,75)', s: aisc ? `0,75 · 0,75 · ${mat.fu} · ${n0(Ag)}` : `0,75 · ${n0(Ase)} · ${n0(futa)}`, r: `${n1(phiNsa / 1e3)} kN ≥ ${n1(NuaRod / 1e3)} → ${phiNsa >= NuaRod ? 'verifica' : 'NO verifica'}`, ok: phiNsa >= NuaRod });
     eqs4.push({ ref: 'Arrancamiento del hormigón (cono) · ACI 17.6.2' });
     if (bo.note) eqs4.push({ note: bo.note });
     eqs4.push({ l: 'N<sub>b</sub>', f: bo.hefE < 280 ? 'k<sub>c</sub> · λ<sub>a</sub> · √f′<sub>c</sub> · h<sub>ef</sub><sup>1,5</sup>   (k<sub>c</sub> = 10, preinstalado)' : '3,9 · λ<sub>a</sub> · √f′<sub>c</sub> · h<sub>ef</sub><sup>5/3</sup>', s: bo.hefE < 280 ? `10 · ${n2(lam)} · √${n1(fc)} · ${n0(bo.hefE)}^1,5` : `3,9 · ${n2(lam)} · √${n1(fc)} · ${n0(bo.hefE)}^(5/3)`, r: `${n1(bo.Nb / 1e3)} kN` });
@@ -1109,11 +1282,11 @@ function calc(v) {
     if (v.fric === '1' && Vu > 0) eqs5.push({ note: 'La fricción no alcanza: todo el corte lo toman los anclajes (no se suman ambos mecanismos).' });
     const nVa = v.nV === 'half' ? ntot / 2 : ntot;
     VuA = Vu / nVa;
-    const phiVsa = 0.65 * 0.6 * Ase * futa * (v.grout === '1' ? 0.8 : 1);
+    const phiVsa = aisc ? 0.75 * 0.40 * mat.fu * Ag : 0.65 * 0.6 * Ase * futa * (v.grout === '1' ? 0.8 : 1);
     // arrancamiento por corte hacia el borde (fila más cercana, todo el corte)
     const ca1 = cN, ha = v.ha;
     const le = min(hef, 8 * da);
-    const Vb = min(0.6 * (le / da) ** 0.2 * sqrt(da) * lam * sqrt(fc) * ca1 ** 1.5, 3.7 * lam * sqrt(fc) * ca1 ** 1.5);
+    const Vb0 = (aisc ? 0.581 : 0.6) * (le / da) ** 0.2 * sqrt(da) * lam * sqrt(fc) * ca1 ** 1.5, Vb = aisc ? Vb0 : min(Vb0, 3.7 * lam * sqrt(fc) * ca1 ** 1.5);
     const ca2 = cB;
     const AVc = (min(ca2, 1.5 * ca1) * 2 + (nrow > 1 ? v.g : 0)) * min(1.5 * ca1, ha);
     const AVco = 4.5 * ca1 * ca1;
@@ -1126,12 +1299,12 @@ function calc(v) {
     const boAll = breakout(2, hef);
     const kcp = hef < 65 ? 1 : 2;
     const phiVcpg = 0.70 * kcp * boAll.Ncbg;
-    eqs5.push({ ref: 'Acero · ACI 17.7.1' });
+    eqs5.push({ ref: aisc ? 'Acero · AISC 360-05 J3 (DG1 Ej. 4.10 y 4.11)' : 'Acero · ACI 17.7.1' });
     eqs5.push({ l: 'V<sub>ua</sub>', f: 'V<sub>u</sub> / n<sub>anclajes que toman corte</sub>', s: `${n1(Vu / 1e3)} / ${nVa}`, r: `${n1(VuA / 1e3)} kN` });
-    eqs5.push({ l: 'φV<sub>sa</sub>', f: 'φ · 0,6 · A<sub>se,V</sub> · f<sub>uta</sub> · (0,8 si hay grout)   (φ = 0,65)', s: `0,65 · 0,6 · ${n0(Ase)} · ${n0(futa)}${v.grout === '1' ? ' · 0,8' : ''}`, r: `${n1(phiVsa / 1e3)} kN ≥ ${n1(VuA / 1e3)} → ${phiVsa >= VuA ? 'verifica' : 'NO verifica'}`, ok: phiVsa >= VuA });
+    eqs5.push({ l: 'φV<sub>sa</sub>', f: aisc ? 'φ · 0,40 · F<sub>u</sub> · A<sub>b</sub>   (φ = 0,75; rosca en el plano de corte)' : 'φ · 0,6 · A<sub>se,V</sub> · f<sub>uta</sub> · (0,8 si hay grout)   (φ = 0,65)', s: aisc ? `0,75 · 0,40 · ${mat.fu} · ${n0(Ag)}` : `0,65 · 0,6 · ${n0(Ase)} · ${n0(futa)}${v.grout === '1' ? ' · 0,8' : ''}`, r: `${n1(phiVsa / 1e3)} kN ≥ ${n1(VuA / 1e3)} → ${phiVsa >= VuA ? 'verifica' : 'NO verifica'}`, ok: phiVsa >= VuA });
     eqs5.push({ ref: 'Arrancamiento del borde por corte · ACI 17.7.2' });
     eqs5.push({ l: 'c<sub>a1</sub>', f: 'distancia de la fila al borde en la dirección del corte', s: `N₂/2 − f = ${n0(v.N2)}/2 − ${n1(f)}`, r: `${n0(ca1)} mm` });
-    eqs5.push({ l: 'V<sub>b</sub>', f: 'mín[0,6·(ℓ<sub>e</sub>/d<sub>a</sub>)<sup>0,2</sup>·√d<sub>a</sub> ; 3,7]·λ<sub>a</sub>·√f′<sub>c</sub>·c<sub>a1</sub><sup>1,5</sup>', s: `ℓe = ${n0(le)} mm`, r: `${n1(Vb / 1e3)} kN` });
+    eqs5.push({ l: 'V<sub>b</sub>', f: aisc ? '0,6·(ℓ<sub>e</sub>/d<sub>a</sub>)<sup>0,2</sup>·√d<sub>a</sub>·λ<sub>a</sub>·√f′<sub>c</sub>·c<sub>a1</sub><sup>1,5</sup>   (ACI 318-02, sin tope)' : 'mín[0,6·(ℓ<sub>e</sub>/d<sub>a</sub>)<sup>0,2</sup>·√d<sub>a</sub> ; 3,7]·λ<sub>a</sub>·√f′<sub>c</sub>·c<sub>a1</sub><sup>1,5</sup>', s: `ℓe = ${n0(le)} mm`, r: `${n1(Vb / 1e3)} kN` });
     eqs5.push({ l: 'A<sub>Vc</sub> / A<sub>Vco</sub>', f: '[(c<sub>a2</sub>≤1,5c<sub>a1</sub>)·2 + s] · mín(1,5·c<sub>a1</sub>; h<sub>a</sub>) / 4,5·c<sub>a1</sub>²', s: `${n0(AVc)} / ${n0(AVco)}`, r: n3(AVc / AVco) });
     eqs5.push({ l: 'ψ<sub>ed,V</sub> · ψ<sub>c,V</sub> · ψ<sub>h,V</sub>', f: '', s: `${n3(psiedV)} · ${n2(psicV)} · ${n3(psihV)}`, r: n3(psiedV * psicV * psihV) });
     eqs5.push({ l: 'φV<sub>cbg</sub>', f: 'φ · (A<sub>Vc</sub>/A<sub>Vco</sub>) · ψ<sub>ed,V</sub> · ψ<sub>c,V</sub> · ψ<sub>h,V</sub> · V<sub>b</sub>   (φ = 0,70)', s: 'se supone todo el corte en la fila más cercana al borde (conservador)', r: `${n1(phiVcbg / 1e3)} kN ≥ ${n1(Vu / 1e3)} → ${phiVcbg >= Vu ? 'verifica' : 'NO verifica'}`, ok: phiVcbg >= Vu });
@@ -1142,9 +1315,53 @@ function calc(v) {
     R.checks.push({ n: 'Corte · arrancamiento del borde', u: Vu / phiVcbg, d: `${n1(Vu / 1e3)} / ${n1(phiVcbg / 1e3)} kN`, step: 'corte' });
     R.checks.push({ n: 'Corte · desprendimiento por palanca', u: Vu / phiVcpg, d: `${n1(Vu / 1e3)} / ${n1(phiVcpg / 1e3)} kN`, step: 'corte' });
     zV = max(VuA / phiVsa, Vu / phiVcbg, Vu / phiVcpg);
+    if (aisc) {
+      // DG1 Ej. 4.11: arandelas soldadas → todos toman corte y la barra se flexiona con palanca (t_p + 3,2)/2;
+      // agujeros agrandados sin arandela soldada → sólo la mitad toma corte, se amplifica ×1,25 y no se considera la flexión
+      const nAll = ntot, half = v.nV === 'half';
+      const fv = half ? 1.25 * Vu / (nAll / 2 * Ag) : Vu / (nAll * Ag);
+      const tpl = v.tp > 0 ? v.tp : (R.tReq || 25), lev = (tpl + 3.175) / 2, S = da ** 3 / 6;
+      const fb = half ? 0 : (Vu / nAll) * lev / S;
+      const Trod = tensionRows ? NuaRod : 0, fta = Trod / Ag, ft = fta + fb;
+      const Fnt = 0.75 * mat.fu, Fnv = 0.40 * mat.fu, Fp = min(Fnt, 1.3 * Fnt - Fnt / (0.75 * Fnv) * fv), cap = 0.75 * Fp;
+      eqs5.push({ ref: 'Tracción + corte en la barra · AISC 360-05 J3.7 (DG1 Ej. 4.11)' });
+      eqs5.push({ l: 'f<sub>v</sub>', f: half ? '1,25 · V<sub>u</sub> / (n/2 · A<sub>b</sub>)   (sólo la mitad toma corte)' : 'V<sub>u</sub> / (n · A<sub>b</sub>)', s: '', r: `${n1(fv)} MPa` });
+      if (!half) eqs5.push({ l: 'f<sub>tb</sub> flexión', f: '(V<sub>u</sub>/n) · ℓ / S,  ℓ = (t<sub>p</sub> + 3,2)/2,  S = d³/6', s: `ℓ = ${n1(lev)} mm`, r: `${n1(fb)} MPa` });
+      eqs5.push({ l: 'f<sub>t</sub>', f: 'T<sub>barra</sub>/A<sub>b</sub> + f<sub>tb</sub>', s: `${n1(fta)} + ${n1(fb)}`, r: `${n1(ft)} MPa` });
+      eqs5.push({ l: 'φF′<sub>nt</sub>', f: 'φ · [1,3·F<sub>nt</sub> − F<sub>nt</sub>/(φF<sub>nv</sub>)·f<sub>v</sub>] ≤ φ·F<sub>nt</sub>', s: `F<sub>nt</sub> = 0,75·F<sub>u</sub> = ${n0(Fnt)} · F<sub>nv</sub> = 0,40·F<sub>u</sub> = ${n0(Fnv)}`, r: `${n1(cap)} MPa ≥ ${n1(ft)} → ${ft <= cap ? 'verifica' : 'NO verifica'}`, ok: ft <= cap });
+      R.checks.push({ n: 'Barra · tracción + corte (AISC J3.7)', u: ft / cap, d: `${n1(ft)} / ${n1(cap)} MPa`, step: 'corte' });
+      R.j37 = { fv, fb, ft, cap, fta };
+    }
     R.shear = { ca1, AVc, AVco, phiVsa, phiVcbg, phiVcpg };
   }
   R.steps.push({ id: 'corte', t: 'Transferencia del corte', sub: 'DG1 §3.5 · ACI 318 §17.7', eqs: eqs5 });
+  if (v.lug === 'lug' && Vu > 0) {
+    const e8 = [], lb = v.lb, ld = v.ld, G = v.lG || 0;
+    const Areq = Vu / (0.8 * fc), Al = lb * ld, ok1 = Al >= Areq;
+    e8.push({ note: 'La llave se diseña para tomar <b>todo</b> el corte (DG1 Ej. 4.9). Criterios de ACI 349-01 App. B citados por la DG1 §3.5.2.' });
+    e8.push({ l: 'A<sub>l,req</sub>', f: 'V<sub>u</sub> / (0,8 · f′<sub>c</sub>)   (aplastamiento del hormigón contra la llave)', s: `${n0(Vu)} / (0,8 · ${n1(fc)})`, r: `${n0(Areq)} mm² ≤ A<sub>l</sub> = ${n0(lb)}·${n0(ld)} = ${n0(Al)} mm² → ${ok1 ? 'verifica' : 'NO verifica'}`, ok: ok1 });
+    const wv = min(v.lBp, lb + 2 * v.lc), Av = wv * (ld + v.lc) - lb * ld, Vc = 4 * 0.75 * 0.0830 * sqrt(fc) * Av;
+    e8.push({ l: 'A<sub>v</sub>', f: 'plano a 45° desde el borde de la llave hasta la cara libre: mín(B<sub>ped</sub>; b<sub>l</sub> + 2c)·(d<sub>l</sub> + c) − b<sub>l</sub>·d<sub>l</sub>', s: `${n0(wv)} · (${n0(ld)} + ${n0(v.lc)}) − ${n0(lb)} · ${n0(ld)}`, r: `${n0(Av)} mm²` });
+    e8.push({ l: 'φV<sub>c</sub>', f: '4·φ·√f′<sub>c</sub>[psi] · A<sub>v</sub> = 0,75 · 0,332·√f′<sub>c</sub>[MPa] · A<sub>v</sub>', s: `0,75 · 0,332 · √${n1(fc)} · ${n0(Av)}`, r: `${n1(Vc / 1e3)} kN ≥ ${n1(Vu / 1e3)} → ${Vc >= Vu ? 'verifica' : 'NO verifica'}`, ok: Vc >= Vu });
+    const Ml = Vu * (G + ld / 2), tl = sqrt(4 * Ml / (0.9 * Fy * lb)), tlA = v.lt > 0 ? v.lt : Math.ceil(tl);
+    e8.push({ l: 'M<sub>l</sub>', f: 'V<sub>u</sub> · (G + d<sub>l</sub>/2)   (llave en voladizo)', s: `${n0(Vu / 1e3)} kN · (${n0(G)} + ${n0(ld)}/2)`, r: `${n2(Ml / 1e6)} kN·m` });
+    e8.push({ l: 't<sub>l,req</sub>', f: '√[4 · M<sub>l</sub> / (φ · F<sub>y</sub> · b<sub>l</sub>)]   (φ = 0,90)', s: `√[4 · ${n0(Ml)} / (0,9 · ${n0(Fy)} · ${n0(lb)})]`, r: `${n1(tl)} mm${v.lt > 0 ? ` → adoptado ${n1(v.lt)}: ${v.lt >= tl ? 'verifica' : 'NO verifica'}` : ''}`, ok: v.lt > 0 ? v.lt >= tl : undefined });
+    const sl = tlA + (v.lw || 0) * 2 / 3, fcw = Ml / (sl * lb), fvw = Vu / (2 * lb), fr = Math.hypot(fcw, fvw), wcl = 0.75 * 0.6 * 482 * 0.707 * (v.lw || 0);
+    e8.push({ l: 'soldadura', f: 's = t<sub>l</sub> + 2a/3;  f<sub>c</sub> = M<sub>l</sub>/(s·b<sub>l</sub>);  f<sub>v</sub> = V<sub>u</sub>/(2·b<sub>l</sub>);  f<sub>r</sub> = √(f<sub>c</sub>² + f<sub>v</sub>²) ≤ φ·0,6·F<sub>EXX</sub>·0,707·a', s: `s = ${n1(sl)} · f<sub>c</sub> = ${n1(fcw)} · f<sub>v</sub> = ${n1(fvw)} N/mm`, r: `${n1(fr)} ≤ ${n1(wcl)} N/mm → ${fr <= wcl ? 'verifica' : 'NO verifica'}`, ok: fr <= wcl });
+    R.lug = { Areq, Vc, Av, Ml, tl, fr, wcl, fcw, fvw };
+    R.checks.push({ n: 'Llave · aplastamiento', u: Areq / Al, d: `${n0(Areq)} / ${n0(Al)} mm²`, step: 'lug' });
+    R.checks.push({ n: 'Llave · corte del hormigón al frente', u: Vu / Vc, d: `${n1(Vu / 1e3)} / ${n1(Vc / 1e3)} kN`, step: 'lug' });
+    R.checks.push({ n: 'Llave · soldadura', u: fr / wcl, d: `${n1(fr)} / ${n1(wcl)} N/mm`, step: 'lug' });
+    if (v.lt > 0) R.checks.push({ n: 'Llave · espesor', u: tl / v.lt, d: `${n1(tl)} / ${n1(v.lt)} mm`, step: 'lug' });
+    R.steps.push({ id: 'lug', t: 'Llave de corte', sub: 'DG1 §3.5.2 · Ej. 4.9 · ACI 349-01 App. B', eqs: e8 });
+  } else if (v.lug === 'emb' && Vu > 0) {
+    const e8 = [], tpl = v.tp > 0 ? v.tp : (R.tReq || 25), Vp = 0.6 * 0.85 * fc * tpl * B, rest = max(0, Vu - Vp), dreq = rest / (0.6 * 0.85 * fc * bf);
+    e8.push({ l: 'φV<sub>placa</sub>', f: '0,6 · 0,85 · f′<sub>c</sub> · A<sub>brg</sub>,  A<sub>brg</sub> = t<sub>p</sub>·B   (borde de la placa empotrada)', s: `0,6 · 0,85 · ${n1(fc)} · ${n1(tpl)} · ${n0(B)}`, r: `${n1(Vp / 1e3)} kN` });
+    e8.push({ l: 'resto al ala', f: 'V<sub>u</sub> − φV<sub>placa</sub>', s: '', r: `${n1(rest / 1e3)} kN` });
+    e8.push({ l: 'empotramiento del ala', f: 'resto / (0,6 · 0,85 · f′<sub>c</sub> · b<sub>f</sub>)', s: `${n0(rest)} / (0,6 · 0,85 · ${n1(fc)} · ${n1(bf)})`, r: `${n1(dreq)} mm` });
+    R.emb = { Vp, rest, dreq };
+    R.steps.push({ id: 'lug', t: 'Transferencia por apoyo lateral (placa empotrada)', sub: 'DG1 §3.5.2 · Ej. 4.8', eqs: e8 });
+  }
 
   /* ---- 6. Interacción ---- */
   const eqs6 = [];
@@ -1310,6 +1527,112 @@ function calcP(v) {
   return R;
 }
 
+
+/* ===================== Validación contra los ejemplos de la DG1 =====================
+   Cada caso arma los datos del ejemplo (convertidos a SI), corre el mismo motor de cálculo y compara con el valor impreso en la guía. */
+const U = { IN: 25.4, KSI: 6.894757, KIP: 4.448222, KIPIN: 0.1129848 };
+function dgRun(over) {
+  const base = Object.assign({}, PRESETS.base, { ctype: 'W', pm: 'dg1', fric: '0', grout: '0', Vu: 0, Mu: 0, cracked: '1', thr: '1', atype: 'H', lug: 'none', steelM: 'aisc', tbeff: '45', aw: 0, tp: 0, lam: 1, phic: 0.65, nV: 'all', ha: 3000, Fyc: 345, eh: 100 });
+  return calc(Object.assign(base, over));
+}
+const W12x96 = { d: 12.7 * U.IN, bf: 12.2 * U.IN, tf: 0.900 * U.IN, tw: 0.550 * U.IN }, W10x45 = { d: 10.1 * U.IN, bf: 8.02 * U.IN, tf: 0.620 * U.IN, tw: 0.350 * U.IN };
+function dgCases() {
+  const I = U.IN, K = U.KIP, S = U.KSI, rows = [];
+  const add = (ex, q, guide, unit, val, note) => rows.push({ ex, q, guide, unit, val, note });
+  // 4.1
+  let R = dgRun(Object.assign({}, W12x96, { N: 22 * I, B: 20 * I, N2: 22 * I, B2: 20 * I, fc: 3 * S, Fy: 36 * S, Pu: 700 * K }));
+  add('4.1', 'φP<sub>p</sub> (aplastamiento, A₂ = A₁)', 729, 'kips', R.fpmax * R.A1 / 1e3 / K);
+  add('4.1', 'm', 4.97, 'in', R.m / I); add('4.1', 'n', 5.12, 'in', R.n / I); add('4.1', 'λn′', 3.11, 'in', R.lamn / I);
+  add('4.1', 't<sub>min</sub>', 1.60, 'in', R.ALT.dg1.tC / I);
+  // 4.2
+  R = dgRun(Object.assign({}, W12x96, { N: 20 * I, B: 18 * I, N2: 24 * I, B2: 24 * I, fc: 3 * S, Fy: 36 * S, Pu: 700 * K }));
+  add('4.2', 'A₂ (semejante a A₁, pedestal de 24")', 518, 'in²', R.A2 / I / I); add('4.2', 'φP<sub>p</sub>', 716, 'kips', R.fpmax * R.A1 / 1e3 / K);
+  add('4.2', 'm', 3.97, 'in', R.m / I);
+  add('4.2', 'n', 4.37, 'in', R.n / I, 'Errata de la guía: calcula n con B = 18,5" aunque adopta B = 18". Con B = 18" n = 4,12".');
+  add('4.2', 't<sub>min</sub>', 1.5, 'in', R.ALT.dg1.tC / I, 'Consecuencia de la errata anterior (con n = 4,37" daría 1,49").');
+  // 4.3
+  R = dgRun({ mat: 'F36', da: 19.05 });
+  add('4.3', 'φR<sub>n</sub> barra ¾" Gr.36 (tracción)', 14.4, 'kips', R.phiNsa / 1e3 / K);
+  // 4.4
+  R = dgRun({ da: 19.05, nrow: '1', hef: 6 * I, fc: 4 * S, cracked: '0', Pu: 0, Mu: 50, N: 500, B: 500, aN: 60, N2: 5000, B2: 5000 });
+  add('4.4', 'φN<sub>cbg</sub> un anclaje, h<sub>ef</sub> = 6", no fisurado', 19.5, 'kips', R.phiNcbg / 1e3 / K);
+  add('4.4', 'φN<sub>p</sub> arrancamiento (tabla × 1,4)', 21.3, 'kips', R.phiNpn / 1e3 / K, 'La guía usa la Tabla 3.2, armada con f′c = 3 ksi; el ejemplo es de 4 ksi. Con la fórmula ACI y 4 ksi da más.');
+  // 4.5
+  const e45 = Object.assign({}, W10x45, { N: 14 * I, B: 14 * I, aN: 5 * I, g: 4 * I, nrow: '2', mat: 'F36', da: 22.225, Fy: 36 * S, Fyc: 50 * S, aw: 3 / 16 * I, Pu: -69.8 * K, hef: 13 * I, fc: 4 * S, cracked: '0', N2: 5000, B2: 5000 });
+  R = dgRun(e45);
+  add('4.5', 'T por barra', 17.5, 'kips', R.NuaRod / 1e3 / K);
+  add('4.5', 'φR<sub>n</sub> barra ⅞" Gr.36', 19.6, 'kips', R.phiNsa / 1e3 / K);
+  add('4.5', 't<sub>req</sub> (flexión respecto del alma)', 1.04, 'in', R.ALT.dg1.tT / I);
+  add('4.5', 'carga en la soldadura del alma', 4.79, 'kips/in', R.weldT ? R.weldT.fw * I / 1e3 / K : NaN);
+  add('4.5', 'φR<sub>n</sub> filete 3/16" E70 (×1,5)', 6.26, 'kips/in', R.weldT ? R.weldT.wcap * I / 1e3 / K : NaN);
+  add('4.5', 'tensión en el alma', 27.4, 'ksi', R.weldT ? R.weldT.sw / S : NaN);
+  add('4.5', 'φN<sub>cbg</sub> grupo 4 barras, h<sub>ef</sub> = 13"', 77.4, 'kips', R.phiNcbg / 1e3 / K);
+  R = dgRun(Object.assign({}, e45, { atype: 'J', eh: 2.625 * I }));
+  add('4.5', 'gancho de 3½": capacidad', 8.10, 'kips', R.phiNpn / 1e3 / K);
+  R = dgRun(Object.assign({}, e45, { N2: 20 * I, B2: 20 * I }));
+  add('4.5', 'φN<sub>cbg</sub> en pedestal de 20" (h<sub>ef</sub>′ = 5,33")', 25.5, 'kips', R.phiNcbg / 1e3 / K);
+  // 4.6
+  R = dgRun(Object.assign({}, W12x96, { N: 19 * I, B: 19 * I, N2: 19 * I, B2: 19 * I, fc: 4 * S, Fy: 36 * S, Pu: 376 * K, Mu: 940 * U.KIPIN }));
+  add('4.6', 'e', 2.50, 'in', R.e / I); add('4.6', 'e<sub>crít</sub>', 5.02, 'in', R.ecrit / I); add('4.6', 'Y', 14.0, 'in', R.Y / I);
+  add('4.6', 'q', 26.9, 'kips/in', R.q * I / 1e3 / K); add('4.6', 'f<sub>p</sub>', 1.41, 'ksi', R.fp / S);
+  add('4.6', 't<sub>req</sub> (gobierna n)', 1.36, 'in', R.ALT.dg1.tC / I, 'La guía redondea f<sub>p</sub>: 1,5·4,62·√(1,41/36) = 1,37".');
+  // 4.7
+  const e47 = Object.assign({}, W12x96, { N: 20 * I, B: 20 * I, N2: 20 * I, B2: 20 * I, aN: 1.5 * I, nrow: '3', g: 12 * I, fc: 4 * S, Fy: 36 * S, Pu: 376 * K, Mu: 3600 * U.KIPIN, mat: 'F36', da: 38.1, tbeff: 'B', hef: 18 * I, cracked: '0' });
+  R = dgRun(e47);
+  add('4.7', 'e<sub>crít</sub>', 5.75, 'in', R.ecrit / I); const n47 = 'Errata de la guía: calcula f = 8,5" pero en la ecuación de Y usa f + N/2 = 19,5" (f = 9,5"). Con f = 8,5" consistente: Y = 12,6", T<sub>u</sub> = 181 kips.';
+  add('4.7', 'Y', 12.0, 'in', R.Y / I, n47); add('4.7', 'T<sub>u</sub>', 156, 'kips', R.Tu / 1e3 / K, n47);
+  add('4.7', 't<sub>req</sub> lado comprimido (gobierna n)', 1.90, 'in', R.ALT.dg1.tC / I);
+  add('4.7', 't<sub>req</sub> lado traccionado (ancho B)', 1.44, 'in', R.ALT.dg1.tT / I, 'Usa la T<sub>u</sub> = 156 kips de la errata anterior; con 181 kips da 1,55". Con T = 156 kips la calculadora da 1,44" (ver fila siguiente).');
+  { const R2 = dgRun(Object.assign({}, e47, { aN: 0.5 * I })); add('4.7', 'Y y T<sub>u</sub> con f = 9,5" (como la guía)', 156, 'kips', R2.Tu / 1e3 / K); }
+  add('4.7', 'φR<sub>n</sub> barra 1½" Gr.36', 57.7, 'kips', R.phiNsa / 1e3 / K);
+  add('4.7', 'φN<sub>p</sub> arrancamiento (Tabla 3.2)', 52.6, 'kips', R.phiNpn / 1e3 / K, 'La Tabla 3.2 de la guía corresponde a f′c = 3 ksi y hormigón fisurado; el ejemplo es de 4 ksi no fisurado.');
+  R = dgRun(Object.assign({}, e47, { N2: 5000, B2: 5000 }));
+  add('4.7', 'φN<sub>cbg</sub> 3 barras, h<sub>ef</sub> = 18"', 295, 'kips', R.phiNcbg / 1e3 / K, 'Errata de la guía: usa A<sub>No</sub> = 3·h<sub>ef</sub>² (972 in²) en vez de 9·h<sub>ef</sub>² (2.916 in²) y 1·h<sub>ef</sub> en vez de 1,5·h<sub>ef</sub> a lo largo de la fila. Con ACI correcto el cono no alcanza para 156 kips.');
+  // 4.8
+  R = dgRun({ d: 12.2 * I, bf: 8.08 * I, tf: 0.640 * I, tw: 0.370 * I, B: 15 * I, N: 15 * I, tp: 1.5 * I, fc: 6 * S, Vu: 100 * K, lug: 'emb', Pu: 10 });
+  add('4.8', 'φV por el borde de la placa', 68.8, 'kips', R.emb ? R.emb.Vp / 1e3 / K : NaN);
+  add('4.8', 'empotramiento requerido del ala', 1.26, 'in', R.emb ? R.emb.dreq / I : NaN);
+  // 4.9
+  R = dgRun(Object.assign({}, W10x45, { Vu: 36.8 * K, Pu: 10, fc: 4 * S, Fy: 36 * S, lug: 'lug', lb: 9 * I, ld: 1.5 * I, lG: 2 * I, lt: 1.25 * I, lw: 5 / 16 * I, lc: 9.5 * I, lBp: 20 * I }));
+  if (R.lug) {
+    add('4.9', 'A<sub>l</sub> requerida', 11.5, 'in²', R.lug.Areq / I / I);
+    add('4.9', 'φV<sub>c</sub> hormigón al frente de la llave', 39.2, 'kips', R.lug.Vc / 1e3 / K);
+    add('4.9', 'M<sub>l</sub>', 101, 'kip-in', R.lug.Ml / 1e6 / U.KIPIN);
+    add('4.9', 't<sub>l,req</sub>', 1.18, 'in', R.lug.tl / I);
+    add('4.9', 'f<sub>c</sub> soldadura', 7.71, 'kips/in', R.lug.fcw * I / 1e3 / K);
+    add('4.9', 'f<sub>v</sub> soldadura', 2.05, 'kips/in', R.lug.fvw * I / 1e3 / K);
+    add('4.9', 'f<sub>r</sub> resultante', 7.98, 'kips/in', R.lug.fr * I / 1e3 / K);
+    add('4.9', 'resistencia filete 5/16"', 6.96, 'kips/in', R.lug.wcl * I / 1e3 / K);
+  }
+  // 4.10
+  R = dgRun({ da: 19.05, mat: 'F36', N: 12 * I, B: 12 * I, aN: 4 * I, g: 4 * I, nrow: '2', N2: 32 * I, B2: 60 * I, ha: 36 * I, hef: 12 * I, fc: 4 * S, cracked: '0', Vu: 36.8 * K, Pu: 10 });
+  add('4.10', 'φR<sub>n</sub> corte por barra ¾"', 7.69, 'kips', R.shear ? R.shear.phiVsa / 1e3 / K : NaN);
+  add('4.10', 'φV<sub>cbg</sub> borde a 14"', 32.7, 'kips', R.shear ? R.shear.phiVcbg / 1e3 / K : NaN);
+  // 4.11
+  const e411 = Object.assign({}, W10x45, { N: 14 * I, B: 14 * I, aN: 2 * I, g: 10 * I, nrow: '2', mat: 'F36', tp: 1 * I, Pu: -69.8 * K, Vu: 36.8 * K, fc: 4 * S, hef: 18 * I, N2: 5000, B2: 5000 });
+  R = dgRun(Object.assign({}, e411, { da: 28.575 }));
+  add('4.11', 'f<sub>t</sub> barra 1⅛" (con flexión)', 39.5, 'ksi', R.j37 ? R.j37.ft / S : NaN, 'La guía escribe 39,5 y después compara 39,1.');
+  add('4.11', 'φF′<sub>nt</sub> barra 1⅛"', 22.7, 'ksi', R.j37 ? R.j37.cap / S : NaN, 'Errata de la guía: usa f<sub>v</sub> = 10,5 ksi pero 36,8/(4·0,994) = 9,26 ksi.');
+  R = dgRun(Object.assign({}, e411, { da: 38.1 }));
+  add('4.11', 'f<sub>t</sub> barra 1½"', 19.1, 'ksi', R.j37 ? R.j37.ft / S : NaN);
+  add('4.11', 'φF′<sub>nt</sub> barra 1½"', 32.6, 'ksi', R.j37 ? R.j37.cap / S : NaN);
+  R = dgRun(Object.assign({}, e411, { da: 38.1, nV: 'half' }));
+  add('4.11', 'f<sub>t</sub> (2 barras al corte, ×1,25, sin flexión)', 9.9, 'ksi', R.j37 ? R.j37.ft / S : NaN);
+  add('4.11', 'φF′<sub>nt</sub> (2 barras al corte)', 18.0, 'ksi', R.j37 ? R.j37.cap / S : NaN);
+  return rows;
+}
+function runValidation() {
+  const t0 = performance.now(), rows = dgCases(), tol = 0.015;
+  let ok = 0, err = 0, bad = 0;
+  const html = rows.map(r => {
+    const d = (r.val - r.guide) / r.guide, isOk = Math.abs(d) <= tol;
+    const cls = isOk ? 'ok' : r.note ? 'warn' : 'bad'; if (isOk) ok++; else if (r.note) err++; else bad++;
+    return `<tr class="v-${cls}"><td><b>${r.ex}</b></td><td>${r.q}</td><td class="num">${nf(r.guide, 2)}</td><td class="num">${nf(r.val, 2)}</td><td>${r.unit}</td><td class="num">${isFinite(d) ? (d >= 0 ? '+' : '') + nf(d * 100, 1) + ' %' : '—'}</td><td><span class="tag ${cls === 'ok' ? 'ok' : cls === 'warn' ? 'warn' : 'bad'}">${isOk ? 'igual' : r.note ? 'difiere (explicado)' : 'difiere'}</span>${r.note ? `<div class="note">${r.note}</div>` : ''}</td></tr>`;
+  }).join('');
+  $('valTable').innerHTML = `<thead><tr><th>Ej.</th><th>Magnitud</th><th>Guía</th><th>Calculadora</th><th>Unidad</th><th>Dif.</th><th>Resultado</th></tr></thead><tbody>${html}</tbody>`;
+  $('valSum').innerHTML = `<b>${ok}</b> valores iguales (±1,5 %) · <b>${err}</b> diferencias explicadas por erratas o tablas de la guía · <b>${bad}</b> diferencias sin explicar · ${rows.length} comparaciones en ${n0(performance.now() - t0)} ms.`;
+}
+
 /* ===================== Render ===================== */
 var prevN, prevType; // sin asignación: init() ya los cargó antes de llegar aquí
 function recenterRows() {
@@ -1336,6 +1659,7 @@ function run(ev) {
   $('lbf').innerHTML = t === 'R' ? 'b ancho del tubo<small>mm (dirección B)</small>' : 'b<sub>f</sub> ancho de ala<small>mm (dirección B)</small>';
   $('ltf').innerHTML = t === 'W' ? 't<sub>f</sub> espesor de ala<small>mm</small>' : 't espesor de pared<small>mm</small>';
   $('fehook').style.display = v.atype === 'J' ? '' : 'none';
+  $('lugF').style.display = v.lug === 'lug' ? '' : 'none';
   const isP = t === 'P';
   $('fP').style.display = isP ? '' : 'none'; ['fd', 'fbf', 'ftf'].forEach(id => $(id).style.display = isP ? 'none' : (id === 'fbf' && t === 'C' ? 'none' : ''));
   if (isP) { $('fW').style.display = 'none'; $('ftw').style.display = 'none'; }
