@@ -113,6 +113,10 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
     <option value="dg41">DG1 Ej. 4.1 · axial concéntrico, A₂ = A₁ (convertido a SI)</option>
     <option value="uplift">Tracción neta (viento)</option>
     <option value="ck">Columna tubo Ø355,6 con corte</option>
+    <option value="pl1b">Contraplaca PL1-b 400×1250 (12 barras B7 Ø1")</option>
+    <option value="pl1c">Contraplaca PL1-c 400×380 (6 barras B7 Ø1")</option>
+    <option value="pl1d">Contraplaca PL1-d 400×250 (4 barras B7 Ø1")</option>
+    <option value="pl1e">Contraplaca PL1-e 400×150 (2 barras B7 Ø1")</option>
   </select>
   <button class="btn" id="btnSave" title="Descargar los datos como JSON">💾 Guardar</button>
   <button class="btn" id="btnLoad" title="Cargar un JSON guardado">📂 Abrir</button>
@@ -142,7 +146,13 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
   </div>
 
   <div class="pane" id="p-col">
-    <div class="fld"><label>Tipo de columna</label><select id="ctype"><option value="W">Perfil I / W</option><option value="R">Tubo rectangular</option><option value="C">Tubo circular</option></select></div>
+    <div class="fld"><label>Tipo de columna</label><select id="ctype"><option value="W">Perfil I / W</option><option value="R">Tubo rectangular</option><option value="C">Tubo circular</option><option value="P">Contraplaca (placa de apoyo cargada por barras)</option></select></div>
+    <div id="fP" style="display:none">
+      <div class="hint">Placa apoyada contra el hormigón y <b>empujada por las tuercas</b> de barras pasantes (p. ej. contraplaca de una unión viga–columna de H°A°). No hay columna: la carga entra por las arandelas. Las barras en dirección B se toman de la pestaña <b>Anclajes</b> (cantidad por fila y separación g); el material y diámetro también.</div>
+      <div class="fld"><label>Posición de las filas de barras<small>mm desde el borde superior, en dirección N, separadas por coma</small></label><input id="pRows" type="text"></div>
+      <div class="fld"><label>Ø de arandela / tuerca de apoyo<small>mm (zona rígida bajo cada barra)</small></label><input id="Dw" type="number" step="0.1"></div>
+      <div class="fld"><label>Carga de compresión</label><select id="pAuto"><option value="1">Automática: Σ fluencia de barras (n·A<sub>se</sub>·f<sub>ya</sub>)</option><option value="0">Usar P<sub>u</sub> de la pestaña Cargas</option></select></div>
+    </div>
     <div class="fld" id="fW"><label>Perfil I (catálogo)<small>completa d, bf, tf, tw</small></label><select id="wcat"></select></div>
     <div class="fld" id="fd"><label id="ld">d altura<small>mm (dirección N)</small></label><input id="d" type="number"></div>
     <div class="fld" id="fbf"><label id="lbf">b<sub>f</sub> ancho de ala<small>mm (dirección B)</small></label><input id="bf" type="number"></div>
@@ -155,6 +165,13 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
     <div class="fld"><label>B ancho<small>mm</small></label><input id="B" type="number"></div>
     <div class="fld"><label>F<sub>y</sub> placa<small>MPa (F-24 = 235, F-36 = 355)</small></label><input id="Fy" type="number"></div>
     <div class="fld"><label>Espesor adoptado t<sub>p</sub><small>mm (0 = sólo calcular el requerido)</small></label><input id="tp" type="number" step="0.1"></div>
+    <h3 class="sec">Método para el espesor (compresión)</h3>
+    <div class="fld wide"><select id="pm">
+      <option value="dg1">AISC DG1 — presión uniforme, voladizo desde la línea crítica</option>
+      <option value="hyb">Área efectiva con f<sub>p,máx</sub> AISC y φ (híbrido)</option>
+      <option value="ec3">EN 1993-1-8 §6.2.5 — T equivalente (f<sub>jd</sub>, c = t·√(f<sub>y</sub>/3f<sub>jd</sub>))</option>
+    </select></div>
+    <div class="hint" id="pmHint"></div>
   </div>
 
   <div class="pane" id="p-horm">
@@ -212,6 +229,13 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
     </div>
   </div>
 
+  <div class="card fig" style="margin-top:18px">
+    <h2>Mecanismo de la placa: franja en voladizo <span class="tg"><label>Franja <select id="strip" class="btn" style="padding:3px 6px"><option value="N">dirección N</option><option value="B">dirección B</option></select></label></span></h2>
+    <svg id="mech" viewBox="0 0 1000 340"></svg>
+    <div class="legend"><span><i style="background:repeating-linear-gradient(45deg,#334155 0 2px,transparent 2px 5px)"></i>Punto fijo (empotramiento)</span><span><i style="background:var(--press);opacity:.6"></i>Presión del hormigón</span><span><i style="background:var(--tens)"></i>Fuerza de anclaje</span><span><i style="background:var(--accent2)"></i>Deformada (exagerada)</span><span><i style="background:#0ea5e9"></i>Momento máx. / rótula</span></div>
+    <div class="note" id="mechNote"></div>
+  </div>
+
   <div class="card dash">
     <h2>Resumen de verificaciones</h2>
     <div class="kpis" id="kpis"></div>
@@ -235,13 +259,22 @@ const WCAT = [
 const MAT = { F36:{n:'ASTM F1554 Gr.36',fy:248,fu:400}, F55:{n:'ASTM F1554 Gr.55',fy:380,fu:517}, F105:{n:'ASTM F1554 Gr.105',fy:724,fu:862},
   B7:{n:'ASTM A193 B7',fy:724,fu:862}, ADN:{n:'ADN-420',fy:420,fu:500}, F24:{n:'F-24',fy:235,fu:370} };
 // diámetro nominal (mm) → paso de rosca gruesa ISO (mm)
-const DIAS = [[12,1.75],[16,2],[19.05,2.54],[20,2.5],[22,2.5],[24,3],[25.4,2.82],[27,3],[30,3.5],[31.75,3.18],[33,3.5],[36,4],[38.1,3.63],[42,4.5],[48,5],[50.8,4.5],[56,5.5],[64,6]];
+const DIAS = [[12,1.75],[16,2],[19.05,2.54],[20,2.5],[22,2.5],[24,3],[25.4,3.175],[27,3],[30,3.5],[31.75,3.629],[33,3.5],[36,4],[38.1,4.233],[42,4.5],[48,5],[50.8,5.644],[56,5.5],[64,6]];
 const PRESETS = {
-  base:{Pu:600,Mu:90,Vu:60,ctype:'W',d:308,bf:305,tf:15.4,tw:9.9,N:500,B:500,Fy:250,tp:0,fc:25,N2:700,B2:700,ha:900,cracked:'1',lam:1,phic:0.65,mat:'F36',da:24,thr:'1',atype:'H',hef:400,eh:90,nrow:'2',aN:60,g:380,fric:'1',mu:0.55,grout:'1',nV:'all'},
+  base:{Pu:600,Mu:90,Vu:60,ctype:'W',d:308,bf:305,tf:15.4,tw:9.9,N:500,B:500,Fy:250,tp:0,fc:25,N2:700,B2:700,ha:900,cracked:'1',lam:1,phic:0.65,mat:'F36',da:24,thr:'1',atype:'H',hef:400,eh:90,nrow:'2',aN:60,g:380,fric:'1',mu:0.55,grout:'1',nV:'all',pRows:'100,190,280',Dw:50.8,pAuto:'1',pm:'dg1'},
   dg46:{Pu:1672.5,Mu:106.2,Vu:0,ctype:'W',d:322.6,bf:309.9,tf:22.9,tw:14.0,N:482.6,B:482.6,Fy:248.2,tp:0,fc:27.58,N2:482.6,B2:482.6,ha:900,cracked:'1',lam:1,phic:0.65,mat:'F36',da:19.05,thr:'1',atype:'H',hef:305,eh:60,nrow:'2',aN:50,g:380,fric:'1',mu:0.55,grout:'1',nV:'all'},
   dg41:{Pu:3113.8,Mu:0,Vu:0,ctype:'W',d:322.6,bf:309.9,tf:22.9,tw:14.0,N:558.8,B:508,Fy:248.2,tp:44.45,fc:20.68,N2:558.8,B2:508,ha:900,cracked:'1',lam:1,phic:0.65,mat:'F36',da:19.05,thr:'1',atype:'H',hef:305,eh:60,nrow:'2',aN:50,g:400,fric:'1',mu:0.55,grout:'1',nV:'all'},
   uplift:{Pu:-120,Mu:10,Vu:15,ctype:'W',d:257,bf:204,tf:15.7,tw:8.9,N:400,B:350,Fy:250,tp:25.4,fc:25,N2:800,B2:700,ha:900,cracked:'1',lam:1,phic:0.65,mat:'F36',da:24,thr:'1',atype:'H',hef:500,eh:80,nrow:'2',aN:50,g:250,fric:'1',mu:0.55,grout:'1',nV:'all'},
+  pl1b:{Pu:0,Mu:0,Vu:0,ctype:'P',d:300,bf:300,tf:10,tw:10,N:1250,B:400,Fy:355,tp:19,fc:30,N2:3000,B2:400,ha:900,cracked:'1',lam:1,phic:0.65,mat:'B7',da:25.4,thr:'1',atype:'H',hef:300,eh:100,nrow:'2',aN:100,g:110,fric:'0',mu:0.55,grout:'0',nV:'all',pRows:'100,190,280,600,692,1082',Dw:50.8,pAuto:'1'},
+  pl1c:{Pu:0,Mu:0,Vu:0,ctype:'P',d:300,bf:300,tf:10,tw:10,N:380,B:400,Fy:355,tp:19,fc:30,N2:3000,B2:400,ha:900,cracked:'1',lam:1,phic:0.65,mat:'B7',da:25.4,thr:'1',atype:'H',hef:300,eh:100,nrow:'2',aN:100,g:110,fric:'0',mu:0.55,grout:'0',nV:'all',pRows:'100,190,280',Dw:50.8,pAuto:'1'},
+  pl1d:{Pu:0,Mu:0,Vu:0,ctype:'P',d:300,bf:300,tf:10,tw:10,N:250,B:400,Fy:355,tp:19,fc:30,N2:3000,B2:400,ha:900,cracked:'1',lam:1,phic:0.65,mat:'B7',da:25.4,thr:'1',atype:'H',hef:300,eh:100,nrow:'2',aN:100,g:110,fric:'0',mu:0.55,grout:'0',nV:'all',pRows:'79,171',Dw:50.8,pAuto:'1'},
+  pl1e:{Pu:0,Mu:0,Vu:0,ctype:'P',d:300,bf:300,tf:10,tw:10,N:150,B:400,Fy:355,tp:19,fc:30,N2:3000,B2:400,ha:900,cracked:'1',lam:1,phic:0.65,mat:'B7',da:25.4,thr:'1',atype:'H',hef:300,eh:100,nrow:'2',aN:100,g:110,fric:'0',mu:0.55,grout:'0',nV:'all',pRows:'75',Dw:50.8,pAuto:'1'},
   ck:{Pu:60,Mu:0,Vu:30.6,ctype:'C',d:355.6,bf:355.6,tf:6.35,tw:6.35,N:400,B:400,Fy:235,tp:15.9,fc:30,N2:800,B2:400,ha:800,cracked:'1',lam:1,phic:0.65,mat:'ADN',da:16,thr:'0',atype:'J',hef:500,eh:200,nrow:'2',aN:100,g:200,fric:'0',mu:0.55,grout:'0',nV:'all'}
+};
+const METH = {
+  dg1: { n: 'AISC DG1', src: 'DG1 §3.1.2 / §3.3 — presión uniforme bajo la placa, voladizo desde la línea crítica' },
+  hyb: { n: 'Área efectiva (híbrido)', src: 'Área efectiva de EN 1993-1-8 §6.2.5 con f<sub>p,máx</sub> y φ de AISC: c = t·√(0,9·F<sub>y</sub> / 2·f<sub>p,máx</sub>)' },
+  ec3: { n: 'EN 1993-1-8 §6.2.5', src: 'T equivalente en compresión: f<sub>jd</sub> = β<sub>j</sub>·f<sub>cd</sub>·√(A₂/A₁) ≤ 3f<sub>cd</sub>, c = t·√(f<sub>y</sub> / 3·f<sub>jd</sub>·γ<sub>M0</sub>)' }
 };
 const IDS = Object.keys(PRESETS.base);
 
@@ -257,11 +290,13 @@ const sqrt = Math.sqrt, min = Math.min, max = Math.max, PI = Math.PI;
   let st = null; try { st = JSON.parse(localStorage.getItem('pb-dg1')); } catch (e) {}
   const qp = new URLSearchParams(location.search).get('p');
   setVals(PRESETS[qp] || st || PRESETS.base);
+  const qm = new URLSearchParams(location.search).get('pm'); if (qm) $('pm').value = qm;
+  const qs = new URLSearchParams(location.search).get('strip'); if (qs) $('strip').value = qs;
   document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b)); document.querySelectorAll('.pane').forEach(p => p.classList.toggle('on', p.id === 'p-' + b.dataset.p)); });
   document.querySelectorAll('aside input, aside select').forEach(el => el.addEventListener('input', run));
   $('wcat').onchange = () => { const w = WCAT[$('wcat').value]; if (w) { $('d').value = w[1]; $('bf').value = w[2]; $('tf').value = w[3]; $('tw').value = w[4]; } run(); };
   $('preset').onchange = () => { if (PRESETS[$('preset').value]) setVals(PRESETS[$('preset').value]); $('preset').value = ''; run(); };
-  $('showANc').onchange = run; $('showAVc').onchange = run;
+  $('showANc').onchange = run; $('showAVc').onchange = run; $('strip').onchange = run;
   $('btnPrint').onclick = () => { document.querySelectorAll('details.step').forEach(d => d.open = true); window.print(); };
   $('btnTheme').onclick = () => { const r = document.documentElement; const dark = matchMedia('(prefers-color-scheme: dark)').matches; const cur = r.dataset.theme || (dark ? 'dark' : 'light'); r.dataset.theme = cur === 'dark' ? 'light' : 'dark'; };
   $('btnSave').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(getVals(), null, 1)], { type: 'application/json' })); a.download = 'placa-anclaje.json'; a.click(); };
@@ -270,10 +305,53 @@ const sqrt = Math.sqrt, min = Math.min, max = Math.max, PI = Math.PI;
   run();
 })();
 function setVals(o) { IDS.forEach(k => { if (o[k] !== undefined && $(k)) $(k).value = o[k]; }); }
-function getVals() { const o = {}; IDS.forEach(k => { const el = $(k); o[k] = el.tagName === 'SELECT' && isNaN(+el.value) ? el.value : (el.type === 'number' || !isNaN(+el.value) ? +el.value : el.value); }); o.ctype = $('ctype').value; o.mat = $('mat').value; o.nV = $('nV').value; o.cracked = $('cracked').value; o.thr = $('thr').value; o.atype = $('atype').value; o.fric = $('fric').value; o.grout = $('grout').value; o.nrow = $('nrow').value; return o; }
+function getVals() { const o = {}; IDS.forEach(k => { const el = $(k); o[k] = el.tagName === 'SELECT' && isNaN(+el.value) ? el.value : (el.type === 'number' || !isNaN(+el.value) ? +el.value : el.value); }); o.ctype = $('ctype').value; o.mat = $('mat').value; o.nV = $('nV').value; o.cracked = $('cracked').value; o.thr = $('thr').value; o.atype = $('atype').value; o.fric = $('fric').value; o.grout = $('grout').value; o.nrow = $('nrow').value; o.pRows = $('pRows').value; o.pAuto = $('pAuto').value; o.pm = $('pm').value; return o; }
+
+
+/* ===================== Franja de placa (viga por unidad de ancho) =====================
+   Coordenadas 0..L. Apoyos = tramos rígidos (empotramiento). Cargas: w (MPa = N/mm por mm de ancho, + empuja hacia la columna)
+   y P puntuales (N/mm, + hacia la columna). Voladizos y tramos empotrado-empotrado se resuelven por integración numérica. */
+function cFac(meth, Fy, fj) { return meth === 'ec3' ? Math.sqrt(Fy / (3 * fj)) : Math.sqrt(0.9 * Fy / (2 * fj)); }
+function stripSolve(L, sups, dl, pl, EI) {
+  sups = sups.map(([a, b]) => [Math.max(0, a), Math.min(L, b)]).filter(([a, b]) => b > a).sort((a, b) => a[0] - b[0]);
+  const gaps = []; let cur = 0;
+  sups.forEach(([a, b]) => { if (a > cur + 1e-6) gaps.push([cur, a]); cur = Math.max(cur, b); });
+  if (cur < L - 1e-6) gaps.push([cur, L]);
+  const wAt = x => dl.reduce((t, d) => t + (x >= d.a && x <= d.b ? d.w : 0), 0);
+  const segs = [];
+  for (const [x0, x1] of gaps) {
+    const leftFix = sups.some(([a, b]) => Math.abs(b - x0) < 1e-6), rightFix = sups.some(([a, b]) => Math.abs(a - x1) < 1e-6);
+    const n = 80, h = (x1 - x0) / n, X = [], M = [];
+    for (let i = 0; i <= n; i++) X.push(x0 + i * h);
+    const loadsIn = (a, b) => ({ d: dl.map(d => ({ a: Math.max(a, d.a), b: Math.min(b, d.b), w: d.w })).filter(d => d.b > d.a), p: pl.filter(q => q.x > a - 1e-9 && q.x < b + 1e-9) });
+    let type;
+    if (leftFix && rightFix) {
+      type = 'span'; const Ls = x1 - x0, ld = loadsIn(x0, x1);
+      const RA = (ld.d.reduce((t, d) => t + d.w * (d.b - d.a) * (x1 - (d.a + d.b) / 2), 0) + ld.p.reduce((t, q) => t + q.P * (x1 - q.x), 0)) / Ls;
+      const m0 = X.map(x => { let Mx = RA * (x - x0); ld.d.forEach(d => { const b = Math.min(d.b, x); if (b > d.a) Mx -= d.w * (b - d.a) * (x - (d.a + b) / 2); }); ld.p.forEach(q => { if (q.x < x) Mx -= q.P * (x - q.x); }); return -Mx; });
+      // m = m0 + MA(1-ξ) + MB ξ ;  ∫m = 0 ; ∫m (L-x) = 0
+      let I0 = 0, I1 = 0, a11 = 0, a12 = 0, a21 = 0, a22 = 0;
+      for (let i = 0; i <= n; i++) { const wt = (i === 0 || i === n) ? h / 2 : h, xi = (X[i] - x0) / Ls, r = Ls - (X[i] - x0); I0 += m0[i] * wt; I1 += m0[i] * r * wt; a11 += (1 - xi) * wt; a12 += xi * wt; a21 += (1 - xi) * r * wt; a22 += xi * r * wt; }
+      const det = a11 * a22 - a12 * a21, MA = (-I0 * a22 + a12 * I1) / det, MB = (-a11 * I1 + a21 * I0) / det;
+      X.forEach((x, i) => { const xi = (x - x0) / Ls; M.push(m0[i] + MA * (1 - xi) + MB * xi); });
+    } else if (leftFix) {
+      type = 'cant'; X.forEach(x => { const ld = loadsIn(x, x1); M.push(ld.d.reduce((t, d) => t + d.w * (d.b - d.a) * ((d.a + d.b) / 2 - x), 0) + ld.p.reduce((t, q) => t + q.P * (q.x - x), 0)); });
+    } else if (rightFix) {
+      type = 'cant'; X.forEach(x => { const ld = loadsIn(x0, x); M.push(ld.d.reduce((t, d) => t + d.w * (d.b - d.a) * (x - (d.a + d.b) / 2), 0) + ld.p.reduce((t, q) => t + q.P * (x - q.x), 0)); });
+    } else { type = 'free'; X.forEach(() => M.push(0)); }
+    // deformada: v'' = M/EI, desde el extremo empotrado
+    const V = new Array(n + 1).fill(0), S = new Array(n + 1).fill(0);
+    if (type === 'span' || leftFix) { for (let i = 1; i <= n; i++) { S[i] = S[i - 1] + (M[i - 1] + M[i]) / 2 * h / EI; V[i] = V[i - 1] + (S[i - 1] + S[i]) / 2 * h; } }
+    else if (rightFix) { for (let i = n - 1; i >= 0; i--) { S[i] = S[i + 1] - (M[i + 1] + M[i]) / 2 * h / EI; V[i] = V[i + 1] - (S[i + 1] + S[i]) / 2 * h; } }
+    let iM = 0; M.forEach((mm, i) => { if (Math.abs(mm) > Math.abs(M[iM])) iM = i; });
+    segs.push({ x0, x1, type, X, M, V, Mmax: Math.abs(M[iM]), xM: X[iM], len: x1 - x0 });
+  }
+  return { L, sups, dl, pl, segs, Mmax: Math.max(0, ...segs.map(g => g.Mmax)) };
+}
 
 /* ===================== Motor de cálculo ===================== */
 function calc(v) {
+  if (v.ctype === 'P') return calcP(v);
   const R = { steps: [], checks: [], warns: [] };
   const Pu = v.Pu * 1e3, Mu = v.Mu * 1e6, Vu = Math.abs(v.Vu) * 1e3; // N, N·mm
   const { N, B, Fy, fc, phic } = v, lam = v.lam || 1;
@@ -340,7 +418,7 @@ function calc(v) {
     if (Tc >= 0) {
       eqs2.push({ l: 'T<sub>fila 1</sub>', f: '|P<sub>u</sub>|/2 + M<sub>u</sub>/(2·f)', s: `${n1(P / 1e3)}/2 + ${n1(v.Mu)}·10³/(2·${n1(f)})`, r: `${n1(Tt / 1e3)} kN` });
       eqs2.push({ l: 'T<sub>fila 2</sub>', f: '|P<sub>u</sub>|/2 − M<sub>u</sub>/(2·f)', s: `${n1(P / 1e3)}/2 − ${n1(v.Mu)}·10³/(2·${n1(f)})`, r: `${n1(Tc / 1e3)} kN` });
-      Tu = Tt; tensionRows = 2; TuGroup = P;
+      Tu = Tt; tensionRows = 2; TuGroup = P; R.Tc = Tc;
     } else {
       // una fila traccionada, la otra zona comprime: equilibrio simplificado con brazo 2f
       Tu = Tt - Tc * 0; // conservador: fila traccionada toma P/2 + M/2f
@@ -396,13 +474,99 @@ function calc(v) {
       eqs3.push({ l: 'x', f: 'anclajes dentro de la huella de la columna', s: '', r: 'la flexión de la placa por tracción no gobierna (verificar la unión al alma/pared)' });
     }
   }
-  const tReq = max(tReqC, tReqT);
-  R.tReq = tReq; R.m = m; R.n = n; R.lamn = lamn; R.x = x; R.beff = beff;
+  const tReqD = max(tReqC, tReqT);
   const tAdopt = v.tp > 0 ? v.tp : 0;
-  eqs3.push({ l: 't<sub>p,req</sub>', f: 'máx(compresión; tracción)', s: '', r: `${n1(tReq)} mm${tAdopt ? ` → adoptado ${n1(tAdopt)} mm: ${tAdopt >= tReq ? 'verifica' : 'NO verifica'}` : ''}`, ok: tAdopt ? tAdopt >= tReq : undefined });
-  R.steps.push({ id: 'tp', t: 'Espesor de la placa', sub: 'DG1 §3.1.2 / §3.3.2 / §3.4.3 · fluencia por flexión en voladizo', eqs: eqs3 });
-  if (tAdopt) R.checks.push({ n: 'Espesor de placa (t<sub>p</sub> ≥ t<sub>req</sub>)', u: tReq / tAdopt, d: `${n1(tReq)} / ${n1(tAdopt)} mm`, step: 'tp' });
-  else R.checks.push({ n: 'Espesor de placa requerido', u: NaN, d: `t<sub>req</sub> = ${n1(tReq)} mm`, step: 'tp', info: true });
+  eqs3.push({ l: 't<sub>p,req</sub> (DG1)', f: 'máx(compresión; tracción)', s: '', r: `${n1(tReqD)} mm` });
+  R.steps.push({ id: 'tp', t: 'Espesor de la placa — AISC DG1', sub: 'DG1 §3.1.2 / §3.3.2 / §3.4.3 · presión uniforme, fluencia por flexión en voladizo desde la línea crítica', eqs: eqs3 });
+  /* ---- 3b. Área efectiva (híbrido y EN 1993-1-8) ---- */
+  const fjdE = (2 / 3) * (fc / 1.5) * min(max(k2, 1), 3);
+  const shapes = c => {
+    const R_ = [];
+    const add = (x0, x1, y0, y1) => R_.push([x0 - c, x1 + c, y0 - c, y1 + c]);
+    if (typ === 'W') { add(-d / 2, -d / 2 + tf, -bf / 2, bf / 2); add(d / 2 - tf, d / 2, -bf / 2, bf / 2); add(-d / 2 + tf, d / 2 - tf, -v.tw / 2, v.tw / 2); }
+    else if (typ === 'R') { add(-d / 2, -d / 2 + tf, -bf / 2, bf / 2); add(d / 2 - tf, d / 2, -bf / 2, bf / 2); add(-d / 2, d / 2, -bf / 2, -bf / 2 + tf); add(-d / 2, d / 2, bf / 2 - tf, bf / 2); }
+    return R_;
+  };
+  const effCol = c => { // devuelve área total, área del lado comprimido (x<0) y su brazo zc
+    const h = max(2, min(N, B) / 160); let At = 0, Al = 0, Sx = 0; const rr = R_ => 0;
+    const rects = shapes(c), ri = d / 2 - tf - c, ro = d / 2 + c;
+    for (let x = -N / 2 + h / 2; x < N / 2; x += h) for (let y = -B / 2 + h / 2; y < B / 2; y += h) {
+      let inn;
+      if (typ === 'C') { const r = Math.hypot(x, y); inn = r <= ro && r >= ri; }
+      else inn = rects.some(q => x >= q[0] && x <= q[1] && y >= q[2] && y <= q[3]);
+      if (inn) { At += h * h; if (x < 0) { Al += h * h; Sx += -x * h * h; } }
+    }
+    return { At, Al, zc: Al ? Sx / Al : 0 };
+  };
+  const demand = (E) => { // fuerza de compresión que debe tomar el área efectiva (EN 1993-1-8 Tabla 6.7, simplificada)
+    if (Pu > 0 && Mu === 0) return { C: Pu, A: E.At, txt: 'P<sub>u</sub> (compresión centrada: toda el área efectiva)' };
+    const zc = E.zc || d / 2, ev = Pu > 0 ? Mu / Pu : Infinity;
+    if (Pu > 0 && ev <= zc) return { C: Pu / 2 + Mu / (2 * zc), A: E.Al, txt: 'P<sub>u</sub>/2 + M<sub>u</sub>/(2·z<sub>c</sub>)  (ambos lados comprimidos)' };
+    const C = (Pu * f + Mu) / (zc + f);
+    return { C: max(0, C), A: E.Al, txt: '(P<sub>u</sub>·f + M<sub>u</sub>) / (z<sub>c</sub> + f)  (lado traccionado en los anclajes)' };
+  };
+  const altM = meth => {
+    const fj = meth === 'ec3' ? fjdE : fpmax, kf = cFac(meth, Fy, fj);
+    let lo = 0.5, hi = 200; const cap = t => { const E = effCol(t * kf), D = demand(E); return { E, D, ok: fj * D.A >= D.C }; };
+    if (Pu <= 0 && demand(effCol(0)).C <= 0) return { fj, kf, tC: 0, none: true };
+    if (!cap(hi).ok) return { fj, kf, tC: NaN };
+    for (let i = 0; i < 30; i++) { const mid = (lo + hi) / 2; if (cap(mid).ok) hi = mid; else lo = mid; }
+    return { fj, kf, tC: hi, at: tAdopt ? cap(tAdopt) : null };
+  };
+  const ALT = { dg1: { t: tReqD, tC: tReqC }, hyb: altM('hyb'), ec3: altM('ec3') };
+  ['hyb', 'ec3'].forEach(k => { ALT[k].t = isFinite(ALT[k].tC) ? max(ALT[k].tC, tReqT) : NaN; });
+  const eqs3b = [{ note: 'La placa no reparte la presión en toda su superficie: sólo trabaja una franja de ancho <b>c</b> alrededor de las paredes/alas de la columna (puntos fijos). c es el voladizo que la placa resiste con la presión de diseño. La flexión por la tracción de los anclajes se toma igual que en DG1.' }];
+  for (const k of ['hyb', 'ec3']) {
+    const a = ALT[k];
+    eqs3b.push({ ref: METH[k].n });
+    eqs3b.push({ l: k === 'ec3' ? 'f<sub>jd</sub>' : 'f<sub>p,máx</sub>', f: k === 'ec3' ? 'β<sub>j</sub> · (f′<sub>c</sub>/γ<sub>c</sub>) · √(A₂/A₁)   (β<sub>j</sub> = 2/3; γ<sub>c</sub> = 1,5; √ ≤ 3)' : 'φ<sub>c</sub> · 0,85 · f′<sub>c</sub> · √(A₂/A₁)', s: k === 'ec3' ? `0,667 · (${n1(fc)}/1,5) · ${n2(min(max(k2, 1), 3))}` : '', r: `${n2(a.fj)} MPa` });
+    eqs3b.push({ l: 'c', f: k === 'ec3' ? 't · √[F<sub>y</sub> / (3 · f<sub>jd</sub>)]' : 't · √[0,9 · F<sub>y</sub> / (2 · f<sub>p,máx</sub>)]', s: tAdopt ? `${n1(tAdopt)} · ${n3(a.kf)}` : `${n3(a.kf)} · t`, r: tAdopt ? `${n1(tAdopt * a.kf)} mm` : `${n3(a.kf)}·t` });
+    if (a.none) { eqs3b.push({ note: 'No hay compresión sobre el hormigón: gobierna la tracción.' }); continue; }
+    if (a.at) {
+      const E = a.at.E, D = a.at.D;
+      eqs3b.push({ l: 'A<sub>eff</sub>', f: typ === 'C' ? 'anillo de ancho t + 2c bajo la pared del tubo, recortado a la placa' : 'unión de rectángulos (pared/ala + 2c), recortada a la placa', s: `total ${n0(E.At)} mm² · lado comprimido ${n0(E.Al)} mm² · z<sub>c</sub> = ${n0(E.zc)} mm`, r: `${n0(D.A)} mm² activos` });
+      eqs3b.push({ l: 'C<sub>u</sub>', f: D.txt, s: '', r: `${n1(D.C / 1e3)} kN` });
+      eqs3b.push({ l: 'C<sub>u</sub> ≤ f · A<sub>eff</sub>', f: '', s: `${n1(D.C / 1e3)} ≤ ${n2(a.fj)} · ${n0(D.A)} / 1000`, r: `${n1(a.fj * D.A / 1e3)} kN → ${a.at.ok ? 'verifica' : 'NO verifica'}`, ok: a.at.ok });
+    }
+    eqs3b.push({ l: 't<sub>req</sub>', f: 'máx(t para C<sub>u</sub> = f·A<sub>eff</sub>(t) ; t<sub>req</sub> tracción DG1)', s: `máx(${n1(a.tC)} ; ${n1(tReqT)})`, r: isFinite(a.t) ? `${n1(a.t)} mm` : 'no alcanza: agrandar la placa' });
+  }
+  R.steps.push({ id: 'tpalt', t: 'Espesor de la placa — área efectiva', sub: 'Híbrido AISC / EN 1993-1-8 §6.2.5 (T equivalente en compresión)', eqs: eqs3b });
+  const sel = v.pm || 'dg1', tReq = ALT[sel].t;
+  R.tReq = tReq; R.m = m; R.n = n; R.lamn = lamn; R.x = x; R.beff = beff; R.ALT = ALT; R.sel = sel; R.fjdE = fjdE;
+  R.steps.push(compareStep(ALT, sel, tAdopt));
+  if (tAdopt) R.checks.push({ n: `Espesor de placa — ${METH[sel].n}`, u: tReq / tAdopt, d: `${n1(tReq)} / ${n1(tAdopt)} mm`, step: 'cmp' });
+  else R.checks.push({ n: `Espesor de placa requerido — ${METH[sel].n}`, u: NaN, d: `t<sub>req</sub> = ${n1(tReq)} mm`, step: 'cmp', info: true });
+  /* ---- franjas para el gráfico ---- */
+  const tE = tAdopt || (isFinite(tReq) ? tReq : 20), EI = 200000 * tE ** 3 / 12;
+  const mL = typ === 'C' ? 0.4 * d : 0.475 * d, nL = typ === 'W' ? 0.4 * bf : typ === 'R' ? 0.475 * bf : 0.4 * d;
+  const mk = dir => {
+    const L = dir === 'N' ? N : B, half = L / 2;
+    const anch = [];
+    if (dir === 'N') {
+      if (Tu > 0) anch.push({ x: half + f, P: -Tu / max(beff, 1) });
+      if (R.tensionRows === 2 && R.Tc > 0) anch.push({ x: half - f, P: -R.Tc / max(beff, 1) });
+    }
+    if (sel === 'dg1') {
+      const sup = dir === 'N' ? [[half - mL, half + mL]] : [[half - nL, half + nL]];
+      const dl = [];
+      if (Pu > 0 && fp > 0) dl.push(dir === 'N' ? { a: 0, b: min(Y, N), w: fp } : { a: 0, b: B, w: fp });
+      return { sol: stripSolve(L, sup, dl, dir === 'N' ? anch : [], EI), supLbl: dir === 'N' ? (typ === 'C' ? 'línea crítica 0,8·D' : 'línea crítica 0,95·d') : (typ === 'W' ? 'línea crítica 0,8·b<sub>f</sub>' : typ === 'R' ? 'línea crítica 0,95·b' : 'línea crítica 0,8·D') };
+    }
+    const a = ALT[sel], c = (tAdopt || a.tC || 20) * a.kf;
+    let walls;
+    if (typ === 'C') walls = [[half - d / 2, half - d / 2 + tf], [half + d / 2 - tf, half + d / 2]];
+    else if (dir === 'N') walls = [[half - d / 2, half - d / 2 + tf], [half + d / 2 - tf, half + d / 2]];
+    else walls = typ === 'W' ? [[half - bf / 2, half + bf / 2]] : [[half - bf / 2, half - bf / 2 + tf], [half + bf / 2 - tf, half + bf / 2]];
+    let D = null; if (a.at) D = a.at.D;
+    const C = D ? D.C : 0, Aact = D ? D.A : 1, w = C > 0 ? C / Aact : 0;
+    const dl = [];
+    walls.forEach(([p0, p1], i) => {
+      const comp = (Pu > 0 && Mu === 0) || dir === 'B' || (p1 <= half + 1e-6) || (Pu > 0 && Mu / Pu <= (D ? (a.at.E.zc || d / 2) : d / 2));
+      if (w > 0 && comp) dl.push({ a: p0 - c, b: p1 + c, w });
+    });
+    return { sol: stripSolve(L, walls, dl, dir === 'N' ? anch : [], EI), supLbl: 'pared / ala de la columna', c };
+  };
+  R.mech = { N: mk('N'), B: mk('B'), t: tE };
 
   /* ---- 4. Anclajes a tracción ---- */
   const hef = v.hef;
@@ -558,6 +722,137 @@ function calc(v) {
   return R;
 }
 
+
+
+function compareStep(ALT, sel, tA) {
+  const eqs = [{ note: 'Los tres métodos se calculan siempre; el elegido en la pestaña <b>Placa</b> es el que entra en el resumen.' }];
+  for (const k of ['dg1', 'hyb', 'ec3']) {
+    const a = ALT[k]; if (!a) continue;
+    const okk = tA && isFinite(a.t) ? tA >= a.t : undefined;
+    eqs.push({ l: (k === sel ? '▶ ' : '') + METH[k].n, f: METH[k].src, s: tA && isFinite(a.t) ? `aprovechamiento ${n0(a.t / tA * 100)} % con t<sub>p</sub> = ${n1(tA)} mm` : '', r: isFinite(a.t) ? `t<sub>req</sub> = ${n1(a.t)} mm${k === sel ? '  (MÉTODO ELEGIDO)' : ''}` : 'no alcanza', ok: k === sel ? okk : undefined });
+  }
+  return { id: 'cmp', t: 'Comparación de métodos de espesor', sub: 'AISC DG1 · área efectiva híbrida · EN 1993-1-8', eqs };
+}
+
+/* ===================== Modo contraplaca (placa de apoyo cargada por barras) ===================== */
+function pGeom(v) {
+  const rows = String(v.pRows).split(/[;,\s]+/).map(Number).filter(x => isFinite(x) && x > 0 && x < v.N);
+  const nB = +v.nrow, g = nB > 1 ? v.g : 0;
+  const xs = Array.from({ length: nB }, (_, i) => v.B / 2 - g / 2 + (nB > 1 ? i * g / (nB - 1) : 0));
+  return { rows, xs };
+}
+// área efectiva: unión de cuadrados (Dw + 2c) centrados en cada barra, recortada a la placa.
+// Como todas las filas tienen barras en las mismas posiciones x, la unión es (unión de intervalos en y) × (unión de intervalos en x): cálculo exacto.
+function unionLen(cs, half, L) {
+  const iv = cs.map(c => [Math.max(0, c - half), Math.min(L, c + half)]).filter(a => a[1] > a[0]).sort((a, b) => a[0] - b[0]);
+  let tot = 0, cur = null;
+  for (const [a, b] of iv) { if (!cur || a > cur[1]) { if (cur) tot += cur[1] - cur[0]; cur = [a, b]; } else cur[1] = Math.max(cur[1], b); }
+  if (cur) tot += cur[1] - cur[0];
+  return tot;
+}
+function effArea(v, rows, xs, c) { const half = v.Dw / 2 + c; return unionLen(rows, half, v.N) * unionLen(xs, half, v.B); }
+function calcP(v) {
+  const R = { steps: [], checks: [], warns: [], mode: 'P' };
+  const { N, B, Fy, fc, phic } = v;
+  const { rows, xs } = pGeom(v); R.rows = rows; R.xs = xs;
+  const mat = MAT[v.mat], da = +v.da, pitch = (DIAS.find(x => x[0] === da) || [0, 2.5])[1];
+  const Ag = PI * da * da / 4, Ase = v.thr === '1' ? PI / 4 * (da - 0.9382 * pitch) ** 2 : Ag;
+  const nb = rows.length * xs.length;
+  const Pbar = Ase * mat.fy;
+  const Pu = v.pAuto === '1' ? nb * Pbar : Math.max(0, v.Pu * 1e3);
+  R.Pu = Pu; R.nb = nb;
+  if (!rows.length) R.warns.push('Cargar al menos una fila de barras (posición en mm desde el borde superior).');
+  // 1. aplastamiento
+  const A1 = B * N, k2 = Math.min(v.N2 / N, v.B2 / B), A2 = Math.max(A1, A1 * k2 * k2), ratio = Math.min(Math.sqrt(A2 / A1), 2);
+  const fpmax = phic * 0.85 * fc * ratio;
+  R.fpmax = fpmax; R.ratio = ratio; R.A1 = A1;
+  R.steps.push({ id: 'geo', t: 'Área de apoyo y resistencia al aplastamiento', sub: 'DG1 §3.1.1 · AISC 360 J8 · cara del hormigón donde apoya la placa', eqs: [
+    { l: 'A<sub>1</sub>', f: 'B · N', s: `${n0(B)} · ${n0(N)}`, r: `${n0(A1)} mm²` },
+    { l: 'A<sub>2</sub>', f: 'cara de hormigón geométricamente semejante a A<sub>1</sub>', s: `k = mín(N₂/N; B₂/B) = ${n2(k2)}`, r: `${n0(A2)} mm²` },
+    { l: 'f<sub>p,máx</sub>', f: 'φ<sub>c</sub> · 0,85 · f′<sub>c</sub> · √(A<sub>2</sub>/A<sub>1</sub>)', s: `${n2(phic)} · 0,85 · ${n1(fc)} · ${n2(ratio)}`, r: `${n2(fpmax)} MPa` }
+  ]});
+  // 2. carga
+  const eq2 = [
+    { l: 'n<sub>barras</sub>', f: 'filas × barras por fila', s: `${rows.length} × ${xs.length}`, r: `${nb}` },
+    { l: 'A<sub>se</sub>', f: v.thr === '1' ? 'π/4 · (d<sub>a</sub> − 0,9382·p)²  (área resistente de la rosca)' : 'π·d<sub>a</sub>²/4', s: v.thr === '1' ? `π/4 · (${n2(da)} − 0,9382 · ${n3(pitch)})²` : `π · ${n2(da)}² / 4`, r: `${n0(Ase)} mm²` },
+    { l: 'P<sub>y,barra</sub>', f: 'A<sub>se</sub> · f<sub>ya</sub>   (' + mat.n + ')', s: `${n0(Ase)} · ${mat.fy}`, r: `${n1(Pbar / 1e3)} kN` },
+    { l: 'P<sub>u</sub>', f: v.pAuto === '1' ? 'n<sub>barras</sub> · P<sub>y,barra</sub>   (diseño por capacidad: las barras llegan a fluencia)' : 'carga ingresada', s: v.pAuto === '1' ? `${nb} · ${n1(Pbar / 1e3)}` : '', r: `${n1(Pu / 1e3)} kN` }
+  ];
+  R.steps.push({ id: 'carga', t: 'Carga de compresión sobre la placa', sub: 'Σ de las fuerzas de fluencia de las barras que la atraviesan', eqs: eq2 });
+  // 3. presión media
+  const fp = Pu / A1;
+  R.steps.push({ id: 'media', t: 'Presión media de contacto (placa infinitamente rígida)', sub: 'Cota inferior: sólo vale si la placa es lo bastante gruesa para repartir la carga en toda su superficie', eqs: [
+    { l: 'f<sub>p</sub>', f: 'P<sub>u</sub> / A<sub>1</sub> ≤ f<sub>p,máx</sub>', s: `${n0(Pu)} / ${n0(A1)}`, r: `${n2(fp)} MPa ≤ ${n2(fpmax)} → ${fp <= fpmax ? 'verifica' : 'NO verifica'}`, ok: fp <= fpmax }
+  ]});
+  R.checks.push({ n: 'Aplastamiento medio del hormigón', u: fp / fpmax, d: `${n2(fp)} / ${n2(fpmax)} MPa`, step: 'media' });
+  // 4. espesor por los tres métodos
+  const tA = v.tp > 0 ? v.tp : 0;
+  const fjdE = (2 / 3) * (fc / 1.5) * Math.min(Math.max(k2, 1), 3);
+  // DG1: presión uniforme f_p, franjas en N (filas) y B (barras) con voladizos y tramos empotrados entre arandelas
+  const wsN = rows.map(r => [r - v.Dw / 2, r + v.Dw / 2]), wsB = xs.map(x => [x - v.Dw / 2, x + v.Dw / 2]);
+  const sN = stripSolve(N, wsN, [{ a: 0, b: N, w: fp }], [], 1), sB = stripSolve(B, wsB, [{ a: 0, b: B, w: fp }], [], 1);
+  const Mdg = Math.max(sN.Mmax, sB.Mmax), tDG = Math.sqrt(4 * Mdg / (0.9 * Fy));
+  const segTxt = (sol, lbl) => sol.segs.map(g => `${g.type === 'span' ? 'tramo' : 'voladizo'} ${n0(g.len)} mm → ${n2(g.Mmax / 1e3)} kN·m/m`).join(' · ');
+  const eqD = [
+    { note: 'DG1 supone presión uniforme f<sub>p</sub> = P<sub>u</sub>/A<sub>1</sub> en toda la placa. Los puntos fijos son las arandelas; entre ellas la placa trabaja como tramo empotrado-empotrado (M = f<sub>p</sub>·s²/12) y hacia los bordes como voladizo (M = f<sub>p</sub>·c²/2).' },
+    { l: 'M<sub>u</sub> franja N', f: 'máx. de voladizos y tramos', s: segTxt(sN), r: `${n2(sN.Mmax / 1e3)} kN·m/m` },
+    { l: 'M<sub>u</sub> franja B', f: 'máx. de voladizos y tramos', s: segTxt(sB), r: `${n2(sB.Mmax / 1e3)} kN·m/m` },
+    { l: 't<sub>req</sub>', f: '√[4 · M<sub>u</sub> / (φ · F<sub>y</sub>)]   (φ = 0,90)', s: `√[4 · ${n0(Mdg)} / (0,9 · ${n0(Fy)})]`, r: `${n1(tDG)} mm` }
+  ];
+  R.steps.push({ id: 'tp', t: 'Espesor de la placa — AISC DG1', sub: 'Presión uniforme · voladizos y tramos entre arandelas (puntos fijos)', eqs: eqD });
+  const alt = meth => {
+    const fj = meth === 'ec3' ? fjdE : fpmax, kf = cFac(meth, Fy, fj);
+    let lo = 0.5, hi = 200;
+    if (fj * A1 < Pu) return { fj, kf, t: NaN, tC: NaN };
+    for (let i = 0; i < 40; i++) { const mid = (lo + hi) / 2; if (fj * effArea(v, rows, xs, mid * kf) >= Pu) hi = mid; else lo = mid; }
+    const at = tA ? { A: effArea(v, rows, xs, tA * kf) } : null;
+    return { fj, kf, t: hi, tC: hi, at };
+  };
+  const ALT = { dg1: { t: tDG, tC: tDG }, hyb: alt('hyb'), ec3: alt('ec3') };
+  const eqE = [{ note: 'Con placa flexible sólo trabaja una franja de ancho <b>c</b> alrededor de cada arandela (punto fijo); más allá la placa se despega del hormigón.' }];
+  for (const k of ['hyb', 'ec3']) {
+    const a = ALT[k];
+    eqE.push({ ref: METH[k].n });
+    eqE.push({ l: k === 'ec3' ? 'f<sub>jd</sub>' : 'f<sub>p,máx</sub>', f: k === 'ec3' ? 'β<sub>j</sub> · (f′<sub>c</sub>/γ<sub>c</sub>) · √(A₂/A₁)   (β<sub>j</sub> = 2/3; γ<sub>c</sub> = 1,5)' : 'φ<sub>c</sub> · 0,85 · f′<sub>c</sub> · √(A₂/A₁)', s: k === 'ec3' ? `0,667 · (${n1(fc)}/1,5) · ${n2(Math.min(Math.max(k2, 1), 3))}` : '', r: `${n2(a.fj)} MPa` });
+    eqE.push({ l: 'c', f: k === 'ec3' ? 't · √[F<sub>y</sub> / (3 · f<sub>jd</sub>)]   (γ<sub>M0</sub> = 1)' : 't · √[0,9 · F<sub>y</sub> / (2 · f<sub>p,máx</sub>)]', s: tA ? `${n1(tA)} · ${n3(a.kf)}` : `${n3(a.kf)} · t`, r: tA ? `${n1(tA * a.kf)} mm` : '' });
+    if (a.at) {
+      const okA = a.fj * a.at.A >= Pu;
+      eqE.push({ l: 'A<sub>eff</sub>', f: 'unión de cuadrados (D<sub>w</sub> + 2c) por barra, recortada a la placa', s: `D<sub>w</sub> + 2c = ${n1(v.Dw + 2 * tA * a.kf)} mm`, r: `${n0(a.at.A)} mm² (${n0(a.at.A / A1 * 100)} % de la placa)` });
+      eqE.push({ l: 'P<sub>u</sub> ≤ f · A<sub>eff</sub>', f: '', s: `${n1(Pu / 1e3)} ≤ ${n2(a.fj)} · ${n0(a.at.A)} / 1000`, r: `${n1(a.fj * a.at.A / 1e3)} kN → ${okA ? 'verifica' : 'NO verifica'}`, ok: okA });
+    }
+    eqE.push({ l: 't<sub>req</sub>', f: 'mínimo t con f · A<sub>eff</sub>(t) = P<sub>u</sub>', s: 'resuelto por iteración', r: isFinite(a.t) ? `${n1(a.t)} mm` : 'no alcanza ni con la placa completa' });
+  }
+  R.steps.push({ id: 'tpalt', t: 'Espesor de la placa — área efectiva', sub: 'Híbrido AISC / EN 1993-1-8 §6.2.5', eqs: eqE });
+  const sel = v.pm || 'dg1', tReq = ALT[sel].t;
+  R.steps.push(compareStep(ALT, sel, tA));
+  if (tA) R.checks.push({ n: `Espesor de placa — ${METH[sel].n}`, u: tReq / tA, d: `${n1(tReq)} / ${n1(tA)} mm`, step: 'cmp' });
+  else R.checks.push({ n: `Espesor de placa requerido — ${METH[sel].n}`, u: NaN, d: `t<sub>req</sub> = ${n1(tReq)} mm`, step: 'cmp', info: true });
+  const kcs = sel === 'dg1' ? 0 : ALT[sel].kf, cA = sel === 'dg1' ? 0 : (tA || tReq || 20) * kcs;
+  const Aeff = sel === 'dg1' ? A1 : effArea(v, rows, xs, cA);
+  R.cA = cA; R.Aeff = Aeff; R.tReq = tReq; R.Y = N; R.q = fp * B; R.Tu = 0; R.ALT = ALT; R.sel = sel;
+  R.caseName = sel === 'dg1' ? 'Contraplaca · presión uniforme' : 'Contraplaca · área efectiva';
+  // franjas para el gráfico
+  const tE = tA || (isFinite(tReq) ? tReq : 20), EI = 200000 * tE ** 3 / 12;
+  const mkP = dir => {
+    const L = dir === 'N' ? N : B, ws = dir === 'N' ? wsN : wsB;
+    if (sel === 'dg1') return { sol: stripSolve(L, ws, [{ a: 0, b: L, w: fp }], [], EI), supLbl: 'arandela / tuerca' };
+    const w = Pu / Aeff, dl = ws.map(([a, b]) => ({ a: a - cA, b: b + cA, w }));
+    // unir zonas superpuestas para no duplicar presión
+    const mg = []; dl.sort((p, q) => p.a - q.a).forEach(z => { const l = mg[mg.length - 1]; if (l && z.a <= l.b) l.b = Math.max(l.b, z.b); else mg.push({ ...z }); });
+    return { sol: stripSolve(L, ws, mg, [], EI), supLbl: 'arandela / tuerca', c: cA };
+  };
+  R.mech = { N: mkP('N'), B: mkP('B'), t: tE };
+  // 5. barras (informativo)
+  R.steps.push({ id: 'det', t: 'Notas', sub: '', eqs: [
+    { note: 'Las barras pasantes, sus anclajes y el corte no se verifican en este modo: la placa sólo transmite compresión al hormigón.' },
+    { note: 'El aplastamiento usa la cara de hormigón (N₂ × B₂) donde apoya la placa. Si la placa ocupa todo el ancho de la columna, √(A₂/A₁) = 1.' },
+    { note: 'Con varias placas en la misma cara, verificar también que sus áreas A₂ no se superpongan.' }
+  ]});
+  R.ok = R.checks.every(c => c.info || !(c.u > 1.0001));
+  R.geom = { f: 0, s: 0, Ase, Ag, futa: mat.fu, pitch };
+  return R;
+}
+
 /* ===================== Render ===================== */
 function run() {
   const v = getVals();
@@ -569,22 +864,30 @@ function run() {
   $('lbf').innerHTML = t === 'R' ? 'b ancho del tubo<small>mm (dirección B)</small>' : 'b<sub>f</sub> ancho de ala<small>mm (dirección B)</small>';
   $('ltf').innerHTML = t === 'W' ? 't<sub>f</sub> espesor de ala<small>mm</small>' : 't espesor de pared<small>mm</small>';
   $('fehook').style.display = v.atype === 'J' ? '' : 'none';
+  const isP = t === 'P';
+  $('fP').style.display = isP ? '' : 'none'; ['fd', 'fbf', 'ftf'].forEach(id => $(id).style.display = isP ? 'none' : (id === 'fbf' && t === 'C' ? 'none' : ''));
+  if (isP) { $('fW').style.display = 'none'; $('ftw').style.display = 'none'; }
   const R = calc(v);
-  $('layoutNote').innerHTML = `${2 * +v.nrow} anclajes · f = ${n0(R.geom.f)} mm · s = ${n0(R.geom.s)} mm · bordes del pedestal: c<sub>N</sub> = ${n0(R.edge.cN)} mm, c<sub>B</sub> = ${n0(R.edge.cB)} mm`;
-  drawPlan(v, R); drawElev(v, R); renderDash(v, R); renderSteps(R);
+  $('layoutNote').innerHTML = R.mode === 'P' ? `${R.nb} barras (${R.rows.length} filas × ${+v.nrow}) · g = ${n0(v.g)} mm` : `${2 * +v.nrow} anclajes · f = ${n0(R.geom.f)} mm · s = ${n0(R.geom.s)} mm · bordes del pedestal: c<sub>N</sub> = ${n0(R.edge.cN)} mm, c<sub>B</sub> = ${n0(R.edge.cB)} mm`;
+  if (R.mode === 'P') { drawPlanP(v, R); drawElevP(v, R); } else { drawPlan(v, R); drawElev(v, R); }
+  document.querySelectorAll('.grid2 .fig h2 .tg, .grid2 .fig .legend').forEach(el => el.style.display = R.mode === 'P' ? 'none' : '');
+  drawMech(v, R);
+  $('pmHint').innerHTML = METH[v.pm || 'dg1'].src; renderDash(v, R); renderSteps(R);
   const vd = $('verdict'); vd.className = 'verdict ' + (R.ok ? 'ok' : 'bad'); vd.textContent = R.ok ? '✔ VERIFICA' : '✘ NO VERIFICA';
 }
 
 function color(u) { return !isFinite(u) ? 'var(--muted)' : u <= 0.7 ? 'var(--ok)' : u <= 1 ? '#ca8a04' : 'var(--bad)'; }
 function renderDash(v, R) {
-  $('kpis').innerHTML = [
+  $('kpis').innerHTML = (R.mode === 'P' ? [
+    ['Caso', R.caseName], ['P<sub>u</sub> (Σ fluencia)', `${n0(R.Pu / 1e3)} kN`], ['Barras', `${R.nb}`], ['t<sub>p</sub> req. (' + METH[R.sel].n + ')', `${n1(R.tReq)} mm`], ['c efectivo', R.cA ? `${n0(R.cA)} mm` : '—'], ['f<sub>p,máx</sub>', `${n2(R.fpmax)} MPa`]
+  ] : [
     ['Caso', R.caseName],
-    ['t<sub>p</sub> requerido', `${n1(R.tReq)} mm`],
+    ['t<sub>p</sub> req. (' + METH[R.sel].n + ')', `${n1(R.tReq)} mm`],
     ['Y (apoyo)', R.Y ? `${n0(R.Y)} mm` : '—'],
     ['T<sub>u</sub> fila', `${n1(R.Tu / 1e3)} kN`],
     ['f<sub>p,máx</sub>', `${n2(R.fpmax)} MPa`],
     ['√(A₂/A₁)', n2(R.ratio)]
-  ].map(([a, b]) => `<div class="kpi"><span>${a}</span><b style="font-size:${b.length > 14 ? 13 : 18}px">${b}</b></div>`).join('') + (R.warns.length ? `<div class="warnbox" style="grid-column:1/-1">${R.warns.join('<br>')}</div>` : '');
+  ]).map(([a, b]) => `<div class="kpi"><span>${a}</span><b style="font-size:${b.length > 14 ? 13 : 18}px">${b}</b></div>`).join('') + (R.warns.length ? `<div class="warnbox" style="grid-column:1/-1">${R.warns.join('<br>')}</div>` : '');
   $('checks').innerHTML = R.checks.map(c => {
     const u = c.u, cls = c.info ? 'na' : u <= 1.0001 ? 'ok' : 'bad';
     const w = isFinite(u) ? min(u, 1.2) / 1.2 * 100 : 0;
@@ -606,6 +909,124 @@ function renderSteps(R) {
     const open = first ? (i < 3) : openIds.has('st-' + s.id);
     return `<details class="step" id="st-${s.id}" ${open ? 'open' : ''}><summary><span class="num">${i + 1}</span><span class="tt">${s.t}<small>${s.sub || ''}</small></span><span class="st">${tag}</span></summary><div class="body">${body}</div></details>`;
   }).join('');
+}
+
+
+function drawPlanP(v, R) {
+  const W = 520, H = 520, pad = 60;
+  const sc = Math.min((W - 2 * pad) / v.B, (H - 2 * pad) / v.N);
+  const ox = W / 2 - v.B * sc / 2, oy = H / 2 - v.N * sc / 2;
+  const X = x => ox + x * sc, Y = y => oy + y * sc;
+  let s = `<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>`;
+  s += `<rect x="${X(0)}" y="${Y(0)}" width="${v.B * sc}" height="${v.N * sc}" fill="var(--plate)" fill-opacity=".18" stroke="var(--plate)" stroke-width="2"/>`;
+  if (R.cA) {
+    const half = v.Dw / 2 + R.cA;
+    // área efectiva: rectángulos por fila × columna (unión visual)
+    R.rows.forEach(r => R.xs.forEach(x => {
+      const x0 = Math.max(0, x - half), x1 = Math.min(v.B, x + half), y0 = Math.max(0, r - half), y1 = Math.min(v.N, r + half);
+      s += `<rect x="${X(x0)}" y="${Y(y0)}" width="${(x1 - x0) * sc}" height="${(y1 - y0) * sc}" fill="var(--press)" opacity=".28"/>`;
+    }));
+  }
+  R.rows.forEach(r => R.xs.forEach(x => {
+    s += `<rect x="${X(x - v.Dw / 2)}" y="${Y(r - v.Dw / 2)}" width="${v.Dw * sc}" height="${v.Dw * sc}" fill="none" stroke="var(--anchor)" stroke-width="1.2"/>`;
+    s += `<circle cx="${X(x)}" cy="${Y(r)}" r="${Math.max(3, v.da / 2 * sc)}" fill="var(--tens)"/>`;
+  }));
+  const dim = (x1, y1, x2, y2, txt, vert) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--muted)" marker-start="url(#arr)" marker-end="url(#arr)"/><text x="${(x1 + x2) / 2 + (vert ? -6 : 0)}" y="${(y1 + y2) / 2 + (vert ? 0 : -5)}" font-size="11.5" text-anchor="middle" ${vert ? `transform="rotate(-90 ${(x1 + x2) / 2 - 6} ${(y1 + y2) / 2})"` : ''} style="fill:var(--muted)">${txt}</text>`;
+  s += dim(X(0), Y(0) - 16, X(v.B), Y(0) - 16, `B = ${n0(v.B)}`);
+  s += dim(X(0) - 18, Y(0), X(0) - 18, Y(v.N), `N = ${n0(v.N)}`, true);
+  let prev = 0; R.rows.slice().sort((a, b) => a - b).forEach(r => { s += dim(X(v.B) + 16, Y(prev), X(v.B) + 16, Y(r), n0(r - prev), true); prev = r; }); s += dim(X(v.B) + 16, Y(prev), X(v.B) + 16, Y(v.N), n0(v.N - prev), true);
+  if (R.cA) s += `<text x="${W / 2}" y="${H - 12}" text-anchor="middle" font-size="12" style="fill:var(--press);font-weight:700">Área efectiva (naranja): c = ${n0(R.cA)} mm alrededor de cada arandela · ${n0(R.Aeff / R.A1 * 100)} % de la placa</text>`;
+  $('plan').innerHTML = s;
+}
+function drawElevP(v, R) {
+  const W = 520, H = 420;
+  const sc = Math.min(300 / v.N, 1.2), cy = H / 2;
+  const top = cy - v.N * sc / 2, xP = 250, tp = Math.max(8, (v.tp || R.tReq || 19) * sc * 1.6);
+  let s = `<defs><marker id="arrT" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--tens)"/></marker><marker id="arrP" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--press)"/></marker>
+   <pattern id="hatch3" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="var(--conc)" stroke-width="1"/></pattern></defs>`;
+  s += `<rect x="${xP + tp}" y="20" width="${W - xP - tp - 20}" height="${H - 40}" fill="var(--conc2)" stroke="var(--conc)" stroke-width="2"/><rect x="${xP + tp}" y="20" width="${W - xP - tp - 20}" height="${H - 40}" fill="url(#hatch3)" opacity=".5"/>`;
+  s += `<text x="${(xP + tp + W - 20) / 2}" y="40" text-anchor="middle" font-size="12" style="fill:var(--muted)">Hormigón (columna)</text>`;
+  s += `<rect x="${xP}" y="${top}" width="${tp}" height="${v.N * sc}" fill="var(--plate)" stroke="#1d4ed8"/>`;
+  s += `<text x="${xP + tp / 2}" y="${top - 8}" text-anchor="middle" font-size="11.5" style="fill:var(--plate)">t = ${v.tp ? n1(v.tp) : n1(R.tReq)} mm</text>`;
+  R.rows.forEach(r => {
+    const y = top + r * sc;
+    s += `<line x1="${xP - 30}" y1="${y}" x2="${W - 20}" y2="${y}" stroke="var(--tens)" stroke-width="${Math.max(2.5, v.da * sc * 0.6)}"/>`;
+    s += `<rect x="${xP - 14}" y="${y - 9}" width="14" height="18" fill="var(--anchor)"/>`;
+    s += `<line x1="${xP - 80}" y1="${y}" x2="${xP - 18}" y2="${y}" stroke="var(--tens)" stroke-width="2.5" marker-end="url(#arrT)"/>`;
+  });
+  s += `<text x="20" y="${top - 10}" font-size="12" style="fill:var(--tens);font-weight:700">Tuercas: Σ = ${n0(R.Pu / 1e3)} kN</text>`;
+  // presión en la franja efectiva
+  const half = v.Dw / 2 + (R.cA || 0);
+  R.rows.forEach(r => {
+    const y0 = top + Math.max(0, r - half) * sc, y1 = top + Math.min(v.N, r + half) * sc;
+    s += `<rect x="${xP + tp}" y="${y0}" width="26" height="${y1 - y0}" fill="var(--press)" opacity=".45"/>`;
+    for (let k = 0; k <= 3; k++) { const yy = y0 + (y1 - y0) * k / 3; s += `<line x1="${xP + tp + 26}" y1="${yy}" x2="${xP + tp + 3}" y2="${yy}" stroke="var(--press)" marker-end="url(#arrP)"/>`; }
+  });
+  s += `<text x="${xP + tp + 34}" y="${top + v.N * sc + 22}" font-size="12" style="fill:var(--press);font-weight:700">f<tspan baseline-shift="sub" font-size="9">p,máx</tspan> = ${n2(R.fpmax)} MPa en el área efectiva</text>`;
+  $('elev').innerHTML = s;
+}
+
+
+function drawMech(v, R) {
+  const el = $('mech'); if (!R.mech) { el.innerHTML = ''; return; }
+  const dir = $('strip').value, M = R.mech[dir], sol = M.sol, W = 1000, H = 340, x0 = 60, x1 = W - 60;
+  const sx = (x1 - x0) / sol.L, X = x => x0 + x * sx, yP = 175, tPx = 12;
+  const tE = R.mech.t, phiMp = 0.9 * v.Fy * tE * tE / 4;
+  let s = `<defs><pattern id="hfix" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#334155" stroke-width="1.6"/></pattern>
+    <marker id="mP" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--press)"/></marker>
+    <marker id="mT" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--tens)"/></marker>
+    <marker id="mD" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>`;
+  // hormigón
+  s += `<rect x="${x0 - 20}" y="${yP + tPx + 52}" width="${x1 - x0 + 40}" height="40" fill="var(--conc2)" stroke="var(--conc)"/><text x="${x1 + 14}" y="${yP + tPx + 76}" text-anchor="end" font-size="12" style="fill:var(--muted)">hormigón</text>`;
+  // puntos fijos
+  sol.sups.forEach(([a, b]) => {
+    s += `<rect x="${X(a)}" y="${yP - 94}" width="${Math.max(3, (b - a) * sx)}" height="94" fill="url(#hfix)" stroke="#334155"/>`;
+    s += `<line x1="${X(a)}" y1="${yP}" x2="${X(a)}" y2="${yP + tPx}" stroke="#0ea5e9" stroke-width="2.5"/><line x1="${X(b)}" y1="${yP}" x2="${X(b)}" y2="${yP + tPx}" stroke="#0ea5e9" stroke-width="2.5"/>`;
+  });
+  if (sol.sups.length) { const [a, b] = sol.sups[0]; s += `<text x="${(X(a) + X(b)) / 2}" y="${yP - 100}" text-anchor="middle" font-size="12" style="fill:#334155;font-weight:600">PUNTO FIJO</text><text x="${(X(a) + X(b)) / 2}" y="${yP - 114}" text-anchor="middle" font-size="11" style="fill:var(--muted)">${M.supLbl}</text>`; }
+  // placa sin deformar
+  s += `<rect x="${X(0)}" y="${yP}" width="${sol.L * sx}" height="${tPx}" fill="var(--plate)" fill-opacity=".25" stroke="var(--plate)" stroke-dasharray="4 3"/>`;
+  // presiones
+  const wMax = Math.max(1e-9, ...sol.dl.map(d => d.w));
+  sol.dl.forEach(d => {
+    const a = Math.max(0, d.a), b = Math.min(sol.L, d.b); if (b <= a) return;
+    const hh = 18 + 30 * d.w / wMax, yb = yP + tPx + 4;
+    s += `<rect x="${X(a)}" y="${yb}" width="${(b - a) * sx}" height="${hh}" fill="var(--press)" opacity=".35"/>`;
+    const nA = Math.max(2, Math.round((b - a) * sx / 22));
+    for (let i = 0; i <= nA; i++) { const xx = X(a) + (b - a) * sx * i / nA; s += `<line x1="${xx}" y1="${yb + hh}" x2="${xx}" y2="${yb + 2}" stroke="var(--press)" stroke-width="1.3" marker-end="url(#mP)"/>`; }
+    s += `<text x="${(X(a) + X(b)) / 2}" y="${yb + hh + 13}" text-anchor="middle" font-size="11" style="fill:var(--press);font-weight:700">${n2(d.w)} MPa</text>`;
+  });
+  // zonas sin contacto
+  const cov = [...sol.dl].map(d => [Math.max(0, d.a), Math.min(sol.L, d.b)]).filter(z => z[1] > z[0]).sort((p, q) => p[0] - q[0]);
+  let c0 = 0; const gaps = []; cov.forEach(([a, b]) => { if (a > c0 + 1) gaps.push([c0, a]); c0 = Math.max(c0, b); }); if (c0 < sol.L - 1) gaps.push([c0, sol.L]);
+  if (sol.dl.length) gaps.forEach(([a, b]) => { if ((b - a) * sx > 40) s += `<text x="${(X(a) + X(b)) / 2}" y="${yP + tPx + 30}" text-anchor="middle" font-size="11" style="fill:var(--muted)">sin contacto</text>`; });
+  // anclajes
+  sol.pl.forEach(q => { s += `<line x1="${X(q.x)}" y1="${yP + tPx}" x2="${X(q.x)}" y2="${yP + tPx + 46}" stroke="var(--tens)" stroke-width="3" marker-end="url(#mT)"/><text x="${X(q.x) + 6}" y="${yP + tPx + 40}" font-size="11" style="fill:var(--tens);font-weight:700">T = ${n1(-q.P / 1e3 * 1000)} N/mm</text>`; });
+  // deformada
+  const vMax = Math.max(1e-12, ...sol.segs.map(g => Math.max(...g.V.map(Math.abs))));
+  const k = 38 / vMax;
+  let path = '';
+  const pts = [];
+  sol.sups.forEach(([a, b]) => pts.push([a, 0], [b, 0]));
+  sol.segs.forEach(g => g.X.forEach((xx, i) => pts.push([xx, g.V[i]])));
+  pts.sort((p, q) => p[0] - q[0]);
+  path = pts.map((p, i) => `${i ? 'L' : 'M'}${X(p[0]).toFixed(1)},${(yP + tPx / 2 - p[1] * k).toFixed(1)}`).join(' ');
+  s += `<path d="${path}" fill="none" stroke="var(--accent2)" stroke-width="3"/>`;
+  s += `<text x="${x0}" y="22" font-size="12" style="fill:var(--accent2);font-weight:600">Deformada (exagerada ×${n0(k)}) · δ<tspan baseline-shift="sub" font-size="9">máx</tspan> = ${n2(vMax)} mm (elástico, t = ${n1(tE)} mm)</text>`;
+  // momentos máximos y cotas de voladizos/tramos
+  let li = 0;
+  sol.segs.forEach(g => {
+    if (g.type === 'free') return;
+    const lyy = yP - 66 - (li++ % 2) * 14;
+    const u = g.Mmax / phiMp, xm = X(g.xM), ym = yP + tPx / 2;
+    s += `<circle cx="${xm}" cy="${ym}" r="${u >= 0.95 ? 7 : 4.5}" fill="${u >= 0.95 ? '#0ea5e9' : 'none'}" stroke="#0ea5e9" stroke-width="2"/>`;
+    s += `<line x1="${xm}" y1="${ym - 6}" x2="${xm}" y2="${lyy + 3}" stroke="#0ea5e9" stroke-width="1" stroke-dasharray="2 2"/><text x="${Math.min(Math.max(xm, 120), 880)}" y="${lyy}" text-anchor="middle" font-size="11" style="fill:#0284c7;font-weight:700;paint-order:stroke;stroke:var(--panel);stroke-width:5px">M = ${n2(g.Mmax / 1e3)} kN·m/m (${n0(u * 100)} %)${u >= 0.95 ? ' · rótula' : ''}</text>`;
+    const yd = H - 18;
+    s += `<line x1="${X(g.x0)}" y1="${yd}" x2="${X(g.x1)}" y2="${yd}" stroke="var(--muted)" marker-start="url(#mD)" marker-end="url(#mD)"/><text x="${(X(g.x0) + X(g.x1)) / 2}" y="${yd - 4}" text-anchor="middle" font-size="11" style="fill:var(--muted)">${g.type === 'span' ? 'tramo' : 'voladizo'} ${n0(g.len)}</text>`;
+  });
+  s += `<text x="${W / 2}" y="${H - 2}" text-anchor="middle" font-size="11" style="fill:var(--muted)">franja de 1 mm en dirección ${dir} · L = ${n0(sol.L)} mm · φM<tspan baseline-shift="sub" font-size="8">p</tspan> = 0,9·F<tspan baseline-shift="sub" font-size="8">y</tspan>·t²/4 = ${n2(phiMp / 1e3)} kN·m/m</text>`;
+  el.innerHTML = s;
+  $('mechNote').innerHTML = `<b>Método: ${METH[R.sel].n}</b> — ${METH[R.sel].src}. ${M.c ? `Ancho de la franja que trabaja alrededor de cada punto fijo: c = ${n1(M.c)} mm.` : ''} Los puntos fijos son el tramo rígido (columna o arandela); el círculo azul marca el momento máximo de cada voladizo o tramo y se rellena cuando llega a la rótula plástica (≥ 95 % de φM<sub>p</sub>).`;
 }
 
 /* ---------- Dibujo en planta ---------- */
