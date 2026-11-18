@@ -770,9 +770,9 @@ function g3Vista(v){if(typeof G3=='undefined'||!G3.r)return;G3V.cur=v;const m=A.
  if(v=='3d'){g3Cam(false);G3.grp.traverse(o=>{if(o.isMesh||o.isSprite)o.visible=true});g3View();document.querySelectorAll('#g3Vb button').forEach(b=>b.classList.toggle('on',b.dataset.v==v));return}
  // P(u,v): del plano de la vista (u hacia la derecha de la pantalla, v hacia arriba) al espacio
  const fr=[...Array(nb+1)].map((_,i)=>({p:i*s,lab:g3Let(i)})),lo=[{p:L,lab:'1'},{p:L/2,lab:'2'},{p:0,lab:'3'}],cvn=+d.cvN|0,wc=[...Array(cvn+2)].map((_,k)=>k*L/(cvn+1));
- let P,sl=null,uAx,vAx=null,lev=null,sub=null,U0,U1,V0,V1,dir,up=[0,1,0];
+ let P,sl=null,uAx,vAx=null,lev=null,sub=null,U0,U1,V0,V1,dir,up=[0,1,0],px=null;
  if(v=='pl'){P=(u,w)=>[u,HT+3,-w];uAx=fr.map(q=>({u:q.p,lab:q.lab}));vAx=lo.map(q=>({v:-q.p,lab:q.lab}));U0=0;U1=Lt;V0=-L;V1=0;dir=[0,1,0];up=[0,0,-1]}
- else if(v=='por'||v=='h1'||v=='hn'){const x0=v=='por'?xp:(v=='h1'?0:Lt),sg=v=='h1'?1:-1,wd=v=='por'?0.7:0.9;sl={ax:'x',lo:x0-wd,hi:x0+wd};P=(u,w)=>[x0-sg*2.5,w,sg*u];uAx=lo.map(q=>({u:sg*q.p,lab:q.lab}));lev=[0,H,HT];if(v!='por'&&cvn>0)sub=wc.map(z=>sg*z);U0=Math.min(0,sg*L);U1=Math.max(0,sg*L);V0=0;V1=HT;dir=[-sg,0,0]}
+ else if(v=='por'||v=='h1'||v=='hn'){const x0=v=='por'?xp:(v=='h1'?0:Lt),sg=v=='h1'?1:-1,wd=v=='por'?0.7:0.9;sl={ax:'x',lo:x0-wd,hi:x0+wd};P=(u,w)=>[x0-sg*2.5,w,sg*u];uAx=lo.map(q=>({u:sg*q.p,lab:q.lab}));lev=[0,H,HT];if(v!='por'&&cvn>0)sub=wc.map(z=>sg*z);U0=Math.min(0,sg*L);U1=Math.max(0,sg*L);V0=0;V1=HT;dir=[-sg,0,0];px=x0-sg*2.5}
  else{const z0=v=='lz'?L:0,sg=v=='lz'?1:-1;sl={ax:'z',lo:z0-1.2,hi:z0+1.2};P=(u,w)=>[sg*u,w,z0+sg*2.5];uAx=fr.map(q=>({u:sg*q.p,lab:q.lab}));lev=[0,H];U0=Math.min(0,sg*Lt);U1=Math.max(0,sg*Lt);V0=0;V1=H;dir=[0,0,sg]}
  uAx.sort((p,q)=>p.u-q.u);if(sub)sub.sort((p,q)=>p-q);
  // visibilidad: en el plano, o atravesándolo en sección
@@ -792,6 +792,12 @@ function g3Vista(v){if(typeof G3=='undefined'||!G3.r)return;G3V.cur=v;const m=A.
  if(vAx){vAx.sort((p,q)=>p.v-q.v);vAx.forEach((q,i)=>{ln(xB+0.8*mu,q.v,U1+0.8*mu,q.v,COL,r*0.7);g3Lbl(g,q.lab,P(xB,q.v),mu*1.5,{circ:1});ln(xC-0.25*mu,q.v-0.25*mu,xC+0.25*mu,q.v+0.25*mu,CD,r*1.3);
    g3Lbl(g,'+'+f(Math.abs(q.v-vAx[0].v),2),P(xP,q.v+0.6*th),th,{col:'#166534'});if(i){const p=vAx[i-1];g3Lbl(g,f(q.v-p.v,2),P(xC-0.6*th,(q.v+p.v)/2),th,{rot:Math.PI/2,col:'#1d4ed8'})}});ln(xC,vAx[0].v,xC,vAx[vAx.length-1].v,CD)}
  if(lev){ln(xC,lev[0],xC,lev[lev.length-1],CD);lev.forEach((y,i)=>{ln(xC-0.25*mu,y-0.25*mu,xC+0.25*mu,y+0.25*mu,CD,r*1.3);ln(xC,y,U0-0.4*mu,y,0x94a3b8,r*0.5);g3Lbl(g,'+'+f(y,2),P(xB+0.4*mu,y+0.55*th),th,{col:'#166534'});if(i)g3Lbl(g,f(y-lev[i-1],2),P(xC-0.6*th,(y+lev[i-1])/2),th,{rot:Math.PI/2,col:'#1d4ed8'})})}
+ // correas de techo y de pared en sección, con el espesor exagerado para que se vean en el plano
+ if(px!=null){const t2=m.th,cs2=Math.cos(t2),sn2=Math.sin(t2),cH=+d.coH/1000,cB=+d.coB/1000,cD=+d.coD/1000,sr=secData(d,'r'),sc=secData(d,'c'),kS=Math.max(1,0.011*W0/cH),off=sr.h/2000+cH*kS/2,slp=(L/2)/cs2,zt=y=>H+(y<=L/2?y:L-y)*Math.tan(t2),mt=new THREE.MeshBasicMaterial({color:0x1e3a8a});
+  const shT=shpC(cH*kS,cB*kS,cD*kS,cH*kS*0.13),tS=kS>1.05?' (símbolo ampliado × '+f(kS,1)+' para que se lea)':'';
+  for(let side=0;side<2;side++){const nr=[0,cs2,side?sn2:-sn2];for(const vv of CP(d,slp)){const dd=Math.min(vv,slp)*cs2,yy=side?L-dd:dd,y0=zt(yy)+off*nr[1],z0=yy+off*nr[2];g.add(g3Bar(shT,[px-0.2,y0,z0],[px+0.2,y0,z0],nr,mt,'<b>Correa de techo</b> en sección'+tS))}}
+  const pH=+d.pH/1000,shW=shpC(pH*kS,+d.pB/1000*kS,+d.pD/1000*kS,pH*kS*0.13),offp=(sc.var?(sc.h+sc.h1)/2:sc.h)/2000+pH*kS/2;
+  for(const [zz,sg2] of [[0,-1],[L,1]])for(const hh of wallLv(d,H).g)g.add(g3Bar(shW,[px-0.2,hh,zz+sg2*offp],[px+0.2,hh,zz+sg2*offp],[0,0,sg2],mt,'<b>Correa de pared</b> en sección'+tS))}
  // cámara ortogonal encuadrada
  const uA=U0-7*mu,uB=U1+1.6*mu,vA=V0-(sub?3.2:1.4)*mu,vB=V1+7*mu,w=uB-uA,h=vB-vA,hw=Math.max(w,h*asp)/2,hh=hw/asp,ct=P((uA+uB)/2,(vA+vB)/2),D=600;
  g3Cam(true);const c=G3.oc;c.left=-hw;c.right=hw;c.top=hh;c.bottom=-hh;c.near=0.1;c.far=D*3;c.zoom=1;c.up.set(...up);c.position.set(ct[0]+dir[0]*D,ct[1]+dir[1]*D,ct[2]+dir[2]*D);
