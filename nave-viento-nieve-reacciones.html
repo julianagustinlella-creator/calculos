@@ -79,6 +79,7 @@ h3.vh{display:flex;justify-content:space-between;align-items:center;gap:10px;mar
 .vtag{font-size:13px;padding:2px 10px;border-radius:12px;white-space:nowrap}.vtag.ok{background:#dcfce7;color:#166534}.vtag.bad{background:#fee2e2;color:#b91c1c}
 table.dat td:nth-child(2){white-space:nowrap;font-weight:600}h4{margin:12px 0 4px;font-size:13.5px}
 .vcl{display:none}.zsec{margin:26px 0 8px;padding:10px 14px;border-radius:8px;font-size:18px;color:#fff;scroll-margin-top:120px}.zsec span{font-size:13px;font-weight:400;opacity:.9;margin-left:10px}.zdat{background:var(--acc2)}.zres{background:var(--acc)}#fver .card{border-left:5px solid var(--acc2)}.card.vres{border-left:5px solid var(--acc)}#vIdx{position:sticky;z-index:3;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 12px;margin:0 -4px 6px;background:var(--bg);border-bottom:2px solid var(--line);font-size:15px}#vIdx .vi{display:inline-flex;border:1.5px solid;border-radius:14px;background:var(--card);overflow:hidden}#vIdx button{border:0;background:none;color:var(--ink);font:inherit;padding:6px 12px;cursor:pointer}#vIdx button.vi{border:1.5px solid var(--line);border-radius:14px;background:var(--card)}#vIdx button:hover{background:color-mix(in srgb,var(--acc) 18%,var(--card))}#vIdx .vi button+button{border-left:1px solid var(--line);padding:4px 7px}
+#g3Vb button{border:1.5px solid var(--acc);background:var(--card);color:var(--acc);font:inherit;font-size:13px;padding:5px 12px;border-radius:14px;cursor:pointer}#g3Vb button.on{background:var(--acc);color:#fff;font-weight:700}
 #bWord{float:right;border:0;background:var(--acc);color:#fff;font:inherit;font-weight:700;padding:9px 16px;border-radius:8px;cursor:pointer;margin-top:2px}#bWord:hover{filter:brightness(1.08)}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -213,7 +214,8 @@ table.dat td:nth-child(2){white-space:nowrap;font-weight:600}h4{margin:12px 0 4p
 <div id="vIdx" class="nomem"></div>
 <div class="card"><h2>Verificación de elementos</h2><p class="note">Viento sobre componentes y revestimientos (CIRSOC 102-2025, cap. 5), chapas (separación máxima de correas), correas, vigas y columnas. Los datos de cada verificación se cargan abajo.</p></div>
 <div class="card"><h2>Nave en 3D: qué verifica y qué no</h2>
-<div class="row" style="gap:14px;flex-wrap:wrap;margin-bottom:6px"><label><input type="checkbox" id="g3Ch" checked> chapa</label><label><input type="checkbox" id="g3Co" checked> correas de techo</label><label><input type="checkbox" id="g3Pa" checked> correas de pared</label><label><input type="checkbox" id="g3Po" checked> pórticos</label><label><input type="checkbox" id="g3Ar" checked> arriostramientos</label><label><input type="checkbox" id="g3Sp" checked> soportes y placas base</label><label><input type="checkbox" id="g3Cot" checked> cotas de la cruz de techo</label><label><input type="checkbox" id="g3CotG"> cotas generales</label><label><input type="checkbox" id="g3CotC"> cotas de correas</label><button type="button" class="nav2" style="font-size:13px" onclick="g3Full()">⛶ Pantalla completa</button><button type="button" class="nav2" style="font-size:13px" onclick="g3Png()">📷 Guardar imagen</button><button type="button" class="nav2" id="g3R" style="font-size:13px">vista inicial</button><button type="button" class="nav2" style="font-size:13px" onclick="g3Pin()">📌 Fijar / soltar el 3D en la pantalla</button></div>
+<div class="row" style="gap:14px;flex-wrap:wrap;margin-bottom:6px"><label><input type="checkbox" id="g3Ch" checked> chapa</label><label><input type="checkbox" id="g3Co" checked> correas de techo</label><label><input type="checkbox" id="g3Pa" checked> correas de pared</label><label><input type="checkbox" id="g3Po" checked> pórticos</label><label><input type="checkbox" id="g3Ar" checked> arriostramientos</label><label><input type="checkbox" id="g3Sp" checked> soportes y placas base</label><label><input type="checkbox" id="g3Ej" checked> ejes</label><label><input type="checkbox" id="g3Cot" checked> cotas de la cruz de techo</label><label><input type="checkbox" id="g3CotG"> cotas generales</label><label><input type="checkbox" id="g3CotC"> cotas de correas</label><button type="button" class="nav2" style="font-size:13px" onclick="g3Full()">⛶ Pantalla completa</button><button type="button" class="nav2" style="font-size:13px" onclick="g3Png()">📷 Guardar imagen</button><button type="button" class="nav2" id="g3R" style="font-size:13px">vista inicial</button><button type="button" class="nav2" style="font-size:13px" onclick="g3Pin()">📌 Fijar / soltar el 3D en la pantalla</button></div>
+<div id="g3Vb" class="row nomem" style="gap:6px;margin:0 0 8px"></div>
 <div id="g3" style="position:relative;width:100%;height:560px;border-radius:8px;overflow:hidden;background:#eef1f4"><div id="g3i" style="position:absolute;left:10px;top:10px;background:rgba(255,255,255,.92);color:#222;padding:6px 10px;border-radius:6px;font-size:13px;pointer-events:none">Arrastrá para girar · rueda para acercar · botón derecho para desplazar · tocá un elemento para ver su verificación</div></div>
 <div id="v3d"></div></div>
 <div class="card"><details id="tL31"><summary>Tabla L.3.1 del CIRSOC 301: valores límite de deformaciones (para elegir las flechas admisibles)</summary>
@@ -570,6 +572,7 @@ function extraRun(m,d){let te={rT:0,Tu:0,dT:20},tn={},st={r:0},sc={r:0},rv={r:0}
  if(window.VRsum)window.VRsum.ar=Math.max(0,te.rT||0,rv.r||0,ha.r||0,tn.rV||0,tn.rC||0);
  try{vBadges()}catch(e){}
  try{g3Extra(m,d,R)}catch(e){console.error(e)}
+ try{g3Ejes(m,d);g3Barra(m,d);if(G3V.cur!='3d')g3Vista(G3V.cur)}catch(e){console.error(e)}
  {const v3=$('v3d');if(v3)v3.querySelectorAll('.tw,table,p.note').forEach(x=>x.remove())}
  try{coSepShow(m,d)}catch(e){console.error(e)}
  try{uInit();uFix()}catch(e){console.error(e)}
@@ -742,6 +745,34 @@ function xDrift(m,d){const out=$('drOut');if(!out)return {r:null};const sv=A.sv|
  h+=fig(gT,'Combinación con el mayor desplazamiento total')+(gL!==gT?fig(gL,'Combinación con el mayor ladeo'):'')+(gA!==gT&&gA!==gL?fig(gA,'Combinación con la mayor apertura'):'')+gWrap('Apertura y ladeo en las combinaciones de servicio con más desplazamiento [mm]',bs);
  out.innerHTML=h;return {r:rL,rA,rT}}
 
+/* ---------- 3D: ejes como en los planos (letras en los pórticos, números en las líneas longitudinales) y vistas por plano ---------- */
+const G3V={cur:'3d'};
+function g3Let(i){return i<26?String.fromCharCode(65+i):String.fromCharCode(64+Math.floor(i/26))+String.fromCharCode(65+i%26)}
+function g3Zs(m,d){const n=+d.cvN|0,L=+d.L,z=[0];for(let k=1;k<=n;k++)z.push(k*L/(n+1));z.push(L);return z}
+function g3Ejes(m,d){if(typeof G3=='undefined'||!G3.grp)return;let g=G3.grp.children.find(x=>x.userData.k=='g3Ej');if(g){g.traverse(o=>{if(o.geometry)o.geometry.dispose()});G3.grp.remove(g)}
+ g=new THREE.Group();g.userData.k='g3Ej';g.visible=!$('g3Ej')||$('g3Ej').checked;G3.grp.add(g);if($('g3Ej'))$('g3Ej').onchange=()=>{g.visible=$('g3Ej').checked};
+ const L=+d.L,Lt=m.Lt,s=+d.s,nb=Math.round(Lt/s),zs=g3Zs(m,d),o=3.2,H=m.Hc+m.fr,g3Txt0=g3Txt;let AX='L';
+ const g3TxtA=(gg,t,p,hh)=>{g3Txt0(gg,t,p,hh);gg.children[gg.children.length-1].userData.ax=AX};
+ for(let i=0;i<=nb;i++){const x=i*s;g3Line(g,[[x,0,-o],[x,0,L+o]],0x94a3b8,0.012,'<b>Eje '+g3Let(i)+'</b>');g3TxtA(g,g3Let(i),[x,-1.2,-o-0.9],1.1);g3TxtA(g,g3Let(i),[x,-1.2,L+o+0.9],1.1);g3TxtA(g,g3Let(i),[x,H+1.4,L/2],0.9)}
+ AX='N';
+ zs.forEach((z,k)=>{g3Line(g,[[-o,0,z],[Lt+o,0,z]],0x94a3b8,0.012,'<b>Eje '+(k+1)+'</b>');g3TxtA(g,String(k+1),[-o-0.9,-1.2,z],1.1);g3TxtA(g,String(k+1),[Lt+o+0.9,-1.2,z],1.1)})}
+function g3Vistas(m,d){const nb=Math.round(m.Lt/(+d.s)),zs=g3Zs(m,d),un=zs.length,lp=g3Let(m.np-1),lh=g3Let(nb);
+ return [['3d','Vista 3D','Vista general de la nave'],['por','Pórtico tipo (eje '+lp+')','Pórtico tipo, eje '+lp],['h1','Hastial eje A','Plano hastial del eje A'],['hn','Hastial eje '+lh,'Plano hastial del eje '+lh],['la','Eje 1','Eje longitudinal 1 (pared lateral)'],['lz','Eje '+un,'Eje longitudinal '+un+' (pared lateral)'],['pl','Planta','Planta de la cubierta y ejes']]}
+function g3Vista(v){if(typeof G3=='undefined'||!G3.r)return;G3V.cur=v;const m=A.m,d=window.DV||read(),L=+d.L,Lt=m.Lt,s=+d.s,H=m.Hc,HT=m.Hc+m.fr,xp=(m.np-1)*s,asp=G3.cam.aspect||1.6;
+ let sl=null,pos,tar,w,h;
+ if(v=='por'){sl=['x',xp-0.7,xp+0.7,1];tar=[xp,HT/2,L/2];w=L+12;h=HT+6;pos=[1,0,0]}
+ else if(v=='h1'){sl=['x',-0.9,0.9,1];tar=[0,HT/2,L/2];w=L+12;h=HT+6;pos=[-1,0,0]}
+ else if(v=='hn'){sl=['x',Lt-0.9,Lt+0.9,1];tar=[Lt,HT/2,L/2];w=L+12;h=HT+6;pos=[1,0,0]}
+ else if(v=='la'){sl=['z',-1.2,1.2,0];tar=[Lt/2,H/2,0];w=Lt+14;h=H+8;pos=[0,0,-1]}
+ else if(v=='lz'){sl=['z',L-1.2,L+1.2,0];tar=[Lt/2,H/2,L];w=Lt+14;h=H+8;pos=[0,0,1]}
+ else if(v=='pl'){tar=[Lt/2,0,L/2];w=Lt+16;h=L+16;pos=[0,1,0.0008]}
+ const bx=new THREE.Box3();
+ G3.grp.traverse(o=>{if(!(o.isMesh||o.isSprite))return;if(!sl){o.visible=true;return}if(o.userData.ax){o.visible=sl[0]=='x'?o.userData.ax=='N':o.userData.ax=='L';return}bx.setFromObject(o);const a=sl[0],lo=bx.min[a],hi=bx.max[a];o.visible=sl[3]?(hi>=sl[1]&&lo<=sl[2]):((lo+hi)/2>=sl[1]&&(lo+hi)/2<=sl[2])});
+ if(v=='3d'){G3.cam.fov=40;G3.cam.far=2000;G3.cam.updateProjectionMatrix();g3View()}
+ else{const fov=7,D=Math.max(w/asp,h)/2/Math.tan(fov*Math.PI/360)*1.04;G3.cam.fov=fov;G3.cam.far=D*3+2000;G3.cam.updateProjectionMatrix();G3.cam.position.set(tar[0]+pos[0]*D,tar[1]+pos[1]*D,tar[2]+pos[2]*D);G3.ctl.target.set(...tar);G3.ctl.update()}
+ document.querySelectorAll('#g3Vb button').forEach(b=>b.classList.toggle('on',b.dataset.v==v))}
+function g3Barra(m,d){const el=$('g3Vb');if(!el)return;el.innerHTML='<b style="font-size:13px">Vistas:</b>'+g3Vistas(m,d).map(([v,t])=>`<button type="button" data-v="${v}" class="${G3V.cur==v?'on':''}" onclick="g3Vista('${v}')">${t}</button>`).join('')}
+
 /* ===================== MEMORIA DE CÁLCULO EN WORD (formato CIVETEC) ===================== */
 const WLIGHT={bg:'#f6f5f2',card:'#ffffff',ink:'#1f2328',mut:'#667085',line:'#d9d6cf',acc:'#ec7200',acc2:'#0b6bcb',ok:'#1a7f37',bad:'#c62828',inp:'#fff8e6',press:'#c62828',suc:'#0b6bcb'};
 const wEsc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -799,9 +830,9 @@ async function memWord(){const bt=$('bWord'),t0=bt?bt.textContent:'';const say=t
   say('Generando memoria…');const d=window.DV||read(),dd=read(),m=A.m,C={x:'',n:0,media:[],cap:'',sec:'',notes:+dd.memNotas==1};
   const html=async h=>{const t=document.createElement('div');t.innerHTML=h;await wWalk(t,C,9)},dom=async(id,lv=3)=>{const e=$(id);if(e)await wWalk(e,C,lv)},fig=async(id,cap)=>{const e=$(id),s=e&&e.querySelector('svg');if(s){C.cap=cap;await wWalk(e,C,9);C.cap=''}};
   const H1=t=>{C.x+=wH(t,1);C.sec=t},H2=t=>{C.x+=wH(t,2);C.sec=t};
-  H1('Introducción');await html(memTxt.intro(dd));await fig('geoSvg','Geometría del pórtico y secciones adoptadas');await fig('svgGeo','Corte transversal, niveles y terreno');await fig('svgPlan','Planta de la nave y pórtico analizado');
+  H1('Introducción');await html(memTxt.intro(dd));await fig('geoSvg','Geometría del pórtico y secciones adoptadas');await fig('svgGeo','Corte transversal, niveles y terreno');
   // vista 3D
-  try{const cur=document.querySelector('#nav button.on').dataset.t;goTab('ver');await new Promise(r=>setTimeout(r,350));if(typeof G3!='undefined'&&G3.r){g3View();G3.r.render(G3.sc,G3.cam);const cv=G3.r.domElement;await wFig(C,{b64:cv.toDataURL('image/png').split(',')[1],w:cv.width,h:cv.height},'Modelo tridimensional de la nave. Verde: verifica; rojo: no verifica')}goTab(cur)}catch(e){console.warn(e)}
+  try{const cur=document.querySelector('#nav button.on').dataset.t;goTab('ver');await new Promise(r=>setTimeout(r,350));if(typeof G3!='undefined'&&G3.r){const pv=G3V.cur,cv=G3.r.domElement,e3=$('g3');G3.r.setSize(1600,900,false);G3.cam.aspect=1600/900;G3.cam.updateProjectionMatrix();for(const [v,,cap] of g3Vistas(m,d)){g3Vista(v);G3.ctl.update();G3.r.render(G3.sc,G3.cam);await wFig(C,{b64:cv.toDataURL('image/png').split(',')[1],w:cv.width,h:cv.height},cap+(v=='3d'?'. Verde: verifica; rojo: no verifica':''))}{const w3=e3.clientWidth||1000,h3=e3.clientHeight||560;G3.r.setSize(w3,h3);G3.cam.aspect=w3/h3;G3.cam.updateProjectionMatrix()}g3Vista(pv)}goTab(cur)}catch(e){console.warn(e)}
   H1('Características de los materiales');await html(memTxt.mat(dd));
   H1('Reglamentación utilizada');await html(memTxt.reg());
   H1('Acciones sobre la construcción');H2('Cargas permanentes (D) y sobrecarga de cubierta (Lr)');await dom('gOut');
