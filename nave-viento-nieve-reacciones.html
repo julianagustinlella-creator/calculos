@@ -80,7 +80,7 @@ h3.vh{display:flex;justify-content:space-between;align-items:center;gap:10px;mar
 table.dat td:nth-child(2){white-space:nowrap;font-weight:600}h4{margin:12px 0 4px;font-size:13.5px}
 .vcl{display:none}.zsec{margin:26px 0 8px;padding:10px 14px;border-radius:8px;font-size:18px;color:#fff;scroll-margin-top:120px}.zsec span{font-size:13px;font-weight:400;opacity:.9;margin-left:10px}.zdat{background:var(--acc2)}.zres{background:var(--acc)}#fver .card{border-left:5px solid var(--acc2)}.card.vres{border-left:5px solid var(--acc)}#vIdx{position:sticky;z-index:3;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 12px;margin:0 -4px 6px;background:var(--bg);border-bottom:2px solid var(--line);font-size:15px}#vIdx .vi{display:inline-flex;border:1.5px solid;border-radius:14px;background:var(--card);overflow:hidden}#vIdx button{border:0;background:none;color:var(--ink);font:inherit;padding:6px 12px;cursor:pointer}#vIdx button.vi{border:1.5px solid var(--line);border-radius:14px;background:var(--card)}#vIdx button:hover{background:color-mix(in srgb,var(--acc) 18%,var(--card))}#vIdx .vi button+button{border-left:1px solid var(--line);padding:4px 7px}
 #g3Vb button{border:1.5px solid var(--acc);background:var(--card);color:var(--acc);font:inherit;font-size:13px;padding:5px 12px;border-radius:14px;cursor:pointer}#g3Vb button.on{background:var(--acc);color:#fff;font-weight:700}
-#bWord{float:right;border:0;background:var(--acc);color:#fff;font:inherit;font-weight:700;padding:9px 16px;border-radius:8px;cursor:pointer;margin-top:2px}#bWord:hover{filter:brightness(1.08)}
+#bWord{float:right;border:0;background:var(--acc);color:#fff;font:inherit;font-weight:700;padding:9px 16px;border-radius:8px;cursor:pointer;margin-top:2px}#bWord:hover{filter:brightness(1.08)}.hbt{float:right;border:2px solid var(--acc);background:var(--card);color:var(--acc);font:inherit;font-size:15px;font-weight:700;padding:8px 16px;border-radius:8px;cursor:pointer;margin:2px 10px 0 0;display:inline-block}.hbt:hover{background:var(--acc);color:#fff}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -88,7 +88,7 @@ table.dat td:nth-child(2){white-space:nowrap;font-weight:600}h4{margin:12px 0 4p
 </head>
 <body>
 <header>
-<button id="bWord" type="button" onclick="memWord()" title="Genera la memoria de cálculo en Word con el formato CIVETEC">⬇ Memoria de cálculo (Word)</button><select id="uSel" title="Unidades de fuerza y momento en las verificaciones" style="float:right;margin:2px 10px 0 0;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--inp);color:var(--ink);font:inherit"><option value="t">Unidades: t y t·m</option><option value="kN">Unidades: kN y kN·m</option></select>
+<button id="bWord" type="button" onclick="memWord()" title="Genera la memoria de cálculo en Word con el formato CIVETEC">⬇ Memoria de cálculo (Word)</button><label id="bOpen" class="hbt" title="Abre un proyecto guardado (archivo .json)">📂 Abrir proyecto<input type="file" accept=".json" style="display:none" onchange="impP(this);this.value=''"></label><button id="bSave" class="hbt" type="button" onclick="projSave()" title="Guarda todos los datos en un archivo .json (y también en este navegador)">💾 Guardar proyecto</button><select id="uSel" title="Unidades de fuerza y momento en las verificaciones" style="float:right;margin:2px 10px 0 0;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--inp);color:var(--ink);font:inherit"><option value="t">Unidades: t y t·m</option><option value="kN">Unidades: kN y kN·m</option></select>
 <h1>Nave industrial · modelo estructural del pórtico</h1>
 <div class="sub">Pórtico a dos aguas · CIRSOC 101-2025 (cargas y combinaciones) · CIRSOC 102-2025 (viento) · CIRSOC 104-2005 (nieve) · unidades: t, m, kg/m²</div>
 </header>
@@ -123,7 +123,7 @@ table.dat td:nth-child(2){white-space:nowrap;font-weight:600}h4{margin:12px 0 4p
 <ul>
 <li><b>Unidades</b>: el selector de arriba a la derecha cambia fuerzas y momentos entre toneladas y kN.</li>
 <li><b>Longitudes no arriostradas</b>: salen solas de las cruces, tillas y tornapuntas. Si se escribe un valor en el campo, pasa a manual; con 0 vuelve a automático.</li>
-<li><b>Proyectos</b>: «Guardar» deja los datos en este navegador; «Exportar JSON» los baja a un archivo para pasarlos a otra PC.</li>
+<li><b>Proyectos</b>: arriba a la derecha, «Guardar proyecto» baja todos los datos a un archivo .json (y los deja también en este navegador) y «Abrir proyecto» carga un archivo guardado. En la pestaña 1 sigue estando la lista de proyectos del navegador.</li>
 <li><b>Pórtico analizado</b>: el 1 es el extremo (medio ancho tributario); cualquier otro es interior.</li>
 <li><b>Sismo</b>: el programa no lo calcula. Si corresponde, se carga la fuerza sísmica longitudinal mayorada en «Tensores y tornapuntas» y se compara con el viento.</li>
 <li><b>Visor 3D</b>: arrastrar para girar, rueda para acercar, tocar un elemento para ver su verificación. Las casillas prenden y apagan cada grupo.</li>
@@ -485,7 +485,7 @@ function alvDev(z){const g=z.g,sd=z.sd,T=g.T,Fy=T.Fy,p=z.pg,E=200000,O=k=>z.bA.f
  h+=hd(6,'vh','Corte horizontal en el montante')+eqL(`φV<sub>n</sub> = 1,00·0,60·F<sub>y</sub>·e·t<sub>w</sub> = 0,60 × ${f(Fy,0)} MPa × ${f(g.e,0)} mm × ${f(sd.tw,1)} mm = <b>${f(T.phVh,0)} kN</b>`)+resL(`V<sub>h</sub> = ${f(vh.Vh,0)} kN`,`φV<sub>n</sub> = ${f(T.phVh,0)} kN`,O('vh').r);
  h+=hd(7,'vnet','Corte vertical en la sección neta (con alvéolo)')+eqL(`φV<sub>n</sub> = φ·0,60·F<sub>y</sub>·(2·d<sub>t</sub>·t<sub>w</sub>)·C<sub>v</sub> = 0,90 × 0,60 × ${f(Fy,0)} × 2 × ${f(g.dt,1)} × ${f(sd.tw,1)} × ${f(T.CvT,2)} = <b>${f(T.phVnet,0)} kN</b> (k<sub>v</sub> = 1,2)`)+resL(`V<sub>u</sub> = ${f(O('vnet').V,0)} kN`,`φV<sub>n</sub> = ${f(T.phVnet,0)} kN`,O('vnet').r);
  h+=hd(8,'vgro','Corte vertical en la sección bruta (sin alvéolo)')+eqL(`φV<sub>n</sub> = φ·0,60·F<sub>y</sub>·h<sub>w</sub>·t<sub>w</sub>·C<sub>v</sub> = 0,90 × 0,60 × ${f(Fy,0)} × ${f(sd.h-2*sd.tf,0)} × ${f(sd.tw,1)} × ${f(T.CvG,2)} = <b>${f(T.phVgro,0)} kN</b> (k<sub>v</sub> = 5,34)`)+resL(`V<sub>u</sub> = ${f(O('vgro').V,0)} kN`,`φV<sub>n</sub> = ${f(T.phVgro,0)} kN`,O('vgro').r);
- {const b=z.best,r=b.M/b.phMn;h+=`<h5 class="vh5">3.6.9 Pandeo lateral-torsional (sección bruta) y flexión de la sección neta <span class="vtag ${r<=1?'ok':'bad'}">${f(r,2)}</span></h5>`+eqL(`Sección neta: φM<sub>n</sub> = 0,90·F<sub>y</sub>·Z<sub>net</sub> = 0,90 × ${f(Fy,0)} MPa × ${f(g.Znet/1e3,0)} cm³ = ${f(0.9*Fy*g.Znet/1e6,0)} kN·m`,`Sección bruta (F.2): L<sub>b</sub> = ${f(b.Lb,2)} m, C<sub>b</sub> = ${f(b.CbU,2)} (desarrollo en 3.3)`,`φM<sub>n</sub> = mín = <b>${f(b.phMn,0)} kN·m</b>`)+resL(`M<sub>u</sub> = ${f(b.M,0)} kN·m`,`φM<sub>n</sub> = ${f(b.phMn,0)} kN·m`,r)}
+ {const b=z.best,r=b.M/b.phMn;h+=`<h5 class="vh5">3.6.9 Pandeo lateral-torsional y pandeo local del ala (sección bruta) y flexión de la sección neta <span class="vtag ${r<=1?'ok':'bad'}">${f(r,2)}</span></h5>`+eqL(`Sección neta: φM<sub>n</sub> = 0,90·F<sub>y</sub>·Z<sub>net</sub> = 0,90 × ${f(Fy,0)} MPa × ${f(g.Znet/1e3,0)} cm³ = ${f(0.9*Fy*g.Znet/1e6,0)} kN·m`,`Sección bruta, pandeo lateral-torsional (F.2): L<sub>b</sub> = ${f(b.Lb,2)} m, C<sub>b</sub> = ${f(b.CbU,2)} → φM<sub>n</sub> = ${f(0.9*Mn_(z.pg,Fy,b.Lb,b.CbU).ltb,0)} kN·m (desarrollo en 3.3)`,(q=>`Sección bruta, pandeo local del ala (F.3): b<sub>f</sub>/2t<sub>f</sub> = ${f(q.lf,1)} · λ<sub>p</sub> = ${f(q.lp,1)} · λ<sub>r</sub> = ${f(q.lr,1)} → ${q.t.split(':')[0]}, φM<sub>n</sub> = ${f(0.9*q.Mn,0)} kN·m`)(flbInfo(z.pg,Fy)),`Fluencia del ala traccionada: sección doblemente simétrica, no es crítica (queda cubierta por M<sub>p</sub>)`,`φM<sub>n</sub> = mín = <b>${f(b.phMn,0)} kN·m</b>`)+resL(`M<sub>u</sub> = ${f(b.M,0)} kN·m`,`φM<sub>n</sub> = ${f(b.phMn,0)} kN·m`,r)}
  h+=`<div class="tw"><table><tr><th>Estado límite (resumen)</th><th>Solicitación y resistencia</th><th>Relación</th></tr>${z.bA.map(a=>`<tr><td class="l">${a.q}</td><td class="l">${a.x}</td><td class="${a.r<=1?'ok':'bad'}">${f(a.r,2)}</td></tr>`).join('')}</table></div>`;
  return h}
 
@@ -523,6 +523,10 @@ function g3Extra(m,d,R){if(typeof G3=='undefined'||!G3.r||!G3.grp)return;const O
 /* ---------- diagrama del pórtico (M, V o N) para una combinación ---------- */
 function esfFig(ct,tipo,cap){const c=A.cb.find(q=>q.t==ct);if(!c)return '';const pd=DIAG;let s='';DIAG=tipo;try{s=drawRes(A,c.r,ab(ct))}catch(e){console.error(e)}DIAG=pd;return s?gWrap(cap,s):''}
 /* ---------- flexión: cuadro con Mu, Lb, Lp, Lr, Cb, Mn ---------- */
+/* pandeo local del ala comprimida (CIRSOC 301-2018, F.3): lo mismo que aplica Mn_ */
+function flbInfo(p,Fy){const E=200000,lf=p.b/2/p.tf,lp=0.38*Math.sqrt(E/Fy),lr=Math.sqrt(E/Fy),Mp=Fy*p.Zx/1e6,Mr=0.7*Fy*p.Sx/1e6,kc=Math.min(0.76,Math.max(0.35,4/Math.sqrt(p.hw/p.tw))),cas=lf<=lp?0:(lf<=lr?1:2),
+  Mn=cas==0?Mp:(cas==1?Mp-(Mp-Mr)*(lf-lp)/(lr-lp):0.9*E*kc*p.Sx/lf/lf/1e6);return {lf,lp,lr,kc,cas,Mn,Mp,Mr,
+  t:['ala compacta: el pandeo local no reduce, M<sub>n</sub> = M<sub>p</sub>','ala no compacta: M<sub>n</sub> = M<sub>p</sub> − (M<sub>p</sub> − 0,7·F<sub>y</sub>·S<sub>x</sub>)·(λ − λ<sub>p</sub>)/(λ<sub>r</sub> − λ<sub>p</sub>) (F.3-1)','ala esbelta: M<sub>n</sub> = 0,9·E·k<sub>c</sub>·S<sub>x</sub>/λ², con k<sub>c</sub> = 4/√(h/t<sub>w</sub>) entre 0,35 y 0,76 (F.3-2)'][cas]}}
 function flexKey(z,b,mn,Mp,Fy,col){const p=z.pg,cas=b.Lb<=mn.Lp?0:(b.Lb<=mn.Lr?1:2),Mr=0.7*Fy*p.Sx/1e6,sg=b.sg||{},r=b.M/b.phMn,net=z.alv?Fy*z.g.Znet/1e6:null,Mn=b.phMn/0.9;
  const casT=['L<sub>b</sub> ≤ L<sub>p</sub> → la sección plastifica, no hay pandeo lateral-torsional (F.2.1)','L<sub>p</sub> &lt; L<sub>b</sub> ≤ L<sub>r</sub> → pandeo lateral-torsional inelástico (F.2.2)','L<sub>b</sub> &gt; L<sub>r</sub> → pandeo lateral-torsional elástico (F.2.2)'][cas];
  const fm=['M<sub>n</sub> = M<sub>p</sub>','M<sub>n</sub> = C<sub>b</sub>·[M<sub>p</sub> − (M<sub>p</sub> − M<sub>r</sub>)·(L<sub>b</sub> − L<sub>p</sub>)/(L<sub>r</sub> − L<sub>p</sub>)] ≤ M<sub>p</sub>','M<sub>n</sub> = F<sub>cr</sub>·S<sub>x</sub> ≤ M<sub>p</sub>, con F<sub>cr</sub> = C<sub>b</sub>·π²·E/(L<sub>b</sub>/r<sub>ts</sub>)²·√(1 + 0,078·J·c/(S<sub>x</sub>·h<sub>o</sub>)·(L<sub>b</sub>/r<sub>ts</sub>)²)'][cas];
@@ -537,7 +541,8 @@ function flexKey(z,b,mn,Mp,Fy,col){const p=z.pg,cas=b.Lb<=mn.Lp?0:(b.Lb<=mn.Lr?1
  +R('C<sub>b</sub>',f(b.CbU,2),`12,5·M<sub>máx</sub>/(2,5·M<sub>máx</sub> + 3·M<sub>A</sub> + 4·M<sub>B</sub> + 3·M<sub>C</sub>) (F.1-1), con los momentos del tramo: M<sub>máx</sub> = ${f(sg.Mmax,0)} kN·m, M<sub>A</sub> = ${f(sg.MA,0)} kN·m, M<sub>B</sub> = ${f(sg.MB,0)} kN·m, M<sub>C</sub> = ${f(sg.MC,0)} kN·m`)
  +R('M<sub>p</sub>',f(Mp,0)+' kN·m',`F<sub>y</sub>·Z<sub>x</sub> = ${f(Fy,0)} MPa × ${f(p.Zx/1e3,0)} cm³ (F.2-1)`)
  +R('M<sub>r</sub>',f(Mr,0)+' kN·m',`0,7·F<sub>y</sub>·S<sub>x</sub> = 0,7 × ${f(Fy,0)} MPa × ${f(p.Sx/1e3,0)} cm³`)
- +R('M<sub>n</sub>',f(Mn,0)+' kN·m',fm+(net!=null?`. En la viga alveolar se toma además M<sub>n</sub> ≤ F<sub>y</sub>·Z<sub>net</sub> = ${f(net,0)} kN·m`:''))
+ +(()=>{const q=flbInfo(p,Fy);return R('λ = b<sub>f</sub>/2t<sub>f</sub>',f(q.lf,1),`Esbeltez del ala comprimida: ${f(p.b,0)} mm / (2 × ${f(p.tf,1)} mm). Límites: λ<sub>p</sub> = 0,38·√(E/F<sub>y</sub>) = ${f(q.lp,1)} · λ<sub>r</sub> = 1,0·√(E/F<sub>y</sub>) = ${f(q.lr,1)} (Tabla B.4.1b)`)+R('M<sub>n</sub> por pandeo local del ala',f(q.Mn,0)+' kN·m','F.3 · '+q.t)+R('M<sub>n</sub> por pandeo lateral-torsional',f(Mn_(p,Fy,b.Lb,b.CbU).ltb,0)+' kN·m',fm)})()
+ +R('M<sub>n</sub>',f(Mn,0)+' kN·m','el menor entre el de pandeo lateral-torsional y el de pandeo local del ala'+(net!=null?`. En la viga alveolar se toma además M<sub>n</sub> ≤ F<sub>y</sub>·Z<sub>net</sub> = ${f(net,0)} kN·m`:''))
  +R('φM<sub>n</sub>',f(b.phMn,0)+' kN·m','0,90·M<sub>n</sub>')
  +R('M<sub>u</sub> / φM<sub>n</sub>',`<span class="${r<=1?'ok':'bad'}">${f(r,2)}</span>`,`<span class="${r<=1?'ok':'bad'}">${r<=1?'≤ 1,00 → VERIFICA a flexión':'&gt; 1,00 → NO VERIFICA a flexión'}</span>`)+'</table></div>'+compKey(z,b,Fy,col)}
 /* ---------- compresión y flexión + axial: cuadros con todos los valores ---------- */
@@ -638,7 +643,7 @@ function rvGeo(cfg,s,hp,y0){return [[[0,y0,s,y0+hp,1]],[[0,y0,s,y0+hp,1],[s,y0,0
 function xRigV(m,d){const s=+d.s,H=m.Hc,vP=d.arParV||[],nP=Math.max(1,vP.length),nH=Math.max(1,+d.arParN|0),hp=H/nH,cfg=+d.rvCfg|0,W=xLon(m,d),Fs=+d.exF||0,Fw=W.Fr,Fx=Math.max(Fw,Fs),Hb=Fx/2/nP;
  const sc=RVCAT[+d.rvSec]||RVCAT[0],sp=RVCAT[+d.puSec]||RVCAT[RVCAT.length-6],g0=rvGeo(cfg,s,hp,0),Ld=Math.hypot(g0[0][2]-g0[0][0],g0[0][3]-g0[0][1]),nd=g0.length;
  // esfuerzo en cada diagonal: el corte H se reparte entre las nd diagonales del panel; N = (H/nd)·Ld/Δx
- const dx=Math.abs(g0[0][2]-g0[0][0]),N=Hb/nd*Ld/dx,kd=+d.rvK>0?+d.rvK:(cfg==1?0.5:1),T=rvTens(sc,d),C=nd>1?rvComp(sc,d,Ld,kd):null,rT=N/T.R,rC=C?(C.R>0?N/C.R:9.99):0;
+ const dx=Math.abs(g0[0][2]-g0[0][0]),N=Hb/nd*Ld/dx,kd=+d.rvK>0?+d.rvK:1,T=rvTens(sc,d),C=nd>1?rvComp(sc,d,Ld,kd):null,rT=N/T.R,rC=C?(C.R>0?N/C.R:9.99):0;
  const Np=cfg==1?Hb/2:Hb,Cp=rvComp(sp,d,s,1),rPu=Cp.R>0?Np/Cp.R:9.99,Nc=Hb*H/s,r=Math.max(rT,rC,rPu);
  // alzado del vano arriostrado
  const SW=560,SH=360,x0=150,yb=300,k=Math.min(240/s,230/H),X=x=>x0+x*k,Y=y=>yb-y*k;let sv=`<svg viewBox="0 0 ${SW} ${SH}"><text x="${SW/2}" y="16" text-anchor="middle" style="font-weight:600">Vano arriostrado de la pared lateral · ${RVCFG[cfg]}</text>`;
@@ -654,7 +659,7 @@ function xRigV(m,d){const s=+d.s,H=m.Hc,vP=d.arParV||[],nP=Math.max(1,vP.length)
   nd==1?`Diagonal traccionada: T<sub>u</sub> = H·L<sub>d</sub>/s = ${f(Hb,2)} t × ${f(Ld,2)} m / ${f(s,2)} m = <b>${f(N,1)} t</b>`:`Diagonales: N<sub>u</sub> = ±(H/2)·L<sub>d</sub>/Δx = ±(${f(Hb,2)} t / 2) × ${f(Ld,2)} m / ${f(dx,2)} m = <b>±${f(N,1)} t</b> (una traccionada y otra comprimida)`,
   `Puntal longitudinal: P<sub>u</sub> = ${cfg==1?'H/2':'H'} = <b>${f(Np,1)} t</b> (compresión)`,`Columnas del vano: N = ±H·H<sub>c</sub>/s = ±${f(Hb,2)} t × ${f(H,2)} m / ${f(s,2)} m = <b>±${f(Nc,1)} t</b>, que se suma al axial del pórtico`,`Reacciones en las bases del vano: horizontal ${f(Hb,1)} t y vertical ±${f(Nc,1)} t`,cfg==4?'En la configuración K las diagonales cargan a la columna a media altura del panel: M = H·h<sub>p</sub>/4 = '+f(Hb*hp/4,1)+' t·m, que hay que sumar a la columna.':'');
  h+=`<h4>1 · Diagonal a tracción (CIRSOC 301-2018, cap. D)</h4>`+T.eq+resL(`T<sub>u</sub> = ${f(N,1)} t`,`φR<sub>n</sub> = ${f(T.R,1)} t`,rT);
- if(C)h+=`<h4>2 · Diagonal a compresión (CIRSOC 301-2018, cap. E)</h4>`+eqL(`L<sub>d</sub> = ${f(Ld,2)} m · k = ${f(kd,2)}${cfg==1&&!(+d.rvK>0)?' (las diagonales se unen en el cruce)':''}`)+C.eq+resL(`P<sub>u</sub> = ${f(N,1)} t`,`φP<sub>n</sub> = ${f(C.R,1)} t`,rC);
+ if(C)h+=`<h4>2 · Diagonal a compresión (CIRSOC 301-2018, cap. E)</h4>`+eqL(`L<sub>d</sub> = ${f(Ld,2)} m · k = ${f(kd,2)}${cfg==1&&!(+d.rvK>0)?' (en X también se toma k = 1 con el largo completo: fuera del plano nada restringe el cruce)':''}`)+C.eq+resL(`P<sub>u</sub> = ${f(N,1)} t`,`φP<sub>n</sub> = ${f(C.R,1)} t`,rC);
  h+=`<h4>${C?3:2} · Puntal longitudinal a compresión (CIRSOC 301-2018, cap. E)</h4>`+eqL(`L = s = ${f(s,2)} m · k = 1,00`)+Cp.eq+resL(`P<sub>u</sub> = ${f(Np,1)} t`,`φP<sub>n</sub> = ${f(Cp.R,1)} t`,rPu);
  $('rvOut').innerHTML=h;return {r,rT,rC,rPu,N,Hb,Nc,cfg,nm:sc.nm}}
 
@@ -746,7 +751,7 @@ function xHast(m,d){const n=+d.cvN|0,L=+d.L,out=$('haOut');
  for(let j=0;j<=nB;j++){const z=j*e;sv+=`<line x1="${X(z)}" y1="${Y(0)}" x2="${X(z)}" y2="${Y(zt(z))}" stroke="#1f2328" stroke-width="${j==0||j==nB?4:2.5}" pointer-events="none"/>`}
  sv+=`<polyline points="${X(0)},${Y(m.Hc)} ${X(L/2)},${Y(m.Hc+m.fr)} ${X(L)},${Y(m.Hc)}" fill="none" stroke="#1f2328" stroke-width="4" pointer-events="none"/>`+arrow(X(0)-52,Y(m.Hc),X(0)-6,Y(m.Hc),'#c62828',2.5)+`<text x="${X(0)-54}" y="${Y(m.Hc)-8}" style="fill:#c62828;font-weight:700;font-size:12px">${f(Hg,1)} t</text>`+dimH(X(0),X(e),Y(0)+34,'e = '+f(e,2)+' m')+`<text x="${SW-10}" y="${SH-8}" text-anchor="end" style="font-size:11px"><tspan fill="#1d4ed8">azul: diagonales</tspan> · <tspan fill="#7c3aed">violeta: puntal horizontal en cada nudo</tspan></text></svg>`;
  if(!bays.length){out.innerHTML=gWrap('Paños del hastial entre columnas de viento',sv)+'<p class="eq">No hay paños rigidizados en el hastial: tocá un paño en el esquema o cargalos en «Arriostramientos · Hastiales».</p>';return {r:null,bays,e,cfg,nH}}
- const Hb=Hg/bays.length,nd=cfg==0?1:2,kd=+d.rvK>0?+d.rvK:(cfg==1?0.5:1),T=rvTens(sc,d);let g=null;
+ const Hb=Hg/bays.length,nd=cfg==0?1:2,kd=+d.rvK>0?+d.rvK:1,T=rvTens(sc,d);let g=null;
  for(const i of bays){const pp=haPan(m,d,i,e,nH);pp.pan.forEach((p,q)=>{for(const [a,b,c,f2] of haGeo(cfg,e,p.yb,p.yL,p.yR)){const dx=Math.abs(c-a),Ld=Math.hypot(dx,f2-b),N=Hb/nd*Ld/dx,C=nd>1?rvComp(sc,d,Ld,kd):null,rT=N/T.R,rC=C?(C.R>0?N/C.R:9.99):0,r=Math.max(rT,rC);if(!g||r>g.r)g={i,q,Ld,dx,N,C,rT,rC,r,h:Math.max(pp.hL,pp.hR),hp:pp.hp}}})}
  const Np=cfg==1?Hb/2:Hb,Cp=rvComp(sp,d,e,1),rPu=nH>1?(Cp.R>0?Np/Cp.R:9.99):0,Nc=Hb*g.h/e,rr=Math.max(g.r,rPu);
  let h=hdV(`Rigidización de hastiales · ${RVCFG[cfg]} · ${sc.nm}`,rr)+gWrap('Hastial: paños rigidizados entre columnas de viento',sv);
@@ -845,6 +850,45 @@ function g3Vista(v){if(typeof G3=='undefined'||!G3.r)return;G3V.cur=v;const m=A.
  document.querySelectorAll('#g3Vb button').forEach(b=>b.classList.toggle('on',b.dataset.v==v))}
 if(!window.G3RS){window.G3RS=1;window.addEventListener('resize',()=>{try{if(G3V.cur!='3d')g3Vista(G3V.cur)}catch(e){}})}
 function g3Barra(m,d){const el=$('g3Vb');if(!el)return;el.innerHTML='<b style="font-size:13px">Vistas:</b>'+g3Vistas(m,d).map(([v,t])=>`<button type="button" data-v="${v}" class="${G3V.cur==v?'on':''}" onclick="g3Vista('${v}')">${t}</button>`).join('')}
+
+/* ---------- croquis orientativo de cada sector de datos ---------- */
+function elSk2(k){const s=11,cx=112,cy=74,c=Math.cos(Math.PI/6),Pp=(x,y,z)=>[cx+(x-y)*c*s,cy+(x+y)*0.5*s-z*s],H=4,R=5.6,W=8,X=[0,6,12],OR='#ea580c',VI='#7c3aed',
+  zt=y=>H+(R-H)*(1-Math.abs(y-W/2)/(W/2)),ln=(a,b,col,w)=>{const p=Pp(...a),q=Pp(...b);return `<line x1="${p[0].toFixed(1)}" y1="${p[1].toFixed(1)}" x2="${q[0].toFixed(1)}" y2="${q[1].toFixed(1)}" stroke="${col||'#9ca3af'}" stroke-width="${col?(w||2.4):1}" stroke-linecap="round"/>`},
+  T={arL:'Pared lateral: cruces y puntales',arH:'Hastiales: cruces entre columnas de viento',arT:'Techo: cruces de cubierta',til:'Tillas y tornapuntas',ten:'Tensores de techo y tornapuntas',cv:'Columnas de viento del hastial',st:'Soporte de tensores',sc:'Soporte de correas (clip y tornillos)'};
+ let o='',leg='';
+ if(k=='st'){ // detalle: ala de la viga, ángulo soldado, tensor con tuerca
+  o=`<rect x="30" y="120" width="190" height="10" fill="#475569"/><rect x="120" y="130" width="8" height="45" fill="#475569"/><text x="34" y="146" style="font-size:10px;fill:#475569">ala de la viga</text>
+  <path d="M95,120 L95,62 L103,62 L103,112 L150,112 L150,120 Z" fill="${OR}" fill-opacity=".35" stroke="${OR}" stroke-width="2"/><path d="M88,120 l7,-7 M150,120 l7,-7" stroke="#c62828" stroke-width="2.5"/>
+  <line x1="20" y1="84" x2="130" y2="84" stroke="${VI}" stroke-width="4"/><rect x="103" y="77" width="11" height="14" fill="${VI}"/>
+  <path d="M20,84 l14,-5 v10 z" fill="${VI}"/><text x="16" y="72" style="font-size:11px;font-weight:700;fill:${VI}">T</text><text x="160" y="92" style="font-size:10px;fill:${OR}">ángulo</text><text x="160" y="124" style="font-size:10px;fill:#c62828">soldadura</text><text x="118" y="72" style="font-size:10px;fill:${VI}">tensor</text>`}
+ else if(k=='sc'){ // detalle: viga, clip, correa C y tornillos
+  o=`<rect x="30" y="140" width="190" height="10" fill="#475569"/><rect x="120" y="150" width="8" height="30" fill="#475569"/><text x="34" y="166" style="font-size:10px;fill:#475569">ala de la viga</text>
+  <rect x="112" y="72" width="7" height="68" fill="${OR}" fill-opacity=".45" stroke="${OR}" stroke-width="2"/><text x="60" y="110" style="font-size:10px;fill:${OR}">clip</text>
+  <path d="M168,66 L168,56 L121,56 L121,132 L168,132 L168,122" fill="none" stroke="#1e3a8a" stroke-width="4"/><text x="174" y="98" style="font-size:10px;fill:#1e3a8a">correa</text>
+  <g stroke="${VI}" stroke-width="3"><line x1="104" y1="84" x2="130" y2="84"/><line x1="104" y1="108" x2="130" y2="108"/></g><circle cx="104" cy="84" r="4" fill="${VI}"/><circle cx="104" cy="108" r="4" fill="${VI}"/><text x="28" y="80" style="font-size:10px;fill:${VI}">autoperforantes</text>`}
+ else{
+  for(const x of X)o+=ln([x,0,0],[x,0,H])+ln([x,W,0],[x,W,H])+ln([x,0,H],[x,W/2,R])+ln([x,W/2,R],[x,W,H]);
+  for(let i=0;i<=8;i++){const y=W*i/8;o+=ln([0,y,zt(y)],[12,y,zt(y)])}
+  for(const z of [1.3,2.7])for(const y of [0,W])o+=ln([0,y,z],[12,y,z]);
+  const cvY=[2,4,6],cvC=k=='cv'?OR:(k=='arH'?'#4b5563':null);
+  for(const x of [0,12]){for(const y of cvY)o+=ln([x,y,0],[x,y,zt(y)],cvC,k=='cv'?3.5:1.6);o+=ln([x,0,0],[x,W,0])}
+  if(k=='arL'){for(const y of [0,W]){for(const [a,b] of [[0,2],[2,4]])o+=ln([0,y,a],[6,y,b],OR)+ln([6,y,a],[0,y,b],OR);for(const z of [2,4])o+=ln([0,y,z],[6,y,z],VI,3)}leg=`<tspan fill="${OR}">— diagonal</tspan>  <tspan fill="${VI}">— puntal</tspan>`}
+  if(k=='arH'){for(const x of [0,12])for(const [ya,yb] of [[0,2],[6,8]]){const hm=Math.min(zt(ya),zt(yb))/2;o+=ln([x,ya,0],[x,yb,hm],OR)+ln([x,yb,0],[x,ya,hm],OR)+ln([x,ya,hm],[x,yb,zt(yb)],OR)+ln([x,yb,hm],[x,ya,zt(ya)],OR)+ln([x,ya,hm],[x,yb,hm],VI,3)}leg=`<tspan fill="${OR}">— diagonal</tspan>  <tspan fill="${VI}">— puntal</tspan>`}
+  if(k=='arT'||k=='ten')for(const [a,b] of [[0,2],[2,4],[4,6],[6,8]])o+=ln([0,a,zt(a)],[6,b,zt(b)],OR)+ln([6,a,zt(a)],[0,b,zt(b)],OR);
+  if(k=='til'){for(const x of [3,9]){o+=ln([x,0,H],[x,W/2,R],OR,2)+ln([x,W/2,R],[x,W,H],OR,2);for(const y of [0,W])o+=ln([x,y,0.3],[x,y,H],OR,2)}}
+  if(k=='til'||k=='ten'){for(const x of X)for(const y of [2,6])o+=ln([x+1.1,y,zt(y)],[x,y,zt(y)-0.9],VI,2.6)+ln([x-1.1,y,zt(y)],[x,y,zt(y)-0.9],VI,2.6);leg=k=='til'?`<tspan fill="${OR}">— tilla</tspan>  <tspan fill="${VI}">— tornapunta</tspan>`:`<tspan fill="${OR}">— tensor</tspan>  <tspan fill="${VI}">— tornapunta</tspan>`}
+ }
+ return `<svg viewBox="0 0 250 ${leg?218:204}" style="width:100%;max-width:260px">${o}<text x="125" y="199" text-anchor="middle" style="font-size:11.5px;font-weight:600;fill:${OR}">${T[k]}</text>${leg?`<text x="125" y="213" text-anchor="middle" style="font-size:10.5px;font-weight:600">${leg}</text>`:''}</svg>`}
+const SK2=[['Tensores y tornapuntas','ten'],['Columnas de viento','cv'],['Soporte de tensores','st'],['Soporte de correas','sc']],SKS=[['Pared lateral','arL'],['Hastiales','arH'],['Techo','arT'],['Tillas','til']];
+function skFix(){const mk=k=>{const b=document.createElement('div');b.className='skb';b.style.cssText='flex:0 0 240px;margin:auto;text-align:center';b.innerHTML=elSk2(k);return b},
+  row=()=>{const r=document.createElement('div');r.style.cssText='display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start';return r};
+ for(const c of document.querySelectorAll('#fver .card')){const h=c.querySelector('h2');if(!h||c.dataset.sk)continue;const t=h.textContent,g=c.querySelector('.grid');if(!g)continue;
+  if(t.includes('Arriostramientos (definen')){c.dataset.sk=1;const old=g.parentElement,box=document.createElement('div');let cur=null;
+   for(const ch of [...g.children]){if(ch.classList.contains('subh')||!cur){const r=row(),gg=document.createElement('div');gg.className='grid';gg.style.flex='1 1 600px';r.appendChild(gg);box.appendChild(r);cur={r,gg};const q=SKS.find(([p])=>ch.textContent.trim().startsWith(p));if(ch.classList.contains('subh')&&q)r.appendChild(mk(q[1]))}cur.gg.appendChild(ch)}
+   old.replaceWith(box)}
+  else{const q=SK2.find(([p])=>t.includes(p));if(!q)continue;c.dataset.sk=1;const r=row();g.replaceWith(r);g.style.flex='1 1 600px';r.appendChild(g);r.appendChild(mk(q[1]))}}}
+/* guardar y abrir proyecto desde la barra de arriba */
+function projSave(){try{saveP()}catch(e){}expP();const b=$('bSave');if(b){const t=b.textContent;b.textContent='✓ Guardado';setTimeout(()=>b.textContent=t,1800)}}
 
 /* ===================== MEMORIA DE CÁLCULO EN WORD (formato CIVETEC) ===================== */
 const WLIGHT={bg:'#f6f5f2',card:'#ffffff',ink:'#1f2328',mut:'#667085',line:'#d9d6cf',acc:'#ec7200',acc2:'#0b6bcb',ok:'#1a7f37',bad:'#c62828',inp:'#fff8e6',press:'#c62828',suc:'#0b6bcb'};
@@ -1218,7 +1262,7 @@ const F=[
   ["rvSec","Diagonal: sección","",4,RVOPT],
   ["puSec","Puntal longitudinal: sección","",RVOPT.findIndex(x=>/2 UPN 100/.test(x)),RVOPT],
   ["rvFy","Diagonal y puntal: tensión de fluencia de los perfiles","MPa",240],
-  ["rvK","k de pandeo de la diagonal (0 = automático: 0,5 si la configuración es X y 1 en las demás; el mismo k en las dos direcciones)","",0],
+  ["rvK","k de pandeo de la diagonal (0 = automático: k = 1 con el largo completo en todas las configuraciones, también en X porque fuera del plano nada restringe el cruce)","",0],
   ["haPan","Paños rigidizados, contados entre columnas de viento (tocalos en el esquema de la verificación)","","1, 8"],
   ["haN","Paneles en la altura del paño","",2],
   ["haCfg","Configuración de la rigidización del hastial","",0,RVCFG],
@@ -1341,6 +1385,7 @@ function buildForms(){
  for(const tg of new Set(TGT))$(tg).innerHTML=H[tg]||'';
  let ov='';for(const [,fl] of F)for(const [id,lab,u,def,op] of fl)if(OVF[id])ov+=`<div class="ov" id="ov_${id}"><b>${OVF[id]}</b><select id="${id}">${op.map((o,i)=>`<option value="${i}"${i==def?' selected':''}>${o}</option>`).join('')}</select></div>`;
  $('geoOv').innerHTML=ov;
+ try{skFix()}catch(e){console.error(e)}
 }
 
 /* ---------- nombres cortos de combinaciones (el texto completo queda al pasar el mouse) ---------- */
@@ -1875,8 +1920,8 @@ function Pn_(p,Fy,Lx,Ly){const E=200000,lf=p.b/2/p.tf,lw=p.hw/p.tw,rf=0.56*Math.
  return {Pn:Fcr*p.A/1000,Fcr,Q,sl}}
 function Mn_(p,Fy,Lb,Cb){const E=200000,L=Lb*1000,Mp=Fy*p.Zx,Lp=1.76*p.ry*Math.sqrt(E/Fy),jc=p.J/(p.Sx*p.ho),Lr=1.95*p.rts*E/(0.7*Fy)*Math.sqrt(jc+Math.sqrt(jc*jc+6.76*(0.7*Fy/E)**2));
  let Mn=L<=Lp?Mp:(L<=Lr?Math.min(Mp,Cb*(Mp-(Mp-0.7*Fy*p.Sx)*(L-Lp)/(Lr-Lp))):Math.min(Mp,Cb*Math.PI**2*E/(L/p.rts)**2*Math.sqrt(1+0.078*jc*(L/p.rts)**2)*p.Sx));
- const lf=p.b/2/p.tf,lp=0.38*Math.sqrt(E/Fy),lr=Math.sqrt(E/Fy);if(lf>lp)Mn=Math.min(Mn,lf<=lr?Mp-(Mp-0.7*Fy*p.Sx)*(lf-lp)/(lr-lp):0.9*E*4/Math.sqrt(p.hw/p.tw)*p.Sx/lf/lf);
- return {Mn:Mn/1e6,Lp:Lp/1000,Lr:Lr/1000,web:p.hw/p.tw<=3.76*Math.sqrt(E/Fy)}}
+ const ltb=Mn/1e6,lf=p.b/2/p.tf,lp=0.38*Math.sqrt(E/Fy),lr=Math.sqrt(E/Fy);if(lf>lp)Mn=Math.min(Mn,lf<=lr?Mp-(Mp-0.7*Fy*p.Sx)*(lf-lp)/(lr-lp):0.9*E*Math.min(0.76,Math.max(0.35,4/Math.sqrt(p.hw/p.tw)))*p.Sx/lf/lf);
+ return {ltb,Mn:Mn/1e6,Lp:Lp/1000,Lr:Lr/1000,web:p.hw/p.tw<=3.76*Math.sqrt(E/Fy)}}
 function Vn_(hw,tw,Fy,kv){const E=200000,l=hw/tw;let ph=0.9,Cv;if(kv==5&&l<=2.24*Math.sqrt(E/Fy)){ph=1;Cv=1}else Cv=l<=1.1*Math.sqrt(kv*E/Fy)?1:(l<=1.37*Math.sqrt(kv*E/Fy)?1.1*Math.sqrt(kv*E/Fy)/l:1.51*kv*E/(l*l*Fy));return {phVn:ph*0.6*Fy*hw*tw*Cv/1000,Cv}}
 function alvGeo(sd,d){const ho=sd.ho,dd=ho,th=(+d.alvT)*Math.PI/180,b=ho/2/Math.tan(th),e=+d.alvE>0?+d.alvE:0.83*ho-2*b,dt=(sd.h-ho)/2,bf=sd.b,tf=sd.tf,tw=sd.tw;
  const AT=bf*tf+(dt-tf)*tw,y=(bf*tf*(dt-tf/2)+(dt-tf)*tw*(dt-tf)/2)/AT,IT=bf*tf**3/12+bf*tf*((dt-y)-tf/2)**2+tw*(dt-tf)**3/12+tw*(dt-tf)*(y-(dt-tf)/2)**2;
