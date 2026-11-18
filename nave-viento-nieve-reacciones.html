@@ -542,6 +542,16 @@ const RVCAT=[...BARD.map(x=>({nm:'Barra Ø'+x+' ADN 420 (solo tracción)',tp:'ba
  ...ANG.filter(p=>p[1]>=50).map(p=>{const q=angP(p[1],p[2]);return {nm:p[0]+' simple',tp:'L',A:q.A/100,rx:q.rx/10,ry:q.rz/10,bt:p[1]/p[2]}}),
  ...ANG.filter(p=>p[1]>=50).map(p=>{const q=angP(p[1],p[2]),Iy=2*(q.Ix+q.A*(q.c+4)**2);return {nm:'2 '+p[0]+' espalda con espalda',tp:'2L',A:2*q.A/100,rx:q.rx/10,ry:Math.sqrt(Iy/(2*q.A))/10,bt:p[1]/p[2]}}),
  ...UPN.map(u=>({nm:'2 UPN '+u[0]+' en cajón',tp:'2U',A:2*u[1],rx:Math.sqrt(u[2]/u[1]),ry:Math.sqrt((u[3]+u[1]*(u[4]-u[5])**2)/u[1]),bt:0}))];
+/* UPN simple y tubos estructurales (propiedades calculadas con la geometría, esquinas vivas); se agregan al final para no correr los índices guardados */
+{const E=200000,n=v=>String(v).replace('.',',');
+ for(const u of UPN)RVCAT.push({nm:'UPN '+u[0],tp:'U',A:u[1],rx:Math.sqrt(u[2]/u[1]),ry:Math.sqrt(u[3]/u[1]),bt:0});
+ const TC=[[48.3,2.9],[48.3,3.2],[60.3,2.9],[60.3,3.6],[73,3.2],[73,5.2],[88.9,3.2],[88.9,4],[88.9,5.5],[101.6,3.2],[101.6,4],[114.3,3.2],[114.3,4],[114.3,6],[141.3,4],[141.3,6.6],[168.3,4.8],[168.3,7.1],[219.1,4.8],[219.1,6.4],[219.1,8.2]];
+ for(const [D,t] of TC){const d=D-2*t,A=Math.PI*(D*D-d*d)/4,r=Math.sqrt(D*D+d*d)/4;RVCAT.push({nm:'Tubo circular Ø'+n(D)+' × '+n(t),tp:'TC',A:A/100,rx:r/10,ry:r/10,bt:0,lam:D/t,
+  Qf:Fy=>{const l=D/t;return l<=0.11*E/Fy?1:Math.min(1,0.038*E/(Fy*l)+2/3)}})}
+ const TR=[[40,40,2],[50,50,2],[50,50,3.2],[60,60,2],[60,60,3.2],[70,70,2.5],[70,70,3.2],[80,80,2.5],[80,80,3.2],[80,80,4],[100,100,3.2],[100,100,4],[100,100,4.75],[100,100,6.35],[120,120,4],[120,120,4.75],[120,120,6.35],[140,140,4.75],[140,140,6.35],[150,150,4.75],[150,150,6.35],[200,200,6.35],[200,200,8],
+  [60,40,2],[60,40,3.2],[80,40,2],[80,40,3.2],[100,50,2.5],[100,50,3.2],[100,50,4],[120,60,3.2],[120,60,4],[140,60,4],[150,50,3.2],[150,50,4.75],[150,100,4],[150,100,4.75],[150,100,6.35],[200,100,4.75],[200,100,6.35]];
+ for(const [H,B,t] of TR){const h=H-2*t,b=B-2*t,A=H*B-h*b,Ix=(B*H**3-b*h**3)/12,Iy=(H*B**3-h*b**3)/12;RVCAT.push({nm:(H==B?'Tubo cuadrado ':'Tubo rectangular ')+H+' × '+B+' × '+n(t),tp:'TR',A:A/100,rx:Math.sqrt(Ix/A)/10,ry:Math.sqrt(Iy/A)/10,bt:0,lam:(H-3*t)/t,
+  Qf:Fy=>{const se=Math.sqrt(E/Fy);let Ae=A;for(const w of [H-3*t,B-3*t]){const l=w/t;if(l>1.4*se){const be=Math.min(w,1.92*t*se*(1-0.38/l*se));Ae-=2*(w-be)*t}}return Ae/A}})}}
 const RVOPT=RVCAT.map(x=>x.nm),RVCFG=['X, solo tracción (tensores)','X, tracción y compresión','V invertida','V','K'];
 function rvTens(sc,d){if(sc.tp=='bar'){const b=barR(sc.dia,+d.teFy,+d.teRos==0);return {R:b.R,eq:barEq(b,sc.dia,+d.teRos==0)}}
  const Fy=+d.rvFy,Fu=Fy<300?370:520,fy=Fy/T9/10,fu=Fu/T9/10,R1=0.9*sc.A*fy,R2=0.75*0.75*sc.A*fu;
@@ -549,8 +559,8 @@ function rvTens(sc,d){if(sc.tp=='bar'){const b=barR(sc.dia,+d.teFy,+d.teRos==0);
 function rvComp(sc,d,L,k){const E=200000,Fy=+d.rvFy;if(sc.tp=='bar')return {R:0,eq:eqL('Una barra redonda no resiste compresión: elegir un perfil o la configuración «X, solo tracción».')};
  let kl,t1;if(sc.tp=='L'){const lx=L*100/sc.rx;kl=lx<=80?72+0.75*lx:Math.min(32+1.25*lx,200);t1=`Ángulo simple (E.5(a)): L/r<sub>x</sub> = ${f(L*100,0)} cm / ${f(sc.rx,2)} cm = ${f(lx,0)} → (k·L/r)<sub>m</sub> = ${lx<=80?'72 + 0,75':'32 + 1,25'}·L/r<sub>x</sub> = <b>${f(kl,0)}</b>`}
  else{const a=k*L*100/sc.rx,b=k*L*100/sc.ry;kl=Math.max(a,b);t1=`k·L/r = máx(${f(k,2)} × ${f(L*100,0)} cm / ${f(sc.rx,2)} cm ; ${f(k,2)} × ${f(L*100,0)} cm / ${f(sc.ry,2)} cm) = máx(${f(a,0)} ; ${f(b,0)}) = <b>${f(kl,0)}</b>`}
- const se=Math.sqrt(E/Fy),Q=!sc.bt||sc.bt<=0.45*se?1:(sc.bt<=0.91*se?1.34-0.76*sc.bt/se:0.53*E/(Fy*sc.bt*sc.bt)),Fe=Math.PI**2*E/kl**2,Fcr=Q*Fy/Fe<=2.25?Q*Math.pow(0.658,Q*Fy/Fe)*Fy:0.877*Fe,R=0.9*Fcr*sc.A/10/T9;
- return {R,kl,eq:eqL(t1+(kl>200?' (supera 200)':''),`F<sub>e</sub> = π²·E/(k·L/r)² = ${f(Fe,0)} MPa · Q = ${f(Q,3)}`,`F<sub>cr</sub> = ${Q*Fy/Fe<=2.25?'Q·0,658<sup>Q·F<sub>y</sub>/F<sub>e</sub></sup>·F<sub>y</sub>':'0,877·F<sub>e</sub>'} = ${f(Fcr,0)} MPa (E.3)`,`φP<sub>n</sub> = 0,90·F<sub>cr</sub>·A<sub>g</sub> = 0,90 × ${f(Fcr,0)} MPa × ${f(sc.A,1)} cm² = <b>${f(R,1)} t</b>`)}}
+ const se=Math.sqrt(E/Fy),Q=sc.Qf?sc.Qf(Fy):(!sc.bt||sc.bt<=0.45*se?1:(sc.bt<=0.91*se?1.34-0.76*sc.bt/se:0.53*E/(Fy*sc.bt*sc.bt))),Fe=Math.PI**2*E/kl**2,Fcr=Q*Fy/Fe<=2.25?Q*Math.pow(0.658,Q*Fy/Fe)*Fy:0.877*Fe,R=0.9*Fcr*sc.A/10/T9;
+ return {R,kl,eq:eqL(t1+(kl>200?' (supera 200)':''),`F<sub>e</sub> = π²·E/(k·L/r)² = ${f(Fe,0)} MPa · Q = ${f(Q,3)}${sc.lam?(Q<1?' (pared esbelta, '+(sc.tp=='TC'?'D/t':'b/t')+' = '+f(sc.lam,1)+': área efectiva, E.7)':' (pared no esbelta, '+(sc.tp=='TC'?'D/t':'b/t')+' = '+f(sc.lam,1)+')'):''}`,`F<sub>cr</sub> = ${Q*Fy/Fe<=2.25?'Q·0,658<sup>Q·F<sub>y</sub>/F<sub>e</sub></sup>·F<sub>y</sub>':'0,877·F<sub>e</sub>'} = ${f(Fcr,0)} MPa (E.3)`,`φP<sub>n</sub> = 0,90·F<sub>cr</sub>·A<sub>g</sub> = 0,90 × ${f(Fcr,0)} MPa × ${f(sc.A,1)} cm² = <b>${f(R,1)} t</b>`)}}
 /* geometría de las diagonales de un panel (ancho s, alto hp, base en y0): [[x1,y1,x2,y2,signo]] con la fuerza hacia +x */
 function rvGeo(cfg,s,hp,y0){return [[[0,y0,s,y0+hp,1]],[[0,y0,s,y0+hp,1],[s,y0,0,y0+hp,-1]],[[0,y0,s/2,y0+hp,1],[s,y0,s/2,y0+hp,-1]],[[s/2,y0,s,y0+hp,1],[s/2,y0,0,y0+hp,-1]],[[0,y0,s,y0+hp/2,1],[0,y0+hp,s,y0+hp/2,-1]]][cfg]}
 function xRigV(m,d){const s=+d.s,H=m.Hc,vP=d.arParV||[],nP=Math.max(1,vP.length),nH=Math.max(1,+d.arParN|0),hp=H/nH,cfg=+d.rvCfg|0,W=xLon(m,d),Fs=+d.exF||0,Fw=W.Fr,Fx=Math.max(Fw,Fs),Hb=Fx/2/nP;
