@@ -529,6 +529,7 @@ function extraRun(m,d){let te={rT:0,Tu:0,dT:20},tn={},st={r:0},sc={r:0},rv={r:0}
  try{vBadges()}catch(e){}
  try{g3Extra(m,d,R)}catch(e){console.error(e)}
  const v3=$('v3d'),tb=v3&&v3.querySelector('table');if(tb&&!tb.dataset.x){tb.dataset.x=1;tb.insertAdjacentHTML('beforeend',all.map(([n,r])=>`<tr><td class="l">${n}</td><td class="${r<=1?'ok':'bad'}">${f(r,2)}</td></tr>`).join(''))}
+ try{coSepShow(m,d)}catch(e){console.error(e)}
  try{uInit();uFix()}catch(e){console.error(e)}
  try{vIndex(R)}catch(e){console.error(e)}
 }
@@ -626,6 +627,18 @@ function vIndex(R){const el=$('vIdx');if(!el)return;const V=window.VRsum||{},mx=
  for(const [id,r] of [['crOut',null],['loOut',null],['chOut',V.ch],['coOut',V.co],['paOut',V.pa],['vcOut',mx(V.vig,V.col)],['teOut',R.te.rT],['rvOut',R.rv.r],['cvOut',R.cv.r],['tnOut',mx(R.tn.rV,R.tn.rC)],['stOut',R.st.r],['scOut',R.sc.r]]){const b=$(id);if(!b||!b.closest('.card'))continue;const h=b.closest('.card').querySelector('h2');if(!(id in VOPEN))VOPEN[id]=false;
   if(!h.dataset.f){h.dataset.f=1;h.style.cursor='pointer';h.style.userSelect='none';h.title='Tocá para abrir o cerrar';h.insertAdjacentHTML('afterbegin','<span class="vfi nomem"></span> ');h.insertAdjacentHTML('beforeend','<span class="vfb nomem" style="float:right;font-size:13px;padding:2px 10px;border-radius:12px"></span>');h.onclick=()=>{VOPEN[id]=!VOPEN[id];vFold(id)}}
   const bd=h.querySelector('.vfb'),ok=r==null||!isFinite(r)?null:r<=1;bd.textContent=ok==null?'':((ok?'✔ VERIFICA':'✘ NO VERIFICA')+' · '+f(r,2));bd.style.background=ok==null?'':(ok?'#dcfce7':'#fee2e2');bd.style.color=ok?'#166534':'#b91c1c';vFold(id)}}
+
+/* ---------- separación de correas: máxima, real sobre el faldón y en planta ---------- */
+function coSepTab(m,d){const P=d.coPos||[],cs=Math.cos(m.th),seg=[];if(P.length<2)return '';
+ for(let i=1;i<P.length;i++){const g=P[i]-P[i-1],l=seg[seg.length-1];if(l&&Math.abs(l[1]-g)<1e-3)l[0]++;else seg.push([1,g])}
+ const lst=k=>seg.map(([n,g])=>`${n} × ${f(g*k,3)} m`).join(' + '),rd=read(),sB=+rd.coSepB,sl=P[P.length-1];
+ return `<div class="tw"><table><tr><th>Número</th><th>Valor en esta nave</th><th>Qué es</th><th>Para qué se usa</th></tr>
+ <tr><td class="l"><b>Separación máxima</b> (la que se carga)</td><td class="l">${f(+d.coSepMax,2)} m en el faldón${sB>0?' · '+f(sB,2)+' m en las franjas de borde':''}</td><td class="l">El tope que se permite</td><td class="l">El programa reparte las correas parejo sin pasarse de ese tope</td></tr>
+ <tr><td class="l"><b>Separación real sobre el faldón</b></td><td class="l"><b>${lst(1)}</b> = ${f(sl,2)} m</td><td class="l">La que resulta de repartir, medida sobre la pendiente (del alero a la cumbrera)</td><td class="l">Verificar la chapa y las correas, fabricar y montar</td></tr>
+ <tr><td class="l"><b>Separación en planta</b></td><td class="l"><b>${lst(cs)}</b> = ${f(sl*cs,2)} m</td><td class="l">La real proyectada sobre la horizontal (× cos ${f(m.thd,1)}° = ${f(cs,3)})</td><td class="l">Solo para dibujar la planta</td></tr></table></div>`}
+function coSepShow(m,d){const h=coSepTab(m,d);if(!h)return;const fm=$('coMod')&&$('coMod').closest('.f');
+ if(fm){let b=$('coSepInfo');if(!b){b=document.createElement('div');b.id='coSepInfo';b.className='nomem';b.style.cssText='grid-column:1/-1;margin-top:6px';fm.insertAdjacentElement('afterend',b)}b.innerHTML='<div style="font-weight:700;font-size:13px;margin-bottom:4px">Separación de correas: las tres medidas</div>'+h}
+ const o=$('coOut');if(o&&!o.querySelector('#coSepRes')){const w=document.createElement('div');w.id='coSepRes';w.innerHTML='<h3>Separación de correas</h3>'+h;o.insertBefore(w,o.firstChild)}}
 
 /* ===================== MEMORIA DE CÁLCULO EN WORD (formato CIVETEC) ===================== */
 const WLIGHT={bg:'#f6f5f2',card:'#ffffff',ink:'#1f2328',mut:'#667085',line:'#d9d6cf',acc:'#ec7200',acc2:'#0b6bcb',ok:'#1a7f37',bad:'#c62828',inp:'#fff8e6',press:'#c62828',suc:'#0b6bcb'};
