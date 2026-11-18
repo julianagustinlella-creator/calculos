@@ -748,7 +748,8 @@ function xDrift(m,d){const out=$('drOut');if(!out)return {r:null};const sv=A.sv|
 /* ---------- 3D: ejes como en los planos (letras en los pórticos, números en las líneas longitudinales) y vistas por plano ---------- */
 const G3V={cur:'3d'};
 function g3Let(i){return i<26?String.fromCharCode(65+i):String.fromCharCode(64+Math.floor(i/26))+String.fromCharCode(65+i%26)}
-function g3Zs(m,d){const n=+d.cvN|0,L=+d.L,z=[0];for(let k=1;k<=n;k++)z.push(k*L/(n+1));z.push(L);return z}
+/* ejes longitudinales: 1 = pared lateral (abajo en la planta), 2 = cumbrera, 3 = la otra pared lateral */
+function g3Zs(m,d){const L=+d.L;return [L,L/2,0]}
 function g3Ejes(m,d){if(typeof G3=='undefined'||!G3.grp)return;let g=G3.grp.children.find(x=>x.userData.k=='g3Ej');if(g){g.traverse(o=>{if(o.geometry)o.geometry.dispose()});G3.grp.remove(g)}
  g=new THREE.Group();g.userData.k='g3Ej';g.visible=!$('g3Ej')||$('g3Ej').checked;G3.grp.add(g);if($('g3Ej'))$('g3Ej').onchange=()=>{g.visible=$('g3Ej').checked};
  const L=+d.L,Lt=m.Lt,s=+d.s,nb=Math.round(Lt/s),zs=g3Zs(m,d),o=3.2,H=m.Hc+m.fr,g3Txt0=g3Txt;let AX='L';
@@ -757,7 +758,7 @@ function g3Ejes(m,d){if(typeof G3=='undefined'||!G3.grp)return;let g=G3.grp.chil
  AX='N';
  zs.forEach((z,k)=>{g3Line(g,[[-o,0,z],[Lt+o,0,z]],0x94a3b8,0.012,'<b>Eje '+(k+1)+'</b>');g3TxtA(g,String(k+1),[-o-0.9,-1.2,z],1.1);g3TxtA(g,String(k+1),[Lt+o+0.9,-1.2,z],1.1)})}
 function g3Vistas(m,d){const nb=Math.round(m.Lt/(+d.s)),zs=g3Zs(m,d),un=zs.length,lp=g3Let(m.np-1),lh=g3Let(nb);
- return [['3d','Vista 3D','Vista general de la nave'],['por','Pórtico tipo (eje '+lp+')','Pórtico tipo, eje '+lp],['h1','Hastial eje A','Plano hastial del eje A'],['hn','Hastial eje '+lh,'Plano hastial del eje '+lh],['la','Eje 1','Eje longitudinal 1 (pared lateral)'],['lz','Eje '+un,'Eje longitudinal '+un+' (pared lateral)'],['pl','Planta','Planta de la cubierta y ejes']]}
+ return [['3d','Vista 3D','Vista general de la nave'],['por','Pórtico tipo (eje '+lp+')','Pórtico tipo, eje '+lp],['h1','Hastial eje A','Plano hastial del eje A'],['hn','Hastial eje '+lh,'Plano hastial del eje '+lh],['lz','Eje 1','Eje longitudinal 1 (pared lateral)'],['la','Eje 3','Eje longitudinal 3 (pared lateral)'],['pl','Planta','Planta de la cubierta y ejes']]}
 function g3Vista(v){if(typeof G3=='undefined'||!G3.r)return;G3V.cur=v;const m=A.m,d=window.DV||read(),L=+d.L,Lt=m.Lt,s=+d.s,H=m.Hc,HT=m.Hc+m.fr,xp=(m.np-1)*s,asp=G3.cam.aspect||1.6;
  let sl=null,pos,tar,w,h;
  if(v=='por'){sl=['x',xp-0.7,xp+0.7,1];tar=[xp,HT/2,L/2];w=L+12;h=HT+6;pos=[1,0,0]}
