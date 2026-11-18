@@ -759,19 +759,45 @@ function g3Ejes(m,d){if(typeof G3=='undefined'||!G3.grp)return;let g=G3.grp.chil
  zs.forEach((z,k)=>{g3Line(g,[[-o,0,z],[Lt+o,0,z]],0x94a3b8,0.012,'<b>Eje '+(k+1)+'</b>');g3TxtA(g,String(k+1),[-o-0.9,-1.2,z],1.1);g3TxtA(g,String(k+1),[Lt+o+0.9,-1.2,z],1.1)})}
 function g3Vistas(m,d){const nb=Math.round(m.Lt/(+d.s)),zs=g3Zs(m,d),un=zs.length,lp=g3Let(m.np-1),lh=g3Let(nb);
  return [['3d','Vista 3D','Vista general de la nave'],['por','Pórtico tipo (eje '+lp+')','Pórtico tipo, eje '+lp],['h1','Hastial eje A','Plano hastial del eje A'],['hn','Hastial eje '+lh,'Plano hastial del eje '+lh],['lz','Eje 1','Eje longitudinal 1 (pared lateral)'],['la','Eje 3','Eje longitudinal 3 (pared lateral)'],['pl','Planta','Planta de la cubierta y ejes']]}
-function g3Vista(v){if(typeof G3=='undefined'||!G3.r)return;G3V.cur=v;const m=A.m,d=window.DV||read(),L=+d.L,Lt=m.Lt,s=+d.s,H=m.Hc,HT=m.Hc+m.fr,xp=(m.np-1)*s,asp=G3.cam.aspect||1.6;
- let sl=null,pos,tar,w,h;
- if(v=='por'){sl=['x',xp-0.7,xp+0.7,1];tar=[xp,HT/2,L/2];w=L+12;h=HT+6;pos=[1,0,0]}
- else if(v=='h1'){sl=['x',-0.9,0.9,1];tar=[0,HT/2,L/2];w=L+12;h=HT+6;pos=[-1,0,0]}
- else if(v=='hn'){sl=['x',Lt-0.9,Lt+0.9,1];tar=[Lt,HT/2,L/2];w=L+12;h=HT+6;pos=[1,0,0]}
- else if(v=='la'){sl=['z',-1.2,1.2,0];tar=[Lt/2,H/2,0];w=Lt+14;h=H+8;pos=[0,0,-1]}
- else if(v=='lz'){sl=['z',L-1.2,L+1.2,0];tar=[Lt/2,H/2,L];w=Lt+14;h=H+8;pos=[0,0,1]}
- else if(v=='pl'){tar=[Lt/2,0,L/2];w=Lt+16;h=L+16;pos=[0,1,0.0008]}
- const bx=new THREE.Box3();
- G3.grp.traverse(o=>{if(!(o.isMesh||o.isSprite))return;if(!sl){o.visible=true;return}if(o.userData.ax){o.visible=sl[0]=='x'?o.userData.ax=='N':o.userData.ax=='L';return}bx.setFromObject(o);const a=sl[0],lo=bx.min[a],hi=bx.max[a];o.visible=sl[3]?(hi>=sl[1]&&lo<=sl[2]):((lo+hi)/2>=sl[1]&&(lo+hi)/2<=sl[2])});
- if(v=='3d'){G3.cam.fov=40;G3.cam.far=2000;G3.cam.updateProjectionMatrix();g3View()}
- else{const fov=7,D=Math.max(w/asp,h)/2/Math.tan(fov*Math.PI/360)*1.04;G3.cam.fov=fov;G3.cam.far=D*3+2000;G3.cam.updateProjectionMatrix();G3.cam.position.set(tar[0]+pos[0]*D,tar[1]+pos[1]*D,tar[2]+pos[2]*D);G3.ctl.target.set(...tar);G3.ctl.update()}
+/* rótulo plano para las vistas 2D: texto, globo de eje (circ) o texto girado (rot) */
+function g3Lbl(grp,txt,pos,h,o={}){const c=document.createElement('canvas'),x=c.getContext('2d'),fz=56;x.font=`bold ${fz}px sans-serif`;const tw=Math.ceil(x.measureText(txt).width),w=o.circ?Math.max(tw+44,104):tw+16,hh=o.circ?w:72;c.width=w;c.height=hh;
+ x.font=`bold ${fz}px sans-serif`;x.textAlign='center';x.textBaseline='middle';if(o.circ){x.beginPath();x.arc(w/2,hh/2,w/2-6,0,7);x.fillStyle='#fff';x.fill();x.lineWidth=7;x.strokeStyle=o.col||'#c62828';x.stroke()}else{x.fillStyle='rgba(238,241,244,.9)';x.fillRect(0,0,w,hh)}
+ x.fillStyle=o.col||'#c62828';x.fillText(txt,w/2,hh/2+3);const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false,rotation:o.rot||0}));sp.scale.set(h*w/hh,h,1);sp.position.set(...pos);sp.renderOrder=20;grp.add(sp)}
+function g3Cam(ortho){if(!G3.pc)G3.pc=G3.cam;if(ortho){if(!G3.oc)G3.oc=new THREE.OrthographicCamera(-1,1,1,-1,0.1,6000);G3.cam=G3.oc}else{G3.cam=G3.pc;const cv=G3.r.domElement;G3.pc.aspect=(cv.width/cv.height)||1.6;G3.pc.updateProjectionMatrix()}G3.ctl.object=G3.cam;G3.ctl.enableRotate=!ortho}
+/* vistas planas (proyección ortogonal): solo se ve lo que está en el plano; lo que lo atraviesa se ve en sección */
+function g3Vista(v){if(typeof G3=='undefined'||!G3.r)return;G3V.cur=v;const m=A.m,d=window.DV||read(),L=+d.L,Lt=m.Lt,s=+d.s,H=m.Hc,HT=m.Hc+m.fr,nb=Math.round(Lt/s),xp=(m.np-1)*s,cv=G3.r.domElement,asp=(cv.width/cv.height)||1.6;
+ let old=G3.grp.children.find(x=>x.userData.k=='g3Ax2');if(old){old.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material&&o.material.map)o.material.map.dispose()});G3.grp.remove(old)}
+ if(v=='3d'){g3Cam(false);G3.grp.traverse(o=>{if(o.isMesh||o.isSprite)o.visible=true});g3View();document.querySelectorAll('#g3Vb button').forEach(b=>b.classList.toggle('on',b.dataset.v==v));return}
+ // P(u,v): del plano de la vista (u hacia la derecha de la pantalla, v hacia arriba) al espacio
+ const fr=[...Array(nb+1)].map((_,i)=>({p:i*s,lab:g3Let(i)})),lo=[{p:L,lab:'1'},{p:L/2,lab:'2'},{p:0,lab:'3'}],cvn=+d.cvN|0,wc=[...Array(cvn+2)].map((_,k)=>k*L/(cvn+1));
+ let P,sl=null,uAx,vAx=null,lev=null,sub=null,U0,U1,V0,V1,dir,up=[0,1,0];
+ if(v=='pl'){P=(u,w)=>[u,HT+3,-w];uAx=fr.map(q=>({u:q.p,lab:q.lab}));vAx=lo.map(q=>({v:-q.p,lab:q.lab}));U0=0;U1=Lt;V0=-L;V1=0;dir=[0,1,0];up=[0,0,-1]}
+ else if(v=='por'||v=='h1'||v=='hn'){const x0=v=='por'?xp:(v=='h1'?0:Lt),sg=v=='h1'?1:-1,wd=v=='por'?0.7:0.9;sl={ax:'x',lo:x0-wd,hi:x0+wd};P=(u,w)=>[x0-sg*2.5,w,sg*u];uAx=lo.map(q=>({u:sg*q.p,lab:q.lab}));lev=[0,H,HT];if(v!='por'&&cvn>0)sub=wc.map(z=>sg*z);U0=Math.min(0,sg*L);U1=Math.max(0,sg*L);V0=0;V1=HT;dir=[-sg,0,0]}
+ else{const z0=v=='lz'?L:0,sg=v=='lz'?1:-1;sl={ax:'z',lo:z0-1.2,hi:z0+1.2};P=(u,w)=>[sg*u,w,z0+sg*2.5];uAx=fr.map(q=>({u:sg*q.p,lab:q.lab}));lev=[0,H];U0=Math.min(0,sg*Lt);U1=Math.max(0,sg*Lt);V0=0;V1=H;dir=[0,0,sg]}
+ uAx.sort((p,q)=>p.u-q.u);if(sub)sub.sort((p,q)=>p-q);
+ // visibilidad: en el plano, o atravesándolo en sección
+ const bx=new THREE.Box3(),oth=sl?['x','y','z'].filter(k=>k!=sl.ax):[];
+ G3.grp.traverse(o=>{if(!(o.isMesh||o.isSprite))return;let g=o;while(g.parent&&g.parent!==G3.grp)g=g.parent;const k=g.userData.k;if(k=='g3Cot'||k=='g3CotG'||k=='g3CotC'||k=='g3Ej'){o.visible=false;return}if(!sl){o.visible=true;return}
+  bx.setFromObject(o);const a=sl.ax,l0=bx.min[a],h0=bx.max[a],c=(l0+h0)/2;o.visible=(c>=sl.lo&&c<=sl.hi)||(h0>=sl.lo&&l0<=sl.hi&&oth.every(q=>bx.max[q]-bx.min[q]<0.6))});
+ // ejes, cotas parciales y progresivas
+ const g=new THREE.Group();g.userData.k='g3Ax2';G3.grp.add(g);const W0=U1-U0,H0=V1-V0,mu=Math.max(W0,H0*asp)*0.028,th=mu*0.62,COL=0xc62828,CD=0x1d4ed8,r=mu*0.018;
+ const ln=(u1,w1,u2,w2,c,rr)=>g3Line(g,[P(u1,w1),P(u2,w2)],c,rr||r,'');
+ const yB=V1+5.6*mu,yC=V1+3.5*mu,yP=V1+1.9*mu;
+ uAx.forEach((q,i)=>{ln(q.u,V0-0.8*mu,q.u,yB-0.8*mu,COL,r*0.7);g3Lbl(g,q.lab,P(q.u,yB),mu*1.5,{circ:1});ln(q.u-0.25*mu,yC-0.25*mu,q.u+0.25*mu,yC+0.25*mu,CD,r*1.3);
+  g3Lbl(g,'+'+f(Math.abs(q.u-uAx[0].u),2),P(q.u+0.55*th,yP),th,{rot:Math.PI/2,col:'#166534'});
+  if(i){const p=uAx[i-1];g3Lbl(g,f(q.u-p.u,2),P((q.u+p.u)/2,yC+0.62*th),th,{col:'#1d4ed8'})}});
+ ln(uAx[0].u,yC,uAx[uAx.length-1].u,yC,CD);
+ if(sub){const yS=V0-1.6*mu;ln(sub[0],yS,sub[sub.length-1],yS,CD);sub.forEach((u,i)=>{ln(u-0.25*mu,yS-0.25*mu,u+0.25*mu,yS+0.25*mu,CD,r*1.3);if(i)g3Lbl(g,f(u-sub[i-1],2),P((u+sub[i-1])/2,yS-0.7*th),th,{col:'#1d4ed8'})})}
+ const xB=U0-5.6*mu,xC=U0-3.3*mu,xP=U0-1.7*mu;
+ if(vAx){vAx.sort((p,q)=>p.v-q.v);vAx.forEach((q,i)=>{ln(xB+0.8*mu,q.v,U1+0.8*mu,q.v,COL,r*0.7);g3Lbl(g,q.lab,P(xB,q.v),mu*1.5,{circ:1});ln(xC-0.25*mu,q.v-0.25*mu,xC+0.25*mu,q.v+0.25*mu,CD,r*1.3);
+   g3Lbl(g,'+'+f(Math.abs(q.v-vAx[0].v),2),P(xP,q.v+0.6*th),th,{col:'#166534'});if(i){const p=vAx[i-1];g3Lbl(g,f(q.v-p.v,2),P(xC-0.6*th,(q.v+p.v)/2),th,{rot:Math.PI/2,col:'#1d4ed8'})}});ln(xC,vAx[0].v,xC,vAx[vAx.length-1].v,CD)}
+ if(lev){ln(xC,lev[0],xC,lev[lev.length-1],CD);lev.forEach((y,i)=>{ln(xC-0.25*mu,y-0.25*mu,xC+0.25*mu,y+0.25*mu,CD,r*1.3);ln(xC,y,U0-0.4*mu,y,0x94a3b8,r*0.5);g3Lbl(g,'+'+f(y,2),P(xB+0.4*mu,y+0.55*th),th,{col:'#166534'});if(i)g3Lbl(g,f(y-lev[i-1],2),P(xC-0.6*th,(y+lev[i-1])/2),th,{rot:Math.PI/2,col:'#1d4ed8'})})}
+ // cámara ortogonal encuadrada
+ const uA=U0-7*mu,uB=U1+1.6*mu,vA=V0-(sub?3.2:1.4)*mu,vB=V1+7*mu,w=uB-uA,h=vB-vA,hw=Math.max(w,h*asp)/2,hh=hw/asp,ct=P((uA+uB)/2,(vA+vB)/2),D=600;
+ g3Cam(true);const c=G3.oc;c.left=-hw;c.right=hw;c.top=hh;c.bottom=-hh;c.near=0.1;c.far=D*3;c.zoom=1;c.up.set(...up);c.position.set(ct[0]+dir[0]*D,ct[1]+dir[1]*D,ct[2]+dir[2]*D);
+ c.updateProjectionMatrix();G3.ctl.target.set(...ct);c.lookAt(...ct);G3.ctl.update();
  document.querySelectorAll('#g3Vb button').forEach(b=>b.classList.toggle('on',b.dataset.v==v))}
+if(!window.G3RS){window.G3RS=1;window.addEventListener('resize',()=>{try{if(G3V.cur!='3d')g3Vista(G3V.cur)}catch(e){}})}
 function g3Barra(m,d){const el=$('g3Vb');if(!el)return;el.innerHTML='<b style="font-size:13px">Vistas:</b>'+g3Vistas(m,d).map(([v,t])=>`<button type="button" data-v="${v}" class="${G3V.cur==v?'on':''}" onclick="g3Vista('${v}')">${t}</button>`).join('')}
 
 /* ===================== MEMORIA DE CÁLCULO EN WORD (formato CIVETEC) ===================== */
