@@ -78,6 +78,7 @@ details{margin:8px 0}summary{cursor:pointer;color:var(--acc);font-weight:600}
 h3.vh{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:20px;padding-top:10px;border-top:2px solid var(--acc)}h5.vh5{font-size:13.5px;margin:14px 0 4px;display:flex;justify-content:space-between;gap:10px}
 .vtag{font-size:13px;padding:2px 10px;border-radius:12px;white-space:nowrap}.vtag.ok{background:#dcfce7;color:#166534}.vtag.bad{background:#fee2e2;color:#b91c1c}
 table.dat td:nth-child(2){white-space:nowrap;font-weight:600}h4{margin:12px 0 4px;font-size:13.5px}
+.vcl{display:none}#vIdx{position:sticky;z-index:3;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 10px;margin:0 -4px 4px;background:var(--bg);border-bottom:1px solid var(--line);font-size:13px}#vIdx .vi{display:inline-flex;border:1.5px solid;border-radius:14px;background:var(--card);overflow:hidden}#vIdx button{border:0;background:none;color:var(--ink);font:inherit;padding:4px 9px;cursor:pointer}#vIdx button.vi{border:1.5px solid var(--line);border-radius:14px;background:var(--card)}#vIdx button:hover{background:color-mix(in srgb,var(--acc) 18%,var(--card))}#vIdx .vi button+button{border-left:1px solid var(--line);padding:4px 7px}
 #bWord{float:right;border:0;background:var(--acc);color:#fff;font:inherit;font-weight:700;padding:9px 16px;border-radius:8px;cursor:pointer;margin-top:2px}#bWord:hover{filter:brightness(1.08)}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -209,6 +210,7 @@ table.dat td:nth-child(2){white-space:nowrap;font-weight:600}h4{margin:12px 0 4p
 </section>
 
 <section class="tab" id="t-ver">
+<div id="vIdx" class="nomem"></div>
 <div class="card"><h2>Verificación de elementos</h2><p class="note">Viento sobre componentes y revestimientos (CIRSOC 102-2025, cap. 5), chapas (separación máxima de correas), correas, vigas y columnas. Los datos de cada verificación se cargan abajo.</p></div>
 <div class="card"><h2>Nave en 3D: qué verifica y qué no</h2>
 <div class="row" style="gap:14px;flex-wrap:wrap;margin-bottom:6px"><label><input type="checkbox" id="g3Ch" checked> chapa</label><label><input type="checkbox" id="g3Co" checked> correas de techo</label><label><input type="checkbox" id="g3Pa" checked> correas de pared</label><label><input type="checkbox" id="g3Po" checked> pórticos</label><label><input type="checkbox" id="g3Ar" checked> arriostramientos</label><label><input type="checkbox" id="g3Sp" checked> soportes y placas base</label><label><input type="checkbox" id="g3Cot" checked> cotas de la cruz de techo</label><label><input type="checkbox" id="g3CotG"> cotas generales</label><label><input type="checkbox" id="g3CotC"> cotas de correas</label><button type="button" class="nav2" style="font-size:13px" onclick="g3Full()">⛶ Pantalla completa</button><button type="button" class="nav2" style="font-size:13px" onclick="g3Png()">📷 Guardar imagen</button><button type="button" class="nav2" id="g3R" style="font-size:13px">vista inicial</button><button type="button" class="nav2" style="font-size:13px" onclick="g3Pin()">📌 Fijar / soltar el 3D en la pantalla</button></div>
@@ -528,6 +530,7 @@ function extraRun(m,d){let te={rT:0,Tu:0,dT:20},tn={},st={r:0},sc={r:0},rv={r:0}
  try{g3Extra(m,d,R)}catch(e){console.error(e)}
  const v3=$('v3d'),tb=v3&&v3.querySelector('table');if(tb&&!tb.dataset.x){tb.dataset.x=1;tb.insertAdjacentHTML('beforeend',all.map(([n,r])=>`<tr><td class="l">${n}</td><td class="${r<=1?'ok':'bad'}">${f(r,2)}</td></tr>`).join(''))}
  try{uInit();uFix()}catch(e){console.error(e)}
+ try{vIndex(R)}catch(e){console.error(e)}
 }
 
 /* ===================== RIGIDIZACIONES VERTICALES, COLUMNAS DE VIENTO, MINIATURAS ===================== */
@@ -602,6 +605,27 @@ function xTor(m,d){const el=$('torOut');if(!el)return;const F=xLon(m,d).Fr,c1=F/
 /* ---------- gráficos de curvas en la unidad elegida ---------- */
 function uCh(o){if(uGet()!='t'||!/kN·m/.test(o.yl||''))return o;const k=1/T9,sc=t=>String(t||'').replace(/(\d+(?:,\d+)?)\s*$/,x=>f(parseFloat(x.replace(',','.'))*k,1));
  return Object.assign({},o,{ymax:o.ymax*k,yl:o.yl.replace('kN·m','t·m'),series:o.series.map(s=>Object.assign({},s,{p:s.p.map(([x,y])=>[x,y*k])})),hl:(o.hl||[]).map(h=>Object.assign({},h,{y:h.y*k,t:sc(h.t)})),pts:(o.pts||[]).map(p=>Object.assign({},p,{y:p.y*k}))})}
+
+/* ---------- índice de verificaciones: un botón por elemento, con su estado ---------- */
+function vFold(id){const b=$(id);if(!b)return;const h=b.closest('.card').querySelector('h2'),op=!!VOPEN[id];b.classList.toggle('vcl',!op);const i=h.querySelector('.vfi');if(i)i.textContent=op?'▾':'▸'}
+function vAll(op){for(const id in VOPEN){VOPEN[id]=op;vFold(id)}}
+const VOPEN={};
+function vGo(id,key){goTab('ver');let el=$(id);if(!el)return;if(id in VOPEN){VOPEN[id]=true;vFold(id)}if(key){const h=[...el.querySelectorAll('h2')].find(x=>x.textContent.trim().toUpperCase().startsWith(key));el=h?h.closest('.card')||h:el}else el=el.closest('.card')||el;
+ const off=($('nav')?$('nav').offsetHeight:0)+($('vIdx')?$('vIdx').offsetHeight:0)+10;window.scrollTo({top:el.getBoundingClientRect().top+window.scrollY-off,behavior:'smooth'});
+ el.style.transition='box-shadow .3s';el.style.boxShadow='0 0 0 3px var(--acc)';setTimeout(()=>el.style.boxShadow='',1600)}
+function vDat(pre){goTab('ver');const h=[...document.querySelectorAll('#fver h2.fold')].find(x=>x.textContent.replace(/^[▸▾\s]+/,'').startsWith(pre));if(!h)return;foldT(h,false);
+ const off=($('nav')?$('nav').offsetHeight:0)+($('vIdx')?$('vIdx').offsetHeight:0)+10;window.scrollTo({top:h.getBoundingClientRect().top+window.scrollY-off,behavior:'smooth'})}
+function vIndex(R){const el=$('vIdx');if(!el)return;const V=window.VRsum||{},mx=(...a)=>{const b=a.filter(x=>x!=null&&isFinite(x));return b.length?Math.max(...b):null};
+ const IT=[['Chapa',V.ch,'chOut','','Chapa'],['Correas de techo',V.co,'coOut','','Correas de cubierta'],['Correas de pared',V.pa,'paOut','','Correas de pared'],['Viga',V.vig,'vcOut','VIGA','Vigas del pórtico'],['Columna',V.col,'vcOut','COLUMNA','Columnas del pórtico'],
+  ['Tensores de techo',R.te.rT,'teOut','','Tensores y tornapuntas'],['Rigidización vertical',R.rv.r,'rvOut','','Arriostramientos'],['Columnas de viento',R.cv.r,'cvOut','','Columnas de viento'],['Tornapuntas',mx(R.tn.rV,R.tn.rC),'tnOut','','Tensores y tornapuntas'],['Soporte de tensores',R.st.r,'stOut','','Soporte de tensores'],['Soporte de correas',R.sc.r,'scOut','','Soporte de correas']];
+ const nb=IT.filter(x=>x[1]!=null&&isFinite(x[1])&&x[1]>1).length;
+ el.style.top=($('nav')?$('nav').offsetHeight:0)+'px';
+ el.innerHTML=`<span style="font-weight:700;margin-right:4px">Ir a:</span><button type="button" class="vi" onclick="vGo('g3')" style="border-color:var(--line)">Nave 3D</button>`+IT.map(([n,r,id,k,pre])=>{const ok=r==null||!isFinite(r)?null:r<=1,c=ok==null?'var(--mut)':(ok?'#16a34a':'#dc2626');
+  return `<span class="vi" style="border-color:${c}"><button type="button" onclick="vGo('${id}','${k}')" title="Ir a la verificación">${ok==null?'':(ok?'✔ ':'✘ ')}${n}${ok==null?'':' · <b style="color:'+c+'">'+f(r,2)+'</b>'}</button><button type="button" onclick="vDat('${pre}')" title="Ir a los datos de este elemento">⚙</button></span>`}).join('')
+  +`<span style="margin-left:auto;font-weight:700;color:${nb?'#dc2626':'#16a34a'}">${nb?nb+' sin verificar':'todo verifica'}</span><button type="button" class="vi" onclick="vAll(true)">▾ Abrir todo</button><button type="button" class="vi" onclick="vAll(false)">▸ Cerrar todo</button>`;
+ for(const [id,r] of [['crOut',null],['loOut',null],['chOut',V.ch],['coOut',V.co],['paOut',V.pa],['vcOut',mx(V.vig,V.col)],['teOut',R.te.rT],['rvOut',R.rv.r],['cvOut',R.cv.r],['tnOut',mx(R.tn.rV,R.tn.rC)],['stOut',R.st.r],['scOut',R.sc.r]]){const b=$(id);if(!b||!b.closest('.card'))continue;const h=b.closest('.card').querySelector('h2');if(!(id in VOPEN))VOPEN[id]=false;
+  if(!h.dataset.f){h.dataset.f=1;h.style.cursor='pointer';h.style.userSelect='none';h.title='Tocá para abrir o cerrar';h.insertAdjacentHTML('afterbegin','<span class="vfi nomem"></span> ');h.insertAdjacentHTML('beforeend','<span class="vfb nomem" style="float:right;font-size:13px;padding:2px 10px;border-radius:12px"></span>');h.onclick=()=>{VOPEN[id]=!VOPEN[id];vFold(id)}}
+  const bd=h.querySelector('.vfb'),ok=r==null||!isFinite(r)?null:r<=1;bd.textContent=ok==null?'':((ok?'✔ VERIFICA':'✘ NO VERIFICA')+' · '+f(r,2));bd.style.background=ok==null?'':(ok?'#dcfce7':'#fee2e2');bd.style.color=ok?'#166534':'#b91c1c';vFold(id)}}
 
 /* ===================== MEMORIA DE CÁLCULO EN WORD (formato CIVETEC) ===================== */
 const WLIGHT={bg:'#f6f5f2',card:'#ffffff',ink:'#1f2328',mut:'#667085',line:'#d9d6cf',acc:'#ec7200',acc2:'#0b6bcb',ok:'#1a7f37',bad:'#c62828',inp:'#fff8e6',press:'#c62828',suc:'#0b6bcb'};
@@ -1607,8 +1631,8 @@ function drawCorrea(m,d){const CS=corrSec(+d.coH,+d.coB,+d.coD,+d.cot,+d.coTipo,
   zs+=`<line x1="${cx}" y1="${Y(0)}" x2="${cx}" y2="${Y(W2)}" stroke="var(--ink)" stroke-width="1"/>`;
   for(const sd of [0,1])for(const [p,q] of seg){const ya=Y(yP(sd,p)),yb=Y(yP(sd,q)),n=q-p,sg=(PP[q]-PP[p])/n;
    for(const yy of [ya,yb])zs+=`<line x1="${cx-6}" y1="${yy+6}" x2="${cx+6}" y2="${yy-6}" stroke="var(--ink)" stroke-width="1.6"/>`;
-   zs+=`<text x="${cx+10}" y="${(ya+yb)/2-2}" style="font-size:11px;font-weight:700">${f(PP[q]-PP[p],2)} m</text><text x="${cx+10}" y="${(ya+yb)/2+11}" style="font-size:10px">${n} × ${f(sg,3)} m</text>`}
-  zs+=`<text x="${cx}" y="${Y(W2)-8}" text-anchor="middle" style="font-size:10px">medidas sobre la pendiente; cada faldón ${f(PP[PP.length-1],2)} m</text>`}
+   zs+=`<text x="${cx+10}" y="${(ya+yb)/2-2}" style="font-size:11px;font-weight:700">${f(PP[q]-PP[p],2)} m</text><text x="${cx+10}" y="${(ya+yb)/2+11}" style="font-size:10px">faldón: ${n} × ${f(sg,3)} m</text><text x="${cx+10}" y="${(ya+yb)/2+23}" style="font-size:10px;fill:var(--acc2);font-weight:600">planta: ${n} × ${f(sg*cs,3)} m</text>`}
+  zs+=`<text x="${cx}" y="${Y(W2)-8}" text-anchor="middle" style="font-size:10px">faldón = medida real sobre la pendiente (${f(PP[PP.length-1],2)} m) · planta = proyección horizontal (${f(PP[PP.length-1]*cs,2)} m)</text>`}
  zs+=`<text x="${X(Lt)+8}" y="${Y(0)+4}" style="font-size:11px">alero</text><text x="${X(Lt)+8}" y="${Y(L2)+4}" style="font-size:11px">cumbrera</text><text x="${X(Lt)+8}" y="${Y(W2)+4}" style="font-size:11px">alero</text><text x="${X(0)}" y="12" style="font-size:11px">Cubierta completa en planta: ${f(Lt,0)} m de largo × ${f(W2,0)} m de ancho (dos faldones de ${f(L2,2)} m en planta, ${f(L2/cs,2)} m en la pendiente) · a = ${f(a,2)} m</text>`;
  [['z1','zona 1'],['z2','zona 2'],['z3','zona 3']].forEach(([z,n],i)=>zs+=`<rect x="${X(Lt)+8}" y="${Y(W2)+40+i*16}" width="12" height="10" fill="${ZC[z]}"/><text x="${X(Lt)+24}" y="${Y(W2)+49+i*16}" style="font-size:10px">${n}</text>`);
  [['#2a9d8f','≤ 0,80'],['#e9a800','≤ 1,00'],['#d62828','> 1,00']].forEach(([c,n],i)=>zs+=`<line x1="${X(Lt)+8}" y1="${Y(W2)+110+i*16}" x2="${X(Lt)+22}" y2="${Y(W2)+110+i*16}" stroke="${c}" stroke-width="3"/><text x="${X(Lt)+26}" y="${Y(W2)+114+i*16}" style="font-size:10px">${n}</text>`);
