@@ -443,13 +443,36 @@ function alvTee(g,sd,Fy){if(g.T&&g.T.Fy==Fy)return g.T;const E=200000,Gs=77200,b
 function alvChk(g,sd,Fy,M,V,Pu){const T=alvTee(g,sd,Fy),Pt=M/(g.deff/1000)+Pu/2,Mv=V/2*g.e/2/1000,rp=Pt/T.phPn,rm=Mv/T.phMn,Vh=V*g.S/g.deff,Mh=Vh*g.h/1000;
  return {loc:T.loc,comp:rp,flex:rm,int:rp>=0.2?rp+8/9*rm:rp/2+rm,post:Mh/T.phMpo,vh:Vh/T.phVh,vnet:V/T.phVnet,vgro:V/T.phVgro,Pt,Mv,Vh,Mh}}
 function alvX(o,g,sd,Fy){const k=o.k9,T=g.T;return {loc:`b<sub>f</sub>/2t<sub>f</sub> = ${f(T.lf,1)} ≤ ${f(T.lrf,1)} · d<sub>t</sub>/t<sub>w</sub> = ${f(T.lw,1)} ≤ ${f(T.lrw,1)}`,comp:`P<sub>T</sub> = ${f(k.Pt,0)} kN ≤ φP<sub>n</sub> = ${f(T.phPn,0)} kN`,flex:`M<sub>v</sub> = ${f(k.Mv,1)} kN·m ≤ φM<sub>n</sub> = ${f(T.phMn,1)} kN·m`,int:`P<sub>T</sub> = ${f(k.Pt,0)} kN, M<sub>v</sub> = ${f(k.Mv,1)} kN·m`,post:`M<sub>h</sub> = ${f(k.Mh,1)} kN·m ≤ φM<sub>n</sub> = ${f(T.phMpo,1)} kN·m`,vh:`V<sub>h</sub> = ${f(k.Vh,0)} kN ≤ φV<sub>n</sub> = ${f(T.phVh,0)} kN`,vnet:`V<sub>u</sub> = ${f(o.V,0)} kN ≤ φV<sub>n</sub> = ${f(T.phVnet,0)} kN`,vgro:`V<sub>u</sub> = ${f(o.V,0)} kN ≤ φV<sub>n</sub> = ${f(T.phVgro,0)} kN`}[o.key]}
-function alvFig(g,sd){const W=760,Hh=300,sc=Math.min(0.42,230/sd.h),x0=40,yT=40,H=sd.h*sc,ho=g.ho*sc,e=g.e*sc,b=g.b*sc,S=g.S*sc,dt=g.dt*sc,tf=Math.max(2,sd.tf*sc),n=Math.max(2,Math.min(4,Math.floor(430/S))),Lw=n*S+e;
- let o=`<svg viewBox="0 0 ${W} ${Hh}"><rect x="${x0}" y="${yT}" width="${Lw}" height="${H}" fill="#e8eef5" stroke="#1f2328"/><rect x="${x0}" y="${yT}" width="${Lw}" height="${tf}" fill="#1f2328"/><rect x="${x0}" y="${yT+H-tf}" width="${Lw}" height="${tf}" fill="#1f2328"/>`;
- const cy=yT+H/2;for(let i=0;i<n;i++){const c=x0+e+b+e/2+i*S;o+=`<polygon points="${c-e/2-b},${cy} ${c-e/2},${cy-ho/2} ${c+e/2},${cy-ho/2} ${c+e/2+b},${cy} ${c+e/2},${cy+ho/2} ${c-e/2},${cy+ho/2}" fill="#fff" stroke="#1f2328"/>`}
- const c0=x0+e+b+e/2;o+=dimH(c0-e/2,c0+e/2,cy-ho/2-8,'e = '+f(g.e,0))+dimH(c0+e/2,c0+e/2+b,cy+ho/2+26,'b = '+f(g.b,0))+dimH(c0,c0+S,yT+H+30,'paso S = '+f(g.S,0)+' mm')+dimV(x0-14,yT,yT+H,'d<tspan baseline-shift="sub" font-size="9">g</tspan> = '+f(sd.h,0))+dimV(x0+Lw+14,cy-ho/2,cy+ho/2,'h₀ = '+f(g.ho,0),1)+dimV(x0+Lw+14,yT,yT+dt,'d<tspan baseline-shift="sub" font-size="9">t</tspan> = '+f(g.dt,0),1);
- // sección T
- const tx=x0+Lw+150,bw=sd.b*sc*1.6,tt=sd.tf*sc*1.6,dd=g.dt*sc*1.6,tw=Math.max(2,sd.tw*sc*1.6);o+=`<rect x="${tx}" y="${yT+20}" width="${bw}" height="${tt}" fill="#c9ced6" stroke="#1f2328"/><rect x="${tx+bw/2-tw/2}" y="${yT+20+tt}" width="${tw}" height="${dd-tt}" fill="#c9ced6" stroke="#1f2328"/><line x1="${tx-10}" y1="${yT+20+dd-g.y*sc*1.6}" x2="${tx+bw+10}" y2="${yT+20+dd-g.y*sc*1.6}" stroke="#c62828" stroke-dasharray="5 3"/><text x="${tx+bw+14}" y="${yT+24+dd-g.y*sc*1.6}" style="font-size:11px;fill:#c62828">eje x, ȳ = ${f(g.y,1)}</text><text x="${tx+bw/2}" y="${yT+12}" text-anchor="middle" style="font-size:11px;font-weight:600">Sección T en el alvéolo</text><text x="${tx+bw/2}" y="${yT+20+dd+18}" text-anchor="middle" style="font-size:11px">b<tspan baseline-shift="sub" font-size="9">f</tspan> = ${f(sd.b,0)} · t<tspan baseline-shift="sub" font-size="9">f</tspan> = ${f(sd.tf,1)} · t<tspan baseline-shift="sub" font-size="9">w</tspan> = ${f(sd.tw,1)}</text>`;
- return o+`<text x="${x0+Lw/2}" y="18" text-anchor="middle" style="font-size:12px;font-weight:600">Alzado de la viga alveolar (medidas en mm)</text></svg>`}
+function alvFig(g,sd){const W=980,Hh=400,dg=sd.h,ho=g.ho,e=g.e,b=g.b,S=g.S,dt=g.dt,thd=g.th*180/Math.PI,n=3,Lr=n*S+e,sc=Math.min(500/Lr,230/dg),x0=96,yT=92,H=dg*sc,tf=Math.max(2.5,sd.tf*sc),cy=yT+H/2,X=v=>x0+v*sc,bl='#1d4ed8',rd='#c62828',tx=(x,y,t,c,an,ex)=>`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="${an||'middle'}" style="font-size:12px;font-weight:700;fill:${c||bl}" ${ex||''}>${t}</text>`,sb=t=>`<tspan baseline-shift="sub" font-size="9">${t}</tspan>`;
+ const dH=(xa,xb,y,t,c)=>`<line x1="${xa}" y1="${y}" x2="${xb}" y2="${y}" stroke="${c||bl}"/><line x1="${xa-3}" y1="${y+3}" x2="${xa+3}" y2="${y-3}" stroke="${c||bl}" stroke-width="1.6"/><line x1="${xb-3}" y1="${y+3}" x2="${xb+3}" y2="${y-3}" stroke="${c||bl}" stroke-width="1.6"/>`+tx((xa+xb)/2,y-5,t,c);
+ const dV=(x,ya,yb,t,c,sd2)=>`<line x1="${x}" y1="${ya}" x2="${x}" y2="${yb}" stroke="${c||bl}"/><line x1="${x-3}" y1="${ya+3}" x2="${x+3}" y2="${ya-3}" stroke="${c||bl}" stroke-width="1.6"/><line x1="${x-3}" y1="${yb+3}" x2="${x+3}" y2="${yb-3}" stroke="${c||bl}" stroke-width="1.6"/>`+tx(x+(sd2||-1)*7,(ya+yb)/2+4,t,c,(sd2||-1)<0?'end':'start');
+ let o=`<svg viewBox="0 0 ${W} ${Hh}"><text x="${x0}" y="16" style="font-size:13px;font-weight:700">Viga alveolar: geometría de la abertura (medidas en mm)</text>`;
+ o+=`<rect x="${X(0)}" y="${yT}" width="${Lr*sc}" height="${H}" fill="#e8eef5" stroke="#1f2328"/><rect x="${X(0)}" y="${yT}" width="${Lr*sc}" height="${tf}" fill="#475569"/><rect x="${X(0)}" y="${yT+H-tf}" width="${Lr*sc}" height="${tf}" fill="#475569"/>`;
+ const c0=e+b+e/2;for(let i=0;i<n;i++){const c=c0+i*S;o+=`<polygon points="${X(c-e/2-b)},${cy} ${X(c-e/2)},${cy-ho*sc/2} ${X(c+e/2)},${cy-ho*sc/2} ${X(c+e/2+b)},${cy} ${X(c+e/2)},${cy+ho*sc/2} ${X(c-e/2)},${cy+ho*sc/2}" fill="#fff" stroke="#1f2328" stroke-width="1.4"/>`}
+ // cadena superior e · b · e · b y paso S
+ const p0=c0-e/2,ch=[p0,p0+e,p0+e+b,p0+2*e+b,p0+2*e+2*b],yc=yT-16;
+ o+=dH(X(ch[0]),X(ch[1]),yc,'e')+dH(X(ch[1]),X(ch[2]),yc,'b')+dH(X(ch[2]),X(ch[3]),yc,'e')+dH(X(ch[3]),X(ch[4]),yc,'b')+tx(X(ch[0])-10,yc+4,'e = '+f(e,0),bl,'end')+tx(X(ch[4])+10,yc+4,'b = '+f(b,0),bl,'start')+dH(X(ch[0]),X(ch[4]),yc-26,'S = 2·e + 2·b = '+f(S,0),rd);
+ for(const q of ch)o+=`<line x1="${X(q)}" y1="${yc-26}" x2="${X(q)}" y2="${cy}" stroke="#94a3b8" stroke-dasharray="3 3"/>`;
+ // alturas
+ o+=dV(X(0)-22,yT,yT+H,'d'+sb('g')+' = '+f(dg,0),rd)+dV(X(Lr)+18,yT,cy-ho*sc/2,'d'+sb('t')+' = '+f(dt,1),bl,1)+dV(X(Lr)+18,cy-ho*sc/2,cy+ho*sc/2,'h'+sb('o')+' = '+f(ho,0),bl,1)+dV(X(Lr)+18,cy+ho*sc/2,yT+H,'d'+sb('t'),bl,1)+dV(X(c0+2*S)+0,cy-ho*sc/2,cy,'h = '+f(ho/2,1),'#166534',-1);
+ // ángulo θ en el vértice del primer agujero
+ {const vx=X(c0-e/2-b),R=30,a=g.th;o+=`<path d="M${vx+R},${cy} A${R},${R} 0 0 0 ${(vx+R*Math.cos(a)).toFixed(1)},${(cy-R*Math.sin(a)).toFixed(1)}" fill="none" stroke="${rd}" stroke-width="1.6"/><line x1="${vx}" y1="${cy}" x2="${vx+R+10}" y2="${cy}" stroke="${rd}" stroke-dasharray="3 2"/>`+tx(vx+R+4,cy+17,'θ = '+f(thd,0)+'°',rd,'start')}
+ // marcas de corte
+ for(const [q,nm] of [[c0+S,'A'],[c0+S+e/2+b+e/2,'B']])o+=`<line x1="${X(q)}" y1="${yT-4}" x2="${X(q)}" y2="${yT+H+20}" stroke="#1f2328" stroke-dasharray="8 3 2 3"/>`+tx(X(q),yT+H+34,nm,'#1f2328');
+ // cortes A-A y B-B
+ const kx=Math.min(1,150/sd.b)*0.5,ks=sc,bw=sd.b*ks,tw=Math.max(2,sd.tw*ks),sec=(xc,tit,hole)=>{let q=tx(xc,yT-30,tit,'#1f2328')+`<rect x="${xc-bw/2}" y="${yT}" width="${bw}" height="${tf}" fill="#475569"/><rect x="${xc-bw/2}" y="${yT+H-tf}" width="${bw}" height="${tf}" fill="#475569"/>`;
+  q+=hole?`<rect x="${xc-tw/2}" y="${yT+tf}" width="${tw}" height="${dt*sc-tf}" fill="#475569"/><rect x="${xc-tw/2}" y="${cy+ho*sc/2}" width="${tw}" height="${dt*sc-tf}" fill="#475569"/>`:`<rect x="${xc-tw/2}" y="${yT+tf}" width="${tw}" height="${H-2*tf}" fill="#475569"/>`;
+  return q+`<line x1="${xc-bw/2-8}" y1="${cy}" x2="${xc+bw/2+8}" y2="${cy}" stroke="#94a3b8" stroke-dasharray="6 3"/>`+dH(xc-bw/2,xc+bw/2,yT-10,'b'+sb('f')+' = '+f(sd.b,0))};
+ const xa=X(Lr)+150,xb=xa+135;o+=sec(xa,'CORTE A-A',1)+sec(xb,'CORTE B-B',0)+tx((xa+xb)/2,yT+H+34,'t'+sb('f')+' = '+f(sd.tf,1)+' · t'+sb('w')+' = '+f(sd.tw,1),'#1f2328');
+ o+=tx(x0,Hh-34,'b = h / tan θ = '+f(ho/2,1)+' / tan '+f(thd,0)+'° = '+f(b,0)+' mm','#1f2328','start')+tx(x0,Hh-16,'d'+sb('g')+' = 1,5·d · h'+sb('o')+' = d · d'+sb('t')+' = (d'+sb('g')+' − h'+sb('o')+')/2 · h = h'+sb('o')+'/2','#1f2328','start');
+ return o+'</svg>'}
+/* figura y tabla de la abertura dentro de los datos de la viga: cambia al mover el ángulo */
+function alvShow(m,d){const fm=$('alvIf')&&$('alvIf').closest('.f');if(!fm)return;let bx=$('alvInfo');if(!bx){bx=document.createElement('div');bx.id='alvInfo';bx.className='nomem';bx.style.cssText='grid-column:1/-1;margin-top:8px';fm.insertAdjacentElement('afterend',bx)}
+ const sd=secData(d,'r').ho?secData(d,'r'):(secData(d,'c').ho?secData(d,'c'):null);if(!sd){bx.innerHTML='<p class="note">La viga elegida no es alveolar: estos tres datos no se usan. Para verlos en acción, elegí un perfil «Alveolar W …» en la pestaña 1.</p>';return}
+ const g=alvGeo(sd,d),thd=+d.alvT,man=+d.alvE>0,R=(s,v,o)=>`<tr><td class="l"><b>${s}</b></td><td style="white-space:nowrap;font-weight:700">${v}</td><td class="l">${o}</td></tr>`;
+ bx.innerHTML=(g.e<=0?`<p class="eq bad">Con θ = ${f(thd,0)}° el montante e queda en ${f(g.e,0)} mm (negativo): el agujero no entra con el criterio e = 0,83·h<sub>o</sub> − 2·b. Subí el ángulo o cargá e a mano.</p>`:'')+alvFig(g,sd)+`<div class="tw"><table><tr><th>Parámetro</th><th>Valor</th><th>De dónde sale</th></tr>`
+ +R('θ',f(thd,0)+'°','ángulo del corte, dato (60° por defecto)')+R('d<sub>g</sub>',f(sd.h,1)+' mm','altura de la viga alveolar = 1,5 × altura del perfil W de origen')+R('h<sub>o</sub>',f(g.ho,0)+' mm','altura de la abertura = altura del perfil W de origen')+R('h',f(g.ho/2,1)+' mm','h<sub>o</sub>/2')+R('d<sub>t</sub>',f(g.dt,1)+' mm','altura de cada T: (d<sub>g</sub> − h<sub>o</sub>)/2')
+ +R('b',f(g.b,0)+' mm',`proyección horizontal del corte inclinado: h / tan θ = ${f(g.ho/2,1)} / tan ${f(thd,0)}°`)+R('e',f(g.e,0)+' mm',man?'largo del montante, cargado a mano':`largo del montante: 0,83·h<sub>o</sub> − 2·b = 0,83 × ${f(g.ho,0)} − 2 × ${f(g.b,0)}`)+R('S',f(g.S,0)+' mm','paso entre aberturas: 2·e + 2·b')+'</table></div>'}
 function alvDev(z){const g=z.g,sd=z.sd,T=g.T,Fy=T.Fy,p=z.pg,E=200000,O=k=>z.bA.find(a=>a.key==k),hd=(n,k,t)=>{const o=O(k);return `<h5 class="vh5">3.6.${n} ${t} <span class="vtag ${o.r<=1?'ok':'bad'}">${f(o.r,2)}</span></h5><p class="eq sm">Punto que manda: a ${f(o.xs,2)} m del ${z.k=='c'?'pie':'alero'}, M<sub>u</sub> = ${f(o.M,0)} kN·m, V<sub>u</sub> = ${f(o.V,0)} kN, P<sub>u</sub> = ${f(o.Pu,0)} kN · ${ab(o.c)}</p>`};
  const c=O('comp').k9,fl=O('flex').k9,it=O('int').k9,po=O('post').k9,vh=O('vh').k9,rp=it.Pt/T.phPn,rm=it.Mv/T.phMn;
  let h=`<h4>3.6 Alveolar — AISC Design Guide 31 (método LRFD)</h4>`+gWrap('Geometría de la viga alveolar y de la sección T',alvFig(g,sd));
@@ -575,6 +598,7 @@ function extraRun(m,d){let te={rT:0,Tu:0,dT:20},tn={},st={r:0},sc={r:0},rv={r:0}
  try{g3Ejes(m,d);g3Barra(m,d);if(G3V.cur!='3d')g3Vista(G3V.cur)}catch(e){console.error(e)}
  {const v3=$('v3d');if(v3)v3.querySelectorAll('.tw,table,p.note').forEach(x=>x.remove())}
  try{coSepShow(m,d)}catch(e){console.error(e)}
+ try{alvShow(m,d)}catch(e){console.error(e)}
  try{uInit();uFix()}catch(e){console.error(e)}
  try{vIndex(R)}catch(e){console.error(e)}
  try{pColor()}catch(e){console.error(e)}
@@ -791,7 +815,10 @@ function g3Vista(v){if(typeof G3=='undefined'||!G3.r)return;G3V.cur=v;const m=A.
  const xB=U0-5.6*mu,xC=U0-3.3*mu,xP=U0-1.7*mu;
  if(vAx){vAx.sort((p,q)=>p.v-q.v);vAx.forEach((q,i)=>{ln(xB+0.8*mu,q.v,U1+0.8*mu,q.v,COL,r*0.7);g3Lbl(g,q.lab,P(xB,q.v),mu*1.5,{circ:1});ln(xC-0.25*mu,q.v-0.25*mu,xC+0.25*mu,q.v+0.25*mu,CD,r*1.3);
    g3Lbl(g,'+'+f(Math.abs(q.v-vAx[0].v),2),P(xP,q.v+0.6*th),th,{col:'#166534'});if(i){const p=vAx[i-1];g3Lbl(g,f(q.v-p.v,2),P(xC-0.6*th,(q.v+p.v)/2),th,{rot:Math.PI/2,col:'#1d4ed8'})}});ln(xC,vAx[0].v,xC,vAx[vAx.length-1].v,CD)}
- if(lev){ln(xC,lev[0],xC,lev[lev.length-1],CD);lev.forEach((y,i)=>{ln(xC-0.25*mu,y-0.25*mu,xC+0.25*mu,y+0.25*mu,CD,r*1.3);ln(xC,y,U0-0.4*mu,y,0x94a3b8,r*0.5);g3Lbl(g,'+'+f(y,2),P(xB+0.4*mu,y+0.55*th),th,{col:'#166534'});if(i)g3Lbl(g,f(y-lev[i-1],2),P(xC-0.6*th,(y+lev[i-1])/2),th,{rot:Math.PI/2,col:'#1d4ed8'})})}
+ if(lev){const eJ=secData(d,'r').h/2000/Math.cos(m.th),lev2=lev.map(y=>y>0?y+eJ:0),
+  dl=(xc,arr,ch,cc,tit)=>{ln(xc,arr[0],xc,arr[arr.length-1],ch);g3Lbl(g,tit,P(xc-0.9*mu,arr[arr.length-1]+1.5*th),th*0.95,{col:cc});
+   arr.forEach((y,i)=>{ln(xc-0.25*mu,y-0.25*mu,xc+0.25*mu,y+0.25*mu,ch,r*1.3);ln(xc,y,U0-0.4*mu,y,ch,r*0.45);g3Lbl(g,'+'+f(y,2),P(xc-1.7*mu,y+0.55*th),th,{col:cc});if(i)g3Lbl(g,f(y-arr[i-1],2),P(xc-0.6*th,(y+arr[i-1])/2),th,{rot:Math.PI/2,col:cc})})};
+  dl(U0-2.6*mu,lev,CD,'#1d4ed8','a ejes (cálculo)');dl(U0-7.4*mu,lev2,0x9a3412,'#9a3412','a borde de perfil')}
  // perfiles de los pórticos como en un plano: relleno gris acero y aristas (se ven las alas y el alma)
  {const ST=G3V.st||(G3V.st=new THREE.MeshBasicMaterial({color:0xd3dbe4})),STC=G3V.stc||(G3V.stc=new THREE.MeshBasicMaterial({color:0xd3dbe4,depthTest:false})),EM=G3V.em||(G3V.em=new THREE.LineBasicMaterial({color:0x111827,depthTest:false})),lst=[];G3.grp.updateMatrixWorld(true);
   G3.grp.traverse(o=>{if(!o.isMesh||!o.visible)return;let q=o;while(q.parent&&q.parent!==G3.grp)q=q.parent;if(q.userData.k=='g3Po')lst.push(o)});
@@ -804,7 +831,7 @@ function g3Vista(v){if(typeof G3=='undefined'||!G3.r)return;G3V.cur=v;const m=A.
   for(const [zz,sg2] of [[0,-1],[L,1]])for(const hh of wallLv(d,H).g)g.add(g3Bar(shW,[px-0.2,hh,zz+sg2*offp],[px+0.2,hh,zz+sg2*offp],[0,0,sg2],mt,'<b>Correa de pared</b> en sección'+tS))}
  g.children.forEach(q=>{if(q.isMesh)q.renderOrder=10});
  // cámara ortogonal encuadrada
- const uA=U0-7*mu,uB=U1+1.6*mu,vA=V0-(sub?3.2:1.4)*mu,vB=V1+7*mu,w=uB-uA,h=vB-vA,hw=Math.max(w,h*asp)/2,hh=hw/asp,ct=P((uA+uB)/2,(vA+vB)/2),D=600;
+ const uA=U0-(lev?11.5:7)*mu,uB=U1+1.6*mu,vA=V0-(sub?3.2:1.4)*mu,vB=V1+7*mu,w=uB-uA,h=vB-vA,hw=Math.max(w,h*asp)/2,hh=hw/asp,ct=P((uA+uB)/2,(vA+vB)/2),D=600;
  g3Cam(true);const c=G3.oc;c.left=-hw;c.right=hw;c.top=hh;c.bottom=-hh;c.near=0.1;c.far=D*3;c.zoom=1;c.up.set(...up);c.position.set(ct[0]+dir[0]*D,ct[1]+dir[1]*D,ct[2]+dir[2]*D);
  c.updateProjectionMatrix();G3.ctl.target.set(...ct);c.lookAt(...ct);G3.ctl.update();
  document.querySelectorAll('#g3Vb button').forEach(b=>b.classList.toggle('on',b.dataset.v==v))}
