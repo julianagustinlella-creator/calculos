@@ -644,6 +644,7 @@ function extraRun(m,d){let te={rT:0,Tu:0,dT:20},tn={},st={r:0},sc={r:0},rv={r:0}
  {const v3=$('v3d');if(v3)v3.querySelectorAll('.tw,table,p.note').forEach(x=>x.remove())}
  try{coSepShow(m,d)}catch(e){console.error(e)}
  try{alvShow(m,d)}catch(e){console.error(e)}
+ try{xPost(m,d)}catch(e){console.error(e)}
  try{uInit();uFix()}catch(e){console.error(e)}
  try{vIndex(R)}catch(e){console.error(e)}
  try{pColor()}catch(e){console.error(e)}
@@ -782,14 +783,14 @@ function haPan(m,d,i,e,nH){const L=+d.L,EE=cvZs(d).E,zt=z=>m.Hc+m.fr*(1-Math.abs
 function xHast(m,d){const CV=cvZs(d),n=CV.n,L=+d.L,out=$('haOut');
  if(n<=0){if($('arS_arH'))$('arS_arH').innerHTML='<p class="note">Sin columnas de viento no hay paños para rigidizar en el hastial: cargalas en «Columnas de viento del frente».</p>';out.innerHTML='<p class="eq">Para rigidizar los hastiales hace falta la modulación de las columnas de viento: cargar la cantidad en «Columnas de viento del frente».</p>';return {r:null}}
  const EE=CV.E,wB=EE.slice(1).map((v,i)=>v-EE[i]),nB=n+1,bays=haBays(d,nB),TW=xTransW(m,d),Hg=TW.W/2,cfg=+d.haCfg|0,sc=RVCAT[+d.haSec]||RVCAT[0],sp=RVCAT[+d.puSec]||RVCAT[0],nH=Math.max(1,+d.haN|0),zt=z=>m.Hc+m.fr*(1-Math.abs(z-L/2)/(L/2));
- const SW=820,SH=330,x0=60,yb0=270,k=Math.min((SW-2*x0)/L,200/(m.Hc+m.fr)),X=z=>x0+z*k,Y=y=>yb0-y*k;let sv=`<svg viewBox="0 0 ${SW} ${SH}"><text x="${SW/2}" y="16" text-anchor="middle" style="font-weight:600">Hastial (${RVCFG[cfg]}): tocá un paño para poner o sacar la rigidización</text>`;
+ const SW=820,SH=330,x0=60,yb0=270,k=Math.min((SW-2*x0)/L,200/(m.Hc+m.fr)),X=z=>x0+z*k,Y=y=>yb0-y*k;let sv=`<svg viewBox="0 0 ${SW} ${SH}"><text x="${SW/2}" y="16" text-anchor="middle" style="font-weight:600">Hastial (${RVCFG[cfg]}): paños entre columnas de viento y rigidizaciones</text>`;
  for(let i=1;i<=nB;i++){const pp=haPan(m,d,i,0,nH),z0=pp.z0,e=pp.e,on=bays.includes(i);
   sv+=`<polygon points="${X(z0)},${Y(0)} ${X(z0+e)},${Y(0)} ${X(z0+e)},${Y(pp.hR)} ${X(z0)},${Y(pp.hL)}" fill="${on?'rgba(29,78,216,.15)':'transparent'}" stroke="none" style="cursor:pointer" onclick="arTog('haPan',${i})"><title>paño ${i}: ${on?'sacar':'poner'} rigidización</title></polygon>`;
   if(on)pp.pan.forEach((p,q)=>{sv+=`<path d="${haGeo(cfg,e,p.yb,p.yL,p.yR).map(([a,b,c,f2])=>`M${X(z0+a)},${Y(b)}L${X(z0+c)},${Y(f2)}`).join('')}" fill="none" stroke="#1d4ed8" stroke-width="2" pointer-events="none"/>`;if(q>0)sv+=`<line x1="${X(z0)}" y1="${Y(p.yb)}" x2="${X(z0+e)}" y2="${Y(p.yb)}" stroke="#7c3aed" stroke-width="3" pointer-events="none"/>`});
   sv+=`<text x="${X(z0+e/2)}" y="${Y(0)+16}" text-anchor="middle" style="font-size:11px">${i}</text>`}
  for(let j=0;j<=nB;j++){const z=EE[j];sv+=`<line x1="${X(z)}" y1="${Y(0)}" x2="${X(z)}" y2="${Y(zt(z))}" stroke="#1f2328" stroke-width="${j==0||j==nB?4:2.5}" pointer-events="none"/>`}
  sv+=`<polyline points="${X(0)},${Y(m.Hc)} ${X(L/2)},${Y(m.Hc+m.fr)} ${X(L)},${Y(m.Hc)}" fill="none" stroke="#1f2328" stroke-width="4" pointer-events="none"/>`+arrow(X(0)-52,Y(m.Hc),X(0)-6,Y(m.Hc),'#c62828',2.5)+`<text x="${X(0)-54}" y="${Y(m.Hc)-8}" style="fill:#c62828;font-weight:700;font-size:12px">${f(Hg,1)} t</text>`+wB.map((w,i)=>dimH(X(EE[i]),X(EE[i+1]),Y(0)+34,f(w,2))).join('')+`<text x="${SW-10}" y="${SH-8}" text-anchor="end" style="font-size:11px"><tspan fill="#1d4ed8">azul: diagonales</tspan> · <tspan fill="#7c3aed">violeta: puntal horizontal en cada nudo</tspan></text></svg>`;
- if($('arS_arH'))$('arS_arH').innerHTML='<div style="background:#fff;color:#1f2328;border-radius:6px">'+sv+'</div>';
+ if($('arS_arH'))$('arS_arH').innerHTML='<div style="background:#fff;color:#1f2328;border-radius:6px">'+sv+'</div><p class="note">Tocá un paño del esquema para poner o sacar la rigidización.</p>';
  if(!bays.length){out.innerHTML=gWrap('Paños del hastial entre columnas de viento',sv)+'<p class="eq">No hay paños rigidizados en el hastial: tocá un paño en el esquema o cargalos en «Arriostramientos · Hastiales».</p>';return {r:null,bays,cfg,nH}}
  const nd=cfg==0?1:2,kd=+d.rvK>0?+d.rvK:1,T=rvTens(sc,d);let g=null;
  // rigidez lateral de cada paño: paneles en serie; en cada panel k = E·A·Σ(Δx²/Ld³) de las diagonales que trabajan (E·A es igual en todos y se simplifica)
@@ -899,7 +900,7 @@ function g3Barra(m,d){const el=$('g3Vb');if(!el)return;el.innerHTML='<b style="f
 /* ---------- croquis orientativo de cada sector de datos ---------- */
 function elSk2(k){const s=11,cx=112,cy=74,c=Math.cos(Math.PI/6),Pp=(x,y,z)=>[cx+(x-y)*c*s,cy+(x+y)*0.5*s-z*s],H=4,R=5.6,W=8,X=[0,6,12],OR='#ea580c',VI='#7c3aed',
   zt=y=>H+(R-H)*(1-Math.abs(y-W/2)/(W/2)),ln=(a,b,col,w)=>{const p=Pp(...a),q=Pp(...b);return `<line x1="${p[0].toFixed(1)}" y1="${p[1].toFixed(1)}" x2="${q[0].toFixed(1)}" y2="${q[1].toFixed(1)}" stroke="${col||'#9ca3af'}" stroke-width="${col?(w||2.4):1}" stroke-linecap="round"/>`},
-  T={arL:'Pared lateral: cruces y puntales',arH:'Hastiales: cruces entre columnas de viento',arT:'Techo: cruces de cubierta',til:'Tillas y tornapuntas',ten:'Tensores de techo y tornapuntas',cv:'Columnas de viento del hastial',st:'Soporte de tensores',sc:'Soporte de correas (clip y tornillos)'};
+  T={vc:'Vigas y columnas del pórtico',dr:'Desplazamiento del alero',co:'Correas de cubierta',pa:'Correas de pared',ch:'Chapa de cubierta y de pared',arL:'Pared lateral: cruces y puntales',arH:'Hastiales: cruces entre columnas de viento',arT:'Techo: cruces de cubierta',til:'Tillas y tornapuntas',ten:'Tensores de techo y tornapuntas',cv:'Columnas de viento del hastial',st:'Soporte de tensores',sc:'Soporte de correas (clip y tornillos)'};
  let o='',leg='';
  if(k=='st'){ // detalle: ala de la viga, ángulo soldado, tensor con tuerca
   o=`<rect x="30" y="120" width="190" height="10" fill="#475569"/><rect x="120" y="130" width="8" height="45" fill="#475569"/><text x="34" y="146" style="font-size:10px;fill:#475569">ala de la viga</text>
@@ -912,9 +913,11 @@ function elSk2(k){const s=11,cx=112,cy=74,c=Math.cos(Math.PI/6),Pp=(x,y,z)=>[cx+
   <path d="M168,66 L168,56 L121,56 L121,132 L168,132 L168,122" fill="none" stroke="#1e3a8a" stroke-width="4"/><text x="174" y="98" style="font-size:10px;fill:#1e3a8a">correa</text>
   <g stroke="${VI}" stroke-width="3"><line x1="104" y1="84" x2="130" y2="84"/><line x1="104" y1="108" x2="130" y2="108"/></g><circle cx="104" cy="84" r="4" fill="${VI}"/><circle cx="104" cy="108" r="4" fill="${VI}"/><text x="28" y="80" style="font-size:10px;fill:${VI}">autoperforantes</text>`}
  else{
-  for(const x of X)o+=ln([x,0,0],[x,0,H])+ln([x,W,0],[x,W,H])+ln([x,0,H],[x,W/2,R])+ln([x,W/2,R],[x,W,H]);
-  for(let i=0;i<=8;i++){const y=W*i/8;o+=ln([0,y,zt(y)],[12,y,zt(y)])}
-  for(const z of [1.3,2.7])for(const y of [0,W])o+=ln([0,y,z],[12,y,z]);
+  if(k=='ch'){for(const ys of [[0,W/2],[W/2,W]])o+=`<polygon points="${[[0,ys[0],zt(ys[0])],[12,ys[0],zt(ys[0])],[12,ys[1],zt(ys[1])],[0,ys[1],zt(ys[1])]].map(p=>Pp(...p).map(v=>v.toFixed(1)).join(',')).join(' ')}" fill="rgba(234,88,12,.30)" stroke="${OR}" stroke-width="1.5"/>`;o+=`<polygon points="${[[0,W,0],[12,W,0],[12,W,H],[0,W,H]].map(p=>Pp(...p).map(v=>v.toFixed(1)).join(',')).join(' ')}" fill="rgba(234,88,12,.30)" stroke="${OR}" stroke-width="1.5"/>`}
+  const cCo=(k=='vc'||k=='dr')?OR:null,cVi=k=='vc'?OR:null;for(const x of X)o+=ln([x,0,0],[x,0,H],cCo,3.4)+ln([x,W,0],[x,W,H],cCo,3.4)+ln([x,0,H],[x,W/2,R],cVi,3.4)+ln([x,W/2,R],[x,W,H],cVi,3.4);
+  for(let i=0;i<=8;i++){const y=W*i/8;o+=ln([0,y,zt(y)],[12,y,zt(y)],k=='co'?OR:null,2.2)}
+  for(const z of [1.3,2.7])for(const y of [0,W])o+=ln([0,y,z],[12,y,z],k=='pa'?OR:null,2.6);
+  if(k=='dr')for(const y of [0,W])o+=ln([12,y,H],[12,y+(y?1.6:-1.6),H],VI,3);
   const cvY=[2,4,6],cvC=k=='cv'?OR:(k=='arH'?'#4b5563':null);
   for(const x of [0,12]){for(const y of cvY)o+=ln([x,y,0],[x,y,zt(y)],cvC,k=='cv'?3.5:1.6);o+=ln([x,0,0],[x,W,0])}
   if(k=='arL'){for(const y of [0,W]){for(const [a,b] of [[0,2],[2,4]])o+=ln([0,y,a],[6,y,b],OR)+ln([6,y,a],[0,y,b],OR);for(const z of [2,4])o+=ln([0,y,z],[6,y,z],VI,3)}leg=`<tspan fill="${OR}">— diagonal</tspan>  <tspan fill="${VI}">— puntal</tspan>`}
@@ -946,6 +949,33 @@ function arSlots(m,d,o,p,q,nb){const S=k=>$('arS_'+k);if(!S('arT')||!S('arL')||!
 /* el lienzo 3D se reajusta al entrar o salir de pantalla completa, al cambiar de pestaña y al cambiar el tamaño de la ventana */
 {const fix=()=>setTimeout(()=>{try{if(typeof G3!='undefined'&&G3.rs){G3.rs();G3.r.render(G3.sc,G3.cam)}}catch(e){}},120);document.addEventListener('fullscreenchange',fix);window.addEventListener('resize',fix);document.addEventListener('click',e=>{if(e.target&&e.target.closest&&e.target.closest('#nav,#vIdx'))fix()})}
 
+/* 3D fijado en la pantalla: las casillas y los botones de vistas pasan a una barra dentro del recuadro */
+function g3PinBar(pin){const w=$('g3W'),g=$('g3');if(!w||!g)return;let bar=$('g3bar');
+ if(pin){if(!bar){bar=document.createElement('div');bar.id='g3bar';bar.style.cssText='position:absolute;left:0;top:0;right:0;z-index:4;background:rgba(255,255,255,.94);color:#1f2328;padding:5px 84px 3px 8px;font-size:12px;border-bottom:1px solid #d0d7de;max-height:45%;overflow:auto';g.appendChild(bar)}
+  for(const c of [...w.children])if(c!==g)bar.appendChild(c);if($('g3i'))$('g3i').style.display='none'}
+ else if(bar){for(const c of [...bar.children])w.insertBefore(c,g);bar.remove();if($('g3i'))$('g3i').style.display=''}}
+
+/* ---------- ícono chico del elemento en el título de cada verificación ---------- */
+const VICO={crOut:'ch',loOut:'til',chOut:'ch',coOut:'co',paOut:'pa',vcOut:'vc',drOut:'dr',teOut:'arT',rvOut:'arL',haOut:'arH',cvOut:'cv',tnOut:'til',stOut:'st',scOut:'sc'};
+function elIco(k){let v=elSk2(k).replace(/<text[\s\S]*?<\/text>/g,'').replace(/stroke-width="([\d.]+)"/g,(a,b)=>`stroke-width="${(+b*3).toFixed(1)}"`);
+ return v.replace(/<svg[^>]*>/,`<svg viewBox="${k=='st'||k=='sc'?'10 40 230 150':'18 14 222 180'}" style="width:58px;height:44px;vertical-align:middle">`)}
+function vIcons(){for(const id in VICO){const o=$(id);if(!o)continue;const h=o.closest('.card').querySelector('h2');if(!h||h.querySelector('.vico'))continue;const sp=document.createElement('span');sp.className='vico nomem';sp.style.cssText='display:inline-block;margin:-10px 10px -10px 6px;vertical-align:middle;background:#fff;border:1px solid var(--line);border-radius:6px;line-height:0';sp.innerHTML=elIco(VICO[id]);
+  const b=h.querySelector('.vb,.vst,[style*="float"]');if(b&&b.parentNode===h)h.insertBefore(sp,b);else h.appendChild(sp)}}
+/* ---------- deformada del pórtico para una combinación (como la pestaña 4) ---------- */
+function defSvg(c){const m=A.m,ms=A.ms,u=c.r.u,W=960,Hh=430,g=frameGeom(m,W,Hh,200,80,100);let mx=0;ms.N.forEach((p,i)=>{mx=Math.max(mx,Math.hypot(u[i*3],u[i*3+1]))});const sc=mx>1e-9?1.2/mx:1;
+ let o=`<svg viewBox="0 0 ${W} ${Hh}"><g opacity="0.35">${frameLine(g,2)}</g>`;const pts=ms.N.map((p,i)=>[g.X(p[0]+u[i*3]*sc),g.Y(p[1]+u[i*3+1]*sc)]);
+ o+=`<polyline fill="none" stroke="#ea580c" stroke-width="3" stroke-linejoin="round" points="${pts.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ')}"/>`;
+ for(const [k,i] of [['B',8],['C',20],['D',32]]){const q=pts[i];o+=`<circle cx="${q[0]}" cy="${q[1]}" r="4.5" fill="#ea580c"/><text x="${q[0]+(k=='B'?-10:(k=='D'?10:0))}" y="${q[1]-12}" text-anchor="${k=='B'?'end':(k=='D'?'start':'middle')}" style="fill:#ea580c;font-weight:700">${k}: ${fs(u[i*3]*1000,1)} / ${fs(u[i*3+1]*1000,1)} mm</text>`}
+ return o+`<text x="${W/2}" y="18" text-anchor="middle" style="font-weight:600">${ab(c.t)}</text><text x="${W/2}" y="36" text-anchor="middle" style="font-size:11px">deformada amplificada × ${f(sc,0)} · horizontal / vertical en mm (+ a la derecha / + hacia arriba)</text>`+frameDims(g,m,W,Hh-8)+'</svg>'}
+/* combinaciones de servicio que dan cada desplazamiento máximo */
+function defMax(){const R={v:null,hw:null,hg:null,lad:null,fle:null};(A.sv||[]).forEach((c,i)=>{const u=c.r.u,w=/W/.test(c.t),V=Math.abs(u[61])*1000,Hm=Math.max(Math.abs(u[24]),Math.abs(u[96]))*1000,lad=Math.abs(u[24]+u[96])/2*1000,fle=Math.abs(u[61]-(u[25]+u[97])/2)*1000,S=(k,x)=>{if(!R[k]||x>R[k].x)R[k]={x,c,i}};S('v',V);S(w?'hw':'hg',Hm);S('lad',lad);S('fle',fle)});return R}
+function defFigV(col){try{const R=defMax(),q=col?R.lad:R.fle;if(!q)return '';return gWrap(col?`Deformada del pórtico en la combinación que da el mayor ladeo del alero: ${f(q.x,1)} mm`:`Deformada del pórtico en la combinación que da la mayor flecha de la viga (cumbrera respecto de los aleros): ${f(q.x,1)} mm`,defSvg(q.c))}catch(e){console.error(e);return ''}}
+function defPick(k){const R=defMax(),q=R[k];if(!q)return;const s=$('selDef'),v='s:'+q.i;if([...s.options].some(o=>o.value==v)){s.value=v;drawDef()}}
+function defBtns(){const s=$('selDef');if(!s||!A)return;let b=$('defBt');if(!b){b=document.createElement('div');b.id='defBt';b.className='row nomem';b.style.cssText='gap:8px;margin:8px 0;flex-wrap:wrap;align-items:center';s.closest('.row').insertAdjacentElement('afterend',b)}
+ const R=defMax(),bt=(k,t)=>R[k]?`<button type="button" class="nav2" style="font-size:13px" onclick="defPick('${k}')" title="${ab(R[k].c.t)}">${t}: <b>${f(R[k].x,1)} mm</b></button>`:'';
+ b.innerHTML='<span class="note" style="margin:0">Ir a la combinación de servicio con el mayor desplazamiento:</span>'+bt('v','↕ vertical en la cumbrera')+bt('hw','↔ horizontal del alero, con viento')+bt('hg','↔ horizontal del alero, cargas gravitatorias')}
+function xPost(m,d){try{vIcons()}catch(e){console.error(e)}try{defBtns()}catch(e){console.error(e)}}
+
 /* ===================== MEMORIA DE CÁLCULO EN WORD (formato CIVETEC) ===================== */
 const WLIGHT={bg:'#f6f5f2',card:'#ffffff',ink:'#1f2328',mut:'#667085',line:'#d9d6cf',acc:'#ec7200',acc2:'#0b6bcb',ok:'#1a7f37',bad:'#c62828',inp:'#fff8e6',press:'#c62828',suc:'#0b6bcb'};
 const wEsc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -959,9 +989,9 @@ const wBold=(el,sz)=>wP(wInline(el,{b:1,sz}),{keep:1,bef:160,aft:60,jc:'left'});
 function wTbl(tb,C){const rows=[...tb.rows];if(!rows.length)return '';const occ=[],grid=[];let nc=0;
  rows.forEach((r,ri)=>{occ[ri]=occ[ri]||[];grid[ri]=[];let c=0;[...r.cells].forEach(cell=>{while(occ[ri][c])c++;const cs=cell.colSpan||1,rs=cell.rowSpan||1;grid[ri].push({c,cs,rs,cell});for(let a=0;a<rs;a++){occ[ri+a]=occ[ri+a]||[];for(let b=0;b<cs;b++)occ[ri+a][c+b]=a==0?1:{cs,first:b==0}}c+=cs});nc=Math.max(nc,occ[ri].length)});
  const wtot=9300,sz=nc>7?14:16,wt=Array(nc).fill(4);grid.forEach(r=>r.forEach(g=>{if(g.cs==1){const tx=g.cell.textContent.trim(),L=Math.min(40,Math.max(...tx.split(/\s+/).map(w=>w.length),Math.sqrt(tx.length)*2.3));wt[g.c]=Math.max(wt[g.c],L)}}));const sw=wt.reduce((a,b)=>a+b,0),WC=wt.map(v=>Math.round(wtot*v/sw)),wsum=(c,n)=>WC.slice(c,c+n).reduce((a,b)=>a+b,0),wc=Math.floor(wtot/nc);let x=`<w:tbl><w:tblPr><w:tblW w:w="5000" w:type="pct"/><w:jc w:val="center"/><w:tblBorders>${['top','left','bottom','right','insideH','insideV'].map(k=>`<w:${k} w:val="single" w:sz="4" w:space="0" w:color="ED7D31"/>`).join('')}</w:tblBorders><w:tblLayout w:type="fixed"/><w:tblCellMar><w:left w:w="70" w:type="dxa"/><w:right w:w="70" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${WC.map(v=>'<w:gridCol w:w="'+v+'"/>').join('')}</w:tblGrid>`;
- rows.forEach((r,ri)=>{x+='<w:tr><w:trPr><w:cantSplit/></w:trPr>';let c=0;const cells=grid[ri].slice();
+ rows.forEach((r,ri)=>{const hd=ri<=1&&r.cells.length>0&&[...r.cells].every(q=>q.tagName=='TH')&&(ri==0||[...rows[0].cells].every(q=>q.tagName=='TH'));x+='<w:tr><w:trPr><w:cantSplit/>'+(hd?'<w:tblHeader/>':'')+'</w:trPr>';let c=0;const cells=grid[ri].slice();
   while(c<nc){const g=cells.find(q=>q.c==c);if(g){const th=g.cell.tagName=='TH',left=g.cell.classList.contains('l')||(g.c==0&&!th),runs=wInline(g.cell,{sz,b:th?1:0,col:th?'FFFFFF':'404040'});
-    x+=`<w:tc><w:tcPr><w:tcW w:w="${wsum(g.c,g.cs)}" w:type="dxa"/>${g.cs>1?`<w:gridSpan w:val="${g.cs}"/>`:''}${g.rs>1?'<w:vMerge w:val="restart"/>':''}${th?'<w:shd w:val="clear" w:color="auto" w:fill="3F3F3F"/>':''}<w:vAlign w:val="center"/></w:tcPr>${wP(runs,{bef:30,aft:30,jc:left?'left':'center',empty:1})}</w:tc>`;c+=g.cs}
+    x+=`<w:tc><w:tcPr><w:tcW w:w="${wsum(g.c,g.cs)}" w:type="dxa"/>${g.cs>1?`<w:gridSpan w:val="${g.cs}"/>`:''}${g.rs>1?'<w:vMerge w:val="restart"/>':''}${th?'<w:shd w:val="clear" w:color="auto" w:fill="3F3F3F"/>':''}<w:vAlign w:val="center"/></w:tcPr>${wP(runs,{bef:30,aft:30,jc:left?'left':'center',empty:1,keep:hd||ri==0})}</w:tc>`;c+=g.cs}
    else{const o=occ[ri][c];if(o&&o.first){x+=`<w:tc><w:tcPr><w:tcW w:w="${wsum(c,o.cs)}" w:type="dxa"/>${o.cs>1?`<w:gridSpan w:val="${o.cs}"/>`:''}<w:vMerge/></w:tcPr><w:p/></w:tc>`;c+=o.cs}else if(o){c++}else{x+=`<w:tc><w:tcPr><w:tcW w:w="${wc}" w:type="dxa"/></w:tcPr><w:p/></w:tc>`;c++}}}
   x+='</w:tr>'});
  return x+'</w:tbl>'+wP('',{empty:1,bef:0,aft:60})}
@@ -2075,10 +2105,10 @@ function vcNew(SUM,X){const E=200000,Fy=X.Fy,mem={};for(const z of SUM){const k=
    ['Corte, φV<sub>n</sub>','cap. G (G2)',z.bV.r,`V<sub>u</sub> = ${f(z.bV.V,0)} kN ≤ φV<sub>n</sub> = ${f(z.vS.phVn,0)} kN · ${ab(z.bV.c)}`],
    ...z.bA.map(a=>[a.q.replace(/ \(.*\)/,''),'AISC Design Guide 31 '+((a.q.match(/\((.*)\)/)||[])[1]||''),a.r,a.x+' · '+ab(a.c)])];
   const ok=rows.every(r=>r[2]<=1)&&els.every(r=>r[2]<=1);
-  let h=`<div class="card" style="border:2px solid ${ok?'#16a34a':'#dc2626'};margin:14px 0"><h2 style="display:flex;justify-content:space-between;align-items:center">${ttl}: ${z.sd.nm}<span style="font-size:15px;padding:3px 12px;border-radius:12px;background:${ok?'#dcfce7':'#fee2e2'};color:${ok?'#166534':'#b91c1c'}">${ok?'✔ VERIFICA':'✘ NO VERIFICA'}</span></h2>`;
+  let h=`<div class="card" style="border:2px solid ${ok?'#16a34a':'#dc2626'};margin:14px 0"><h2 style="display:flex;justify-content:space-between;align-items:center">${ttl}: ${z.sd.nm}&nbsp;<span style="font-size:15px;padding:3px 12px;border-radius:12px;background:${ok?'#dcfce7':'#fee2e2'};color:${ok?'#166534':'#b91c1c'}">${ok?'✔ VERIFICA':'✘ NO VERIFICA'}</span></h2>`;
   h+=`<h3>1 · Estado límite último (ELU)</h3><div class="tw"><table><tr><th>Verificación</th><th>Artículo</th><th>Solicitación y resistencia</th><th>Relación</th><th>Estado</th></tr>${rows.map(r=>`<tr><td class="l"><b>${r[0]}</b></td><td class="l">${r[1]}</td><td class="l">${r[3]}</td>${st(r[2])}</tr>`).join('')}</table></div>`;
   h+=flexKey(z,b,mn,Mp,Fy,col);h+=`<p class="note">Punto que manda: ${col?'columna':'viga'} a ${f(b.x)} m del ${col?'pie':'alero'}${col?'':(b.bot?', ala inferior comprimida (momento negativo)':', ala superior comprimida (momento positivo)')}, combinación ${cbT(b.c)}.</p>`;
-  h+=`<h3>2 · Estado límite de servicio (ELS)</h3><div class="tw"><table><tr><th>Verificación</th><th>Artículo</th><th>Valor y admisible</th><th>Relación</th><th>Estado</th></tr>${els.map(r=>`<tr><td class="l"><b>${r[0]}</b></td><td class="l">${r[1]}</td><td class="l">${r[3]}</td>${st(r[2])}</tr>`).join('')}</table></div>`;
+  h+=`<h3>2 · Estado límite de servicio (ELS)</h3><div class="tw"><table><tr><th>Verificación</th><th>Artículo</th><th>Valor y admisible</th><th>Relación</th><th>Estado</th></tr>${els.map(r=>`<tr><td class="l"><b>${r[0]}</b></td><td class="l">${r[1]}</td><td class="l">${r[3]}</td>${st(r[2])}</tr>`).join('')}</table></div>`+defFigV(col);
   // desarrollo
   const lam=pc.sl,Fe=Math.PI**2*E/lam**2,lim=4.71*Math.sqrt(E/(pc.Q*Fy)),lp=0.38*Math.sqrt(E/Fy),lf=p.b/2/p.tf;
   h+=`<details open><summary><b>3 · Desarrollo del cálculo</b></summary>
@@ -2236,7 +2266,8 @@ function g3Init(){if(G3.r||typeof THREE=='undefined')return;const el=$('g3');G3.
 function g3Pin(on){const e=$('g3');if(!e)return;const pin=on===undefined?!e.dataset.pin:on;
  if(pin){e.dataset.pin='1';Object.assign(e.style,{position:'fixed',right:'12px',bottom:'48px',width:'46vw',height:'46vh',zIndex:60,boxShadow:'0 6px 24px rgba(0,0,0,.35)',border:'2px solid var(--acc,#ea580c)'});
   if(!$('g3x')){e.insertAdjacentHTML('beforeend','<button id="g3x" type="button" onclick="g3Pin(false)" style="position:absolute;top:6px;right:6px;z-index:5;font-size:13px;padding:2px 8px;border-radius:6px;border:1px solid #999;background:#fff;cursor:pointer">✕ soltar</button>')}}
- else{delete e.dataset.pin;Object.assign(e.style,{position:'relative',right:'',bottom:'',width:'100%',height:'560px',zIndex:'',boxShadow:'',border:''});$('g3x')&&$('g3x').remove()}}
+ else{delete e.dataset.pin;Object.assign(e.style,{position:'relative',right:'',bottom:'',width:'100%',height:'560px',zIndex:'',boxShadow:'',border:''});$('g3x')&&$('g3x').remove()}
+ try{g3PinBar(pin)}catch(x){console.error(x)}}
 function g3Full(){const e=$('g3W')||$('g3');if(document.fullscreenElement){document.exitFullscreen();return}(e.requestFullscreen||e.webkitRequestFullscreen).call(e)}
 function g3Png(){if(!G3.r)return;G3.r.render(G3.sc,G3.cam);const a=document.createElement('a');a.href=G3.r.domElement.toDataURL('image/png');a.download='nave-3D.png';a.click()}
 function g3View(){const c=G3.ctr;G3.cam.position.set(c.x-c.Lt*0.55,c.H*3.2+c.L*0.6,c.z+c.L*1.55);G3.ctl.target.set(c.x,c.H*0.6,c.z);G3.ctl.update()}
