@@ -78,7 +78,7 @@ details{margin:8px 0}summary{cursor:pointer;color:var(--acc);font-weight:600}
 h3.vh{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:20px;padding-top:10px;border-top:2px solid var(--acc)}h5.vh5{font-size:13.5px;margin:14px 0 4px;display:flex;justify-content:space-between;gap:10px}
 .vtag{font-size:13px;padding:2px 10px;border-radius:12px;white-space:nowrap}.vtag.ok{background:#dcfce7;color:#166534}.vtag.bad{background:#fee2e2;color:#b91c1c}
 table.dat td:nth-child(2){white-space:nowrap;font-weight:600}h4{margin:12px 0 4px;font-size:13.5px}
-.vcl{display:none}#vIdx{position:sticky;z-index:3;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 10px;margin:0 -4px 4px;background:var(--bg);border-bottom:1px solid var(--line);font-size:13px}#vIdx .vi{display:inline-flex;border:1.5px solid;border-radius:14px;background:var(--card);overflow:hidden}#vIdx button{border:0;background:none;color:var(--ink);font:inherit;padding:4px 9px;cursor:pointer}#vIdx button.vi{border:1.5px solid var(--line);border-radius:14px;background:var(--card)}#vIdx button:hover{background:color-mix(in srgb,var(--acc) 18%,var(--card))}#vIdx .vi button+button{border-left:1px solid var(--line);padding:4px 7px}
+.vcl{display:none}.zsec{margin:26px 0 8px;padding:10px 14px;border-radius:8px;font-size:18px;color:#fff;scroll-margin-top:120px}.zsec span{font-size:13px;font-weight:400;opacity:.9;margin-left:10px}.zdat{background:var(--acc2)}.zres{background:var(--acc)}#fver .card{border-left:5px solid var(--acc2)}.card.vres{border-left:5px solid var(--acc)}#vIdx{position:sticky;z-index:3;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 12px;margin:0 -4px 6px;background:var(--bg);border-bottom:2px solid var(--line);font-size:15px}#vIdx .vi{display:inline-flex;border:1.5px solid;border-radius:14px;background:var(--card);overflow:hidden}#vIdx button{border:0;background:none;color:var(--ink);font:inherit;padding:6px 12px;cursor:pointer}#vIdx button.vi{border:1.5px solid var(--line);border-radius:14px;background:var(--card)}#vIdx button:hover{background:color-mix(in srgb,var(--acc) 18%,var(--card))}#vIdx .vi button+button{border-left:1px solid var(--line);padding:4px 7px}
 #bWord{float:right;border:0;background:var(--acc);color:#fff;font:inherit;font-weight:700;padding:9px 16px;border-radius:8px;cursor:pointer;margin-top:2px}#bWord:hover{filter:brightness(1.08)}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -227,7 +227,9 @@ table.dat td:nth-child(2){white-space:nowrap;font-weight:600}h4{margin:12px 0 4p
 <tr><td class="l">Desplazamiento de columnas con respecto a la base por acción de viento</td><td>H/150</td><td>Viento</td><td>H/160</td></tr>
 <tr><td class="l">Desplazamiento de columnas con respecto a la base por acción de puente grúa</td><td></td><td>Frenado puente grúa</td><td>H/400 (c)</td></tr></table></div>
 <p class="note">CIRSOC 301, Tabla L.3.1, parte de edificios industriales (las notas (a) a (d) y la parte «para otros edificios» están en el reglamento). Para esta nave, con cubierta de chapa (flexible): chapa, correas y viga L/150 para la flecha total y L/180 para la flecha por sobrecarga; columnas H/150 con viento (H/160 para la parte debida solo al viento).</p></details></div>
+<h2 id="zdat" class="zsec zdat nomem">A · CARGA DE DATOS<span>lo que se define de cada elemento (recuadros con borde azul)</span></h2>
 <div class="row" style="gap:8px;margin:6px 0"><button type="button" class="nav2" style="font-size:13px" onclick="foldAll(true)">▸ Cerrar todos los datos</button><button type="button" class="nav2" style="font-size:13px" onclick="foldAll(false)">▾ Abrir todos</button><span class="note">o tocá el título de cada recuadro</span></div><div id="fver" class="frm"></div>
+<h2 id="zres" class="zsec zres nomem">B · VERIFICACIÓN<span>resultados de cada elemento (recuadros con borde naranja)</span></h2>
 <div class="card"><h2>Viento sobre componentes y revestimientos</h2><div id="crOut"></div></div>
 <div class="card"><h2>Longitudes no arriostradas</h2><div id="loOut"></div></div>
 <div class="card"><h2>Chapa: verificación</h2><div id="chOut"></div></div>
@@ -568,7 +570,7 @@ function extraRun(m,d){let te={rT:0,Tu:0,dT:20},tn={},st={r:0},sc={r:0},rv={r:0}
  if(window.VRsum)window.VRsum.ar=Math.max(0,te.rT||0,rv.r||0,ha.r||0,tn.rV||0,tn.rC||0);
  try{vBadges()}catch(e){}
  try{g3Extra(m,d,R)}catch(e){console.error(e)}
- const v3=$('v3d'),tb=v3&&v3.querySelector('table');if(tb&&!tb.dataset.x){tb.dataset.x=1;tb.insertAdjacentHTML('beforeend',all.map(([n,r])=>`<tr><td class="l">${n}</td><td class="${r<=1?'ok':'bad'}">${f(r,2)}</td></tr>`).join(''))}
+ {const v3=$('v3d');if(v3)v3.querySelectorAll('.tw,table,p.note').forEach(x=>x.remove())}
  try{coSepShow(m,d)}catch(e){console.error(e)}
  try{uInit();uFix()}catch(e){console.error(e)}
  try{vIndex(R)}catch(e){console.error(e)}
@@ -662,6 +664,8 @@ function uCh(o){if(uGet()!='t'||!/kN·m/.test(o.yl||''))return o;const k=1/T9,sc
 function vFold(id){const b=$(id);if(!b)return;const h=b.closest('.card').querySelector('h2'),op=!!VOPEN[id];b.classList.toggle('vcl',!op);const i=h.querySelector('.vfi');if(i)i.textContent=op?'▾':'▸'}
 function vAll(op){for(const id in VOPEN){VOPEN[id]=op;vFold(id)}}
 const VOPEN={};
+window.arVizC=true; /* el esquema de arriostramientos arranca cerrado */
+function vSec(id){goTab('ver');const el=$(id);if(!el)return;const off=($('nav')?$('nav').offsetHeight:0)+($('vIdx')?$('vIdx').offsetHeight:0)+8;window.scrollTo({top:el.getBoundingClientRect().top+window.scrollY-off,behavior:'smooth'})}
 function vGo(id,key){goTab('ver');let el=$(id);if(!el)return;if(id in VOPEN){VOPEN[id]=true;vFold(id)}if(key){const h=[...el.querySelectorAll('h2')].find(x=>x.textContent.trim().toUpperCase().startsWith(key));el=h?h.closest('.card')||h:el}else el=el.closest('.card')||el;
  const off=($('nav')?$('nav').offsetHeight:0)+($('vIdx')?$('vIdx').offsetHeight:0)+10;window.scrollTo({top:el.getBoundingClientRect().top+window.scrollY-off,behavior:'smooth'});
  el.style.transition='box-shadow .3s';el.style.boxShadow='0 0 0 3px var(--acc)';setTimeout(()=>el.style.boxShadow='',1600)}
@@ -672,10 +676,10 @@ function vIndex(R){const el=$('vIdx');if(!el)return;const V=window.VRsum||{},mx=
   ['Tensores de techo',R.te.rT,'teOut','','Tensores y tornapuntas'],['Rigidización vertical',R.rv.r,'rvOut','','Arriostramientos'],['Rigidización de hastiales',R.ha.r,'haOut','','Arriostramientos'],['Columnas de viento',R.cv.r,'cvOut','','Columnas de viento'],['Tornapuntas',mx(R.tn.rV,R.tn.rC),'tnOut','','Tensores y tornapuntas'],['Soporte de tensores',R.st.r,'stOut','','Soporte de tensores'],['Soporte de correas',R.sc.r,'scOut','','Soporte de correas']];
  const nb=IT.filter(x=>x[1]!=null&&isFinite(x[1])&&x[1]>1).length;
  el.style.top=($('nav')?$('nav').offsetHeight:0)+'px';
- el.innerHTML=`<span style="font-weight:700;margin-right:4px">Ir a:</span><button type="button" class="vi" onclick="vGo('g3')" style="border-color:var(--line)">Nave 3D</button>`+IT.map(([n,r,id,k,pre])=>{const ok=r==null||!isFinite(r)?null:r<=1,c=ok==null?'var(--mut)':(ok?'#16a34a':'#dc2626');
+ el.innerHTML=`<span style="font-weight:700;margin-right:4px">Ir a:</span><button type="button" class="vi" onclick="vGo('g3')" style="border-color:var(--line)">Nave 3D</button><button type="button" class="vi" onclick="vSec('zdat')" style="border-color:var(--acc2);color:var(--acc2);font-weight:700">A · Datos</button><button type="button" class="vi" onclick="vSec('zres')" style="border-color:var(--acc);color:var(--acc);font-weight:700">B · Verificación</button>`+IT.map(([n,r,id,k,pre])=>{const ok=r==null||!isFinite(r)?null:r<=1,c=ok==null?'var(--mut)':(ok?'#16a34a':'#dc2626');
   return `<span class="vi" style="border-color:${c}"><button type="button" onclick="vGo('${id}','${k}')" title="Ir a la verificación">${ok==null?'':(ok?'✔ ':'✘ ')}${n}${ok==null?'':' · <b style="color:'+c+'">'+f(r,2)+'</b>'}</button><button type="button" onclick="vDat('${pre}')" title="Ir a los datos de este elemento">⚙</button></span>`}).join('')
   +`<span style="margin-left:auto;font-weight:700;color:${nb?'#dc2626':'#16a34a'}">${nb?nb+' sin verificar':'todo verifica'}</span><button type="button" class="vi" onclick="vAll(true)">▾ Abrir todo</button><button type="button" class="vi" onclick="vAll(false)">▸ Cerrar todo</button>`;
- for(const [id,r] of [['crOut',null],['loOut',null],['chOut',V.ch],['coOut',V.co],['paOut',V.pa],['vcOut',mx(V.vig,V.col)],['drOut',R.dr.r],['teOut',R.te.rT],['rvOut',R.rv.r],['haOut',R.ha.r],['cvOut',R.cv.r],['tnOut',mx(R.tn.rV,R.tn.rC)],['stOut',R.st.r],['scOut',R.sc.r]]){const b=$(id);if(!b||!b.closest('.card'))continue;const h=b.closest('.card').querySelector('h2');if(!(id in VOPEN))VOPEN[id]=false;
+ for(const [id,r] of [['crOut',null],['loOut',null],['chOut',V.ch],['coOut',V.co],['paOut',V.pa],['vcOut',mx(V.vig,V.col)],['drOut',R.dr.r],['teOut',R.te.rT],['rvOut',R.rv.r],['haOut',R.ha.r],['cvOut',R.cv.r],['tnOut',mx(R.tn.rV,R.tn.rC)],['stOut',R.st.r],['scOut',R.sc.r]]){const b=$(id);if(!b||!b.closest('.card'))continue;const h=b.closest('.card').querySelector('h2');b.closest('.card').classList.add('vres');if(!(id in VOPEN))VOPEN[id]=false;
   if(!h.dataset.f){h.dataset.f=1;h.style.cursor='pointer';h.style.userSelect='none';h.title='Tocá para abrir o cerrar';h.insertAdjacentHTML('afterbegin','<span class="vfi nomem"></span> ');h.insertAdjacentHTML('beforeend','<span class="vfb nomem" style="float:right;font-size:13px;padding:2px 10px;border-radius:12px"></span>');h.onclick=()=>{VOPEN[id]=!VOPEN[id];vFold(id)}}
   const bd=h.querySelector('.vfb'),ok=r==null||!isFinite(r)?null:r<=1;bd.textContent=ok==null?'':((ok?'✔ VERIFICA':'✘ NO VERIFICA')+' · '+f(r,2));bd.style.background=ok==null?'':(ok?'#dcfce7':'#fee2e2');bd.style.color=ok?'#166534':'#b91c1c';vFold(id)}}
 
