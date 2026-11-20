@@ -1856,8 +1856,8 @@ const F=[
   ["arTec","Vanos con cruz (tocalos en el esquema)","","1, 17"],
   ["arTecM","Cómo se reparten los nudos de la cruz de techo","",1,["Un nudo cada N correas (desde el alero)","Paneles de largo parecido (el nudo va en la correa más cercana)"]],
   ["arTecL","Paneles parecidos: largo buscado del panel (0 = igual a la separación de pórticos, cruz a 45°)","m",0],
-  ["arTecN","Cada N correas: un nudo cada N correas (desde el alero)","",4],
-  ["arTecN2","Cada N correas: N en la zona de la cumbrera (0 = el resto queda en un solo panel)","",0],
+  ["arTecN","Cada N correas: un nudo cada N correas en la zona de separación normal","",4],
+  ["arTecN2","Cada N correas: N en la franja de correas más juntas (0 = el mismo N en todo el faldón). Si no hay franja: N junto a la cumbrera","",0],
   ["arPer","Cruces perimetrales (franja junto a los dos aleros)","",0,["No","Sí"]],
   ["arPerN","Perimetral: cantidad de paneles de cruz desde cada alero","",1],
   ["arPerV","Perimetral: vanos (vacío = todos; separar con comas)","",""],
@@ -2941,6 +2941,10 @@ const perV=(d,nb)=>{const t=String(d.arPerV||'').trim();if(!t)return [...Array(n
 function tecIdx(d,sl){if(+d.arTecM==1){const P=CP(d,sl),nc=P.length-1,Lp=+d.arTecL>0?+d.arTecL:+d.s,n=Math.max(1,Math.round(sl/Lp)),idx=[0];
   for(let k=1;k<n;k++){const t=sl*k/n;let bi=0;P.forEach((v,i)=>{if(Math.abs(v-t)<Math.abs(P[bi]-t))bi=i});if(bi>idx[idx.length-1]&&bi<nc)idx.push(bi)}idx.push(nc);
   return {idx,nc,a:idx.length-1,b:0,N:0,N2:0,ok:true,rest:0,eq:true,lens:idx.slice(1).map((v,i)=>P[v]-P[idx[i]]),cnt:idx.slice(1).map((v,i)=>v-idx[i])}}
+ {const P=CP(d,sl),nc=P.length-1,N=Math.max(1,+d.arTecN|0),N2=Math.max(0,+d.arTecN2|0),g=P.slice(1).map((v,i)=>v-P[i]),gm=Math.max(...g),sm=g.map(v=>v<gm-1e-3);
+  if(N2>0&&sm.some(Boolean)&&sm[0]!=sm[nc-1]){const e=sm[0],nS=sm.filter(Boolean).length,nM=nc-nS,idx=[0],seg=(i0,n,k)=>{for(let j=k;j<n;j+=k)idx.push(i0+j);idx.push(i0+n)};
+   if(e){seg(0,nS,N2);seg(nS,nM,N)}else{seg(0,nM,N);seg(nM,nS,N2)}
+   return {idx,nc,a:Math.ceil(nM/N),b:Math.ceil(nS/N2),N,N2,ok:nM%N==0&&nS%N2==0,rest:0,zone:true,nM,nS,rM:nM%N,rS:nS%N2,gM:gm,gS:Math.min(...g),wh:e?'al alero':'a la cumbrera'}}}
  const nc=CP(d,sl).length-1,N=Math.max(1,+d.arTecN|0),N2=Math.max(0,+d.arTecN2|0);let a=Math.floor(nc/N),b=0,ok=true;
  if(N2>0){ok=false;for(let k=Math.floor(nc/N);k>=0;k--){if((nc-k*N)%N2==0){a=k;b=(nc-k*N)/N2;ok=true;break}}if(!ok){a=Math.floor(nc/N);b=0}}
  const idx=[0];for(let k=1;k<=a;k++)idx.push(k*N);if(b>0)for(let k=1;k<=b;k++)idx.push(a*N+k*N2);else if(idx[idx.length-1]<nc)idx.push(nc);
@@ -2994,7 +2998,9 @@ function drawArViz(m,d){arVizSlot();const el=$('arViz');if(!el)return;const Lt=m
  {const T=tecIdx(d,sl),pz=[];if(T.a)pz.push(`${T.a} de ${T.N} correas`);if(T.b)pz.push(`${T.b} de ${T.N2} correas`);if(T.rest)pz.push(`1 de ${T.rest} correas junto a la cumbrera`);
   if(T.eq){hint('arTecL',`→ ${T.lens.length} paneles por faldón: ${T.lens.map((v,i)=>f(v,2)+' m ('+T.cnt[i]+' corr.)').join(' · ')}. <b>Viga: k·L<sub>y</sub> = ${f(Lo.vLy)} m, L<sub>b</sub> ala inferior = ${f(Lo.vLbi)} m</b>`);hint('arTecN','→ no se usa (está elegido «paneles de largo parecido»)');hint('arTecN2','→ no se usa')}else{hint('arTecL','→ no se usa (está elegido «un nudo cada N correas»)');
   hint('arTecN',`→ ${T.nc} espacios de correa por faldón: paneles ${pz.join(' + ')}${T.rest&&!T.b?' <span style="color:#d62828">(el último panel es distinto: probá otro N o cargá N en la zona de la cumbrera)</span>':''}; viga fuera del plano = ${f(Lo.vLy)} m`);
-  hint('arTecN2',+d.arTecN2>0?(T.ok?`→ ${T.a} × ${T.N} + ${T.b} × ${T.N2} = ${T.nc} espacios: cierra justo en la cumbrera`:`<span style="color:#d62828">→ no hay combinación de paneles de ${T.N} y ${T.N2} que sume ${T.nc} espacios: cambiá alguno de los dos</span>`):'→ 0: lo que sobra queda en un solo panel junto a la cumbrera')}
+  hint('arTecN2',+d.arTecN2>0?(T.ok?`→ ${T.a} × ${T.N} + ${T.b} × ${T.N2} = ${T.nc} espacios: cierra justo en la cumbrera`:`<span style="color:#d62828">→ no hay combinación de paneles de ${T.N} y ${T.N2} que sume ${T.nc} espacios: cambiá alguno de los dos</span>`):'→ 0: lo que sobra queda en un solo panel junto a la cumbrera');
+  if(T.zone){const zt=(n,k,r,g)=>`${n} espacios de ${f(g,3)} m: ${Math.floor(n/k)} panel${Math.floor(n/k)==1?'':'es'} de ${k} correas (${f(k*g,2)} m)${r?' + 1 de '+r+' ('+f(r*g,2)+' m) <span style="color:#d62828">(queda un panel distinto: probá otro N)</span>':''}`;
+   hint('arTecN',`→ zona de separación normal, ${zt(T.nM,T.N,T.rM,T.gM)}; viga fuera del plano = ${f(Lo.vLy)} m`);hint('arTecN2',`→ franja de correas más juntas junto ${T.wh}, ${zt(T.nS,T.N2,T.rS,T.gS)}. Siempre hay un nudo en el límite entre las dos zonas`)}}
   {const W1=wallLv(d,H);hint('pSep',`→ puntales a ${W1.st.map(v=>f(v)).join(' y ')} m; ${W1.g.length} correas de pared por cara (incluye una a la altura de cada puntal), separación real máxima ${f(W1.sep,3)} m`)}
   hint('coSep',`→ ${d.ncs} espacios por faldón (faldón de ${f(sl)} m): separación real ${f(+d.coSep,3)} m${d.coSepBr<d.coSep-1e-3?' en el centro':''}`);hint('coSepB',d.coSepBr<d.coSep-1e-3?`→ franja de ${f(coAb(m.thd,crA(m),m.Hc)/Math.cos(m.th))} m junto ${coMd(m.thd)=='e'?'al alero':'a la cumbrera'} (Fig. 5.3-2${cfig(m)}) con correas cada ${f(d.coSepBr,3)} m; el resto del faldón a ${f(+d.coSep,3)} m`:'→ sin franjas: todas las correas a la misma separación')}
  for(const k of ['cLx','cLy','cLb','vLx','vLy','vLbs','vLbi','coLbs','coLbi','pLbi','pLs'])if(d.LoAuto){const I=d.LoInfo,sl2=(d.L/2)/Math.cos(m.th),H2=m.Hc,PT={vLy:[[...I.tnV,...I.brV],sl2],vLbs:[[...I.tnV,...I.brV],sl2],vLbi:[I.tnV,sl2],cLy:[[...I.tnC,...I.brC],H2],cLb:[[...I.tnC,...I.brC],H2]}[k];
