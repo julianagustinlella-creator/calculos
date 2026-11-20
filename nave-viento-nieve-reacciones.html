@@ -2720,7 +2720,7 @@ function drawVer(m,d){d=Object.assign({},d);for(const [s0,h,b,dd,t] of [['coSel'
  {const sl0=(d.L/2)/Math.cos(m.th),ab=crA(m)/Math.cos(m.th);d.coSepMax=+d.coSep;d.coPos=coLay(sl0,+d.coSep,+d.coSepB,ab);d.ncs=d.coPos.length-1;const g=d.coPos.slice(1).map((v,i)=>v-d.coPos[i]);d.coSep=Math.max(...g);d.coSepBr=Math.min(...g);}
  {const nb=Math.round(m.Lt/d.s),sl=(d.L/2)/Math.cos(m.th),bays=t=>String(t).split(/[,; ]+/).map(Number).filter(x=>x>=1&&x<=nb);d.arParV=bays(d.arPar);d.arTecV=bays(d.arTec);
   const gap=(pts,Lt)=>{const p=[0,...pts.filter(x=>x>1e-6&&x<Lt-1e-6),Lt].sort((a,b)=>a-b);let g=0;for(let i=1;i<p.length;i++)g=Math.max(g,p[i]-p[i-1]);return g};
-  const H=m.Hc,ps=+d.pSep,tnC=[],tnV=[];if(+d.arTnC>0){let k=0;for(const hh of wallLv(d,H).g){k++;if(k%(+d.arTnC)==0)tnC.push(hh)}}
+  const H=m.Hc,ps=+d.pSep,tnC=[],tnV=[];if(+d.arTnC>0){let k=0;for(const hh of wallLv(d,H).g){k++;if(k%(+d.arTnC)==0&&hh<H-1e-6)tnC.push(hh)}}
   if(+d.arTnVM==1){for(const v of tecPan(d,sl).slice(1,-1))tnV.push(v)}else if(+d.arTnVM!=2&&+d.arTnV>0){const P=CP(d,sl),nc=P.length-1;for(let c=+d.arTnV;c<=nc;c+=+d.arTnV)tnV.push(P[c])}
   const nP=Math.max(1,+d.arParN|0),nT=Math.max(1,+d.arTecN|0),brC=[...Array(nP-1)].map((_,k)=>H*(k+1)/nP),brV=tecPan(d,sl).slice(1,-1);
   d.LoInfo={tnC,tnV,brC,brV};
@@ -2829,7 +2829,7 @@ function draw3D3(m,d,R){g3Init();if(!G3.r)return false;
  // arriostramientos
  const gAr=gp('g3Ar'),tA='<b>Arriostramiento</b> (todavía no verificado)';
  for(const i of d.arParV||[])for(const zz of [0,L]){const n=Math.max(1,+d.arParN|0),x0=(i-1)*s,x1=i*s;for(let k=0;k<n;k++){const y0=H*k/n,y1=H*(k+1)/n;g3Line(gAr,[[x0,y0,zz],[x1,y1,zz]],0x1d4ed8,0.04,'<b>Cruz de pared</b>, vano '+i);g3Line(gAr,[[x1,y0,zz],[x0,y1,zz]],0x1d4ed8,0.04,'<b>Cruz de pared</b>, vano '+i)}}
- for(const hh of wallLv(d,H).st)for(const zz of [0,L])g3Line(gAr,[[0,hh,zz+(zz?1:-1)*offp],[Lt,hh,zz+(zz?1:-1)*offp]],0x7c3aed,0.07,'<b>Puntal longitudinal</b> a '+f(hh)+' m (nudo de la cruz de pared; perfil a definir)');
+ for(const hh of wallLv(d,H).st)for(const zz of [0,L])g3Line(gAr,[[0,hh,zz],[Lt,hh,zz]],0x7c3aed,0.07,'<b>Puntal longitudinal</b> a '+f(hh)+' m (nudo de la cruz de pared, en el eje de las columnas; por fuera va una correa de pared a la misma altura)');
  const ro=off+cH/2+0.02;
  const TB=tecPan(d,sl);if(+d.arPer)for(const i of perV(d,nb)){if((d.arTecV||[]).includes(i))continue;const x0=(i-1)*s,x1=i*s,nP=Math.max(1,Math.min(+d.arPerN|0||1,TB.length-1));for(let k=0;k<nP;k++)for(const [ya,yb2] of [[TB[k]*Math.cos(th),TB[k+1]*Math.cos(th)],[L-TB[k]*Math.cos(th),L-TB[k+1]*Math.cos(th)]]){g3Line(gAr,[[x0,zt(ya)+ro,ya],[x1,zt(yb2)+ro,yb2]],0x16a34a,0.04,'<b>Cruz perimetral de techo</b>, vano '+i);g3Line(gAr,[[x1,zt(ya)+ro,ya],[x0,zt(yb2)+ro,yb2]],0x16a34a,0.04,'<b>Cruz perimetral de techo</b>, vano '+i)}}
  if(+d.arCum)for(const i of cumV(d,nb)){if((d.arTecV||[]).includes(i))continue;const x0=(i-1)*s,x1=i*s,nT=TB.length-1,nP=Math.max(1,Math.min(+d.arCumN|0||1,nT));for(let k=nT-nP;k<nT;k++)for(const [ya,yb2] of [[TB[k]*Math.cos(th),TB[k+1]*Math.cos(th)],[L-TB[k]*Math.cos(th),L-TB[k+1]*Math.cos(th)]]){g3Line(gAr,[[x0,zt(ya)+ro,ya],[x1,zt(yb2)+ro,yb2]],0x16a34a,0.04,'<b>Cruz de techo junto a la cumbrera</b>, vano '+i);g3Line(gAr,[[x1,zt(ya)+ro,ya],[x0,zt(yb2)+ro,yb2]],0x16a34a,0.04,'<b>Cruz de techo junto a la cumbrera</b>, vano '+i)}}
@@ -2869,7 +2869,7 @@ function draw3D3(m,d,R){g3Init();if(!G3.r)return false;
  for(let i=0;i<nb;i++)for(let k=1;k<=(+d.arTp|0);k++){const x=i*s+k*s/((+d.arTp)+1);for(const zz of [0,L]){const zw=zz+(zz?1:-1)*offp;g3Line(gAr,[[x,0.2,zw],[x,H,zw]],0x6b7280,0.015,'<b>Tilla de correas de pared</b>')}}
  if(((d.LoInfo||{}).tnV||[]).length)for(let i=0;i<=nb;i++){const x=i*s;for(let side=0;side<2;side++)for(const tv of ((d.LoInfo||{}).tnV||[])){const dd=Math.min(tv,sl)*Math.cos(th),yy=side?L-dd:dd,yc=zt(yy)+off,yb3=zt(yy)-mm(sr.h)/2;
   for(const dx of [-0.9,0.9]){const xx=x+dx;if(xx<0||xx>Lt)continue;g3Line(gAr,[[xx,yc,yy],[x,yb3,yy]],0xf97316,0.025,'<b>Tornapunta de la viga</b>')}}}
- if(+d.arTnC>0)for(let i=0;i<=nb;i++){const x=i*s;for(const [zz,sg] of [[0,-1],[L,1]]){let k=0;for(const hh of wallLv(d,H).g){k++;if(k%(+d.arTnC))continue;const zg=zz+sg*offp,zi=zz-sg*mm(sc.var?(sc.h+sc.h1)/2:sc.h)/2;
+ if(+d.arTnC>0)for(let i=0;i<=nb;i++){const x=i*s;for(const [zz,sg] of [[0,-1],[L,1]]){let k=0;for(const hh of wallLv(d,H).g){k++;if(k%(+d.arTnC)||hh>H-1e-6)continue;const zg=zz+sg*offp,zi=zz-sg*mm(sc.var?(sc.h+sc.h1)/2:sc.h)/2;
   for(const dx of [-0.9,0.9]){const xx=x+dx;if(xx<0||xx>Lt)continue;g3Line(gAr,[[xx,hh,zg],[x,hh,zi]],0xf97316,0.025,'<b>Tornapunta de la columna</b>')}}}}
  const fresh=!G3.ctr;G3.ctr={x:Lt/2,z:L/2,H,L,Lt};if(fresh)g3View();return true}
 
@@ -2910,7 +2910,7 @@ function draw3D(m,d){const L=d.L,Lt=m.Lt,H=m.Hc,fr=m.fr,a=crA(m),s=+d.s,sp=+d.co
 
 /* ---------- pared lateral: puntales en los nudos de la cruz y correas de pared entre ellos ---------- */
 function wallLv(d,H){const nP=Math.max(1,+d.arParN|0),sm=Math.max(0.1,(+d.pSepMax||+d.pSep)||1.5),st=[],g=[];let smax=0;for(let k=1;k<=nP;k++)st.push(H*k/nP);
- let a=0;for(const b of st){const n=Math.max(1,Math.ceil((b-a)/sm-1e-9)),dd=(b-a)/n;smax=Math.max(smax,dd);for(let k=(a==0?0:1);k<n;k++)if(a+k*dd>1e-6)g.push(a+k*dd);a=b}
+ let a=0;for(const b of st){const n=Math.max(1,Math.ceil((b-a)/sm-1e-9)),dd=(b-a)/n;smax=Math.max(smax,dd);for(let k=1;k<=n;k++)g.push(a+k*dd);a=b}
  return {st,g,sep:smax}}
 /* ---------- esquema interactivo de arriostramientos ---------- */
 function coLay(sl,sMax,sB,ab){sMax=sMax>=0.1?sMax:(sMax>0?0.1:1.2);if(sB>0&&sB<0.1)sB=0.1;const U=(a,b,sm)=>{const n=Math.max(1,Math.ceil((b-a)/sm-1e-9)),o=[];for(let i=0;i<=n;i++)o.push(a+(b-a)*i/n);return o};
@@ -2950,7 +2950,7 @@ function drawArViz(m,d){arVizSlot();const el=$('arViz');if(!el)return;const Lt=m
  for(let i=0;i<=nb;i++)p+=`<line x1="${x0+i*s*sx}" y1="${Z(0)}" x2="${x0+i*s*sx}" y2="${Z(H)}" stroke="var(--ink)" stroke-width="1.4" pointer-events="none"/>`;
  for(const hh of wallLv(d,H).st)p+=`<line x1="${x0}" y1="${Z(hh)}" x2="${x0+Lt*sx}" y2="${Z(hh)}" stroke="#7c3aed" stroke-width="3" pointer-events="none"/>`;
  for(const hh of wallLv(d,H).g)p+=`<line x1="${x0}" y1="${Z(hh)}" x2="${x0+Lt*sx}" y2="${Z(hh)}" stroke="var(--mut)" stroke-dasharray="3 3" pointer-events="none"/>`;
- p+=`<text x="${x0}" y="12" style="font-size:12px;font-weight:600">2 · Pared lateral (${RVCFG[+d.rvCfg|0]}): tocá un vano para poner o sacar la rigidización (azul). Puntales longitudinales (violeta) en los nudos de la cruz; correas de pared en trazos, repartidas entre puntales.</text></svg>`;
+ p+=`<text x="${x0}" y="12" style="font-size:12px;font-weight:600">2 · Pared lateral (${RVCFG[+d.rvCfg|0]}): tocá un vano para poner o sacar la rigidización (azul). Puntales longitudinales (violeta) en los nudos de la cruz; correas de pared en trazos, repartidas entre puntales y también a la altura de cada puntal (el puntal va en el eje de las columnas, en el plano de la cruz, así que no sostiene la chapa).</text></svg>`;
  // corte del pórtico con tornapuntas y longitudes resultantes
  const Wc=900,Hc2=230,sc2=Math.min((Wc-300)/L,(Hc2-50)/(H+fr)),cx=150,X2=y=>cx+y*sc2,Z2=z=>Hc2-25-z*sc2,I=d.LoInfo||{tnC:[],tnV:[],brC:[],brV:[]},th=m.th,cs=Math.cos(th),sl=(L/2)/cs;
  let q=`<svg viewBox="0 0 ${Wc} ${Hc2}"><polyline points="${X2(0)},${Z2(0)} ${X2(0)},${Z2(H)} ${X2(L/2)},${Z2(H+fr)} ${X2(L)},${Z2(H)} ${X2(L)},${Z2(0)}" fill="none" stroke="var(--ink)" stroke-width="2.5"/>`;
@@ -2975,7 +2975,7 @@ function drawArViz(m,d){arVizSlot();const el=$('arViz');if(!el)return;const Lt=m
   if(T.eq){hint('arTecL',`→ ${T.lens.length} paneles por faldón: ${T.lens.map((v,i)=>f(v,2)+' m ('+T.cnt[i]+' corr.)').join(' · ')}. <b>Viga: k·L<sub>y</sub> = ${f(Lo.vLy)} m, L<sub>b</sub> ala inferior = ${f(Lo.vLbi)} m</b>`);hint('arTecN','→ no se usa (está elegido «paneles de largo parecido»)');hint('arTecN2','→ no se usa')}else{hint('arTecL','→ no se usa (está elegido «un nudo cada N correas»)');
   hint('arTecN',`→ ${T.nc} espacios de correa por faldón: paneles ${pz.join(' + ')}${T.rest&&!T.b?' <span style="color:#d62828">(el último panel es distinto: probá otro N o cargá N en la zona de la cumbrera)</span>':''}; viga fuera del plano = ${f(Lo.vLy)} m`);
   hint('arTecN2',+d.arTecN2>0?(T.ok?`→ ${T.a} × ${T.N} + ${T.b} × ${T.N2} = ${T.nc} espacios: cierra justo en la cumbrera`:`<span style="color:#d62828">→ no hay combinación de paneles de ${T.N} y ${T.N2} que sume ${T.nc} espacios: cambiá alguno de los dos</span>`):'→ 0: lo que sobra queda en un solo panel junto a la cumbrera')}
-  {const W1=wallLv(d,H);hint('pSep',`→ puntales a ${W1.st.map(v=>f(v)).join(' y ')} m; ${W1.g.length} correas de pared por cara, separación real máxima ${f(W1.sep,3)} m`)}
+  {const W1=wallLv(d,H);hint('pSep',`→ puntales a ${W1.st.map(v=>f(v)).join(' y ')} m; ${W1.g.length} correas de pared por cara (incluye una a la altura de cada puntal), separación real máxima ${f(W1.sep,3)} m`)}
   hint('coSep',`→ ${d.ncs} espacios por faldón (faldón de ${f(sl)} m): separación real ${f(+d.coSep,3)} m${d.coSepBr<d.coSep-1e-3?' en el centro':''}`);hint('coSepB',d.coSepBr<d.coSep-1e-3?`→ franjas de ${f(crA(m)/Math.cos(m.th))} m junto al alero y la cumbrera con correas cada ${f(d.coSepBr,3)} m`:'→ sin franjas: todas las correas a la misma separación')}
  for(const k of ['cLx','cLy','cLb','vLx','vLy','vLbs','vLbi','coLbs','coLbi','pLbi','pLs'])if(d.LoAuto){const I=d.LoInfo,sl2=(d.L/2)/Math.cos(m.th),H2=m.Hc,PT={vLy:[[...I.tnV,...I.brV],sl2],vLbs:[[...I.tnV,...I.brV],sl2],vLbi:[I.tnV,sl2],cLy:[[...I.tnC,...I.brC],H2],cLb:[[...I.tnC,...I.brC],H2]}[k];
   let tr='';if(PT){const p=[0,...PT[0].filter(v=>v>1e-6&&v<PT[1]-1e-6),PT[1]].sort((a,b)=>a-b).filter((v,i,a)=>!i||v-a[i-1]>1e-6);tr=`<br>tramos: ${p.slice(1).map((v,i)=>f(v-p[i])).join(' · ')} m (se verifica cada uno con su L<sub>b</sub> y su C<sub>b</sub>; el campo muestra el mayor)`}
