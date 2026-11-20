@@ -1321,6 +1321,14 @@ function coEdge(m,yh,L2,a){return cfig(m)=='D'?yh<a-1e-6:L2-yh<a-1e-6}
 function coBgZ(m,X,Y,sx,sy,Lt,L2,W2,a){let o='';const R=(x0,x1,y0,y1,c,op)=>o+=`<rect x="${X(x0)}" y="${Y(y1)}" width="${(x1-x0)*sx}" height="${(y1-y0)*sy}" fill="${c}" opacity="${op}"/>`;
  if(cfig(m)=='D'){for(const [y0,y1] of [[0,a],[W2-a,W2]])for(const [x0,x1] of [[0,a],[Lt-a,Lt]])R(x0,x1,y0,y1,ZC.z3,.6)}
  else{R(0,Lt,L2-a,L2+a,ZC.z2,.45);for(const [x0,x1] of [[0,a],[Lt-a,Lt]])R(x0,x1,L2-a,L2+a,ZC.z3,.55)}return o}
+/* ---------- datos a medio escribir: nunca calcular con separaciones nulas o absurdas ---------- */
+const SANE_MIN={pSep:0.2,coSep:0.2,s:0.5,L:1,cvSep:0.2,arTecL:0.2},SANE_LAST={};
+function saneD(d){for(const k in SANE_MIN){if(!(k in d))continue;const v=+d[k],e=document.getElementById(k),opt=k=='arTecL';if(opt&&!(v>0)){if(e)e.style.outline='';continue}
+  if(isFinite(v)&&v>=SANE_MIN[k]){SANE_LAST[k]=v;if(e){e.style.outline='';if(e.dataset.sn){e.title='';delete e.dataset.sn}}}
+  else{const u=SANE_LAST[k]>0?SANE_LAST[k]:(e&&+e.defaultValue>=SANE_MIN[k]?+e.defaultValue:Math.max(SANE_MIN[k],1.5));d[k]=u;if(e){e.style.outline='2px solid #d62828';e.dataset.sn='1';e.title='Valor incompleto o menor que '+String(SANE_MIN[k]).replace('.',',')+': mientras tanto se calcula con '+String(u).replace('.',',')}}}
+ if(+d.coSepB>0&&+d.coSepB<0.1)d.coSepB=0.1;return d}
+let RUN_T=0;function runSoon(){clearTimeout(RUN_T);RUN_T=setTimeout(()=>{try{run()}catch(e){console.error(e)}},450)}
+function runNow(){clearTimeout(RUN_T);run()}
 function zN(z){return z=='z0'?'1′':z[1]}
 function flatOn(m){return m.thd<=7}
 function flatE(m){const h=m.Hc>0?m.Hc:m.h;return {h,e:0.6*h,c:0.2*h}}
@@ -2901,14 +2909,14 @@ function draw3D(m,d){const L=d.L,Lt=m.Lt,H=m.Hc,fr=m.fr,a=crA(m),s=+d.s,sp=+d.co
 
 
 /* ---------- pared lateral: puntales en los nudos de la cruz y correas de pared entre ellos ---------- */
-function wallLv(d,H){const nP=Math.max(1,+d.arParN|0),sm=+d.pSepMax||+d.pSep,st=[],g=[];let smax=0;for(let k=1;k<=nP;k++)st.push(H*k/nP);
+function wallLv(d,H){const nP=Math.max(1,+d.arParN|0),sm=Math.max(0.1,(+d.pSepMax||+d.pSep)||1.5),st=[],g=[];let smax=0;for(let k=1;k<=nP;k++)st.push(H*k/nP);
  let a=0;for(const b of st){const n=Math.max(1,Math.ceil((b-a)/sm-1e-9)),dd=(b-a)/n;smax=Math.max(smax,dd);for(let k=(a==0?0:1);k<n;k++)if(a+k*dd>1e-6)g.push(a+k*dd);a=b}
  return {st,g,sep:smax}}
 /* ---------- esquema interactivo de arriostramientos ---------- */
-function coLay(sl,sMax,sB,ab){const U=(a,b,sm)=>{const n=Math.max(1,Math.ceil((b-a)/sm-1e-9)),o=[];for(let i=0;i<=n;i++)o.push(a+(b-a)*i/n);return o};
+function coLay(sl,sMax,sB,ab){sMax=sMax>=0.1?sMax:(sMax>0?0.1:1.2);if(sB>0&&sB<0.1)sB=0.1;const U=(a,b,sm)=>{const n=Math.max(1,Math.ceil((b-a)/sm-1e-9)),o=[];for(let i=0;i<=n;i++)o.push(a+(b-a)*i/n);return o};
  if(!(sB>0)||sB>=sMax||2*ab>=sl-1e-6)return U(0,sl,sB>0&&2*ab>=sl-1e-6?Math.min(sB,sMax):sMax);
  const p=[...U(0,ab,sB),...U(ab,sl-ab,sMax).slice(1),...U(sl-ab,sl,sB).slice(1)];return p}
-function CP(d,sl){if(d.coPos)return d.coPos;const n=Math.max(1,Math.round(sl/(+d.coSep)));return [...Array(n+1)].map((_,i)=>sl*i/n)}
+function CP(d,sl){if(d.coPos)return d.coPos;const n=Math.min(2000,Math.max(1,Math.round(sl/Math.max(0.1,+d.coSep||1.2))));return [...Array(n+1)].map((_,i)=>sl*i/n)}
 const perV=(d,nb)=>{const t=String(d.arPerV||'').trim();if(!t)return [...Array(nb)].map((_,i)=>i+1);return t.split(/[,; ]+/).map(Number).filter(x=>x>=1&&x<=nb)};
 function tecIdx(d,sl){if(+d.arTecM==1){const P=CP(d,sl),nc=P.length-1,Lp=+d.arTecL>0?+d.arTecL:+d.s,n=Math.max(1,Math.round(sl/Lp)),idx=[0];
   for(let k=1;k<n;k++){const t=sl*k/n;let bi=0;P.forEach((v,i)=>{if(Math.abs(v-t)<Math.abs(P[bi]-t))bi=i});if(bi>idx[idx.length-1]&&bi<nc)idx.push(bi)}idx.push(nc);
@@ -2977,7 +2985,7 @@ function drawArViz(m,d){arVizSlot();const el=$('arViz');if(!el)return;const Lt=m
  <p class="note"><b>Cómo se leen los puntos fijos.</b> La correa sola sujeta un ala. Una tornapunta sujeta las dos alas de la columna o de la viga. Un nudo de la cruz (pared o techo) es un punto fijo que las correas trasladan a todos los pórticos. La longitud de pandeo fuera del plano es la mayor distancia entre puntos fijos.</p></div>`}
 
 function run(){
- const d=read();A=analyze(d,d.np);const m=A.m;try{drawVer(m,d)}catch(e){console.error(e)}try{draw3D(m,window.DV||d)}catch(e){console.error(e)}try{drawArViz(m,window.DV||d)}catch(e){console.error(e)}try{loFill()}catch(e){console.error(e)}try{vBadges()}catch(e){console.error(e)}
+ const d=saneD(read());A=analyze(d,d.np);const m=A.m;try{drawVer(m,d)}catch(e){console.error(e)}try{draw3D(m,window.DV||d)}catch(e){console.error(e)}try{drawArViz(m,window.DV||d)}catch(e){console.error(e)}try{loFill()}catch(e){console.error(e)}try{vBadges()}catch(e){console.error(e)}
  $('svgGeo').innerHTML=drawGeo(m);$('svgPlan').innerHTML=drawPlan(m);$('geoSvg').innerHTML=drawBig(m);$('secOut').innerHTML=secOut(d);
  $('geoOut').innerHTML=`Altura de columna ${f(m.Hc)} m · flecha de cubierta ${f(m.fr)} m · cumbrera ${fs(m.zr)} · nivel de referencia del terreno ${fs(m.zref)} · altura de alero sobre el terreno ${f(m.he)} m · altura de cumbrera ${f(m.hr)} m · <b>altura media de cubierta h = ${f(m.h)} m</b> (θ ${m.thd>=10?'≥':'<'} 10°: ${m.thd>=10?'promedio de alero y cumbrera':'altura del alero'}).`;
  // viento
@@ -3138,7 +3146,7 @@ function resetP(){buildForms();run()}
 buildForms();refP();try{foldAll(true)}catch(e){}
 const goTab=t=>{document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('on',x.dataset.t==t));document.querySelectorAll('section.tab').forEach(s=>s.classList.toggle('on',s.id=='t-'+t))};
 document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>goTab(b.dataset.t));
-document.querySelectorAll('.frm').forEach(e=>{e.addEventListener('input',run);e.addEventListener('change',run)});
+document.querySelectorAll('.frm').forEach(e=>{e.addEventListener('input',runSoon);e.addEventListener('change',runNow)});
 $('selW').onchange=drawW;$('selDef').onchange=drawDef;$('defSc').onchange=drawDef;$('selWdir').onchange=drawW;$('selC').onchange=drawC;$('selD').onchange=()=>{DIAG=$('selD').value;drawC()};
 document.querySelectorAll('.losq').forEach(q=>q.onchange=()=>{$('los').value=q.value;run()});
 run();
