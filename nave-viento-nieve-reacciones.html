@@ -284,9 +284,15 @@ const XF=()=>[
   ["haC","Cartela en la cumbrera: largo a cada lado (0 = no hay)","m",0],
   ["haCh","Cartela en la cumbrera: altura que agrega en el nudo","mm",0]]],
  ["Columnas de viento del frente (hastial)",[
-  ["cvN","Opción 1 · Cantidad de columnas de viento en cada frente, repartidas iguales (0 = no hay)","",7],
+  ["cvMod","Cómo ubico las columnas del hastial (eje A)","",0,["Opción 1 · Repartidas iguales, por cantidad","Opción 2 · Digitando las distancias entre ejes","Opción 3 · Digitando la posición de cada columna"]],
+  ["cvN","Opción 1 · Cantidad de columnas de viento, repartidas iguales (0 = no hay)","",7],
   ["cvDist","Opción 2 · Distancias entre ejes de columnas, desde el eje 3, separadas con punto y coma (ej.: 5; 5; 6; 8; 6; 5). La última, hasta el eje 1, sale sola por diferencia. Vacío = no se usa","m",""],
   ["cvPos","Opción 3 · Posición de cada columna de viento, en m desde el eje 3, separadas con punto y coma. Vacío = repartidas iguales. Usalo cuando hay portones y no quedan moduladas (ej.: 3; 6; 12; 18; 21)","m",""],
+  ["haInd","¿Los dos hastiales son iguales?","",0,["Sí: el del último eje es igual al del eje A","No: cargo aparte el hastial del último eje"]],
+  ["cvMod2","Último eje · cómo ubico las columnas","",0,["Opción 1 · Repartidas iguales, por cantidad","Opción 2 · Digitando las distancias entre ejes","Opción 3 · Digitando la posición de cada columna"]],
+  ["cvN2","Último eje · opción 1 · cantidad de columnas, repartidas iguales","",7],
+  ["cvDist2","Último eje · opción 2 · distancias entre ejes, desde el eje 3, separadas con punto y coma","m",""],
+  ["cvPos2","Último eje · opción 3 · posición de cada columna, en m desde el eje 3","m",""],
   ["cvSel","Perfil","",Math.max(0,CATN.filter(x=>!/Alveolar/.test(x)).findIndex(x=>/W 310 x 38/.test(x))),CATN.filter(x=>!/Alveolar/.test(x))],
   ["cvOri","Orientación del perfil","",0,["Alma perpendicular al hastial (eje fuerte contra el viento)","Girada 90°: alma paralela al hastial (no sobresale del cerramiento; eje débil contra el viento)"]],
   ["cvLb","Lb del ala interior, para la succión (0 = altura total; no se usa con la columna girada)","m",0],
@@ -703,13 +709,13 @@ function g3Extra(m,d,R){if(typeof G3=='undefined'||!G3.r||!G3.grp)return;const O
    for(let i=0;i<=nb;i++)for(const q of AH.fl)for(const side of [0,1]){const sv=AH.x0+(q-1)*AH.S,yy=sv*Math.cos(th),b=new THREE.Mesh(new THREE.BoxGeometry(tg,hg,lg),mF);b.position.set(i*s,H+sv*Math.sin(th),side?L-yy:yy);b.rotation.x=side?th:-th;b.userData.t=`<b>Agujero ${q} relleno</b> con chapa de ${f(AH.tp,1)} mm`;gPo2.add(b)}}}
  // rigidización de los hastiales: diagonales (el último panel sube hasta la viga) y puntal horizontal en cada nudo
  if(R.ha&&R.ha.bays&&R.ha.bays.length&&gAr){const cH2=R.ha.r<=1?OKc:NOc,tH=`<b>Rigidización del hastial</b> (${RVCFG[R.ha.cfg]}), ${R.ha.nm}, N<sub>u</sub> = ${f(R.ha.N,1)} t`+tg(R.ha.r),tP=`<b>Puntal horizontal del hastial</b>, ${R.ha.pu||''}, P<sub>u</sub> = ${f(R.ha.Np||0,1)} t`+(R.ha.rPu?tg(R.ha.rPu):'');
-  for(const x of [0,Lt])for(const i of R.ha.bays){const pp=haPan(m,d,i,0,R.ha.nH),e2=pp.e;pp.pan.forEach((p,q)=>{for(const [a,b,c,e3] of haGeo(R.ha.cfg,e2,p.yb,p.yL,p.yR))g3Line(gAr,[[x,b,pp.z0+a],[x,e3,pp.z0+c]],cH2,0.045,tH);if(q>0)g3Line(gAr,[[x,p.yb,pp.z0],[x,p.yb,pp.z0+e2]],(R.ha.rPu||0)<=1?0x7c3aed:NOc,0.07,tP)})}}
+  for(const x of [0,Lt,-1])for(const i of (window.HAK=x>0?1:0,x<0?[]:haBays(d,cvZs(d).n+1))){const pp=haPan(m,d,i,0,R.ha.nH),e2=pp.e;pp.pan.forEach((p,q)=>{for(const [a,b,c,e3] of haGeo(R.ha.cfg,e2,p.yb,p.yL,p.yR))g3Line(gAr,[[x,b,pp.z0+a],[x,e3,pp.z0+c]],cH2,0.045,tH);if(q>0)g3Line(gAr,[[x,p.yb,pp.z0],[x,p.yb,pp.z0+e2]],(R.ha.rPu||0)<=1?0x7c3aed:NOc,0.07,tP)})}}
  // correas de pared en las caras de los hastiales, entre columnas de viento
- {const gPa=G3.grp.children.find(g=>g.userData.k=='g3Pa'),EC=cvZs(d).E,nCv=EC.length-2;if(gPa&&nCv>0){const pH=+d.pH/1000,shG=shpC(pH,+d.pB/1000,+d.pD/1000,+d.pt/1000),W1=wallLv(d,H),sep=W1.sep||+d.pSep||1.5,rPa=(window.VRsum||{}).pa,mG=mt(rPa!=null&&isFinite(rPa)?rPa:0),lv=W1.g.slice(),zc=z=>H+(z<=L/2?z:L-z)*Math.tan(th);
+ {const gPa=G3.grp.children.find(g=>g.userData.k=='g3Pa'),EC=cvEk(d,0),nCv=Math.max(EC.length-2,cvEk(d,1).length-2);if(gPa&&nCv>0){const pH=+d.pH/1000,shG=shpC(pH,+d.pB/1000,+d.pD/1000,+d.pt/1000),W1=wallLv(d,H),sep=W1.sep||+d.pSep||1.5,rPa=(window.VRsum||{}).pa,mG=mt(rPa!=null&&isFinite(rPa)?rPa:0),lv=W1.g.slice(),zc=z=>H+(z<=L/2?z:L-z)*Math.tan(th);
    for(let y=(lv.length?lv[lv.length-1]:0)+sep;y<H+m.fr;y+=sep)lv.push(y);
-   for(const [x,sg] of [[0,-1],[Lt,1]])for(let k=0;k<=nCv;k++){const za=EC[k],zb=EC[k+1],e2=zb-za,top=Math.min(zc(za),zc(zb))-0.25;for(const y of lv)if(y<top)gPa.add(g3Bar(shG,...pSw([x+sg*(0.2+pH/2),y,za],[x+sg*(0.2+pH/2),y,zb],pFlip(d,sg,1)),[sg,0,0],mG,`<b>Correa de pared del hastial</b> C ${d.pH}×${d.pB}×${d.pD}×${d.pt}, luz ${f(e2,2)} m`+(rPa!=null&&isFinite(rPa)?' · relación de las correas de pared '+f(rPa,2):'')))}}}
+   for(const [x,sg] of [[0,-1],[Lt,1]])for(let k=0,EK=cvEk(d,x>0?1:0);k<EK.length-1;k++){const za=EK[k],zb=EK[k+1],e2=zb-za,top=Math.min(zc(za),zc(zb))-0.25;for(const y of lv)if(y<top)gPa.add(g3Bar(shG,...pSw([x+sg*(0.2+pH/2),y,za],[x+sg*(0.2+pH/2),y,zb],pFlip(d,sg,1)),[sg,0,0],mG,`<b>Correa de pared del hastial</b> C ${d.pH}×${d.pB}×${d.pD}×${d.pt}, luz ${f(e2,2)} m`+(rPa!=null&&isFinite(rPa)?' · relación de las correas de pared '+f(rPa,2):'')))}}}
  // columnas de viento de los frentes
- if(R.cv&&R.cv.n>0){const cc=R.cv.r<=1?OKc:NOc;for(const x of [0,Lt])for(let k=1;k<=R.cv.n;k++){const z=R.cv.zs[k-1];{const q=CAT[R.cv.nm],tt=`<b>Columna de viento del frente</b> ${R.cv.nm}${R.cv.ori?' (girada 90°)':''}`+tg(R.cv.r);if(q&&typeof shpI=='function')gs.add(g3Bar(shpI(q[0]/1000,q[1]/1000,q[2]/1000,q[3]/1000),[x,0,z],[x,zt(z)-hr/2,z],R.cv.ori?[0,0,1]:[1,0,0],mt(R.cv.r),tt));else g3Line(gs,[[x,0,z],[x,zt(z)-hr/2,z]],cc,0.09,tt)}}}
+ if(R.cv&&R.cv.n>0){const cc=R.cv.r<=1?OKc:NOc;for(const x of [0,Lt])for(let k=1,ZK=cvEk(d,x>0?1:0).slice(1,-1);k<=ZK.length;k++){const z=ZK[k-1];{const q=CAT[R.cv.nm],tt=`<b>Columna de viento del frente</b> ${R.cv.nm}${R.cv.ori?' (girada 90°)':''}`+tg(R.cv.r);if(q&&typeof shpI=='function')gs.add(g3Bar(shpI(q[0]/1000,q[1]/1000,q[2]/1000,q[3]/1000),[x,0,z],[x,zt(z)-hr/2,z],R.cv.ori?[0,0,1]:[1,0,0],mt(R.cv.r),tt));else g3Line(gs,[[x,0,z],[x,zt(z)-hr/2,z]],cc,0.09,tt)}}}
 }
 
 /* ---------- diagrama del pórtico (M, V o N) para una combinación ---------- */
@@ -864,7 +870,9 @@ function xRigV(m,d){const s=+d.s,H=m.Hc,vP=d.arParV||[],nP=Math.max(1,vP.length)
  $('rvOut').innerHTML=h;return {r,rT,rC,rPu,N,Hb,Nc,cfg,nm:sc.nm}}
 
 /* ---------- columnas de viento del frente (hastial) ---------- */
-function xColV(m,d){const CV=cvZs(d),n=CV.n;if(n<=0){$('cvOut').innerHTML='<p class="eq">No hay columnas de viento en los frentes (cantidad = 0): el cerramiento del frente apoya en el pórtico extremo.</p>';return {r:null}}
+function xColV(m,d){if(!haDos(d))return xColV1(m,d);const H=[],R=haBoth(d,k=>{const r=xColV1(m,d);H.push(`<h3 style="margin:14px 0 4px;padding:4px 10px;background:#eef2ff;border-left:5px solid #4338ca">Columnas de viento del hastial del ${haNom(k,d)}</h3>`+$('cvOut').innerHTML);return r||{r:null}});
+ $('cvOut').innerHTML=H.join('');const v=q=>q&&q.r!=null&&isFinite(q.r)?q.r:-1,w=v(R[1])>v(R[0])?R[1]:R[0];return Object.assign({},w,{n:Math.max(R[0].n||0,(R[1]||{}).n||0)})}
+function xColV1(m,d){const CV=cvZs(d),n=CV.n;if(n<=0){$('cvOut').innerHTML='<p class="eq">No hay columnas de viento en los frentes (cantidad = 0): el cerramiento del frente apoya en el pórtico extremo.</p>';return {r:null}}
  const L=+d.L,EE=CV.E,a=crA(m),nm=CATN.filter(x=>!/Alveolar/.test(x))[+d.cvSel]||CATN[0],c=CAT[nm],p=wProps(c[0],c[1],c[2],c[3],c[6]?c[6]*1e4:null),Fy=+d.fyW,E=200000,lim=[150,180,200,240,300][+d.cvFl|0],ori=+d.cvOri|0,Ief=ori?p.Iy:p.Ix;let g=null;
  for(let k=1;k<=n;k++){const z=EE[k],e=(EE[k+1]-EE[k-1])/2,hc=m.Hc+m.fr*(1-Math.abs(z-L/2)/(L/2)),zn=(z<a||z>L-a)?'w5':'w4',Ae=hc*Math.max(e,hc/3),pr=crP(m,zn,Ae),o={k,z,e,hc,zn,Ae,pr};
   for(const [key,pp,Lb] of [['pre',pr.pre,Math.min(+d.pSep||hc,hc)],['suc',-pr.suc,+d.cvLb>0?Math.min(+d.cvLb,hc):hc]]){const w=pp*e/1000,Mu=w*hc*hc/8,mn=ori?cvMy(p,Fy):Mn_(p,Fy,Lb,1.14),phM=0.9*mn.Mn/T9,r=Mu/phM;if(!g||r>g.r)g=Object.assign({},o,{key,pp,Lb,w,Mu,mn,phM,r,Vu:w*hc/2})}}
@@ -941,28 +949,41 @@ function vtBan(TW){const BT="<button type=\"button\" class=\"nav2 nomem\" style=
 /* ---------- rigidización de los hastiales: paños entre columnas de viento ---------- */
 /* columnas de viento: posiciones (m desde el eje 3). Vacío = repartidas iguales; a mano cuando hay portones */
 function cvNums(v){return String(v==null?'':v).trim().split(/[;\s]+/).map(x=>+String(x).replace(',','.')).filter(x=>isFinite(x)&&x>0)}
-/* columnas del hastial: 2) distancias entre ejes digitadas, 3) posiciones digitadas, 1) repartidas iguales por cantidad */
-function cvZs(d){const L=+d.L,ds=cvNums(d.cvDist),t=String(d.cvPos==null?'':d.cvPos).trim();
- if(ds.length){let a=0,over=0;const zs=[];for(const v of ds){a+=v;if(a<L-0.05)zs.push(+a.toFixed(4));else if(a>L+1e-6)over=1}
-  return {zs,E:[0,...zs,L],n:zs.length,man:true,modo:2,ds,sum:ds.reduce((p,q)=>p+q,0),rest:L-(zs.length?zs[zs.length-1]:0),over}}
- let zs=t&&t!='0'?[...new Set(t.split(/[;\s]+/).map(x=>+String(x).replace(',','.')).filter(x=>x>0.05&&x<L-0.05))].sort((a,b)=>a-b):[];const man=zs.length>0;
- if(!man){const n=Math.max(0,+d.cvN|0);zs=[...Array(n)].map((_,k)=>(k+1)*L/(n+1))}return {zs,E:[0,...zs,L],n:zs.length,man,modo:man?3:1}}
-function cvHint(d){try{const h=(id,tx)=>{const fe=document.getElementById(id)&&document.getElementById(id).closest('.f');if(!fe)return;let q=fe.querySelector('.hint');if(!q){q=document.createElement('div');q.className='hint';fe.appendChild(q)}q.innerHTML=tx};
- const C=cvZs(d),L=+d.L,E=C.E,tr=E.slice(1).map((v,i)=>f(v-E[i],2)).join(' · '),uso=`<b>→ en uso.</b> ${C.n} columnas por frente · distancias entre ejes, del eje 3 al eje 1: ${tr} m`,no=k=>`→ no se usa: manda la opción ${k}`;
- h('cvN',C.modo==1?uso:no(C.modo));h('cvPos',C.modo==3?uso:(C.modo==2?no(2):'→ vacío: no se usa'));
- h('cvDist',C.modo==2?uso+` (el último tramo, ${f(C.rest,2)} m, sale por diferencia con la luz de ${f(L,2)} m)`+(C.over?` <span style="color:#d62828">· ATENCIÓN: las distancias cargadas suman ${f(C.sum,2)} m y se pasan de la luz; se ignoran las que quedan afuera</span>`:''):'→ vacío: no se usa. Escribí las distancias entre ejes y las columnas quedan donde vos digas; después elegís los paños rigidizados en el esquema')}catch(e){}}
+/* ---------- dos hastiales independientes: HAK = 0 (eje A) o 1 (último eje) ---------- */
+window.HAK=0;
+function haDos(d){return +d.haInd==1}
+function haSuf(d){return window.HAK&&haDos(d)?'2':''}
+function haNom(k,d){let l='último';try{l=g3Let(Math.round(+d.nv))}catch(e){}return k?'eje '+l:'eje A'}
+function cvEk(d,k){const p=window.HAK;window.HAK=k;try{return cvZs(d).E}finally{window.HAK=p}}
+function haBoth(d,fn){const out=[];for(const k of (haDos(d)?[0,1]:[0])){window.HAK=k;try{out.push(fn(k))}finally{window.HAK=0}}return out}
+/* columnas del hastial según la opción elegida: 0 = iguales por cantidad, 1 = distancias entre ejes, 2 = posiciones */
+function cvZs(d){const g=haSuf(d),L=+d.L,md=+d['cvMod'+g]|0;
+ if(md==1){const ds=cvNums(d['cvDist'+g]);let a=0,over=0;const zs=[];for(const v of ds){a+=v;if(a<L-0.05)zs.push(+a.toFixed(4));else if(a>L+1e-6)over=1}
+  return {zs,E:[0,...zs,L],n:zs.length,man:true,modo:2,ds,sum:ds.reduce((p,q)=>p+q,0),rest:L-(zs.length?zs[zs.length-1]:0),over,vac:!ds.length}}
+ if(md==2){const t=String(d['cvPos'+g]==null?'':d['cvPos'+g]).trim(),zs=t&&t!='0'?[...new Set(t.split(/[;\s]+/).map(x=>+String(x).replace(',','.')).filter(x=>x>0.05&&x<L-0.05))].sort((a,b)=>a-b):[];return {zs,E:[0,...zs,L],n:zs.length,man:true,modo:3,vac:!zs.length}}
+ const n=Math.max(0,+d['cvN'+g]|0),zs=[...Array(n)].map((_,k)=>(k+1)*L/(n+1));return {zs,E:[0,...zs,L],n,man:false,modo:1}}
+function cvHint(d){try{const fe=id=>document.getElementById(id)&&document.getElementById(id).closest('.f'),h=(id,tx,on)=>{const e=fe(id);if(!e)return;let q=e.querySelector('.hint');if(!q){q=document.createElement('div');q.className='hint';e.appendChild(q)}q.innerHTML=tx;e.style.opacity=on?'':'0.4'};
+ const dos=haDos(d);
+ for(const k of [0,1]){const g=k?'2':'',act=k?dos:true;window.HAK=k;let C;try{C=cvZs(d)}finally{window.HAK=0}const L=+d.L,E=C.E,tr=E.slice(1).map((v,i)=>f(v-E[i],2)).join(' · '),nom=haNom(k,d);
+  const uso=`<b>→ EN USO para el hastial del ${nom}.</b> ${C.n} columnas · distancias entre ejes, del eje 3 al eje 1: ${tr} m`,no='→ no se usa (lo decide el selector «Cómo ubico las columnas»)',ap='→ no se usa: los dos hastiales están cargados como iguales';
+  const e0=fe('cvMod'+g);if(e0)e0.style.opacity=act?'':'0.4';
+  h('cvN'+g,!act?ap:(C.modo==1?uso:no),act&&C.modo==1);
+  h('cvDist'+g,!act?ap:(C.modo==2?(C.vac?'<span style="color:#d62828"><b>→ EN USO, pero está vacío:</b> escribí las distancias entre ejes separadas con punto y coma (ej.: 5; 5; 6; 8; 6; 5)</span>':uso+` (el último tramo, ${f(C.rest,2)} m, sale por diferencia con la luz de ${f(L,2)} m)`+(C.over?` <span style="color:#d62828">· ATENCIÓN: las distancias suman ${f(C.sum,2)} m y se pasan de la luz; se ignoran las que quedan afuera</span>`:'')):no),act&&C.modo==2);
+  h('cvPos'+g,!act?ap:(C.modo==3?(C.vac?'<span style="color:#d62828"><b>→ EN USO, pero está vacío:</b> escribí la posición de cada columna desde el eje 3</span>':uso):no),act&&C.modo==3)}
+ h('haPan2',dos?`→ paños rigidizados del hastial del ${haNom(1,d)}: tocalos en su esquema (el segundo de abajo)`:'→ no se usa: los dos hastiales están cargados como iguales',dos);
+ h('haPan',dos?`→ paños rigidizados del hastial del eje A: tocalos en su esquema (el primero de abajo)`:'→ valen para los dos hastiales',true)}catch(e){console.error(e)}}
 const cumV=(d,nb)=>{const t=String(d.arCumV||'').trim();if(!t||t=='0')return [...Array(nb)].map((_,i)=>i+1);return t.split(/[,; ]+/).map(Number).filter(x=>x>=1&&x<=nb)};
-function haBays(d,nB){return [...new Set(String(d.haPan||'').split(/[,; ]+/).map(Number).filter(x=>x>=1&&x<=nB))].sort((a,b)=>a-b)}
+function haBays(d,nB){return [...new Set(String(d['haPan'+haSuf(d)]||'').split(/[,; ]+/).map(Number).filter(x=>x>=1&&x<=nB))].sort((a,b)=>a-b)}
 /* diagonales de un panel del hastial: base horizontal en yb, techo inclinado de yL (columna izquierda) a yR (columna derecha) */
 function haGeo(cfg,e,yb,yL,yR){const ym=(yL+yR)/2,yk=(yb+yR)/2;return [[[0,yb,e,yR],[e,yb,0,yL]],[[0,yb,e,yR],[e,yb,0,yL]],[[0,yb,e/2,ym],[e,yb,e/2,ym]],[[e/2,yb,e,yR],[e/2,yb,0,yL]],[[0,yb,e,yk],[0,yL,e,yk]]][cfg]}
 /* paneles de un paño: los intermedios son horizontales; el último sube hasta la viga en las dos columnas */
 function haPan(m,d,i,e,nH){const L=+d.L,EE=cvZs(d).E,zt=z=>m.Hc+m.fr*(1-Math.abs(z-L/2)/(L/2)),z0=EE[i-1],hL=zt(z0),hR=zt(EE[i]),hp=Math.min(hL,hR)/nH,o=[];for(let q=0;q<nH;q++)o.push({yb:q*hp,yL:q<nH-1?(q+1)*hp:hL,yR:q<nH-1?(q+1)*hp:hR});return {z0,e:EE[i]-z0,hL,hR,hp,pan:o}}
-function xHast(m,d){const CV=cvZs(d),n=CV.n,L=+d.L,out=$('haOut');
+function xHast1(m,d){const CV=cvZs(d),n=CV.n,L=+d.L,out=$('haOut');
  if(n<=0){if($('arS_arH'))$('arS_arH').innerHTML='<p class="note">Sin columnas de viento no hay paños para rigidizar en el hastial: cargalas en «Columnas de viento del frente».</p>';out.innerHTML='<p class="eq">Para rigidizar los hastiales hace falta la modulación de las columnas de viento: cargar la cantidad en «Columnas de viento del frente».</p>';return {r:null}}
  const EE=CV.E,wB=EE.slice(1).map((v,i)=>v-EE[i]),nB=n+1,bays=haBays(d,nB),TW=xTransW(m,d),Hg=TW.W/2,cfg=+d.haCfg|0,sc=RVCAT[+d.haSec]||RVCAT[0],sp=RVCAT[+d.haPu]||RVCAT[+d.puSec]||RVCAT[0],nH=Math.max(1,+d.haN|0),zt=z=>m.Hc+m.fr*(1-Math.abs(z-L/2)/(L/2));
- const SW=820,SH=330,x0=60,yb0=270,k=Math.min((SW-2*x0)/L,200/(m.Hc+m.fr)),X=z=>x0+z*k,Y=y=>yb0-y*k;let sv=`<svg viewBox="0 0 ${SW} ${SH}"><text x="${SW/2}" y="16" text-anchor="middle" style="font-weight:600">Hastial (${RVCFG[cfg]}): paños entre columnas de viento y rigidizaciones</text>`;
+ const SW=820,SH=330,x0=60,yb0=270,k=Math.min((SW-2*x0)/L,200/(m.Hc+m.fr)),X=z=>x0+z*k,Y=y=>yb0-y*k;let sv=`<svg viewBox="0 0 ${SW} ${SH}"><text x="${SW/2}" y="16" text-anchor="middle" style="font-weight:600">Hastial${haDos(d)?' del '+haNom(window.HAK,d):''} (${RVCFG[cfg]}): paños entre columnas de viento y rigidizaciones</text>`;
  for(let i=1;i<=nB;i++){const pp=haPan(m,d,i,0,nH),z0=pp.z0,e=pp.e,on=bays.includes(i);
-  sv+=`<polygon points="${X(z0)},${Y(0)} ${X(z0+e)},${Y(0)} ${X(z0+e)},${Y(pp.hR)} ${X(z0)},${Y(pp.hL)}" fill="${on?'rgba(29,78,216,.15)':'transparent'}" stroke="none" style="cursor:pointer" onclick="arTog('haPan',${i})"><title>paño ${i}: ${on?'sacar':'poner'} rigidización</title></polygon>`;
+  sv+=`<polygon points="${X(z0)},${Y(0)} ${X(z0+e)},${Y(0)} ${X(z0+e)},${Y(pp.hR)} ${X(z0)},${Y(pp.hL)}" fill="${on?'rgba(29,78,216,.15)':'transparent'}" stroke="none" style="cursor:pointer" onclick="arTog('haPan${haSuf(d)}',${i})"><title>paño ${i}: ${on?'sacar':'poner'} rigidización</title></polygon>`;
   if(on)pp.pan.forEach((p,q)=>{sv+=`<path d="${haGeo(cfg,e,p.yb,p.yL,p.yR).map(([a,b,c,f2])=>`M${X(z0+a)},${Y(b)}L${X(z0+c)},${Y(f2)}`).join('')}" fill="none" stroke="#1d4ed8" stroke-width="2" pointer-events="none"/>`;if(q>0)sv+=`<line x1="${X(z0)}" y1="${Y(p.yb)}" x2="${X(z0+e)}" y2="${Y(p.yb)}" stroke="#7c3aed" stroke-width="3" pointer-events="none"/>`});
   sv+=`<text x="${X(z0+e/2)}" y="${Y(0)+16}" text-anchor="middle" style="font-size:11px">${i}</text>`}
  for(let j=0;j<=nB;j++){const z=EE[j];sv+=`<line x1="${X(z)}" y1="${Y(0)}" x2="${X(z)}" y2="${Y(zt(z))}" stroke="#1f2328" stroke-width="${j==0||j==nB?4:2.5}" pointer-events="none"/>`}
@@ -985,6 +1006,9 @@ function xHast(m,d){const CV=cvZs(d),n=CV.n,L=+d.L,out=$('haOut');
  if(g.C)h+=`<h4>2 · Diagonal a compresión (CIRSOC 301-2018, cap. E)</h4>`+eqL(`L<sub>d</sub> = ${f(g.Ld,2)} m · k = ${f(kd,2)}`)+g.C.eq+resL(`P<sub>u</sub> = ${f(g.N,1)} t`,`φP<sub>n</sub> = ${f(g.C.R,1)} t`,g.rC);
  if(nH>1)h+=`<h4>${g.C?3:2} · Puntal horizontal a compresión (CIRSOC 301-2018, cap. E)</h4>`+eqL(`L = e = ${f(e,2)} m (paño ${iP}) · k = 1,00`)+Cp.eq+resL(`P<sub>u</sub> = ${f(Np,1)} t`,`φP<sub>n</sub> = ${f(Cp.R,1)} t`,rPu);
  out.innerHTML=h;return {r:rr,bays,e,cfg,nH,nm:sc.nm,N:g.N,rPu,pu:sp.nm,Np}}
+function xHast(m,d){if(!haDos(d))return xHast1(m,d);const H=[],S=[],R=haBoth(d,k=>{const r=xHast1(m,d),t=`<h3 style="margin:14px 0 4px;padding:4px 10px;background:#eef2ff;border-left:5px solid #4338ca">Hastial del ${haNom(k,d)}</h3>`;H.push(t+$('haOut').innerHTML);if($('arS_arH'))S.push(t+$('arS_arH').innerHTML);return r||{r:null}});
+ $('haOut').innerHTML=H.join('');if($('arS_arH'))$('arS_arH').innerHTML=S.join('');const v=q=>q&&q.r!=null&&isFinite(q.r)?q.r:-1,w=v(R[1])>v(R[0])?R[1]:(R[0].cfg!=null||!R[1]?R[0]:R[1]);
+ return Object.assign({},w,{bays:[...(R[0].bays||[]),...((R[1]||{}).bays||[])],cfg:w.cfg!=null?w.cfg:(+d.haCfg|0),nH:w.nH||Math.max(1,+d.haN|0)})}
 /* ---------- desplazamiento del alero: apertura (cargas verticales) y ladeo (viento) ---------- */
 function xDrift(m,d){const out=$('drOut');if(!out)return {r:null};const sv=A.sv||[];if(!sv.length){out.innerHTML='';return {r:null}}
  const H=m.Hc,lim=[100,150,160,200,300,400][+d.cFl|0],adm=H*1000/lim,L=+d.L,rows=sv.map(c=>{const uB=c.r.u[24]*1000,uD=c.r.u[96]*1000;return {t:c.t,uB,uD,ap:(uD-uB)/2,la:(uB+uD)/2,tot:Math.max(Math.abs(uB),Math.abs(uD))}});
@@ -1030,7 +1054,7 @@ function g3Vista(v){if(typeof G3=='undefined'||!G3.r)return;G3V.cur=v;const m=A.
  let old=G3.grp.children.find(x=>x.userData.k=='g3Ax2');if(old){old.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material&&o.material.map)o.material.map.dispose()});G3.grp.remove(old)}
  if(v=='3d'){g3Cam(false);G3.grp.traverse(o=>{if(o.isMesh||o.isSprite)o.visible=true;if(o.userData.m0){o.material=o.userData.m0;delete o.userData.m0;o.renderOrder=0}});g3View();g3ElApply();g3Paint();document.querySelectorAll('#g3Vb button').forEach(b=>b.classList.toggle('on',b.dataset.v==v));return}
  // P(u,v): del plano de la vista (u hacia la derecha de la pantalla, v hacia arriba) al espacio
- const fr=[...Array(nb+1)].map((_,i)=>({p:i*s,lab:g3Let(i)})),lo=[{p:L,lab:'1'},{p:L/2,lab:'2'},{p:0,lab:'3'}],wc=cvZs(d).E,cvn=wc.length-2;
+ const fr=[...Array(nb+1)].map((_,i)=>({p:i*s,lab:g3Let(i)})),lo=[{p:L,lab:'1'},{p:L/2,lab:'2'},{p:0,lab:'3'}],wc=cvEk(d,v=='hn'?1:0),cvn=wc.length-2;
  let P,sl=null,uAx,vAx=null,lev=null,sub=null,U0,U1,V0,V1,dir,up=[0,1,0],px=null;
  if(v=='pl'){P=(u,w)=>[u,HT+3,-w];uAx=fr.map(q=>({u:q.p,lab:q.lab}));vAx=lo.map(q=>({v:-q.p,lab:q.lab}));U0=0;U1=Lt;V0=-L;V1=0;dir=[0,1,0];up=[0,0,-1]}
  else if(v=='por'||v=='h1'||v=='hn'){const x0=v=='por'?xp:(v=='h1'?0:Lt),sg=v=='h1'?1:-1,wd=v=='por'?0.7:0.9;sl={ax:'x',lo:x0-wd,hi:x0+wd};P=(u,w)=>[x0-sg*2.5,w,sg*u];uAx=lo.map(q=>({u:sg*q.p,lab:q.lab}));lev=[0,H,HT];if(v!='por'&&cvn>0)sub=wc.map(z=>sg*z);U0=Math.min(0,sg*L);U1=Math.max(0,sg*L);V0=0;V1=HT;dir=[-sg,0,0];px=x0-sg*2.5}
@@ -1288,7 +1312,10 @@ function coSpanP(P,Ml,Mr,L,EI){const I=coInt(P,L),Mx=x=>I.M0(x)-Ml*(1-x/L)-Mr*x/
  const Vl=Vx(0),Vr=-Vx(L);return {w:Math.max(...P.map(p=>p[2])),parts:P,Ml,Mr,Vl,Vr,xm,Mp,Ms:Math.max(Ml,Mr),V:Math.max(Math.abs(Vl),Math.abs(Vr)),d:Math.abs(dm)*1000,xd,Mx,Vx}}
 function coRun(Ls,PP,cont,EI){const B=PP.map((P,i)=>P.length==1?{Bl:P[0][2]*Ls[i]**3/4,Br:P[0][2]*Ls[i]**3/4}:coInt(P,Ls[i])),M=cont&&Ls.length>1?coSolveG(Ls,B.map(b=>b.Bl),B.map(b=>b.Br)):new Array(Ls.length+1).fill(0);
  return PP.map((P,i)=>P.length==1?coSpan(P[0][2],M[i],M[i+1],Ls[i],EI):coSpanP(P,M[i],M[i+1],Ls[i],EI))}
-function haCorr(m,d,C){const Lw=+d.L,H=m.Hc,fr=m.fr,zt=x=>H+fr*(1-Math.abs(x-Lw/2)/(Lw/2)),CV=cvZs(d),xs=[...new Set([0,...CV.zs.filter(z=>z>1e-6&&z<Lw-1e-6),Lw].map(v=>+v.toFixed(3)))].sort((p,q)=>p-q),WL=wallLv(d,H),sp=C.sp,a=crA(m);
+function haTramoK(k,ri,j){window.HAX=(window.HAXS||[])[k]||window.HAX;return haTramo(ri,j)}
+function haCorr(m,d,C){if(!haDos(d))return haCorr1(m,d,C);window.HAXS=[];const R=haBoth(d,k=>{const r=haCorr1(m,d,C)||{};window.HAXS[k]=window.HAX;return {html:`<h3 style="margin:14px 0 4px;padding:4px 10px;background:#eef2ff;border-left:5px solid #4338ca">Correas del hastial del ${haNom(k,d)}</h3>`+String(r.html||'').replace(/haTramo\(/g,'haTramoK('+k+','),worst:r.worst}});
+ const ws=R.map(q=>q.worst).filter(Boolean).sort((a,b)=>(b.r||0)-(a.r||0));return {html:R.map(q=>q.html).join(''),worst:ws[0]}}
+function haCorr1(m,d,C){const Lw=+d.L,H=m.Hc,fr=m.fr,zt=x=>H+fr*(1-Math.abs(x-Lw/2)/(Lw/2)),CV=cvZs(d),xs=[...new Set([0,...CV.zs.filter(z=>z>1e-6&&z<Lw-1e-6),Lw].map(v=>+v.toFixed(3)))].sort((p,q)=>p-q),WL=wallLv(d,H),sp=C.sp,a=crA(m);
  const lv=[...new Set([...WL.g,...WL.st].map(v=>+v.toFixed(3)))].sort((p,q)=>p-q);for(let z=H+sp;z<H+fr-0.4;z+=sp)lv.push(+z.toFixed(3));
  const runs=[],cb={man:+d.pCb,Lbs:+d.pLbe,Lbi:+d.pLbi,Mn:(l,c)=>C.CSp.Mn(l,c)};
  lv.forEach(z=>{let cur=null;for(let i=0;i<xs.length-1;i++){if(Math.min(zt(xs[i]),zt(xs[i+1]))>=z-1e-6){if(!cur){cur={z,sp:[]};runs.push(cur)}cur.sp.push({x0:xs[i],x1:xs[i+1],L:xs[i+1]-xs[i],res:[],r:0})}else cur=null}});
@@ -1452,7 +1479,7 @@ function coZv(m,X,Y,g){const bx=(x,y,z,an)=>{const p=crP(m,z,g.Aeff),t=`zona ${z
 function coZonas(){if(!document.getElementById('coZst')){const st=document.createElement('style');st.id='coZst';st.textContent='.coZv{display:none}body.coZ .coZv{display:inline}body.coZ .coLn{display:none}';document.head.appendChild(st)}document.body.classList.toggle('coZ')}
 function aeW(L,sp,A,p,zn){return `<p class="eq">Área efectiva de viento: A = L × máx(ancho tributario; L/3) = ${f(L,2)} × máx(${f(sp,2)}; ${f(L/3,2)}) = <b>${f(A,1)} m²</b> · zona ${zn}: GC<sub>p</sub> = ${f(p.neg,2)} (succión) y +${f(p.pos,2)} (presión) → presión de diseño ${f(p.suc,0)} y +${f(p.pre,0)} kg/m² · carga por metro = presión × ${f(sp,2)} m de ancho tributario</p>`}
 function aeTx(o,ex,L){if(!o.Ae)return '';return aeW(L,o.tr,o.Ae,ex?o.pE:o.pI,o.ZL?zN(ex?o.ZL[0][1]:o.ZL[o.ZL.length-1][1]):(ex?(o.ed?3:2):(o.ed?2:1)))+(o.ZL&&o.ZL.length>2?`<p class="note">A lo largo de esta correa hay tres zonas: ${o.ZL.map((q,i)=>'zona '+zN(q[1])+(isFinite(q[0])?' hasta '+f(q[0],2)+' m del hastial':' en el resto')).join(', ')}.</p>`:'')}
-function xPost(m,d){try{cvHint(d)}catch(e){}try{pjInit()}catch(e){}try{g3ElFill();g3ElApply();g3Ui();g3Bg();g3Paint()}catch(e){console.error(e)}try{coZonas();document.body.classList.remove('coZ')}catch(e){}try{pOriHint(d)}catch(e){console.error(e)}try{vIcons()}catch(e){console.error(e)}try{if(!window.VRO&&window.ResizeObserver){window.VRO=new ResizeObserver(()=>vTops());for(const id of ['nav','vIdx'])if($(id))window.VRO.observe($(id))}vTops()}catch(e){console.error(e)}try{vPesoB()}catch(e){console.error(e)}try{rxInit()}catch(e){console.error(e)}try{teHint(d)}catch(e){console.error(e)}try{vShow(m,d)}catch(e){console.error(e)}try{vOrden()}catch(e){console.error(e)}try{dIcons()}catch(e){console.error(e)}try{defBtns()}catch(e){console.error(e)}}
+function xPost(m,d){window.HAK=0;try{cvHint(d)}catch(e){}try{pjInit()}catch(e){}try{g3ElFill();g3ElApply();g3Ui();g3Bg();g3Paint()}catch(e){console.error(e)}try{coZonas();document.body.classList.remove('coZ')}catch(e){}try{pOriHint(d)}catch(e){console.error(e)}try{vIcons()}catch(e){console.error(e)}try{if(!window.VRO&&window.ResizeObserver){window.VRO=new ResizeObserver(()=>vTops());for(const id of ['nav','vIdx'])if($(id))window.VRO.observe($(id))}vTops()}catch(e){console.error(e)}try{vPesoB()}catch(e){console.error(e)}try{rxInit()}catch(e){console.error(e)}try{teHint(d)}catch(e){console.error(e)}try{vShow(m,d)}catch(e){console.error(e)}try{vOrden()}catch(e){console.error(e)}try{dIcons()}catch(e){console.error(e)}try{defBtns()}catch(e){console.error(e)}}
 
 /* ---------- peso de la estructura: incidencia de cada elemento en kg por m² de planta ---------- */
 function xPesos(m,d,R){const L=+d.L,Lt=m.Lt,s=+d.s,H=m.Hc,cs=Math.cos(m.th),nb=Math.round(Lt/s),Ap=L*Lt,Aw=2*Lt*H+2*(L*H+L*m.fr/2),PW=window.VRpeso||{},zt=z=>H+m.fr*(1-Math.abs(z-L/2)/(L/2)),rows=[];
@@ -1463,12 +1490,12 @@ function xPesos(m,d,R){const L=+d.L,Lt=m.Lt,s=+d.s,H=m.Hc,cs=Math.cos(m.th),nb=M
  if(PW.col)add('col','Columnas del pórtico',secData(d,'c').nm,PW.col[0]*L*s*(nb+1));
  if(PW.vig)add('vig','Vigas del pórtico',secData(d,'r').nm,PW.vig[0]*L*s*(nb+1));
  try{const AH=window.ALVH,sdr=secData(d,'r');if(AH&&AH.fl&&AH.fl.length&&sdr.ho){const ag=alvGeo(sdr,d),kg1=ag.ho*(ag.e+ag.b)*AH.tp*7.85e-6;add('vig','Vigas: chapas de relleno de agujeros',`${AH.fl.length} agujero${AH.fl.length>1?'s':''} por faldón (n.º ${AH.fl.join(', ')}) · chapa de ${f(AH.tp,1)} mm · ${f(kg1,1)} kg cada una`,kg1*AH.fl.length*2*(nb+1))}}catch(e){}
- try{const CV=cvZs(d),nm=CATN.filter(x=>!/Alveolar/.test(x))[+d.cvSel]||CATN[0],c=CAT[nm];add('cv','Columnas de viento de los hastiales',CV.n+' × '+nm+' por frente',2*CV.zs.reduce((t,z)=>t+zt(z),0)*c[5]*0.785)}catch(e){}
+ try{const CV=cvZs(d),nm=CATN.filter(x=>!/Alveolar/.test(x))[+d.cvSel]||CATN[0],c=CAT[nm];add('cv','Columnas de viento de los hastiales',CV.n+' × '+nm+' por frente',[...cvEk(d,0).slice(1,-1),...cvEk(d,1).slice(1,-1)].reduce((t,z)=>t+zt(z),0)*c[5]*0.785)}catch(e){}
  try{const dT=BARD[+d.teD],w=Math.PI*(dT/10)**2/4*0.785;add('te','Tensores de techo','barra Ø'+dT,(R.te.Lbar||0)*w)}catch(e){}
  try{const vP=d.arParV||[],nH=Math.max(1,+d.arParN|0),cfg=+d.rvCfg|0,sc=RVCAT[+d.rvSec]||RVCAT[0],sp=RVCAT[+d.puSec]||RVCAT[RVCAT.length-6],g0=rvGeo(cfg,s,H/nH,0),Ld=g0.reduce((t,q)=>t+Math.hypot(q[2]-q[0],q[3]-q[1]),0)*(cfg==0?2:1);
   add('ar','Rigidización de las paredes laterales: diagonales',sc.nm,vP.length*2*nH*Ld*sc.A*0.785);add('ar','Rigidización de las paredes laterales: puntales',sp.nm,wallLv(d,H).st.length*2*Lt*sp.A*0.785)}catch(e){}
- try{if(R.ha&&R.ha.bays&&R.ha.bays.length){const sc=RVCAT[+d.haSec]||RVCAT[0],sp=RVCAT[+d.haPu]||RVCAT[+d.puSec]||RVCAT[0];let Ld=0,Lp=0;for(const i of R.ha.bays){const pp=haPan(m,d,i,0,R.ha.nH);pp.pan.forEach((p,q)=>{for(const [a,b,c,e] of haGeo(R.ha.cfg,pp.e,p.yb,p.yL,p.yR))Ld+=Math.hypot(c-a,e-b);if(q>0)Lp+=pp.e})}
-  add('ar','Rigidización de los hastiales: diagonales',sc.nm,2*Ld*sc.A*0.785);add('ar','Rigidización de los hastiales: puntales',sp.nm,2*Lp*sp.A*0.785)}}catch(e){}
+ try{if(R.ha&&R.ha.bays&&R.ha.bays.length){const sc=RVCAT[+d.haSec]||RVCAT[0],sp=RVCAT[+d.haPu]||RVCAT[+d.puSec]||RVCAT[0];let Ld=0,Lp=0;for(const x of [0,1,-1])for(const i of (window.HAK=x>0?1:0,x<0?[]:haBays(d,cvZs(d).n+1))){const pp=haPan(m,d,i,0,R.ha.nH);pp.pan.forEach((p,q)=>{for(const [a,b,c,e] of haGeo(R.ha.cfg,pp.e,p.yb,p.yL,p.yR))Ld+=Math.hypot(c-a,e-b);if(q>0)Lp+=pp.e})}
+  add('ar','Rigidización de los hastiales: diagonales',sc.nm,Ld*sc.A*0.785);add('ar','Rigidización de los hastiales: puntales',sp.nm,Lp*sp.A*0.785)}}catch(e){}
  try{const a=ANG[+d.tnSel]||ANG[0],w=a[4][4]*0.785,ang=Math.min(80,Math.max(15,+d.tnAng||45))*Math.PI/180,nT=+d.tnN==1?2:1,I=d.LoInfo||{},hv=secData(d,'r').h/1000+(+d.coH)/2000,hc=(secData(d,'c').var?(secData(d,'c').h+secData(d,'c').h1)/2:secData(d,'c').h)/1000+(+d.pH)/2000;
   add('tn','Tornapuntas',a[0]+(nT==2?' (dos por punto)':' (una por punto)'),w*nT*(nb+1)*2*((((I.tnV||[]).length)-((I.tnV||[]).length?0.5:0))*hv/Math.sin(ang)+(+d.arTnC>0?((I.tnC||[]).length)*hc/Math.sin(ang):0)))}catch(e){}
  const sum=k=>rows.filter(r=>r.k==k).reduce((t,r)=>t+r.v,0);for(const k of ['te','tn','cv','ar'])if(sum(k)>0)PW[k]=[sum(k),'kg/m² de planta'];PW.pl={};for(const k of ['ch','co','pa'])if(sum(k)>0)PW.pl[k]=sum(k);window.VRpeso=PW;{const sn=re=>rows.filter(r=>re.test(r.n)).reduce((t,r)=>t+r.v,0);window.VRpp={chOut:sum('ch'),coOut:sum('co'),paOut:sum('pa'),vcOut:sum('col')+sum('vig'),teOut:sum('te'),tnOut:sum('tn'),cvOut:sum('cv'),rvOut:sn(/paredes laterales/),haOut:sn(/hastiales: /)}}
@@ -1927,6 +1954,7 @@ const F=[
   ["rvFy","Diagonal y puntal: tensión de fluencia de los perfiles","MPa",240],
   ["rvK","k de pandeo de la diagonal (0 = automático: k = 1 con el largo completo en todas las configuraciones, también en X porque fuera del plano nada restringe el cruce)","",0],
   ["vtMod","Viento transversal: quién lo lleva a las fundaciones","",0,["Los pórticos (estables en su plano): hastiales solo como chequeo","La cubierta lo lleva a los hastiales rigidizados"]],  ["vtPct","Chequeo de redundancia: porcentaje del viento transversal que llega a los hastiales (0 = no chequear)","%",25],  ["haPan","Paños rigidizados, contados entre columnas de viento (tocalos en el esquema de abajo)","","1, 8"],
+  ["haPan2","Hastial del último eje: paños rigidizados (solo si cargás los hastiales por separado)","",""],
   ["haN","Paneles en la altura del paño","",2],
   ["haCfg","Configuración de la rigidización del hastial","",0,RVCFG],
   ["haSec","Diagonal del hastial: sección","",4,RVOPT],
@@ -3242,7 +3270,7 @@ function loAuto(){for(const k of LOK)if($(k)){$(k).value=0;$(k).dataset.man='0'}
 function loFill(){const D=window.DV;if(!D||!D.LoAuto)return;for(const k of LOK){const e=$(k);if(e&&e.dataset.man!='1'&&document.activeElement!==e)e.value=(+D.LoAuto[k]).toFixed(2)}}
 document.addEventListener('input',ev=>{const e=ev.target;if(e&&LOK.includes(e.id))e.dataset.man=(+String(e.value).replace(',','.')>0)?'1':'0'},true);
 document.addEventListener('focusout',ev=>{const e=ev.target;if(e&&LOK.includes(e.id))loFill()});
-function setVals(o){for(const k of LOK)if($(k))$(k).dataset.man='0';for(const k in o)if($(k)&&!(!o._lo&&LOK.includes(k))){$(k).value=o[k];if(LOK.includes(k))$(k).dataset.man=(o._man?o._man.includes(k):+o[k]>0)?'1':'0'}run()}
+function setVals(o){if(o&&!('cvMod' in o)){const t_=String(o.cvPos==null?'':o.cvPos).trim();o=Object.assign({},o,{cvMod:cvNums(o.cvDist).length?1:(t_&&t_!='0'?2:0)})}for(const k of LOK)if($(k))$(k).dataset.man='0';for(const k in o)if($(k)&&!(!o._lo&&LOK.includes(k))){$(k).value=o[k];if(LOK.includes(k))$(k).dataset.man=(o._man?o._man.includes(k):+o[k]>0)?'1':'0'}run()}
 function saveP(){const a=getAll();a[$('pname').value||'sin nombre']=vals();try{localStorage.setItem(LS,JSON.stringify(a))}catch(e){}refP()}
 function loadP(){const a=getAll(),k=$('plist').value;if(a[k]){$('pname').value=k;setVals(a[k])}}
 function delP(){const a=getAll(),k=$('plist').value;if(a[k]&&confirm('¿Borrar "'+k+'"?')){delete a[k];try{localStorage.setItem(LS,JSON.stringify(a))}catch(e){}refP()}}
