@@ -91,7 +91,7 @@ table.dat td:nth-child(2){white-space:nowrap;font-weight:600}h4{margin:12px 0 4p
 <button id="bWord" type="button" onclick="memWord()" title="Genera la memoria de cálculo en Word con el formato CIVETEC">⬇ Memoria de cálculo (Word)</button><label id="bOpen" class="hbt" title="Abre un proyecto guardado (archivo .json)">📂 Abrir proyecto<input type="file" accept=".json" style="display:none" onchange="impP(this);this.value=''"></label><button id="bSave" class="hbt" type="button" onclick="projGuardar()" title="Guarda sobre el archivo del proyecto (y también en este navegador)">💾 Guardar</button><button id="bSaveAs" class="hbt" type="button" onclick="projGuardarComo()" title="Elegí la carpeta y el nombre del archivo .json">💾 Guardar como…</button><select id="uSel" title="Unidades de fuerza y momento en las verificaciones" style="float:right;margin:2px 10px 0 0;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--inp);color:var(--ink);font:inherit"><option value="t">Unidades: t y t·m</option><option value="kN">Unidades: kN y kN·m</option></select>
 <h1>Nave industrial · modelo estructural del pórtico</h1>
 <div class="sub">Pórtico a dos aguas · CIRSOC 101-2025 (cargas y combinaciones) · CIRSOC 102-2025 (viento) · CIRSOC 104-2005 (nieve) · unidades: t, m, kg/m²</div>
-</header>
+<div id="pjFile" style="margin-top:6px;font-weight:600;font-size:13px"></div></header>
 <div id="nav">
 <button data-t="geo" class="on">1 · Geometría y secciones</button>
 <button data-t="cargas">2 · Análisis de cargas</button>
@@ -123,7 +123,7 @@ table.dat td:nth-child(2){white-space:nowrap;font-weight:600}h4{margin:12px 0 4p
 <ul>
 <li><b>Unidades</b>: el selector de arriba a la derecha cambia fuerzas y momentos entre toneladas y kN.</li>
 <li><b>Longitudes no arriostradas</b>: salen solas de las cruces, tillas y tornapuntas. Si se escribe un valor en el campo, pasa a manual; con 0 vuelve a automático.</li>
-<li><b>Proyectos</b>: arriba a la derecha, «Guardar proyecto» baja todos los datos a un archivo .json (y los deja también en este navegador) y «Abrir proyecto» carga un archivo guardado. En la pestaña 1 sigue estando la lista de proyectos del navegador.</li>
+<li><b>Proyectos</b>: arriba a la derecha, «Abrir proyecto» carga un archivo .json guardado. «Guardar» escribe sobre ese mismo archivo; si el proyecto es nuevo, la primera vez pregunta dónde guardarlo. «Guardar como…» lo guarda con otro nombre o en otra carpeta. No hay otro lugar donde se guarde.</li>
 <li><b>Pórtico analizado</b>: el 1 es el extremo (medio ancho tributario); cualquier otro es interior.</li>
 <li><b>Sismo</b>: el programa no lo calcula. Si corresponde, se carga la fuerza sísmica longitudinal mayorada en «Tensores y tornapuntas» y se compara con el viento.</li>
 <li><b>Visor 3D</b>: arrastrar para girar, rueda para acercar, tocar un elemento para ver su verificación. Las casillas prenden y apagan cada grupo.</li>
@@ -136,10 +136,10 @@ table.dat td:nth-child(2){white-space:nowrap;font-weight:600}h4{margin:12px 0 4p
 <li>El análisis es elástico de primer orden.</li>
 </ul></details></div>
 
-<div class="card"><h2>Proyecto</h2>
-<div class="row"><input id="pname" class="btn" style="flex:1;min-width:200px;background:var(--inp)" value="CL-043 ETRSU Neuquén · Nave de transferencia">
-<button class="btn" onclick="saveP()">Guardar</button><select id="plist" class="btn"></select><button class="btn" onclick="loadP()">Abrir</button><button class="btn" onclick="delP()">Borrar</button><button class="btn" onclick="expP()">Exportar JSON</button><label class="btn">Importar<input type="file" accept=".json" style="display:none" onchange="impP(this)"></label><button class="btn" onclick="resetP()">Valores iniciales</button></div>
-<div class="note">Los proyectos se guardan en este navegador. Los valores iniciales son los de la nave de CL-043 leídos de los planos EST-P-PG-006 y ARQ-P-PV-03.</div></div>
+<div class="card"><h2>Nombre del proyecto</h2>
+<div class="row"><input id="pname" class="btn" style="flex:1;min-width:200px;background:var(--inp)" value="Proyecto nuevo">
+<select id="plist" style="display:none"></select><button class="btn" onclick="projNuevo()">Proyecto nuevo (valores iniciales)</button></div>
+<div class="note">Para guardar y abrir usá solo los botones de arriba: «Guardar», «Guardar como…» y «Abrir proyecto». El proyecto es un archivo .json en la carpeta que elijas. Los valores iniciales son los de la nave de CL-043 leídos de los planos EST-P-PG-006 y ARQ-P-PV-03.</div></div>
 <div id="fmem"></div>
 <div class="card"><h2>Geometría del pórtico</h2>
 <div id="geoBox"><div id="geoSvg"></div><div id="geoOv" class="frm"></div></div>
@@ -2152,10 +2152,11 @@ function cvSk(ori,nm){const W=420,H=150,I=(cx,cy,rot,col)=>`<g transform="transl
 window.PJH=null;
 function pjTxt(){return JSON.stringify({nombre:$('pname').value,datos:vals()},null,1)}
 function pjMsg(id,t,ok){const b=$(id);if(!b)return;if(!b.dataset.t)b.dataset.t=b.textContent;b.textContent=t;b.style.background=ok===false?'#fee2e2':'';clearTimeout(b._tm);b._tm=setTimeout(()=>{b.textContent=b.dataset.t;b.style.background=''},2600)}
-function pjTip(){const b=$('bSave');if(b)b.title=window.PJH?'Guarda sobre el archivo «'+window.PJH.name+'» (y también en este navegador)':'Todavía no hay archivo elegido: la primera vez pregunta dónde guardarlo (después guarda siempre sobre ese archivo)'}
+function pjTip(){const b=$('bSave');if(b)b.title=window.PJH?'Guarda sobre el archivo «'+window.PJH.name+'»':'Todavía no hay archivo: la primera vez pregunta dónde guardarlo (después guarda siempre sobre ese archivo)';const e=$('pjFile');if(e){e.innerHTML=window.PJH?'📄 Proyecto abierto: <b>'+window.PJH.name+'</b> · «Guardar» escribe sobre este archivo':'⚠ Ningún archivo de proyecto abierto. Si ya tenés uno, usá «Abrir proyecto». «Guardar» te va a preguntar dónde guardarlo.';e.style.color=window.PJH?'#15803d':'#b45309'}}
+function projNuevo(){if(!confirm('¿Empezar un proyecto nuevo con los valores iniciales? Lo que no hayas guardado se pierde.'))return;window.PJH=null;resetP();$('pname').value='Proyecto nuevo';pjTip()}
 async function pjWrite(h){const w=await h.createWritable();await w.write(pjTxt());await w.close()}
-async function projGuardar(){try{saveP()}catch(e){}if(!window.PJH)return projGuardarComo('bSave');try{await pjWrite(window.PJH);pjMsg('bSave','✓ Guardado en '+window.PJH.name)}catch(e){console.error(e);pjMsg('bSave','No se pudo guardar: usá «Guardar como»',false)}}
-async function projGuardarComo(src){const id=src||'bSaveAs';try{saveP()}catch(e){}
+async function projGuardar(){if(!window.PJH)return projGuardarComo('bSave');try{await pjWrite(window.PJH);pjMsg('bSave','✓ Guardado en '+window.PJH.name)}catch(e){console.error(e);pjMsg('bSave','No se pudo guardar: usá «Guardar como»',false)}}
+async function projGuardarComo(src){const id=src||'bSaveAs';
  if(!window.showSaveFilePicker){try{expP()}catch(e){}pjMsg(id,'✓ Descargado (este navegador no deja elegir carpeta)');return}
  try{const o={suggestedName:($('pname').value||'nave')+'.json',types:[{description:'Proyecto de nave (JSON)',accept:{'application/json':['.json']}}]};if(window.PJH)o.startIn=window.PJH;
   const h=await window.showSaveFilePicker(o);await pjWrite(h);window.PJH=h;pjTip();pjMsg(id,'✓ Guardado en '+h.name)}
