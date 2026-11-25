@@ -266,79 +266,79 @@ const BARD=[10,12,16,20,25,32,40],BAROPT=BARD.map(x=>'Ø'+x+' mm'),NUTW={10:17,1
 const SCRW=[['#10',4.8,6.28,10.0],['#12',5.5,8.36,12.5],['#14',6.3,12.27,17.0]];
 const XF=()=>[
  ["Tensores de techo (CIRSOC 301-2018)",[
-  ["teD","Tensor: barra","",4,BAROPT],
+  ["teD","A · Tensor: barra","",4,BAROPT],
   ["teFy","Tensión de fluencia de la barra (ADN 420)","MPa",420],
-  ["teRos","Extremo de la barra","",0,["Roscado (An = 0,75·Ag)","Soldado, sin rosca","Extremo roscado de mayor diámetro, soldado al tramo"]],
-  ["teDr","Diámetro del extremo roscado (si es de mayor diámetro)","",5,BAROPT],
+  ["teRos","B · Extremo de la barra","",0,["Roscado (An = 0,75·Ag)","Soldado, sin rosca","Extremo roscado de mayor diámetro, soldado al tramo"]],
+  ["teDr","B · Diámetro del extremo roscado (si es de mayor diámetro)","",5,BAROPT],
   ["brCrit","Fuerza de arriostramiento P<sub>br</sub> (vale para tensores y tornapuntas)","",0,["Por capacidad, con Mn: 0,02·Mn·Cd/ho (conservador, no depende de las combinaciones)","Por demanda, con Mu: 0,02·Mu·Cd/ho (Apéndice 6, ec. 6.7)"]],
   ["brN","Vigas cuya fuerza P<sub>br</sub> acumula cada tensor","",2],
   ["exF","Fuerza sísmica longitudinal total sobre la nave, mayorada (0 = no considerar)","t",0],
   ["teFr","Viento de frente: qué cruces de techo lo toman","",0,["Solo la cruz del vano pegado a cada hastial (recomendado)","Todas las cruces completas de la nave (exige verificar las correas como puntales)"]]]],
  ["Tornapuntas (CIRSOC 301-2018)",[
-  ["tnSel","Perfil ángulo","",Math.max(0,ANG.findIndex(p=>Math.abs(p[1]-50.8)<0.3&&Math.abs(p[2]-4.8)<0.2)),ANGOPT],
+  ["tnSel","A · Perfil ángulo","",Math.max(0,ANG.findIndex(p=>Math.abs(p[1]-50.8)<0.3&&Math.abs(p[2]-4.8)<0.2)),ANGOPT],
   ["tnFy","Tensión de fluencia del ángulo","MPa",240],
-  ["tnN","Tornapuntas en cada punto","",1,["Una sola, de un lado","Dos, una a cada lado (una traccionada y otra comprimida)"]],
-  ["tnAng","Ángulo de la tornapunta con la correa","°",45]]],
+  ["tnN","C · Tornapuntas en cada punto","",1,["Una sola, de un lado","Dos, una a cada lado (una traccionada y otra comprimida)"]],
+  ["tnAng","B · Ángulo de la tornapunta con la correa","°",45]]],
  ["Cartelas de la viga (solo cambian la rigidez del análisis; la resistencia en el nudo se verifica con el perfil sin cartela)",[
-  ["haE","Cartela en el alero: largo sobre la viga (0 = no hay)","m",0],
-  ["haEh","Cartela en el alero: altura que agrega en el nudo","mm",0],
-  ["haC","Cartela en la cumbrera: largo a cada lado (0 = no hay)","m",0],
-  ["haCh","Cartela en la cumbrera: altura que agrega en el nudo","mm",0]]],
+  ["haE","A · Cartela en el alero: largo sobre la viga (0 = no hay)","m",0],
+  ["haEh","B · Cartela en el alero: altura que agrega en el nudo","mm",0],
+  ["haC","C · Cartela en la cumbrera: largo a cada lado (0 = no hay)","m",0],
+  ["haCh","D · Cartela en la cumbrera: altura que agrega en el nudo","mm",0]]],
  ["Columnas de viento del frente (hastial)",[
   ["cvMod","Cómo ubico las columnas del hastial (eje A)","",0,["Opción 1 · Repartidas iguales, por cantidad","Opción 2 · Digitando las distancias entre ejes","Opción 3 · Digitando la posición de cada columna"]],
-  ["cvN","Opción 1 · Cantidad de columnas de viento, repartidas iguales (0 = no hay)","",7],
-  ["cvDist","Opción 2 · Distancias entre ejes de columnas, desde el eje 3, separadas con punto y coma (ej.: 5; 5; 6; 8; 6; 5). La última, hasta el eje 1, sale sola por diferencia. Vacío = no se usa","m",""],
-  ["cvPos","Opción 3 · Posición de cada columna de viento, en m desde el eje 3, separadas con punto y coma. Vacío = repartidas iguales. Usalo cuando hay portones y no quedan moduladas (ej.: 3; 6; 12; 18; 21)","m",""],
+  ["cvN","A · Opción 1 · Cantidad de columnas de viento, repartidas iguales (0 = no hay)","",7],
+  ["cvDist","A · Opción 2 · Distancias entre ejes de columnas, desde el eje 3, separadas con punto y coma (ej.: 5; 5; 6; 8; 6; 5). La última, hasta el eje 1, sale sola por diferencia. Vacío = no se usa","m",""],
+  ["cvPos","A · Opción 3 · Posición de cada columna de viento, en m desde el eje 3, separadas con punto y coma. Vacío = repartidas iguales. Usalo cuando hay portones y no quedan moduladas (ej.: 3; 6; 12; 18; 21)","m",""],
   ["haInd","¿Los dos hastiales son iguales?","",0,["Sí: el del último eje es igual al del eje A","No: cargo aparte el hastial del último eje"]],
   ["cvMod2","Último eje · cómo ubico las columnas","",0,["Opción 1 · Repartidas iguales, por cantidad","Opción 2 · Digitando las distancias entre ejes","Opción 3 · Digitando la posición de cada columna"]],
   ["cvN2","Último eje · opción 1 · cantidad de columnas, repartidas iguales","",7],
   ["cvDist2","Último eje · opción 2 · distancias entre ejes, desde el eje 3, separadas con punto y coma","m",""],
   ["cvPos2","Último eje · opción 3 · posición de cada columna, en m desde el eje 3","m",""],
-  ["cvSel","Perfil","",Math.max(0,CATN.filter(x=>!/Alveolar/.test(x)).findIndex(x=>/W 310 x 38/.test(x))),CATN.filter(x=>!/Alveolar/.test(x))],
-  ["cvOri","Orientación del perfil","",0,["Alma perpendicular al hastial (eje fuerte contra el viento)","Girada 90°: alma paralela al hastial (no sobresale del cerramiento; eje débil contra el viento)"]],
-  ["cvBase","Apoyo de la base de la columna de viento (arriba siempre apoya en la viga de contraviento)","",0,["Articulada en la base","Empotrada en la base"]],
-  ["cvLb","Lb del ala interior, para la succión (0 = automático: distancia entre los puntales del hastial, o toda la altura si no hay; no se usa con la columna girada)","m",0],
+  ["cvSel","B · Perfil","",Math.max(0,CATN.filter(x=>!/Alveolar/.test(x)).findIndex(x=>/W 310 x 38/.test(x))),CATN.filter(x=>!/Alveolar/.test(x))],
+  ["cvOri","B · Orientación del perfil","",0,["Alma perpendicular al hastial (eje fuerte contra el viento)","Girada 90°: alma paralela al hastial (no sobresale del cerramiento; eje débil contra el viento)"]],
+  ["cvBase","C · Apoyo de la base de la columna de viento (arriba siempre apoya en la viga de contraviento)","",0,["Articulada en la base","Empotrada en la base"]],
+  ["cvLb","D · Lb del ala interior, para la succión (0 = automático: distancia entre los puntales del hastial, o toda la altura si no hay; no se usa con la columna girada)","m",0],
   ["cvFl","Flecha admisible con viento de servicio","",0,["h/150","h/180","h/200","h/240","h/300"]],
-  ["poPan","Hastial del eje A: paños con portón, contados entre columnas de viento como en el esquema (vacío = no hay)","",""],
-  ["poPan2","Hastial del último eje: paños con portón (solo si cargás los hastiales por separado)","",""],
-  ["poH","Altura libre del portón (cara inferior del dintel)","m",4.5],
-  ["poPg","Peso del portón colgado del dintel, por m² de hoja (0 = no cuelga, apoya en el piso)","kg/m²",0],
-  ["poOri","Dintel: orientación del perfil","",0,["Inercia mayor contra el viento (alma horizontal)","Girado: inercia mayor para el peso (alma vertical)"]],
-  ["poMon","Columna intermedia (montante) sobre el dintel","",1,["No","Sí, al medio del dintel (las correas de arriba quedan con la mitad de luz)"]],
-  ["poSel","Dintel: perfil (W, UPN, 2 UPN en cajón o tubos)","",Math.max(0,poOpt().findIndex(x=>/W 250 x 32,7/.test(x))),poOpt()],
-  ["poMSel","Montante: perfil (W, UPN, 2 UPN en cajón o tubos)","",Math.max(0,poOpt().findIndex(x=>/W 200 x 35,9/.test(x))),poOpt()],
-  ["poFl","Flecha admisible del dintel con viento de servicio","",1,["L/180","L/240","L/300","L/360"]],
-  ["haSinC","Hastial del eje A: paños sin correas de pared (separados con coma)","",""],
-  ["haSinC2","Hastial del último eje: paños sin correas de pared","",""]]],
+  ["poPan","E · Hastial del eje A: paños con portón, contados entre columnas de viento como en el esquema (vacío = no hay)","",""],
+  ["poPan2","E · Hastial del último eje: paños con portón (solo si cargás los hastiales por separado)","",""],
+  ["poH","F · Altura libre del portón (cara inferior del dintel)","m",4.5],
+  ["poPg","G · Peso del portón colgado del dintel, por m² de hoja (0 = no cuelga, apoya en el piso)","kg/m²",0],
+  ["poOri","G · Dintel: orientación del perfil","",0,["Inercia mayor contra el viento (alma horizontal)","Girado: inercia mayor para el peso (alma vertical)"]],
+  ["poMon","H · Columna intermedia (montante) sobre el dintel","",1,["No","Sí, al medio del dintel (las correas de arriba quedan con la mitad de luz)"]],
+  ["poSel","G · Dintel: perfil (W, UPN, 2 UPN en cajón o tubos)","",Math.max(0,poOpt().findIndex(x=>/W 250 x 32,7/.test(x))),poOpt()],
+  ["poMSel","H · Montante: perfil (W, UPN, 2 UPN en cajón o tubos)","",Math.max(0,poOpt().findIndex(x=>/W 200 x 35,9/.test(x))),poOpt()],
+  ["poFl","G · Flecha admisible del dintel con viento de servicio","",1,["L/180","L/240","L/300","L/360"]],
+  ["haSinC","I · Hastial del eje A: paños sin correas de pared (separados con coma)","",""],
+  ["haSinC2","I · Hastial del último eje: paños sin correas de pared","",""]]],
  ["Soporte de tensores (ángulo soldado a la placa)",[
-  ["stPerf","Perfil ángulo","",Math.max(0,ANG.findIndex(p=>Math.abs(p[1]-76.2)<0.3&&Math.abs(p[2]-9.5)<0.2)),ANGOPT],
-  ["stN","Disposición","",1,["Simple (1 ángulo)","Doble (2 ángulos enfrentados)"]],
-  ["stFy","Tensión de fluencia del ángulo","MPa",240],
-  ["stLp","Largo de la pieza (0 = igual al ala)","mm",0],
-  ["stY0","Altura del agujero desde la placa (0 = a media altura)","mm",0],
-  ["stW","Lado del filete de soldadura","mm",4],
-  ["stFexx","Electrodo: F<sub>EXX</sub>","MPa",480],
-["stCap","Fuerza para verificar el soporte","",0,["La tracción que le llega al tensor","La capacidad de la barra del tensor"]],
-["stBot","Soldadura del ala agujereada a la chapa","",0,["Filete de los dos lados (borde empotrado)","Filete de un solo lado (borde articulado)"]],
-["chT","Chapa de nudo: espesor","mm",9.5],
-["chFy","Chapa de nudo: tensión de fluencia","MPa",240],
-["chLx","Chapa de nudo: largo, a lo largo de la viga","mm",250],
-["chB","Chapa de nudo: ancho, de costado","mm",200],
-["chLb","Largo de cada cordón barra-chapa","mm",100],
-["chWb","Filete barra-chapa (solo barras de menos de Ø20)","mm",5],
-["chAl","Ángulo de los tensores con la viga","°",45],
-["chW","Filete de la chapa a la viga, en todo el perímetro","mm",6],
-["chTf","Espesor del ala de la viga, para los límites del filete (0 = no se controla)","mm",0],
-["chEx","Excentricidad del cruce de los tensores respecto del centro de la chapa, a lo largo de la viga","mm",0],
-["chEy","Excentricidad del cruce de los tensores, de costado","mm",0]]],
+  ["stCap","Fuerza para verificar el soporte","",0,["La tracción que le llega al tensor","La capacidad de la barra del tensor"]],
+  ["stFexx","Electrodo de todas las soldaduras: F<sub>EXX</sub>","MPa",480],
+  ["stPerf","A · Perfil ángulo","",Math.max(0,ANG.findIndex(p=>Math.abs(p[1]-76.2)<0.3&&Math.abs(p[2]-9.5)<0.2)),ANGOPT],
+  ["stN","A · Cuántos ángulos","",1,["Simple (1 ángulo)","Doble (2 ángulos enfrentados)"]],
+  ["stFy","A · Tensión de fluencia del ángulo","MPa",240],
+  ["stLp","B · Alto del ángulo parado sobre la chapa (0 = igual al ala)","mm",0],
+  ["stY0","C · Altura del tensor sobre la chapa (0 = a media altura)","mm",0],
+  ["stW","D · Filete del ángulo a la chapa","mm",4],
+  ["stBot","D · Ese filete va","",0,["De los dos lados del ala (borde empotrado)","De un solo lado (borde articulado)"]],
+  ["chT","E · Espesor de la chapa","mm",9.5],
+  ["cnFy","E · Tensión de fluencia de la chapa","MPa",240],
+  ["chLx","F · Largo de la chapa, a lo largo de la viga","mm",250],
+  ["chB","G · Ancho de la chapa, de costado","mm",200],
+  ["chW","H · Filete de la chapa a la viga, en todo el perímetro","mm",6],
+  ["chTf","H · Espesor del ala de la viga, para los límites del filete (0 = no se controla)","mm",0],
+  ["chAl","I · Ángulo de los tensores con la viga","°",45],
+  ["chEx","J · Corrimiento del cruce de los tensores respecto del centro de la chapa, a lo largo de la viga","mm",0],
+  ["chEy","K · Corrimiento del cruce de los tensores, de costado","mm",0],
+  ["chLb","L · Largo de cada cordón de la barra a la chapa (van 2)","mm",100],
+  ["chWb","L · Filete de refuerzo (solo barras de menos de Ø20)","mm",5]]],
  ["Soporte de correas (clip y tornillos autoperforantes, CIRSOC 303)",[
-  ["scCal","Tornillo autoperforante","",2,SCRW.map(s=>s[0]+' ('+String(s[1]).replace('.',',')+' mm)')],
-  ["scN","Cantidad de tornillos por apoyo de correa","",4],
-  ["scT","Espesor del clip","mm",2],
+  ["scCal","A · Tornillo autoperforante","",2,SCRW.map(s=>s[0]+' ('+String(s[1]).replace('.',',')+' mm)')],
+  ["scN","A · Cantidad de tornillos por apoyo de correa","",4],
+  ["scT","B · Espesor del clip","mm",2],
   ["scFu","Tensión de rotura de la chapa del clip y de la correa F<sub>u</sub>","MPa",370],
-  ["scE","Distancia del tornillo al borde, en la dirección de la fuerza","mm",25],
-  ["scW","Soldadura del clip a la viga: lado del filete","mm",3],
-  ["scLw","Soldadura del clip a la viga: longitud total","mm",200]]],
+  ["scE","C · Distancia del tornillo al borde, en la dirección de la fuerza","mm",25],
+  ["scW","D · Soldadura del clip a la viga: lado del filete","mm",3],
+  ["scLw","D · Soldadura del clip a la viga: longitud total","mm",200]]],
  ["Memoria de cálculo (portada del Word)",[
   ["memObra1","Obra, primer renglón","","ESTACIÓN DE TRANSFERENCIA DE RESIDUOS"],
   ["memObra2","Obra, segundo renglón","","Nave industrial metálica – Neuquén"],
@@ -532,7 +532,7 @@ function xSopT(m,d,TuS,dT){const dTm=BARD[+d.teD],bT=+d.teRos==2?barR2(dTm,BARD[
  if(hin){const q=mp*mc.th.tB*B;mc.P-=q;mc.W.WB-=q}
  const Rc=Math.min(y0,H-y0,x0,B-x0),Pc=Rc>rw+1e-6?4*Math.PI*mp*Rc/(Rc-rw):Infinity,Pn=Math.min(mc.P,Pc),phP=0.9*Pn,r1=Tu/phP,phV=0.9*0.6*fy*H*(t/10),r2=(Tu/N)/phV,phPz=0.9*0.6*fy*Math.PI*(Dn/10)*(t/10),r4=Tu/phPz;
  const w=+d.stW,fexx=+d.stFexx/T9/10,a_=a/10,wl=0.6*0.6*fexx*0.707*w/10,Lw=N==2?4*a:2*a,fv=N==2?Tu/(4*a_):Tu/(2*a_)+0.474*Tu/a_,ft=(N==2?1.8:3.6)*Tu*y0/a_**2,fr=Math.hypot(fv,ft),r3=fr/wl;
- const tp=+d.chT/10,fyp=+d.chFy/T9/10,Lb=+d.chLb/10,bp=+d.chB/10,Rb=dTm/2,flare=Rb>=10,thr=flare?5/16*Rb/10:0.707*(+d.chWb)/10,phWb=0.6*0.6*fexx*thr*2*Lb,r5=Tu/phWb,phVb=0.9*0.6*fyp*tp*2*Lb,r6=Tu/phVb,bw=Math.min(Math.max(bp,(+d.chLx)/10),dTm/10+2*Lb*Math.tan(Math.PI/6)),phTp=0.9*fyp*bw*tp,r7=Tu/phTp,alG=+d.chAl,al=alG*Math.PI/180,Lg=(+d.chLx)/20,gg=bp,Ltw=2*(2*Lg+gg),ex=Math.abs(+d.chEx||0)/10,ey=Math.abs(+d.chEy||0)/10,Ipg=2*((2*Lg)**3/12+2*Lg*(gg/2)**2)+2*(gg**3/12+gg*Lg**2),wlp=0.6*0.6*fexx*0.707*(+d.chW)/10,wCase=(Fx,Fy,M)=>{const fx=Fx/Ltw+M*(gg/2)/Ipg,fy=Fy/Ltw+M*Lg/Ipg;return {Fx,Fy,M,fx,fy,f:Math.hypot(fx,fy)}},cA=wCase(0,2*Tu*Math.sin(al),2*Tu*Math.sin(al)*ex),cB=wCase(Tu*Math.cos(al),Tu*Math.sin(al),Tu*(Math.sin(al)*ex+Math.cos(al)*ey)),cW=cA.f>=cB.f?cA:cB,r8=cW.f/wlp,r=Math.max(r1,r2,r3,r4,r5,r6,r7,r8);
+ const tp=+d.chT/10,fyp=+d.cnFy/T9/10,Lb=+d.chLb/10,bp=+d.chB/10,Rb=dTm/2,flare=Rb>=10,thr=flare?5/16*Rb/10:0.707*(+d.chWb)/10,phWb=0.6*0.6*fexx*thr*2*Lb,r5=Tu/phWb,phVb=0.9*0.6*fyp*tp*2*Lb,r6=Tu/phVb,bw=Math.min(Math.max(bp,(+d.chLx)/10),dTm/10+2*Lb*Math.tan(Math.PI/6)),phTp=0.9*fyp*bw*tp,r7=Tu/phTp,alG=+d.chAl,al=alG*Math.PI/180,Lg=(+d.chLx)/20,gg=bp,Ltw=2*(2*Lg+gg),ex=Math.abs(+d.chEx||0)/10,ey=Math.abs(+d.chEy||0)/10,Ipg=2*((2*Lg)**3/12+2*Lg*(gg/2)**2)+2*(gg**3/12+gg*Lg**2),wlp=0.6*0.6*fexx*0.707*(+d.chW)/10,wCase=(Fx,Fy,M)=>{const fx=Fx/Ltw+M*(gg/2)/Ipg,fy=Fy/Ltw+M*Lg/Ipg;return {Fx,Fy,M,fx,fy,f:Math.hypot(fx,fy)}},cA=wCase(0,2*Tu*Math.sin(al),2*Tu*Math.sin(al)*ex),cB=wCase(Tu*Math.cos(al),Tu*Math.sin(al),Tu*(Math.sin(al)*ex+Math.cos(al)*ey)),cW=cA.f>=cB.f?cA:cB,r8=cW.f/wlp,r=Math.max(r1,r2,r3,r4,r5,r6,r7,r8);
  // esquema del nudo en planta
  const OR='#ea580c',BL='#1d4ed8',RD='#c62828',BR='#92400e';let pl=`<svg viewBox="0 0 480 300"><rect x="20" y="40" width="440" height="80" fill="#e5e7eb" stroke="#6b7280"/><text x="30" y="34" style="font-size:10.5px;fill:#374151">viga metálica (vista de arriba)</text><rect x="150" y="62" width="180" height="150" fill="#dbeafe" stroke="#1f2328" stroke-width="1.6"/><text x="336" y="76" style="font-size:10.5px">chapa de nudo e = ${f(tp*10,1)} mm</text>`;
  {const ca=Math.cos(al),sa=Math.sin(al),p0=[205,150],p1=[p0[0]-ca*120,p0[1]+sa*120],lw=Math.min(60,Math.max(25,Lb*5));
@@ -1517,7 +1517,15 @@ function elSk2(k){const s=11,cx=112,cy=74,c=Math.cos(Math.PI/6),Pp=(x,y,z)=>[cx+
   zt=y=>H+(R-H)*(1-Math.abs(y-W/2)/(W/2)),ln=(a,b,col,w)=>{const p=Pp(...a),q=Pp(...b);return `<line x1="${p[0].toFixed(1)}" y1="${p[1].toFixed(1)}" x2="${q[0].toFixed(1)}" y2="${q[1].toFixed(1)}" stroke="${col||'#9ca3af'}" stroke-width="${col?(w||2.4):1}" stroke-linecap="round"/>`},
   T={tor:'Tornapuntas',colu:'Columnas del pórtico',vigu:'Vigas del pórtico',vc:'Vigas y columnas del pórtico',dr:'Desplazamiento del alero',co:'Correas de cubierta',pa:'Correas de pared',ch:'Chapa de cubierta y de pared',arL:'Pared lateral: cruces y puntales',arH:'Hastiales: cruces entre columnas de viento',arT:'Techo: cruces de cubierta',til:'Tillas y tornapuntas',ten:'Tensores de techo y tornapuntas',cv:'Columnas de viento del hastial',st:'Soporte de tensores',sc:'Soporte de correas (clip y tornillos)'};
  let o='',leg='';
- if(k=='st'){ // detalle: ala de la viga, ángulo soldado, tensor con tuerca
+ if(k=='st'){const BR='#92400e',BL='#1d4ed8',RD='#c62828',tg=(x,y,l)=>`<circle cx="${x}" cy="${y}" r="7.5" fill="#1f2328"/><text x="${x}" y="${y+3.6}" text-anchor="middle" style="font-size:10px;font-weight:700;fill:#fff">${l}</text>`,dm=(x1,y1,x2,y2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#475569"/><line x1="${x1-(y1==y2?0:4)}" y1="${y1-(y1==y2?4:0)}" x2="${x1+(y1==y2?0:4)}" y2="${y1+(y1==y2?4:0)}" stroke="#475569"/><line x1="${x2-(y1==y2?0:4)}" y1="${y2-(y1==y2?4:0)}" x2="${x2+(y1==y2?0:4)}" y2="${y2+(y1==y2?4:0)}" stroke="#475569"/>`;
+  let q=`<text x="125" y="12" text-anchor="middle" style="font-size:11px;font-weight:700">Vista de arriba</text><rect x="8" y="34" width="234" height="44" fill="#e5e7eb" stroke="#9ca3af"/><text x="12" y="46" style="font-size:9px;fill:#475569">viga</text><rect x="60" y="44" width="130" height="106" fill="#dbeafe" stroke="${BL}" stroke-width="3"/>`;
+  q+=dm(60,24,190,24)+tg(125,24,'F')+dm(206,44,206,150)+tg(206,97,'G')+tg(60,128,'H')+`<circle cx="125" cy="97" r="2.5" fill="${BL}"/><circle cx="133" cy="106" r="3" fill="${RD}"/>`+tg(150,62,'J')+tg(168,62,'K')+`<line x1="133" y1="106" x2="150" y2="70" stroke="${RD}" stroke-dasharray="2 2"/>`;
+  q+=`<line x1="112" y1="112" x2="42" y2="182" stroke="#ea580c" stroke-width="5"/><line x1="112" y1="112" x2="86" y2="138" stroke="${BL}" stroke-width="9" stroke-opacity=".45"/>`+tg(84,116,'L')+`<line x1="146" y1="112" x2="216" y2="182" stroke="#ea580c" stroke-width="5"/><line x1="134" y1="126" x2="160" y2="100" stroke="${BR}" stroke-width="6"/><line x1="134" y1="126" x2="148" y2="140" stroke="${BR}" stroke-width="6"/><line x1="160" y1="100" x2="174" y2="114" stroke="${BR}" stroke-width="6"/>`+tg(176,96,'A')+`<path d="M 232 182 A 20 20 0 0 0 226 168" fill="none" stroke="#475569"/><line x1="216" y1="182" x2="240" y2="182" stroke="#475569" stroke-dasharray="3 2"/>`+tg(236,164,'I');
+  q+=`<text x="125" y="212" text-anchor="middle" style="font-size:11px;font-weight:700">Corte por el tensor con tuerca</text><rect x="30" y="330" width="190" height="9" fill="#dbeafe" stroke="#1f2328"/>`+tg(232,334,'E')+`<rect x="30" y="339" width="190" height="7" fill="#e5e7eb" stroke="#9ca3af"/><text x="34" y="358" style="font-size:9px;fill:#475569">viga</text><rect x="112" y="238" width="9" height="92" fill="${BR}"/><rect x="121" y="321" width="52" height="9" fill="${BR}" fill-opacity=".55"/>`+tg(150,312,'A');
+  q+=`<line x1="80" y1="290" x2="240" y2="290" stroke="#ea580c" stroke-width="4"/><rect x="100" y="281" width="12" height="18" fill="#fff" stroke="#1f2328"/><path d="M240,290 l-10,-5 v10 z" fill="${RD}"/><text x="228" y="280" style="font-size:10px;font-weight:700;fill:${RD}">T</text><path d="M112,330 l-9,0 l9,-9 z" fill="${BL}"/>`+tg(94,322,'D')+dm(70,238,70,330)+tg(70,266,'B')+dm(196,290,196,330)+tg(196,310,'C');
+  q+=`<text x="125" y="376" text-anchor="middle" style="font-size:10px">Las letras son las de cada dato de la izquierda.</text><text x="125" y="390" text-anchor="middle" style="font-size:10px;fill:#475569">marrón: ángulo · celeste: chapa · naranja: tensores</text>`;
+  return `<svg viewBox="0 0 250 396" style="width:100%;max-width:300px">${q}</svg>`}
+ if(k=='st0'){ // detalle: ala de la viga, ángulo soldado, tensor con tuerca
   o=`<rect x="30" y="120" width="190" height="10" fill="#475569"/><rect x="120" y="130" width="8" height="45" fill="#475569"/><text x="34" y="146" style="font-size:10px;fill:#475569">ala de la viga</text>
   <path d="M95,120 L95,62 L103,62 L103,112 L150,112 L150,120 Z" fill="${OR}" fill-opacity=".35" stroke="${OR}" stroke-width="2"/><path d="M88,120 l7,-7 M150,120 l7,-7" stroke="#c62828" stroke-width="2.5"/>
   <line x1="20" y1="84" x2="130" y2="84" stroke="${VI}" stroke-width="4"/><rect x="103" y="77" width="11" height="14" fill="${VI}"/>
@@ -1543,6 +1551,73 @@ function elSk2(k){const s=11,cx=112,cy=74,c=Math.cos(Math.PI/6),Pp=(x,y,z)=>[cx+
  }
  return `<svg viewBox="0 0 250 ${leg?218:204}" style="width:100%;max-width:260px">${o}<text x="125" y="199" text-anchor="middle" style="font-size:11.5px;font-weight:600;fill:${OR}">${T[k]}</text>${leg?`<text x="125" y="213" text-anchor="middle" style="font-size:10.5px;font-weight:600">${leg}</text>`:''}</svg>`}
 const SKK2={arT:'te',tor:'tn',cv:'cv',st:'st',sc:'sc'},SK2=[['Tensores de techo','arT'],['Tornapuntas','tor'],['Columnas de viento','cv'],['Soporte de tensores','st'],['Soporte de correas','sc']],SKS=[['Pared lateral','arL'],['Hastiales','arH'],['Techo','arT'],['Tillas','til']];
+/* ---------- esquemas con letras: cada letra es la del dato de al lado ---------- */
+function skLet(k){const BR='#92400e',BL='#1d4ed8',RD='#c62828',OR='#ea580c',GR='#475569',VI='#7c3aed',
+  tg=(x,y,l)=>`<circle cx="${x}" cy="${y}" r="7.5" fill="#1f2328"/><text x="${x}" y="${y+3.6}" text-anchor="middle" style="font-size:10px;font-weight:700;fill:#fff">${l}</text>`,
+  dm=(x1,y1,x2,y2)=>{const h=Math.abs(y1-y2)<Math.abs(x1-x2),a=h?0:4,b=h?4:0;return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${GR}"/><line x1="${x1-a}" y1="${y1-b}" x2="${x1+a}" y2="${y1+b}" stroke="${GR}"/><line x1="${x2-a}" y1="${y2-b}" x2="${x2+a}" y2="${y2+b}" stroke="${GR}"/>`},
+  ln=(x1,y1,x2,y2,c,w,ds)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c||'#1f2328'}" stroke-width="${w||2}"${ds?` stroke-dasharray="${ds}"`:''}/>`,
+  tx=(x,y,t,c,an,b)=>`<text x="${x}" y="${y}" text-anchor="${an||'middle'}" style="font-size:${b?11:9.5}px;${b?'font-weight:700;':''}fill:${c||'#1f2328'}">${t}</text>`,
+  secC=(y0)=>`<path d="M150,${y0+12} V${y0} H110 V${y0+80} H150 V${y0+68}" fill="none" stroke="#1e3a8a" stroke-width="4"/>`+dm(98,y0,98,y0+80)+tg(86,y0+40,'A')+dm(110,y0+92,150,y0+92)+tg(130,y0+92,'B')+tg(166,y0+8,'C')+ln(110,y0+40,124,y0+40,GR,1)+tg(132,y0+40,'D');
+ let q='',H=220;
+ if(k=='geo'){H=300;q=tx(125,12,'Pórtico de frente',0,0,1)+ln(20,150,230,150,GR,1)+ln(40,150,40,70)+ln(210,150,210,70)+ln(40,70,125,45)+ln(125,45,210,70)+dm(40,166,210,166)+tg(125,166,'A')+ln(26,150,40,150,GR,1,'2 2')+tg(18,150,'D')+ln(26,70,40,70,GR,1,'2 2')+tg(18,70,'E')+`<path d="M150,52 h22 v6.5 z" fill="none" stroke="${GR}"/>`+tg(184,48,'F');
+  q+=tx(125,196,'Planta',0,0,1)+`<rect x="40" y="206" width="170" height="70" fill="#f1f5f9" stroke="#1f2328"/>`;for(let i=1;i<5;i++)q+=ln(40+34*i,206,40+34*i,276,GR,1.5);
+  q+=dm(40,288,74,288)+tg(57,288,'B')+tg(125,241,'C')+tx(125,262,'vanos')+dm(224,206,224,276)+tg(224,241,'A')}
+ else if(k=='arm'){H=300;q=tx(125,12,'Columna y viga armadas',0,0,1)+ln(20,160,230,160,GR,1)+`<polygon points="50,160 60,160 78,74 50,74" fill="#cbd5e1" stroke="#1f2328"/><polygon points="50,74 220,34 220,50 78,84 78,74" fill="#cbd5e1" stroke="#1f2328"/>`+dm(50,170,60,170)+tg(55,184,'A')+dm(50,64,78,64)+tg(38,62,'B')+dm(232,34,232,50)+tg(240,62,'F');
+  q+=tx(125,206,'Sección (ala, alma)',0,0,1)+`<rect x="85" y="222" width="80" height="8" fill="${BR}"/><rect x="122" y="230" width="6" height="46" fill="${BR}"/><rect x="85" y="276" width="80" height="8" fill="${BR}"/>`+dm(85,214,165,214)+tg(72,214,'C')+tg(180,226,'D')+tg(142,253,'E')+tx(125,296,'columna: C D E · viga: G H I')}
+ else if(k=='arL'){H=190;q=tx(125,12,'Pared lateral, de costado',0,0,1)+ln(20,150,230,150,GR,1);for(const xx of [30,90,150,210])q+=ln(xx,150,xx,70);q+=ln(30,70,210,70,BL,4)+ln(90,110,150,110,BL,3)+ln(90,150,150,110,OR,2)+ln(150,150,90,110,OR,2)+ln(90,110,150,70,OR,2)+ln(150,110,90,70,OR,2)+tg(120,164,'A')+dm(160,70,160,110)+tg(172,90,'B')+tg(104,132,'C')+tg(60,58,'D')+tx(125,184,'naranja: diagonales · azul: puntales',GR)}
+ else if(k=='arH'){H=200;const zt=xx=>90-35*(1-Math.abs(xx-125)/95);q=tx(125,12,'Hastial, de frente',0,0,1)+ln(20,160,230,160,GR,1)+ln(30,160,30,90)+ln(220,160,220,90)+ln(30,90,125,55)+ln(125,55,220,90);for(const xx of [77.5,125,172.5])q+=ln(xx,160,xx,zt(xx),GR,1.6);
+  q+=ln(30,125,77.5,125,BL,3)+ln(30,160,77.5,125,OR,2)+ln(77.5,160,30,125,OR,2)+ln(30,125,77.5,90,OR,2)+ln(77.5,125,30,92,OR,2)+tg(54,174,'A')+dm(18,125,18,160)+tg(10,142,'B')+tg(44,146,'C')+tg(92,125,'D')+tx(125,194,'naranja: diagonales · azul: puntal',GR)}
+ else if(k=='arT'){H=215;q=tx(125,12,'Techo, de arriba',0,0,1)+`<rect x="30" y="40" width="190" height="140" fill="#f8fafc" stroke="#1f2328"/><rect x="30" y="40" width="190" height="18" fill="rgba(29,78,216,.18)"/><rect x="30" y="162" width="190" height="18" fill="rgba(29,78,216,.18)"/><rect x="30" y="100" width="190" height="20" fill="rgba(124,58,237,.2)"/>`+ln(30,110,220,110,GR,1,'5 3');for(let i=1;i<5;i++)q+=ln(30+38*i,40,30+38*i,180,GR,1.5);
+  q+=ln(30,40,68,110,OR,2)+ln(68,40,30,110,OR,2)+ln(30,110,68,180,OR,2)+ln(68,110,30,180,OR,2)+tg(49,194,'A')+tg(125,49,'B')+tg(125,110,'C')+dm(18,40,18,75)+tg(10,90,'D')+tx(125,208,'azul: alero · violeta: cumbrera',GR)}
+ else if(k=='til'){H=210;const P=f=>[58+162*f,70-35*f];q=tx(125,12,'Medio pórtico, de frente',0,0,1)+ln(20,170,230,170,GR,1)+`<rect x="50" y="70" width="8" height="100" fill="#cbd5e1" stroke="#1f2328"/>`+ln(58,70,220,35,'#1f2328',7);
+  for(const f of [0.12,0.38,0.64,0.9]){const [a,b]=P(f);q+=`<rect x="${a-5}" y="${b-15}" width="10" height="10" fill="#fff" stroke="#1e3a8a" stroke-width="2"/>`}
+  for(const yy of [88,118,148])q+=`<rect x="38" y="${yy-5}" width="10" height="10" fill="#fff" stroke="#1e3a8a" stroke-width="2"/>`;
+  {const a=P(0.38),b=P(0.64);q+=ln(a[0],a[1]-10,b[0],b[1]-10,VI,2)+tg((a[0]+b[0])/2,(a[1]+b[1])/2-24,'A')+ln(43,93,43,113,VI,2)+tg(24,103,'B');const c=P(0.64);q+=ln(c[0],c[1]-5,c[0]-22,c[1]+22,OR,2.5)+tg(c[0]-34,c[1]+32,'C')+ln(43,148,62,166,OR,2.5)+tg(76,156,'D')}
+  q+=tx(125,190,'violeta: tillas · naranja: tornapuntas',GR)+tx(125,203,'cuadraditos: correas',GR)}
+ else if(k=='co'){H=290;const P=f=>[20+210*f,272-70*f];q=tx(125,12,'Sección de la correa',0,0,1)+secC(34)+tx(125,166,'Correas sobre la viga',0,0,1)+ln(20,272,230,202,'#1f2328',5);const fs=[0.05,0.3,0.55,0.76,0.88,0.98];
+  for(const f of fs){const [a,b]=P(f);q+=`<rect x="${a-5}" y="${b-14}" width="10" height="10" fill="#fff" stroke="#1e3a8a" stroke-width="2"/>`}
+  {const a=P(0.175),b=P(0.93);q+=tg(a[0],a[1]-28,'E')+tg(b[0]-4,b[1]-30,'F')+tx(206,282,'cumbrera →',GR)}}
+ else if(k=='pa'){H=300;q=tx(125,12,'Sección de la correa',0,0,1)+secC(34)+tx(125,166,'Correas sobre la columna',0,0,1)+`<rect x="120" y="180" width="10" height="112" fill="#cbd5e1" stroke="#1f2328"/>`;for(const yy of [190,222,254,286])q+=`<rect x="108" y="${yy-5}" width="11" height="10" fill="#fff" stroke="#1e3a8a" stroke-width="2"/>`;
+  q+=dm(94,190,94,222)+tg(82,206,'E')+ln(150,222,205,222,'#1e3a8a',3)+ln(150,254,205,254,'#1e3a8a',3)+ln(178,222,178,254,VI,2)+tg(192,238,'F')+tx(178,276,'violeta: tilla',GR)}
+ else if(k=='colu'){H=215;q=tx(62,12,'En el plano',0,0,1)+tx(188,12,'Fuera del plano',0,0,1)+ln(20,170,105,170,GR,1)+ln(50,170,50,60)+ln(50,60,105,42)+`<path d="M50,170 Q28,115 50,60" fill="none" stroke="${RD}" stroke-dasharray="4 3"/>`+dm(20,60,20,168)+tg(12,114,'A');
+  q+=ln(150,170,230,170,GR,1)+ln(180,170,180,60,'#1f2328',3);for(const yy of [60,115,170])q+=`<circle cx="180" cy="${yy}" r="4" fill="${BL}"/>`;q+=dm(204,115,204,170)+tg(218,142,'B')+dm(160,60,160,115)+tg(148,87,'C')+tx(125,194,'puntos azules: donde algo sujeta la columna',GR)+tx(125,207,'rojo: forma en que pandea',GR)}
+ else if(k=='vigu'){H=300;const P=f=>[20+210*f,112-60*f];q=tx(125,12,'Viga del pórtico',0,0,1)+ln(20,112,230,52,'#1f2328',6);for(const f of [0.08,0.3,0.52,0.74,0.96]){const [a,b]=P(f);q+=`<rect x="${a-5}" y="${b-15}" width="10" height="10" fill="#fff" stroke="#1e3a8a" stroke-width="2"/>`}
+  for(const f of [0.3,0.74]){const [a,b]=P(f);q+=ln(a,b-5,a-18,b+22,OR,2.5)}
+  {const a=P(0.41),b=P(0.52);q+=tg(a[0],a[1]-28,'B')+tg(b[0],b[1]+34,'C')+dm(20,134,230,134)+tg(125,146,'A')}
+  q+=tx(125,176,'Si es alveolar',0,0,1)+`<rect x="30" y="190" width="190" height="70" fill="#cbd5e1" stroke="#1f2328"/>`;for(const c of [80,150])q+=`<polygon points="${c-22},225 ${c-11},205 ${c+11},205 ${c+22},225 ${c+11},245 ${c-11},245" fill="#fff" stroke="#1f2328"/>`;
+  q+=`<path d="M 64 225 A 6 6 0 0 1 61 219.7" fill="none" stroke="${GR}"/>`+tg(46,212,'D')+dm(91,198,139,198)+tg(115,198,'E')+tx(125,278,'naranja: tornapuntas · cuadraditos: correas',GR)}
+ else if(k=='ten'){H=200;q=tx(125,12,'Un vano del techo, de arriba',0,0,1)+`<rect x="40" y="40" width="170" height="120" fill="#f8fafc" stroke="none"/>`+ln(40,40,40,160,'#1f2328',5)+ln(210,40,210,160,'#1f2328',5);for(const yy of [40,80,120,160])q+=ln(40,yy,210,yy,'#1e3a8a',1.5);
+  q+=ln(40,40,210,160,OR,3)+ln(40,160,210,40,OR,3)+ln(186,143,210,160,VI,6)+tg(96,66,'A')+tg(180,168,'B')+tx(125,186,'naranja: tensores · violeta: extremo roscado',GR)+tx(125,198,'negro: vigas · azul: correas',GR)}
+ else if(k=='tor'){H=205;q=tx(125,12,'Corte por la viga',0,0,1)+`<rect x="24" y="66" width="202" height="12" fill="#fff" stroke="#1e3a8a" stroke-width="2"/><rect x="95" y="78" width="60" height="8" fill="#475569"/><rect x="122" y="86" width="6" height="64" fill="#475569"/><rect x="95" y="150" width="60" height="8" fill="#475569"/>`+tx(210,60,'correa','#1e3a8a')+tx(125,174,'viga',GR);
+  q+=ln(62,78,100,150,OR,3)+ln(188,78,150,150,OR,3,'5 3')+tg(64,118,'A')+`<path d="M 86 78 A 24 24 0 0 1 73 99" fill="none" stroke="${GR}"/>`+tg(96,100,'B')+tg(188,118,'C')+tx(125,194,'naranja: tornapunta (a trazos: la del otro lado)',GR)}
+ else if(k=='car'){H=195;q=tx(125,12,'Pórtico de frente',0,0,1)+ln(20,160,230,160,GR,1)+ln(40,160,40,80,'#1f2328',3)+ln(210,160,210,80,'#1f2328',3)+ln(40,80,125,50,'#1f2328',3)+ln(125,50,210,80,'#1f2328',3)+`<polygon points="40,80 40,106 78,66.6" fill="${OR}" fill-opacity=".6"/><polygon points="210,80 210,106 172,66.6" fill="${OR}" fill-opacity=".6"/><polygon points="97,60 125,72 153,60 125,50" fill="${OR}" fill-opacity=".6"/>`;
+  q+=dm(40,52,78,52)+tg(59,40,'A')+dm(26,80,26,106)+tg(14,93,'B')+dm(125,36,153,36)+tg(166,36,'C')+tg(125,86,'D')+tx(125,184,'naranja: cartelas',GR)}
+ else if(k=='cv'){H=250;const zt=xx=>95-35*(1-Math.abs(xx-125)/100);q=tx(125,12,'Hastial, de frente',0,0,1)+ln(15,170,235,170,GR,1)+ln(25,170,25,95,'#1f2328',3)+ln(225,170,225,95,'#1f2328',3)+ln(25,95,125,60,'#1f2328',3)+ln(125,60,225,95,'#1f2328',3);
+  for(const xx of [65,105,145,185])q+=ln(xx,170,xx,zt(xx),'#1f2328',2.5);for(const yy of [110,130,150])q+=ln(145,yy,225,yy,'#1e3a8a',1);
+  q+=`<rect x="27" y="122" width="36" height="48" fill="rgba(234,88,12,.2)" stroke="${OR}"/>`+ln(25,120,65,120,BR,4)+ln(45,120,45,zt(45),BR,3)+ln(65,135,145,135,BL,2,'4 3');
+  q+=dm(65,184,105,184)+tg(85,196,'A')+tg(196,122,'B')+`<path d="M185,170 l-6,9 h12 z" fill="${GR}"/>`+tg(203,186,'C')+dm(114,100,114,135)+tg(126,116,'D')+tg(45,150,'E')+dm(13,122,13,170)+tg(9,108,'F')+tg(58,108,'G')+tg(34,92,'H')+tg(125,155,'I');
+  q+=tx(125,216,'marrón: dintel y montante · naranja: portón',GR)+tx(125,229,'azul a trazos: puntal · azul fino: correas de pared',GR)+tx(125,242,'I: paño sin correas',GR)}
+ else if(k=='sc'){H=215;q=tx(125,12,'Corte por la correa',0,0,1)+`<rect x="30" y="160" width="190" height="10" fill="#475569"/><rect x="121" y="170" width="8" height="26" fill="#475569"/>`+tx(60,186,'ala de la viga',GR)+`<rect x="112" y="92" width="7" height="68" fill="${OR}" fill-opacity=".5" stroke="${OR}" stroke-width="2"/><path d="M168,88 V78 H121 V152 H168 V142" fill="none" stroke="#1e3a8a" stroke-width="4"/>`+tx(196,118,'correa','#1e3a8a');
+  q+=ln(102,106,132,106,VI,3)+ln(102,130,132,130,VI,3)+tg(146,118,'A')+tg(96,84,'B')+dm(100,92,100,106)+tg(84,100,'C')+`<polygon points="112,160 102,160 112,150" fill="${RD}"/>`+tg(90,150,'D')+tx(125,208,'naranja: clip · violeta: tornillos · rojo: soldadura',GR)}
+ else if(k=='emp'){H=200;const ar=(x1,y1,x2,y2,c)=>ln(x1,y1,x2,y2,c,2)+`<path d="M${x2},${y2} l-8,-4 v8 z" fill="${c}"/>`;q=tx(125,12,'Terreno, de costado',0,0,1)+`<polygon points="5,150 70,150 110,110 245,110 245,185 5,185" fill="#e7d9c4" stroke="#92400e"/><rect x="172" y="78" width="54" height="32" fill="#cbd5e1" stroke="#1f2328"/><polygon points="168,78 199,64 230,78" fill="#94a3b8" stroke="#1f2328"/>`+tx(199,98,'nave')+ar(12,90,52,90,BL)+tx(32,82,'viento',BL);
+  q+=tg(34,164,'A')+tx(34,180,'calle',GR)+tg(140,124,'B')+tx(140,140,'plataforma',GR)+`<path d="M78,142 h14 v-14" fill="none" stroke="${GR}"/>`+tg(104,146,'C')+dm(110,100,172,100)+tg(141,88,'D')}
+ else if(k=='vie'){H=205;q=tx(125,12,'Mapa de viento, de arriba',0,0,1)+`<path d="M46,28 Q76,100 54,172" fill="none" stroke="${BL}" stroke-width="2.5"/><path d="M198,28 Q228,100 206,172" fill="none" stroke="${VI}" stroke-width="2.5"/><circle cx="112" cy="100" r="5" fill="${RD}"/>`+tx(112,88,'sitio',RD)+tg(40,40,'A')+tg(220,40,'C')+dm(66,116,112,116)+tg(89,130,'B')+dm(112,116,216,116)+tg(164,130,'D')+tx(125,190,'azul y violeta: las dos isotacas vecinas',GR)+tx(125,202,'solo si elegís interpolar entre isotacas',GR)}
+ else if(k=='nie'){H=205;const ar=(x1,y1,x2,y2,c)=>ln(x1,y1,x2,y2,c,2)+`<circle cx="${x2}" cy="${y2}" r="3" fill="${c}"/>`;q=tx(125,12,'Nieve en el terreno y en el techo',0,0,1)+ln(5,165,245,165,GR,1)+`<rect x="8" y="153" width="70" height="12" fill="#bfdbfe" stroke="#60a5fa"/>`+tg(43,140,'A')+ln(115,165,115,105,'#1f2328',3)+ln(215,165,215,105,'#1f2328',3)+`<polygon points="111,105 165,78 219,105 219,95 165,68 111,95" fill="#bfdbfe" stroke="#60a5fa"/>`+ln(115,105,165,80,'#1f2328',3)+ln(165,80,215,105,'#1f2328',3);
+  q+=ar(60,70,100,84,BL)+tg(50,62,'B')+ar(165,150,165,112,RD)+tg(165,160,'C')+ar(196,80,228,98,VI)+tg(236,80,'D')+tx(125,186,'B: viento que barre · C: calor de adentro',GR)+tx(125,198,'D: nieve que resbala',GR)}
+ else if(k=='cgs'){H=210;const P=f=>[30+190*f,150-60*f];q=tx(125,12,'Corte de la cubierta',0,0,1)+ln(30,150,220,90,'#1f2328',5)+ln(26,134,224,72,BL,2);for(const f of [0.1,0.37,0.64,0.9]){const [a,b]=P(f);q+=`<rect x="${a-5}" y="${b-14}" width="10" height="10" fill="#fff" stroke="#1e3a8a" stroke-width="2"/>`}
+  for(const f of [0.2,0.4,0.6,0.8]){const [a,b]=P(f);q+=ln(a,b-70,a,b-30,RD,2)+`<path d="M${a},${b-24} l-4,-8 h8 z" fill="${RD}"/>`}
+  q+=tg(125,36,'B')+`<rect x="96" y="140" width="64" height="14" rx="3" fill="${OR}" fill-opacity=".5" stroke="${OR}" transform="rotate(-17.5 128 147)"/>`+tg(128,172,'A')+tx(125,190,'A: lo que se cuelga o se agrega · B: sobrecarga',GR)+tx(125,202,'el peso de chapa y correas lo calcula solo',GR)}
+ else if(k=='los'){H=210;q=tx(125,12,'Columna con la losa del entrepiso',0,0,1)+ln(20,175,230,175,GR,1)+`<rect x="60" y="45" width="10" height="130" fill="#cbd5e1" stroke="#1f2328"/><rect x="70" y="104" width="150" height="10" fill="#9ca3af" stroke="#1f2328"/><rect x="70" y="114" width="150" height="8" fill="#cbd5e1" stroke="#1f2328"/>`;for(const xx of [100,130,160,190])q+=ln(xx,70,xx,94,RD,2)+`<path d="M${xx},100 l-4,-8 h8 z" fill="${RD}"/>`;
+  q+=tg(145,58,'B')+tg(145,138,'A')+ln(65,128,65,160,OR,3)+`<path d="M65,168 l-5,-10 h10 z" fill="${OR}"/>`+tx(125,190,'A: peso de losa y vigas · B: sobrecarga de uso',GR)+tx(125,202,'naranja: lo que baja a la columna',GR)}
+ else return '';
+ return `<svg viewBox="0 0 250 ${H}" style="width:100%;max-width:300px">${q}<text x="125" y="${H+12}" text-anchor="middle" style="font-size:9.5px;fill:#475569">las letras son las de cada dato</text></svg>`.replace(`viewBox="0 0 250 ${H}"`,`viewBox="0 0 250 ${H+16}"`)}
+function skLetFix(){const MAP=[['Geometría (','geo'],['Emplazamiento','emp'],['Viento (','vie'],['Nieve (','nie'],['Cargas permanentes','cgs'],['Losa y vigas','los'],['Sección armada','arm'],['Correas de cubierta','co'],['Correas de pared','pa'],['Columnas del pórtico','colu'],['Vigas del pórtico','vigu'],['Tensores de techo','ten'],['Tornapuntas','tor'],['Cartelas','car'],['Columnas de viento','cv'],['Soporte de correas','sc']];
+ for(const c of document.querySelectorAll('.card')){const h=c.querySelector('h2');if(!h||c.dataset.skl||!c.querySelector('.grid .f'))continue;const t=h.textContent.replace(/^[▸▾\s]+/,'');
+  if(t.startsWith('Arriostramientos (definen')){c.dataset.skl=1;const bs=[...c.querySelectorAll('.skb')],ks=['arL','arH','arT','til'];bs.forEach((b,i)=>{const sv=ks[i]&&skLet(ks[i]);if(sv)b.innerHTML=sv});continue}
+  const q=MAP.find(([p])=>t.startsWith(p));if(!q)continue;const sv=skLet(q[1]);if(!sv)continue;c.dataset.skl=1;
+  let box=[...c.querySelectorAll('div')].find(x=>x.style.flex=='0 0 240px');
+  if(!box){const g=c.querySelector('.grid');if(!g)continue;const r=document.createElement('div');r.style.cssText='display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start';g.replaceWith(r);g.style.flex='1 1 600px';r.appendChild(g);box=document.createElement('div');box.style.cssText='flex:0 0 240px;margin:auto;text-align:center';r.appendChild(box)}
+  box.innerHTML=sv}}
 function skFix(){const mk=k=>{const b=document.createElement('div');b.className='skb';b.style.cssText='flex:0 0 240px;margin:auto;text-align:center';b.innerHTML=elSk2(k);return b},
   row=()=>{const r=document.createElement('div');r.style.cssText='display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start';return r};
  for(const c of document.querySelectorAll('#fver .card')){const h=c.querySelector('h2');if(!h||c.dataset.sk)continue;const t=h.textContent,g=c.querySelector('.grid');if(!g)continue;
@@ -2301,33 +2376,33 @@ for(const [tp,lab] of [['C',' · C simple'],['2C',' · doble C espalda con espal
 const CCOPT=['Usar la C elegida arriba, de a dos',...CCC.map(c=>{const k=CCAT.find(x=>x[0]==c[0]&&x[1]==c[1]&&x[2]==c[2]&&x[3]==c[3]);return (k&&k[4]?'★ ':'')+c[4]+(k&&k[4]?' ('+k[4]+')':'')})];
 const F=[
  ["Geometría (planos EST-P-PG-006 y ARQ-P-PV-03)",[
-  ["L","Luz del pórtico, entre ejes de columnas","m",40],
-  ["nv","Cantidad de vanos entre pórticos","",17],
-  ["s","Separación entre pórticos","m",5],
-  ["zb","Nivel de la base de la columna","m",5.5],
-  ["ze","Nivel del alero (encuentro columna y viga)","m",11.3],
-  ["pend","Pendiente de la cubierta","%",25],
+  ["L","A · Luz del pórtico, entre ejes de columnas","m",40],
+  ["nv","C · Cantidad de vanos entre pórticos","",17],
+  ["s","B · Separación entre pórticos","m",5],
+  ["zb","D · Nivel de la base de la columna","m",5.5],
+  ["ze","E · Nivel del alero (encuentro columna y viga)","m",11.3],
+  ["pend","F · Pendiente de la cubierta","%",25],
   ["np","Pórtico analizado (1 = extremo)","",9]]],
  ["Sección armada (se usa cuando el perfil elegido es «Armada»)",[
   ["apo","Apoyos de las columnas","",0,["Articulados","Empotrados"]],
   ["csel","Columna: perfil","",0,SECOPT],
   ["rsel","Viga: perfil","",0,SECOPT],
-  ["cd0","Columna armada: altura de la sección en la base","m",0.5],
-  ["cd1","Columna armada: altura de la sección en el alero","m",0.9],
-  ["cb","Columna armada: ancho de ala","mm",250],
-  ["ctf","Columna armada: espesor de ala","mm",25],
-  ["ctw","Columna armada: espesor de alma","mm",15.9],
-  ["rd","Viga armada: altura de la sección","m",0.7],
-  ["rb","Viga armada: ancho de ala","mm",250],
-  ["rtf","Viga armada: espesor de ala","mm",25],
-  ["rtw","Viga armada: espesor de alma","mm",15.9]]],
+  ["cd0","A · Columna armada: altura de la sección en la base","m",0.5],
+  ["cd1","B · Columna armada: altura de la sección en el alero","m",0.9],
+  ["cb","C · Columna armada: ancho de ala","mm",250],
+  ["ctf","D · Columna armada: espesor de ala","mm",25],
+  ["ctw","E · Columna armada: espesor de alma","mm",15.9],
+  ["rd","F · Viga armada: altura de la sección","m",0.7],
+  ["rb","G · Viga armada: ancho de ala","mm",250],
+  ["rtf","H · Viga armada: espesor de ala","mm",25],
+  ["rtw","I · Viga armada: espesor de alma","mm",15.9]]],
  ["Emplazamiento y altura de referencia",[
   ["crit","Criterio para la altura sobre el terreno","",1,["Desde el nivel de calle, Kzt = 1 (no cumple art. 1.8.1 si hay terraplén)","Desde la plataforma, con Kzt de la Fig. 1.8-1","Manual: nivel de referencia y Kzt a elección"]],
   ["forma","Forma del terraplén (Fig. 1.8-1)","",0,["Loma bidimensional (talud en ambos lados)","Escarpa bidimensional (un solo talud)","Colina tridimensional"]],
-  ["z0","Nivel de calle (terreno general)","m",0],
-  ["zp","Nivel de la plataforma (terraplén)","m",6],
-  ["tal","Talud del terraplén, 1 : m (horizontal por vertical)","",2],
-  ["xc","Distancia de la cresta del talud a la nave","m",10],
+  ["z0","A · Nivel de calle (terreno general)","m",0],
+  ["zp","B · Nivel de la plataforma (terraplén)","m",6],
+  ["tal","C · Talud del terraplén, 1 : m (horizontal por vertical)","",2],
+  ["xc","D · Distancia de la cresta del talud a la nave","m",10],
   ["zman","Manual: nivel de referencia del terreno","m",0],
   ["kztman","Manual: Kzt","",1],
   ["alt","Altitud del terreno sobre el nivel del mar †","m",400],
@@ -2337,64 +2412,64 @@ const F=[
   ["vMod","Cómo se elige la velocidad básica V","",0,["Tabla de ciudades (Figura 1.5-1D)","A mano","Interpolando entre dos isotacas del mapa"]],
   ["vCiu","Ciudad de la tabla","",12,VCIU.map(c=>c[0])],
   ["V","V a mano (0 = no usar)","m/s",0],
-  ["vI1","Isotaca de un lado del sitio: velocidad V₁","m/s",0],
-  ["vD1","Distancia del sitio a esa isotaca, d₁","km",0],
-  ["vI2","Isotaca del otro lado: velocidad V₂","m/s",0],
-  ["vD2","Distancia del sitio a esa otra isotaca, d₂","km",0],
+  ["vI1","A · Isotaca de un lado del sitio: velocidad V₁","m/s",0],
+  ["vD1","B · Distancia del sitio a esa isotaca, d₁","km",0],
+  ["vI2","C · Isotaca del otro lado: velocidad V₂","m/s",0],
+  ["vD2","D · Distancia del sitio a esa otra isotaca, d₂","km",0],
   ["exp","Categoría de exposición (art. 1.7)","",1,["B","C","D"]],
   ["Kd","Factor de direccionalidad Kd (Tabla 1.6-1)","",0.85],
   ["G","Factor de efecto de ráfaga G (art. 1.9.1, rígido)","",0.85],
   ["enc","Clasificación de cerramiento (Tabla 1.11-1)","",0,["Cerrado, GCpi = ±0,18","Parcialmente cerrado, GCpi = ±0,55","Parcialmente abierto, GCpi = ±0,18","Abierto, GCpi = 0"]]]],
  ["Nieve (CIRSOC 104-2005)",[
-  ["pg","Carga de nieve a nivel del terreno pg (Tabla 1.9, Neuquén)","kN/m²",0.9],
-  ["cet","Categoría de terreno para Ce (Tabla 2 y Apéndice A)","",2,["A · centro de grandes ciudades","B · urbano, suburbano o boscoso","C · terreno abierto","D · costa plana sin obstrucciones","Sobre la línea de árboles, montaña barrida por el viento"]],
-  ["cee","Exposición de la cubierta para Ce (Tabla 2)","",1,["Totalmente expuesta","Parcialmente expuesta","Protegida"]],
-  ["Ct","Factor térmico Ct (Tabla 3)","",2,["1,0 · estructura común","1,1 · apenas sobre congelamiento","1,2 · no calefaccionada"]],
+  ["pg","A · Carga de nieve a nivel del terreno pg (Tabla 1.9, Neuquén)","kN/m²",0.9],
+  ["cet","B · Categoría de terreno para Ce (Tabla 2 y Apéndice A)","",2,["A · centro de grandes ciudades","B · urbano, suburbano o boscoso","C · terreno abierto","D · costa plana sin obstrucciones","Sobre la línea de árboles, montaña barrida por el viento"]],
+  ["cee","B · Exposición de la cubierta para Ce (Tabla 2)","",1,["Totalmente expuesta","Parcialmente expuesta","Protegida"]],
+  ["Ct","C · Factor térmico Ct (Tabla 3)","",2,["1,0 · estructura común","1,1 · apenas sobre congelamiento","1,2 · no calefaccionada"]],
   ["Is","Factor de importancia I (Tabla 4)","",1,["0,8 · categoría I","1,0 · categoría II","1,1 · categoría III","1,2 · categoría IV"]],
-  ["liso","Superficie de la cubierta","",0,["Lisa sin obstrucciones (chapa)","Otra"]]]],
+  ["liso","D · Superficie de la cubierta","",0,["Lisa sin obstrucciones (chapa)","Otra"]]]],
  ["Cargas permanentes y sobrecarga",[
-  ["Dx","Carga permanente adicional de cubierta (aislación, instalaciones, accesorios), por m² de planta","kg/m²",0],
+  ["Dx","A · Carga permanente adicional de cubierta (aislación, instalaciones, accesorios), por m² de planta","kg/m²",0],
   
   
-  ["lrt","Sobrecarga de cubierta Lr (CIRSOC 101-25, art. 4.8.1)","",0,["Cubierta liviana, art. 4.8.1(b)","Cubierta pesada, art. 4.8.1(a)","Automática, según el peso D cargado","Manual"]],
-  ["Lr","Manual: Lr","kN/m²",0.58]]],
+  ["lrt","B · Sobrecarga de cubierta Lr (CIRSOC 101-25, art. 4.8.1)","",0,["Cubierta liviana, art. 4.8.1(b)","Cubierta pesada, art. 4.8.1(a)","Automática, según el peso D cargado","Manual"]],
+  ["Lr","B · Manual: Lr","kN/m²",0.58]]],
  ["Losa y vigas del nivel de transferencia (reacción sobre la columna, opcional)",[
   ["los","Sumar la reacción de la losa a las reacciones del pórtico","",1,["No sumar","Sumar en la base A","Sumar en las dos bases"]],
-  ["PD","Losa y vigas: reacción por carga permanente D (sin mayorar)","t",76],
-  ["PL","Losa: reacción por sobrecarga L (sin mayorar)","t",200]]],
+  ["PD","A · Losa y vigas: reacción por carga permanente D (sin mayorar)","t",76],
+  ["PL","B · Losa: reacción por sobrecarga L (sin mayorar)","t",200]]],
  ["Arriostramientos (definen las longitudes no arriostradas)",[
-  ["arPar","Vanos con cruz (tocalos en el esquema)","","1, 17"],
-  ["arParN","Paneles de la cruz en la altura (2 = punto fijo a media altura de columna)","",1],
+  ["arPar","A · Vanos con cruz (tocalos en el esquema)","","1, 17"],
+  ["arParN","B · Paneles de la cruz en la altura (2 = punto fijo a media altura de columna)","",1],
   ["rvCfg","Configuración de la rigidización vertical","",0,RVCFG],
-  ["rvSec","Diagonal: sección","",4,RVOPT],
-  ["puSec","Puntal longitudinal: sección","",RVOPT.findIndex(x=>/2 UPN 100/.test(x)),RVOPT],
+  ["rvSec","C · Diagonal: sección","",4,RVOPT],
+  ["puSec","D · Puntal longitudinal: sección","",RVOPT.findIndex(x=>/2 UPN 100/.test(x)),RVOPT],
   ["rvFy","Diagonal y puntal: tensión de fluencia de los perfiles","MPa",240],
   ["rvK","k de pandeo de la diagonal (0 = automático: k = 1 con el largo completo en todas las configuraciones, también en X porque fuera del plano nada restringe el cruce)","",0],
-  ["vtMod","Viento transversal: quién lo lleva a las fundaciones","",0,["Los pórticos (estables en su plano): hastiales solo como chequeo","La cubierta lo lleva a los hastiales rigidizados"]],  ["vtPct","Chequeo de redundancia: porcentaje del viento transversal que llega a los hastiales (0 = no chequear)","%",25],  ["haPan","Paños rigidizados, contados entre columnas de viento (tocalos en el esquema de abajo)","","1, 8"],
-  ["haPan2","Hastial del último eje: paños rigidizados (solo si cargás los hastiales por separado)","",""],
-  ["haN","Paneles en la altura hasta el alero (define el alto de panel; los puntales se repiten cada ese alto, también por encima del alero)","",2],
-  ["haLev","Niveles de los puntales a mano, en m desde el piso, separados con punto y coma (vacío = automático)","m",""],
+  ["vtMod","Viento transversal: quién lo lleva a las fundaciones","",0,["Los pórticos (estables en su plano): hastiales solo como chequeo","La cubierta lo lleva a los hastiales rigidizados"]],  ["vtPct","Chequeo de redundancia: porcentaje del viento transversal que llega a los hastiales (0 = no chequear)","%",25],  ["haPan","A · Paños rigidizados, contados entre columnas de viento (tocalos en el esquema de abajo)","","1, 8"],
+  ["haPan2","A · Hastial del último eje: paños rigidizados (solo si cargás los hastiales por separado)","",""],
+  ["haN","B · Paneles en la altura hasta el alero (define el alto de panel; los puntales se repiten cada ese alto, también por encima del alero)","",2],
+  ["haLev","B · Niveles de los puntales a mano, en m desde el piso, separados con punto y coma (vacío = automático)","m",""],
   ["haSin","Puntales quitados en el hastial del eje A, como paño:nivel (tocá el puntal a trazos en el esquema)","",""],
   ["haSin2","Puntales quitados en el hastial del último eje, como paño:nivel","",""],
   ["haCfg","Configuración de la rigidización del hastial","",0,RVCFG],
-  ["haSec","Diagonal del hastial: sección","",4,RVOPT],
-  ["haPu","Puntal horizontal del hastial: sección","",RVOPT.findIndex(x=>/2 UPN 100/.test(x)),RVOPT],
-  ["arTec","Vanos con cruz (tocalos en el esquema)","","1, 17"],
+  ["haSec","C · Diagonal del hastial: sección","",4,RVOPT],
+  ["haPu","D · Puntal horizontal del hastial: sección","",RVOPT.findIndex(x=>/2 UPN 100/.test(x)),RVOPT],
+  ["arTec","A · Vanos con cruz (tocalos en el esquema)","","1, 17"],
   ["arTecM","Cómo se reparten los nudos de la cruz de techo","",1,["Un nudo cada N correas (desde el alero)","Paneles de largo parecido (el nudo va en la correa más cercana)"]],
-  ["arTecL","Paneles parecidos: largo buscado del panel (0 = igual a la separación de pórticos, cruz a 45°)","m",0],
-  ["arTecN","Cada N correas: un nudo cada N correas en la zona de separación normal","",4],
-  ["arTecN2","Cada N correas: N en la franja de correas más juntas (0 = el mismo N en todo el faldón). Si no hay franja: N junto a la cumbrera","",0],
-  ["arPer","Cruces perimetrales (franja junto a los dos aleros)","",0,["No","Sí"]],
-  ["arPerN","Perimetral: cantidad de paneles de cruz desde cada alero","",1],
-  ["arPerV","Perimetral: vanos (vacío = todos; separar con comas)","",""],
-  ["arCum","Cruces junto a la cumbrera (franja a cada lado de la cumbrera)","",0,["No","Sí"]],
-  ["arCumN","Cumbrera: cantidad de paneles de cruz desde la cumbrera, en cada faldón","",1],
-  ["arCumV","Cumbrera: vanos (vacío = todos; separar con comas)","",""],
-  ["arTe","Correas de techo: tillas en cada vano","",2],
-  ["arTp","Correas de pared: tillas en cada vano","",1],
-  ["arTnVM","Viga: dónde van las tornapuntas","",0,["Cada N correas (dato de abajo)","En los nudos de la cruz de techo (coinciden con los tensores)","Ninguna"]],
-  ["arTnV","Viga: una tornapunta cada N correas (0 = no hay)","",4],
-  ["arTnC","Columna: una tornapunta cada N correas de pared (0 = no hay)","",2]]],
+  ["arTecL","D · Paneles parecidos: largo buscado del panel (0 = igual a la separación de pórticos, cruz a 45°)","m",0],
+  ["arTecN","D · Cada N correas: un nudo cada N correas en la zona de separación normal","",4],
+  ["arTecN2","D · Cada N correas: N en la franja de correas más juntas (0 = el mismo N en todo el faldón). Si no hay franja: N junto a la cumbrera","",0],
+  ["arPer","B · Cruces perimetrales (franja junto a los dos aleros)","",0,["No","Sí"]],
+  ["arPerN","B · Perimetral: cantidad de paneles de cruz desde cada alero","",1],
+  ["arPerV","B · Perimetral: vanos (vacío = todos; separar con comas)","",""],
+  ["arCum","C · Cruces junto a la cumbrera (franja a cada lado de la cumbrera)","",0,["No","Sí"]],
+  ["arCumN","C · Cumbrera: cantidad de paneles de cruz desde la cumbrera, en cada faldón","",1],
+  ["arCumV","C · Cumbrera: vanos (vacío = todos; separar con comas)","",""],
+  ["arTe","A · Correas de techo: tillas en cada vano","",2],
+  ["arTp","B · Correas de pared: tillas en cada vano","",1],
+  ["arTnVM","C · Viga: dónde van las tornapuntas","",0,["Cada N correas (dato de abajo)","En los nudos de la cruz de techo (coinciden con los tensores)","Ninguna"]],
+  ["arTnV","C · Viga: una tornapunta cada N correas (0 = no hay)","",4],
+  ["arTnC","D · Columna: una tornapunta cada N correas de pared (0 = no hay)","",2]]],
  ["Chapa de cubierta y de pared (verificación)",[
   ["chSel","Chapa de cubierta","",3,CHOPT],
   ["chSelP","Chapa de las paredes (laterales y hastiales)","",0,["Igual a la de cubierta"].concat(CHOPT)],
@@ -2407,9 +2482,9 @@ const F=[
   ["coSel","Perfil C (★ = se consigue comercialmente)","",60,COPT],
   ["coCC","Perfil CC, solo para cajón (tabla CC Penta-ka)","",0,CCOPT],
   ["coFy","Acero: fy","MPa",235],
-  ["coH","Altura H","mm",160],["coB","Ala B","mm",60],["coD","Labio D","mm",20],["cot","Espesor t","mm",2.0],
-  ["coSep","Separación máxima sobre el faldón (se reparte parejo, con una correa en la cumbrera)","m",1.2],
-  ["coSepB","Separación máxima en la franja de borde (0 = igual que el resto). La franja va solo donde el reglamento pone las zonas 2 y 3: junto a la cumbrera (7° a 27°) o junto al alero (cubierta plana o más de 27°)","m",0],
+  ["coH","A · Altura H","mm",160],["coB","B · Ala B","mm",60],["coD","C · Labio D","mm",20],["cot","D · Espesor t","mm",2.0],
+  ["coSep","E · Separación máxima sobre el faldón (se reparte parejo, con una correa en la cumbrera)","m",1.2],
+  ["coSepB","F · Separación máxima en la franja de borde (0 = igual que el resto). La franja va solo donde el reglamento pone las zonas 2 y 3: junto a la cumbrera (7° a 27°) o junto al alero (cubierta plana o más de 27°)","m",0],
   ["coMod","Modelo estático","",0,["Simplemente apoyada (un tramo entre pórticos)","Continua (3 o más tramos)"]],
   ["coLbs","Lb del ala superior (entre tillas)","m",0],
   ["coLbi","Lb del ala inferior (succión)","m",0],
@@ -2422,34 +2497,34 @@ const F=[
   ["pCC","Perfil CC, solo para cajón (tabla CC Penta-ka)","",0,CCOPT],
   ["pOri","Posición del perfil C simple (alma horizontal)","",0,["Alas hacia abajo (alma arriba: no junta agua ni polvo)","Alas hacia arriba (alma abajo)"]],
    ["pFy","Acero: fy","MPa",235],
-  ["pH","Altura H","mm",160],["pB","Ala B","mm",60],["pD","Labio D","mm",20],["pt","Espesor t","mm",2.0],
-  ["pSep","Separación vertical máxima entre correas","m",1.5],
+  ["pH","A · Altura H","mm",160],["pB","B · Ala B","mm",60],["pD","C · Labio D","mm",20],["pt","D · Espesor t","mm",2.0],
+  ["pSep","E · Separación vertical máxima entre correas","m",1.5],
   ["pSinV","Paredes laterales: vanos sin correas (separados con coma; por ejemplo, donde va un portón)","",""],
   ["pMod","Modelo estático","",0,["Simplemente apoyada (un tramo entre columnas)","Continua (3 o más tramos)"]],
   ["pDc","Peso de la chapa de pared","kg/m²",6],
   ["pLbe","Lb del ala exterior (presión; la chapa la arriostra)","m",0.5],
-  ["pLbi","Lb del ala interior (succión; entre tillas)","m",0],
-  ["pLs","Luz en el eje débil (separación de tillas)","m",0],
+  ["pLbi","F · Lb del ala interior (succión; entre tillas)","m",0],
+  ["pLs","F · Luz en el eje débil (separación de tillas)","m",0],
   ["pCb","Cb (0 = calcular con F1-1)","",0],
   ["pFl","Con viento 0,6W (en la pared es la carga variable y también la total)","",1,["L/150","L/180","L/200","L/240","L/250","L/300","L/360"]]]],
  ["Columnas del pórtico (CIRSOC 301-2018)",[
   ["fyW","Acero de perfiles W y armados (columnas y vigas): fy","MPa",355],
-  ["cLx","k·Lx, en el plano del pórtico","m",0],
-  ["cLy","k·Ly, fuera del plano","m",0],
-  ["cLb","Lb, pandeo lateral-torsional","m",0],
+  ["cLx","A · k·Lx, en el plano del pórtico","m",0],
+  ["cLy","B · k·Ly, fuera del plano","m",0],
+  ["cLb","C · Lb, pandeo lateral-torsional","m",0],
   ["cCb","Cb (0 = calcular con F1-1 en cada tramo)","",0],
   ["cFl","Ladeo del alero por viento (combinaciones de servicio)","",1,["H/100","H/150","H/160","H/200","H/300","H/400"]]]],
  ["Vigas del pórtico (CIRSOC 301-2018)",[
-  ["vLx","k·Lx, en el plano","m",0],
+  ["vLx","A · k·Lx, en el plano","m",0],
   ["vLy","k·Ly, fuera del plano","m",0],
-  ["vLbs","Lb con el ala superior comprimida","m",0],
-  ["vLbi","Lb con el ala inferior comprimida","m",0],
+  ["vLbs","B · Lb con el ala superior comprimida","m",0],
+  ["vLbi","C · Lb con el ala inferior comprimida","m",0],
   ["cbMod","Coeficiente Cb de vigas y columnas","",0,["Calcular en cada tramo con la expresión F1-1","Tomar Cb = 1 en todos los tramos (conservador)"]],
   ["cbH","Posición de la carga para el pandeo lateral-torsional (CIRSOC 301, F.2.2)","",0,["En el alma o en el ala inferior (F.2.5a, F.2.6a, F.2.4a)","Según corresponda: en el ala superior cuando la carga empuja la viga hacia abajo","Siempre en el ala superior: la más desfavorable (F.2.5b, F.2.6b, F.2.4b)"]],
   ["ltbNorm","Pandeo lateral-torsional: reglamento con el que se calcula","",0,["CIRSOC 301-2018 (F.2.2): el que corresponde","AISC 360-22 (F2): solo para comparar"]],
   ["vCb","Cb a mano para la viga (0 = usar la opción de arriba)","",0],
-  ["alvT","Ángulo del agujero θ","°",60],
-  ["alvE","Largo del montante e (0 = 0,83·h₀ − 2b, criterio de la planilla)","mm",0],
+  ["alvT","D · Ángulo del agujero θ","°",60],
+  ["alvE","E · Largo del montante e (0 = 0,83·h₀ − 2b, criterio de la planilla)","mm",0],
   ["alvIf","Inercia en el análisis y las flechas: fracción de la I neta","",0.9],
   ["alvFill","Agujeros rellenos con chapa, numerados desde el alero (tocalos en el dibujo de abajo)","",""],
   ["alvTp","Espesor de la chapa de relleno (0 = igual al alma)","mm",0],
@@ -2468,7 +2543,7 @@ const fs=(x,d=2)=>(x>=0?'+':'−')+f(Math.abs(x),d);
 
 
 const TGT=['fgeo','fsec','fvie','fvie','fnie','fcar','flos','fver','fver','fver','fver','fver','fver'].concat(['fver','fver','fsec','fver','fver','fver','fmem']),OVF={apo:'Apoyos de las columnas',csel:'Perfil de la columna',rsel:'Perfil de la viga'};
-const SUBH={poPan:'Portones y paños sin correas en los hastiales',vtMod:'Hastiales (frentes): rigidización entre columnas de viento',arPar:'Pared lateral',arTec:'Techo',arTe:'Tillas y tornapuntas',
+const SUBH={stCap:'1 · Con qué fuerza se verifica',stPerf:'2 · Ángulo donde ajusta la tuerca (marrón en el esquema)',chT:'3 · Chapa de nudo (celeste en el esquema)',chLb:'4 · Tensor soldado directo a la chapa',poPan:'Portones y paños sin correas en los hastiales',vtMod:'Hastiales (frentes): rigidización entre columnas de viento',arPar:'Pared lateral',arTec:'Techo',arTe:'Tillas y tornapuntas',
  chSel:'Chapa y material',chFlG:'Flechas admisibles',
  coTipo:'Perfil',coH:'Geometría de la sección (solo si no elegís perfil de la lista)',coSep:'Disposición y modelo',coLbs:'Pandeo lateral-torsional (longitudes: automáticas; si escribís un valor pasa a manual, con 0 vuelve)',coFlG:'Flechas admisibles',
  pTipo:'Perfil',pH:'Geometría de la sección (solo si no elegís perfil de la lista)',pSep:'Disposición, modelo y cargas',pLbe:'Pandeo lateral-torsional (longitudes: automáticas; si escribís un valor pasa a manual, con 0 vuelve)',pFl:'Flecha admisible',
@@ -2511,7 +2586,7 @@ function buildForms(){
  for(const tg of new Set(TGT))$(tg).innerHTML=H[tg]||'';
  let ov='';for(const [,fl] of F)for(const [id,lab,u,def,op] of fl)if(OVF[id])ov+=`<div class="ov" id="ov_${id}"><b>${OVF[id]}</b><select id="${id}">${op.map((o,i)=>`<option value="${i}"${i==def?' selected':''}>${o}</option>`).join('')}</select></div>`;
  $('geoOv').innerHTML=ov;
- try{skFix()}catch(e){console.error(e)}
+ try{skFix()}catch(e){console.error(e)}try{skLetFix()}catch(e){console.error(e)}
 }
 
 /* ---------- nombres cortos de combinaciones (el texto completo queda al pasar el mouse) ---------- */
