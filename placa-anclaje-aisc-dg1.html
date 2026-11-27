@@ -955,7 +955,9 @@ const sqrt = Math.sqrt, min = Math.min, max = Math.max, PI = Math.PI;
   $('btnTheme').onclick = () => { const r = document.documentElement; const dark = matchMedia('(prefers-color-scheme: dark)').matches; const cur = r.dataset.theme || (dark ? 'dark' : 'light'); r.dataset.theme = cur === 'dark' ? 'light' : 'dark'; };
   $('btnSave').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(getVals(), null, 1)], { type: 'application/json' })); a.download = 'placa-anclaje.json'; a.click(); };
   $('btnLoad').onclick = () => $('fileIn').click();
-  $('fileIn').onchange = e => { const f = e.target.files[0]; if (!f) return; f.text().then(t => { try { setVals(JSON.parse(t)); run(); } catch (err) { alert('Archivo no válido'); } }); };
+  $('fileIn').onchange = e => { const f = e.target.files[0]; if (!f) return; f.text().then(t => { try { let o = JSON.parse(t); o = o.datos || o; if (o.placaBase) o = o.placaBase;
+      else if (o.hef === undefined || o.N2 === undefined) { alert('Ese archivo no tiene datos de placa base' + (o.conn !== undefined || o.bd !== undefined ? ': es un proyecto de la planilla de uniones guardado sin la placa base.' : '.') + ' No se cambió nada.'); e.target.value = ''; return; }
+      setVals(o); run(); } catch (err) { alert('Archivo no válido'); } e.target.value = ''; }); };
   run();
 })();
 function setVals(o) { o = Object.assign({ nbt: 0, dbt: 12, nbv: 0, dbv: 8, llv: 0, mdir: 'N', vdir: 'N', stfb: '0', sts: 12.7, shs: 150, sfy: '235', sw: 6, crot: '0', cinf: '0', reinf: '0', Ast: 0, Asv: 0, fyr: 420 }, o); if (o.AsU !== 'cm2') { o.Ast = (+o.Ast || 0) / 100; o.Asv = (+o.Asv || 0) / 100; } IDS.forEach(k => { if (o[k] !== undefined && $(k)) $(k).value = o[k]; }); }
