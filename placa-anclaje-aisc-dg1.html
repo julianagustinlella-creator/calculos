@@ -258,9 +258,10 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
     <div class="hint" id="infHint" style="display:none">Masa infinita: no se cuentan bordes. El cono de arrancamiento y la cuña de corte se desarrollan completos, no hay descascaramiento lateral y el aplastamiento usa el confinamiento máximo, √(A<sub>2</sub>/A<sub>1</sub>) = 2. Usalo sólo si el borde más cercano está a más de 1,5 veces el empotramiento de los anclajes y el espesor del hormigón es mayor que 1,5 veces esa distancia.</div>
     <div class="fld"><label>Armadura en el hormigón<small>ACI 318 §17.5.2 y Tabla 17.5.3</small></label><select id="reinf"><option value="0">Sin armadura junto a los anclajes (Condición B)</option><option value="1">Armadura suplementaria (Condición A): sube φ del cono y la cuña</option><option value="2">Armadura de anclaje: reemplaza el cono y/o la cuña de corte</option></select></div>
     <div id="fReinf">
-    <div class="fld"><label>Barras verticales que cosen el cono<small>mm², área total de las ramas que cruzan la superficie de falla a menos de 0,5·h<sub>ef</sub> de los anclajes traccionados · 0 = no hay</small></label><input id="Ast" type="number"></div>
-    <div class="fld"><label>Horquillas o estribos para el corte<small>mm², área total de las ramas que cruzan la cuña a menos de 0,5·c<sub>a1</sub> de los anclajes · 0 = no hay</small></label><input id="Asv" type="number"></div>
+    <div class="fld"><label>Barras verticales que cosen el cono<small>cm², área total de las ramas que cruzan la superficie de falla a menos de 0,5·h<sub>ef</sub> de los anclajes traccionados · 0 = no hay</small></label><input id="Ast" type="number" step="0.1" min="0"></div>
+    <div class="fld"><label>Horquillas o estribos para el corte<small>cm², área total de las ramas que cruzan la cuña a menos de 0,5·c<sub>a1</sub> de los anclajes · 0 = no hay</small></label><input id="Asv" type="number" step="0.1" min="0"></div>
     <div class="fld"><label>f<sub>y</sub> de la armadura<small>MPa (ADN-420: 420)</small></label><input id="fyr" type="number"></div>
+    <div id="reinfFig"></div>
     </div>
     <div class="hint" id="reinfHint"></div>
     <div class="fld"><label>Estado del hormigón</label><select id="cracked"><option value="1">Fisurado (conservador)</option><option value="0">No fisurado</option></select></div>
@@ -947,8 +948,8 @@ const sqrt = Math.sqrt, min = Math.min, max = Math.max, PI = Math.PI;
   $('fileIn').onchange = e => { const f = e.target.files[0]; if (!f) return; f.text().then(t => { try { setVals(JSON.parse(t)); run(); } catch (err) { alert('Archivo no válido'); } }); };
   run();
 })();
-function setVals(o) { o = Object.assign({ stfb: '0', sts: 12.7, shs: 150, sfy: '235', sw: 6, crot: '0', cinf: '0', reinf: '0', Ast: 0, Asv: 0, fyr: 420 }, o); IDS.forEach(k => { if (o[k] !== undefined && $(k)) $(k).value = o[k]; }); }
-function getVals() { const o = {}; IDS.forEach(k => { const el = $(k); o[k] = el.tagName === 'SELECT' && isNaN(+el.value) ? el.value : (el.type === 'number' || !isNaN(+el.value) ? +el.value : el.value); }); o.ctype = $('ctype').value; o.reinf = $('reinf').value; o.stfb = $('stfb').value; o.mat = $('mat').value; o.nV = $('nV').value; o.cracked = $('cracked').value; o.thr = $('thr').value; o.atype = $('atype').value; o.fric = $('fric').value; o.grout = $('grout').value; o.nrow = $('nrow').value; o.pRows = $('pRows').value; o.pAuto = $('pAuto').value; o.pm = $('pm').value; o.dwAuto = $('dwAuto').value; o.steelM = $('steelM').value; o.tbeff = $('tbeff').value; o.lug = $('lug').value; return o; }
+function setVals(o) { o = Object.assign({ stfb: '0', sts: 12.7, shs: 150, sfy: '235', sw: 6, crot: '0', cinf: '0', reinf: '0', Ast: 0, Asv: 0, fyr: 420 }, o); if (o.AsU !== 'cm2') { o.Ast = (+o.Ast || 0) / 100; o.Asv = (+o.Asv || 0) / 100; } IDS.forEach(k => { if (o[k] !== undefined && $(k)) $(k).value = o[k]; }); }
+function getVals() { const o = {}; IDS.forEach(k => { const el = $(k); o[k] = el.tagName === 'SELECT' && isNaN(+el.value) ? el.value : (el.type === 'number' || !isNaN(+el.value) ? +el.value : el.value); }); o.ctype = $('ctype').value; o.AsU = 'cm2'; o.reinf = $('reinf').value; o.stfb = $('stfb').value; o.mat = $('mat').value; o.nV = $('nV').value; o.cracked = $('cracked').value; o.thr = $('thr').value; o.atype = $('atype').value; o.fric = $('fric').value; o.grout = $('grout').value; o.nrow = $('nrow').value; o.pRows = $('pRows').value; o.pAuto = $('pAuto').value; o.pm = $('pm').value; o.dwAuto = $('dwAuto').value; o.steelM = $('steelM').value; o.tbeff = $('tbeff').value; o.lug = $('lug').value; return o; }
 
 
 /* ===================== Franja de placa (viga por unidad de ancho) =====================
@@ -1394,8 +1395,8 @@ function calc(v) {
     return { hefE, ANc, ANco, camin, psied, psic, Nb, Ncbg, note, L1, L2, F1, F2, depth };
   }
   const bo = breakout(max(tensionRows, 1), hef);
-  const RF = v.reinf || '0', phiB = RF === '0' ? 0.70 : 0.75, ArT = RF === '2' && +v.Ast > 0, ArV = RF === '2' && +v.Asv > 0, fyr = +v.fyr || 420;
-  const phiNcbg = ArT ? 0.75 * v.Ast * fyr : phiB * bo.Ncbg; R.reinf = { RF, phiB, ArT, ArV };
+  const RF = v.reinf || '0', phiB = RF === '0' ? 0.70 : 0.75, ArT = RF === '2' && +v.Ast > 0, ArV = RF === '2' && +v.Asv > 0, fyr = +v.fyr || 420, AstMM = (+v.Ast || 0) * 100, AsvMM = (+v.Asv || 0) * 100; // se cargan en cm²
+  const phiNcbg = ArT ? 0.75 * AstMM * fyr : phiB * bo.Ncbg; R.reinf = { RF, phiB, ArT, ArV };
   // arrancamiento del anclaje (pullout)
   const Fnut = 1.5 * da + 3.2;
   const Abrg = 0.866 * Fnut * Fnut - Ag;
@@ -1428,7 +1429,7 @@ function calc(v) {
     eqs4.push({ l: 'ψ<sub>c,N</sub>', f: cracked ? 'hormigón fisurado' : 'hormigón no fisurado', s: '', r: n2(bo.psic) });
     if (RF === '0') eqs4.push({ note: 'Si hay barras verticales que cosen el cono (ancladas a ambos lados de la fisura, a menos de 0,5·h<sub>ef</sub> del anclaje), no hace falta verificar el hormigón: elegí <b>«Armadura de anclaje»</b> en Hormigón → «Armadura en el hormigón» y esta verificación se reemplaza por φ·A<sub>s</sub>·f<sub>y</sub> (ACI 318 §17.5.2.1).' });
     if (RF !== '0') eqs4.push({ ref: RF === '1' ? 'Hormigón con armadura suplementaria (Condición A, ACI 318 Tabla 17.5.3): φ = 0,75 para el cono y el descascaramiento lateral. El arrancamiento (pullout) y el desprendimiento por palanca siguen con φ = 0,70.' : ArT ? 'Armadura de anclaje en tracción (ACI 318 §17.5.2.1): las barras que cosen el cono reemplazan la resistencia del hormigón al cono. El cono de hormigón queda como referencia.' : 'Armadura de anclaje elegida, pero sin barras verticales cargadas: el cono se verifica con el hormigón, con φ = 0,75.' });
-    if (ArT) eqs4.push({ l: 'φN<sub>n,arm</sub>', f: 'φ · A<sub>s</sub> · f<sub>y</sub>   (φ = 0,75, ACI 318 §17.5.2.1)', s: `0,75 · ${n0(v.Ast)} mm² · ${n0(fyr)} MPa`, r: `${n1(phiNcbg / 1e3)} kN ≥ ${n1(NuaGroup / 1e3)} (grupo) → ${phiNcbg >= NuaGroup ? 'verifica' : 'NO verifica'}`, ok: phiNcbg >= NuaGroup });
+    if (ArT) eqs4.push({ l: 'φN<sub>n,arm</sub>', f: 'φ · A<sub>s</sub> · f<sub>y</sub>   (φ = 0,75, ACI 318 §17.5.2.1)', s: `0,75 · ${n2(v.Ast)} cm² · 100 · ${n0(fyr)} MPa`, r: `${n1(phiNcbg / 1e3)} kN ≥ ${n1(NuaGroup / 1e3)} (grupo) → ${phiNcbg >= NuaGroup ? 'verifica' : 'NO verifica'}`, ok: phiNcbg >= NuaGroup });
     if (ArT) eqs4.push({ note: `Sólo vale si las barras están <b>ancladas a ambos lados</b> de la superficie de falla: arriba con gancho o longitud de anclaje desde el plano de falla, abajo empalmadas con la armadura del pedestal o con su longitud de anclaje (ACI 318 R17.5.2.1). Como referencia, el cono de hormigón sin armadura daría φN<sub>cbg</sub> = ${n1(0.70 * bo.Ncbg / 1e3)} kN.` });
     if (!ArT) eqs4.push({ l: 'φN<sub>cbg</sub>', f: `φ · (A<sub>Nc</sub>/A<sub>Nco</sub>) · ψ<sub>ed,N</sub> · ψ<sub>c,N</sub> · ψ<sub>cp,N</sub> · N<sub>b</sub>   (φ = ${n2(phiB)})`, s: `${n2(phiB)} · ${n3(bo.ANc / bo.ANco)} · ${n3(bo.psied)} · ${n2(bo.psic)} · 1,0 · ${n1(bo.Nb / 1e3)} kN`, r: `${n1(phiNcbg / 1e3)} kN ≥ ${n1(NuaGroup / 1e3)} (grupo) → ${phiNcbg >= NuaGroup ? 'verifica' : 'NO verifica'}`, ok: phiNcbg >= NuaGroup });
     eqs4.push({ ref: 'Arrancamiento del anclaje (pullout) · ACI 17.6.3' });
@@ -1442,7 +1443,7 @@ function calc(v) {
   } else {
     eqs4.push({ note: 'No hay tracción en los anclajes: se dimensionan por montaje (mínimo 4 anclajes según OSHA / DG1 §2.7) y por corte.' });
   }
-  R.bo = bo; R.NuaRod = NuaRod; R.phiNsa = phiNsa; R.phiNcbg = phiNcbg; R.phiNpn = phiNpn; R.Abrg = Abrg;
+  R.bo = bo; R.NuaGroup = NuaGroup; R.NuaRod = NuaRod; R.phiNsa = phiNsa; R.phiNcbg = phiNcbg; R.phiNpn = phiNpn; R.Abrg = Abrg;
   R.steps.push({ id: 'anc', t: 'Anclajes a tracción', sub: 'DG1 §3.2 · ACI 318 §17.6 (= CIRSOC 201-2025 Cap. 17)', eqs: eqs4 });
   const zN = nT ? max(NuaRod / phiNsa, NuaGroup / phiNcbg, NuaRod / phiNpn, sbTxt ? NuaRod / phiNsb : 0) : 0;
 
@@ -1472,7 +1473,7 @@ function calc(v) {
     const psicV = cracked ? 1.0 : 1.4;
     const psihV = max(1, sqrt(1.5 * ca1 / ha));
     const Vcbg = min(AVc / AVco, nrow) * psiedV * psicV * psihV * Vb;
-    const phiVcbg = ArV ? 0.75 * v.Asv * fyr : phiB * Vcbg;
+    const phiVcbg = ArV ? 0.75 * AsvMM * fyr : phiB * Vcbg;
     // desprendimiento por palanca (pryout) con el grupo completo
     const boAll = breakout(2, hef);
     const kcp = hef < 65 ? 1 : 2;
@@ -1487,7 +1488,7 @@ function calc(v) {
     eqs5.push({ l: 'ψ<sub>ed,V</sub> · ψ<sub>c,V</sub> · ψ<sub>h,V</sub>', f: '', s: `${n3(psiedV)} · ${n2(psicV)} · ${n3(psihV)}`, r: n3(psiedV * psicV * psihV) });
     if (!ArV) eqs5.push({ note: 'Si hay horquillas o estribos que abrazan los anclajes y cruzan la cuña (a menos de 0,5·c<sub>a1</sub> de los anclajes y anclados a ambos lados de la fisura), elegí <b>«Armadura de anclaje»</b> en Hormigón → «Armadura en el hormigón» y cargá A<sub>s</sub> de corte: esta verificación se reemplaza por φ·A<sub>s</sub>·f<sub>y</sub> (ACI 318 §17.5.2.1).' });
     if (ArV) { eqs5.push({ ref: 'Armadura de anclaje en corte (ACI 318 §17.5.2.1): horquillas o estribos que cruzan la cuña reemplazan la resistencia del hormigón al arrancamiento del borde.' }); eqs5.push({ note: `Las ramas tienen que estar a menos de 0,5·c<sub>a1</sub> de los anclajes y ancladas a ambos lados de la superficie de falla (ACI 318 R17.5.2.1). Como referencia, el hormigón solo daría φV<sub>cbg</sub> = ${n1(0.70 * Vcbg / 1e3)} kN.` }); }
-    if (ArV) eqs5.push({ l: 'φV<sub>n,arm</sub>', f: 'φ · A<sub>s</sub> · f<sub>y</sub>   (φ = 0,75)', s: `0,75 · ${n0(v.Asv)} mm² · ${n0(fyr)} MPa`, r: `${n1(phiVcbg / 1e3)} kN ≥ ${n1(Vu / 1e3)} → ${phiVcbg >= Vu ? 'verifica' : 'NO verifica'}`, ok: phiVcbg >= Vu }); else
+    if (ArV) eqs5.push({ l: 'φV<sub>n,arm</sub>', f: 'φ · A<sub>s</sub> · f<sub>y</sub>   (φ = 0,75)', s: `0,75 · ${n2(v.Asv)} cm² · 100 · ${n0(fyr)} MPa`, r: `${n1(phiVcbg / 1e3)} kN ≥ ${n1(Vu / 1e3)} → ${phiVcbg >= Vu ? 'verifica' : 'NO verifica'}`, ok: phiVcbg >= Vu }); else
     eqs5.push({ l: 'φV<sub>cbg</sub>', f: `φ · (A<sub>Vc</sub>/A<sub>Vco</sub>) · ψ<sub>ed,V</sub> · ψ<sub>c,V</sub> · ψ<sub>h,V</sub> · V<sub>b</sub>   (φ = ${n2(phiB)}${RF === '1' ? ', Condición A' : ''})`, s: 'se supone todo el corte en la fila más cercana al borde (conservador)', r: `${n1(phiVcbg / 1e3)} kN ≥ ${n1(Vu / 1e3)} → ${phiVcbg >= Vu ? 'verifica' : 'NO verifica'}`, ok: phiVcbg >= Vu });
     eqs5.push({ ref: 'Desprendimiento por palanca (pryout) · ACI 17.7.3' });
     eqs5.push({ l: 'φV<sub>cpg</sub>', f: 'φ · k<sub>cp</sub> · N<sub>cbg</sub>   (k<sub>cp</sub> = 2 si h<sub>ef</sub> ≥ 65 mm; φ = 0,70)', s: `0,70 · ${kcp} · ${n1(boAll.Ncbg / 1e3)} kN`, r: `${n1(phiVcpg / 1e3)} kN ≥ ${n1(Vu / 1e3)} → ${phiVcpg >= Vu ? 'verifica' : 'NO verifica'}`, ok: phiVcpg >= Vu });
@@ -1981,6 +1982,71 @@ var MF = (() => {
   return function (ref, v, R) { try { if (/Resistencia del acero/.test(ref)) return steel(v, R); if (/Arrancamiento del hormigón \(cono\)/.test(ref)) return cone(v, R); if (/pullout\) · ACI 17\.6\.3/.test(ref)) return pullout(v, R);
       if (/Descascaramiento lateral/.test(ref)) return blow(v, R); if (/^Acero · /.test(ref)) return shSteel(v, R); if (/Arrancamiento del borde por corte/.test(ref)) return wedge(v, R); if (/Desprendimiento por palanca/.test(ref)) return pry(v, R); } catch (e) { console.warn(e); } return ''; };
 })();
+/* ===== armadura de anclaje: esquemas a escala del cono (elevación) y de la cuña de corte (planta), con la franja donde cuentan las barras ===== */
+function reinfFigs(v, R) {
+  const c = { conc: '#e7e0d8', concS: '#a8a29e', rod: '#dc2626', cone: '#f59e0b', band: '#16a34a', bar: '#1d4ed8', pl: '#3b82f6', dim: '#475569', txt: '#17212b', mut: '#64748b' };
+  const T = (x, y, t, o) => `<text x="${x}" y="${y}" text-anchor="${(o && o.a) || 'middle'}" font-size="${(o && o.s) || 10.5}"${o && o.b ? ' font-weight="700"' : ''} style="fill:${(o && o.c) || c.txt}">${t}</text>`;
+  const tk = (x, y) => `<line x1="${x - 3}" y1="${y + 3}" x2="${x + 3}" y2="${y - 3}" stroke="${c.dim}" stroke-width="1.2"/>`;
+  const dH = (x1, x2, y, t, col) => `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${col || c.dim}" stroke-width="1"/>${tk(x1, y)}${tk(x2, y)}` + T((x1 + x2) / 2, y - 4, t, { s: 10, c: col || c.txt });
+  const f0 = q => (+q).toLocaleString('es-AR', { maximumFractionDigits: 0 }), f2 = q => (+q).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fy = +v.fyr || 420, bars = need => { for (const d of [8, 10, 12, 16, 20, 25]) { const ab = Math.PI * d * d / 400; let n = Math.ceil(need / ab); if (n % 2) n++; n = Math.max(n, 2); if (n <= 6 || d === 25) return `${n} Ø${d} = ${f2(n * ab)} cm²`; } };
+  const W = 340, svg = (h, b) => `<svg viewBox="0 0 ${W} ${h}" style="width:100%;height:auto;display:block;margin:8px 0"><rect x="0" y="0" width="${W}" height="${h}" rx="8" fill="#ffffff" stroke="#dbe1e8"/>${b}</svg>`;
+  const f = R.geom.f, N2 = +v.N2, B2 = +v.B2, hef = +v.hef, nrow = +v.nrow || 1, g = nrow > 1 ? +v.g : 0, inf = v.cinf === '1', ys = nrow > 1 ? Array.from({ length: nrow }, (_, i) => -g / 2 + i * g / (nrow - 1)) : [0];
+  let out = '';
+  // ---- tracción: elevación ----
+  { const rows = R.tensionRows === 2 ? [-f, f] : [f], eL = inf ? -1e9 : -N2 / 2, eR = inf ? 1e9 : N2 / 2, Wv = Math.min(inf ? 1e9 : N2 / 2 + 40, Math.abs(f) + 1.5 * hef + 0.25 * hef), Dv = 1.35 * hef, k = Math.min(300 / (2 * Wv), 150 / Dv), x0 = W / 2, yT = 80, yh = yT + hef * k, yB = yT + Dv * k, X = x => x0 + x * k, cl = x => Math.max(-Wv, Math.min(Wv, x));
+    let b = T(W / 2, 18, 'Tracción · corte vertical por los anclajes', { b: 1, s: 11.5 });
+    b += `<rect x="${X(Math.max(eL, -Wv))}" y="${yT}" width="${(Math.min(eR, Wv) - Math.max(eL, -Wv)) * k}" height="${Dv * k}" fill="${c.conc}" stroke="${c.concS}"/>`;
+    rows.forEach(xr => { const a = Math.max(xr - 1.5 * hef, eL), d = Math.min(xr + 1.5 * hef, eR), pts = [];
+      if (a > xr - 1.5 * hef) pts.push([a, yh - (xr - a) / 1.5 * k], [a, yT]); else pts.push([a, yT]);
+      if (d < xr + 1.5 * hef) pts.push([d, yT], [d, yh - (d - xr) / 1.5 * k]); else pts.push([d, yT]);
+      b += `<polygon points="${pts.map(q => `${X(q[0])},${q[1]}`).join(' ')} ${X(xr)},${yh}" fill="${c.cone}" fill-opacity=".30" stroke="${c.cone}" stroke-dasharray="5 3"/>`; });
+    rows.forEach(xr => { const a = Math.max(xr - 0.5 * hef, eL), d = Math.min(xr + 0.5 * hef, eR); b += `<rect x="${X(a)}" y="${yT}" width="${(d - a) * k}" height="${Dv * k}" fill="${c.band}" fill-opacity=".18" stroke="${c.band}" stroke-dasharray="4 3"/>`;
+      [-0.32, 0.32].forEach(t => { const xb = xr + t * hef; if (xb < eL + 20 || xb > eR - 20) return; const hk = t < 0 ? 9 : -9; b += `<path d="M${X(xb) + hk},${yT + 9} L${X(xb)},${yT + 9} L${X(xb)},${yB - 3}" fill="none" stroke="${c.bar}" stroke-width="2.6" stroke-linejoin="round"/>`; }); });
+    b += `<rect x="${X(-v.N / 2)}" y="${yT - 6}" width="${v.N * k}" height="6" fill="${c.pl}"/>`;
+    [-f, f].forEach(xr => { const on = rows.includes(xr); b += `<line x1="${X(xr)}" y1="${yT - 14}" x2="${X(xr)}" y2="${yh}" stroke="${on ? c.rod : '#94a3b8'}" stroke-width="4"/><rect x="${X(xr) - 7}" y="${yh - 3}" width="14" height="6" fill="${on ? '#7f1d1d' : '#64748b'}"/>`; });
+    const xr = rows[rows.length - 1]; b += dH(X(xr), X(Math.min(xr + 0.5 * hef, eR)), yT - 20, `0,5·h<tspan font-size="7.5" dy="3">ef</tspan><tspan dy="-3"> = ${f0(0.5 * hef)}</tspan>`, c.band) + dH(X(Math.max(xr - 1.5 * hef, eL, -Wv)), X(xr), yT - 40, xr - 1.5 * hef < eL ? `al borde = ${f0(xr - eL)}` : `1,5·h<tspan font-size="7.5" dy="3">ef</tspan><tspan dy="-3"> = ${f0(1.5 * hef)}</tspan>`);
+    b += `<line x1="${X(xr) + 12}" y1="${yT}" x2="${X(xr) + 12}" y2="${yh}" stroke="${c.dim}"/>${tk(X(xr) + 12, yT)}${tk(X(xr) + 12, yh)}` + T(X(xr) + 16, (yT + yh) / 2 + 12, `h<tspan font-size="7.5" dy="3">ef</tspan><tspan dy="-3"> = ${f0(hef)}</tspan>`, { a: 'start', s: 10 });
+    const Nu = R.NuaGroup || 0, need = Nu / (0.75 * fy) / 100; let y = yB + 16;
+    b += T(8, y, 'Cuentan las ramas dentro de la franja verde, ancladas', { a: 'start' }) + T(8, y + 13, 'arriba y abajo de la superficie del cono (naranja).', { a: 'start' });
+    b += T(8, y + 30, Nu > 0 ? `Necesario: N<tspan font-size="7.5" dy="3">ua</tspan><tspan dy="-3"> / (0,75·f</tspan><tspan font-size="7.5" dy="3">y</tspan><tspan dy="-3">) = ${f0(Nu / 1e3)} kN → ${f2(need)} cm²</tspan>` : 'Con estas cargas no hay anclajes traccionados.', { a: 'start', b: 1 });
+    if (Nu > 0) b += T(8, y + 44, `p. ej. ${bars(need)} · cargaste ${f2(+v.Ast || 0)} cm²`, { a: 'start', c: (+v.Ast || 0) >= need ? '#15803d' : '#b91c1c', b: 1 });
+    out += svg(y + 54, b); }
+  // ---- tracción: planta (el cono es un volumen: se ve su huella en la superficie) ----
+  { const rows = R.tensionRows === 2 ? [-f, f] : [f], x1 = Math.min(...rows), x2 = Math.max(...rows), eL = inf ? -1e9 : -N2 / 2, eR = inf ? 1e9 : N2 / 2, eB = inf ? -1e9 : -B2 / 2, eT = inf ? 1e9 : B2 / 2, cl = (q, a, d) => Math.max(a, Math.min(d, q));
+    const A = [cl(x1 - 1.5 * hef, eL, eR), cl(x2 + 1.5 * hef, eL, eR), cl(-g / 2 - 1.5 * hef, eB, eT), cl(g / 2 + 1.5 * hef, eB, eT)], G = [cl(x1 - 0.5 * hef, eL, eR), cl(x2 + 0.5 * hef, eL, eR), cl(-g / 2 - 0.5 * hef, eB, eT), cl(g / 2 + 0.5 * hef, eB, eT)];
+    const mg = 0.12 * hef, vx0 = A[0] - mg, vx1 = A[1] + mg, vy0 = A[2] - mg, vy1 = A[3] + mg, k = Math.min(300 / (vx1 - vx0), 210 / (vy1 - vy0)), xo = (W - (vx1 - vx0) * k) / 2, yT = 44, X = x => xo + (x - vx0) * k, Y = yy => yT + (vy1 - yy) * k, yB = Y(vy0);
+    let b = T(W / 2, 18, 'Tracción · planta (huella del cono)', { b: 1, s: 11.5 });
+    b += `<rect x="${X(Math.max(eL, vx0))}" y="${Y(Math.min(eT, vy1))}" width="${(Math.min(eR, vx1) - Math.max(eL, vx0)) * k}" height="${(Math.min(eT, vy1) - Math.max(eB, vy0)) * k}" fill="${c.conc}" stroke="${c.concS}"/>`;
+    [[eL, 1], [eR, 1], [eB, 0], [eT, 0]].forEach(q => { if (Math.abs(q[0]) > 1e8) return; if (q[1] && q[0] > vx0 && q[0] < vx1) b += `<line x1="${X(q[0])}" y1="${Y(Math.min(eT, vy1))}" x2="${X(q[0])}" y2="${Y(Math.max(eB, vy0))}" stroke="${c.txt}" stroke-width="2.2"/>`; if (!q[1] && q[0] > vy0 && q[0] < vy1) b += `<line x1="${X(Math.max(eL, vx0))}" y1="${Y(q[0])}" x2="${X(Math.min(eR, vx1))}" y2="${Y(q[0])}" stroke="${c.txt}" stroke-width="2.2"/>`; });
+    b += `<rect x="${X(A[0])}" y="${Y(A[3])}" width="${(A[1] - A[0]) * k}" height="${(A[3] - A[2]) * k}" fill="${c.cone}" fill-opacity=".30" stroke="${c.cone}" stroke-dasharray="5 3"/>`;
+    b += `<rect x="${X(G[0])}" y="${Y(G[3])}" width="${(G[1] - G[0]) * k}" height="${(G[3] - G[2]) * k}" rx="${Math.min(0.5 * hef * k, (G[1] - G[0]) * k / 2)}" fill="${c.band}" fill-opacity=".20" stroke="${c.band}" stroke-dasharray="4 3"/>`;
+    b += `<rect x="${X(Math.max(-v.N / 2, vx0))}" y="${Y(Math.min(v.B / 2, vy1))}" width="${(Math.min(v.N / 2, vx1) - Math.max(-v.N / 2, vx0)) * k}" height="${(Math.min(v.B / 2, vy1) - Math.max(-v.B / 2, vy0)) * k}" fill="none" stroke="${c.pl}" stroke-dasharray="3 3"/>`;
+    const bx = [G[0] + 0.15 * hef, G[1] - 0.15 * hef], by = [G[2] + 0.15 * hef, 0, G[3] - 0.15 * hef]; bx.forEach(xb => by.forEach(yb => { b += `<circle cx="${X(xb)}" cy="${Y(yb)}" r="3.6" fill="${c.bar}"/>`; }));
+    [-f, f].forEach(xr => ys.forEach(yy => { const on = rows.includes(xr); b += `<circle cx="${X(xr)}" cy="${Y(yy)}" r="4.4" fill="${on ? c.rod : '#cbd5e1'}" stroke="${on ? '#7f1d1d' : '#64748b'}"/>`; }));
+    if (x2 + 1.5 * hef <= eR + 1) b += dH(X(x2), X(A[1]), Y(A[2]) + 14, `1,5·h<tspan font-size="7.5" dy="3">ef</tspan><tspan dy="-3"> = ${f0(1.5 * hef)}</tspan>`); else b += dH(X(x2), X(A[1]), Y(A[2]) + 14, `al borde ${f0(A[1] - x2)}`);
+    b += dH(X(x2), X(G[1]), Y(G[3]) - 4, `0,5·h<tspan font-size="7.5" dy="3">ef</tspan>`, '#166534');
+    let y = Math.max(yB, Y(A[2]) + 14) + 18; b += T(8, y, 'Naranja: área proyectada del cono, A<tspan font-size="7.5" dy="3">Nc</tspan><tspan dy="-3"> (1,5·h</tspan><tspan font-size="7.5" dy="3">ef</tspan><tspan dy="-3"> a cada lado</tspan>', { a: 'start' }) + T(8, y + 13, 'o hasta el borde). Cuentan las barras verticales que caen', { a: 'start' }) + T(8, y + 26, 'dentro del contorno verde, en todo el perímetro del grupo.', { a: 'start' });
+    out += svg(y + 36, b); }
+  // ---- corte: planta ----
+  { const ca1 = R.shear ? R.shear.ca1 : 0, Vu = Math.abs(+v.Vu || 0); let b = T(W / 2, 18, 'Corte · planta del pedestal', { b: 1, s: 11.5 });
+    if (!ca1 || inf || ca1 > 6 * Math.max(hef, 300)) { b += T(W / 2, 44, inf ? 'Masa infinita: no hay borde cercano, la cuña de corte no gobierna.' : 'Sin corte en los anclajes o borde muy lejano.', { c: c.mut }); out += svg(58, b); }
+    else { const xe = f + ca1, xmin = -Math.abs(f) - 0.25 * ca1, sp = Math.min(1.5 * ca1, R.edge ? R.edge.cB : 1e9), Hy = g / 2 + sp + 30, k = Math.min(290 / (xe - xmin + 30), 200 / (2 * Hy)), xo = 20 - xmin * k, yT = 44, yc = yT + Hy * k, X = x => xo + x * k, Y = yy => yc - yy * k, yb0 = Math.max(-B2 / 2, -Hy), yb1 = Math.min(B2 / 2, Hy);
+      b += `<rect x="${X(xmin)}" y="${Y(yb1)}" width="${(xe - xmin) * k}" height="${(yb1 - yb0) * k}" fill="${c.conc}" stroke="${c.concS}"/><line x1="${X(xe)}" y1="${Y(yb1)}" x2="${X(xe)}" y2="${Y(yb0)}" stroke="${c.txt}" stroke-width="2.5"/>`;
+      const b0 = Math.max(-g / 2 - 0.5 * ca1, yb0), b1 = Math.min(g / 2 + 0.5 * ca1, yb1); b += `<rect x="${X(xmin)}" y="${Y(b1)}" width="${(xe - xmin) * k}" height="${(b1 - b0) * k}" fill="${c.band}" fill-opacity=".18" stroke="${c.band}" stroke-dasharray="4 3"/>`;
+      b += `<polygon points="${X(f)},${Y(g / 2)} ${X(xe)},${Y(g / 2 + sp)} ${X(xe)},${Y(-g / 2 - sp)} ${X(f)},${Y(-g / 2)}" fill="${c.cone}" fill-opacity=".30" stroke="${c.cone}" stroke-dasharray="5 3"/>`;
+      b += `<rect x="${X(Math.max(-v.N / 2, xmin))}" y="${Y(Math.min(v.B / 2, yb1))}" width="${(Math.min(v.N / 2, xe) - Math.max(-v.N / 2, xmin)) * k}" height="${(Math.min(v.B / 2, yb1) - Math.max(-v.B / 2, yb0)) * k}" fill="none" stroke="${c.pl}" stroke-dasharray="3 3"/>`;
+      const hy = Math.min(g / 2 + Math.max(40, 0.12 * ca1), b1 - 6 / k), hx = xe - Math.min(60, 0.2 * ca1); b += `<path d="M${X(xmin) + 2},${Y(hy)} L${X(hx)},${Y(hy)} L${X(hx)},${Y(-hy)} L${X(xmin) + 2},${Y(-hy)}" fill="none" stroke="${c.bar}" stroke-width="2.6" stroke-linejoin="round"/>`;
+      [-f, f].forEach(xr => ys.forEach(yy => { b += `<circle cx="${X(xr)}" cy="${Y(yy)}" r="4.2" fill="${c.rod}"/>`; }));
+      b += `<line x1="${X(f) + 7}" y1="${Y(0) - (nrow % 2 ? 9 : 0)}" x2="${X(f) + 36}" y2="${Y(0) - (nrow % 2 ? 9 : 0)}" stroke="${c.rod}" stroke-width="2.6"/><path d="M${X(f) + 36},${Y(0) - (nrow % 2 ? 9 : 0)} l-7,-4 M${X(f) + 36},${Y(0) - (nrow % 2 ? 9 : 0)} l-7,4" stroke="${c.rod}" stroke-width="2.6"/>` + T(X(f) + 22, Y(0) - (nrow % 2 ? 14 : 5), 'V', { b: 1, c: c.rod });
+      const yd = Y(yb0) + 16; b += dH(X(f), X(xe), yd, `c<tspan font-size="7.5" dy="3">a1</tspan><tspan dy="-3"> = ${f0(ca1)}</tspan>`);
+      b += `<line x1="${X(xmin) + 10}" y1="${Y(g / 2)}" x2="${X(xmin) + 10}" y2="${Y(b1)}" stroke="${c.band}"/>${tk(X(xmin) + 10, Y(g / 2))}${tk(X(xmin) + 10, Y(b1))}` + T(X(xmin) + 15, (Y(g / 2) + Y(b1)) / 2 + 3, b1 < g / 2 + 0.5 * ca1 ? `al borde ${f0(b1 - g / 2)}` : `0,5·c<tspan font-size="7.5" dy="3">a1</tspan><tspan dy="-3"> = ${f0(0.5 * ca1)}</tspan>`, { a: 'start', s: 9.5, c: '#166534' });
+      const need = Vu * 1e3 / (0.75 * fy) / 100; let y = yd + 20;
+      b += T(8, y, 'Cuentan las ramas paralelas al corte dentro de la franja', { a: 'start' }) + T(8, y + 13, 'verde, que cruzan la cuña (naranja) y se anclan detrás.', { a: 'start' });
+      b += T(8, y + 30, Vu > 0 ? `Necesario: V<tspan font-size="7.5" dy="3">u</tspan><tspan dy="-3"> / (0,75·f</tspan><tspan font-size="7.5" dy="3">y</tspan><tspan dy="-3">) = ${f0(Vu)} kN → ${f2(need)} cm²</tspan>` : 'Sin corte.', { a: 'start', b: 1 });
+      if (Vu > 0) b += T(8, y + 44, `p. ej. ${bars(need)} · cargaste ${f2(+v.Asv || 0)} cm²`, { a: 'start', c: (+v.Asv || 0) >= need ? '#15803d' : '#b91c1c', b: 1 });
+      out += svg(y + 54, b); } }
+  return out + '<div class="hint">Naranja: superficie de falla · verde: zona donde una barra cuenta · azul: barras de ejemplo. Dibujá ahí tu armadura real y sumá el área de las ramas que caen en la franja.</div>'; }
 /* ===== planta acotada del paso «Espesor de la placa»: columna, anclajes, líneas críticas (m, n), brazo x y ancho b_eff ===== */
 function tpFig(v, R) { try {
   const N = +v.N, B = +v.B, typ = v.ctype, rot = typ === 'W' && +v.crot === 1, tf = +v.tf, tw = +v.tw || tf, dN = typ === 'C' ? +v.d : rot ? +v.bf : +v.d, dB = typ === 'C' ? +v.d : rot ? +v.d : +v.bf;
@@ -2042,7 +2108,7 @@ function stepFigs(id) { if (!STEPFIG) return ''; const m = STEPFIG[id]; if (!m) 
   const lv = m[1] && document.getElementById(m[1]); if (lv && lv.childNodes.length) { const c = lv.cloneNode(true); c.removeAttribute('id'); c.setAttribute('style', 'width:100%;max-width:460px;height:auto;display:block;margin:0 auto'); h += `<figure style="margin:0;flex:1 1 320px">${c.outerHTML}<figcaption class="note" style="text-align:center">${LIVECAP[m[1]]}</figcaption></figure>`; }
   return h ? `<div style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;margin:6px 0 12px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel2)">${h}</div>` : ''; }
 setTimeout(() => { try { run(); } catch (e) {} }, 0);
-function renderSteps(R) { window.__lastR = R; try { window.__lastPu = +getVals().Pu; } catch (e) {}
+function renderSteps(R) { window.__lastR = R; try { const h = document.getElementById('reinfFig'); if (h) h.innerHTML = getVals().reinf === '2' ? reinfFigs(getVals(), R) : ''; } catch (e) { console.warn(e); } try { window.__lastPu = +getVals().Pu; } catch (e) {}
   const openIds = new Set([...document.querySelectorAll('details.step[open]')].map(d => d.id));
   const first = !document.querySelector('details.step');
   $('steps').innerHTML = R.steps.map((s, i) => {
