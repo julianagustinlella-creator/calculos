@@ -294,6 +294,14 @@ footer{color:var(--muted);font-size:12px;text-align:center;padding:20px}
     <div class="fld"><label>Resistencia del acero del anclaje</label><select id="steelM"><option value="aci">ACI 318-19 §17 (A<sub>se</sub>·f<sub>uta</sub>)</option><option value="aisc">DG1 2ª ed.: AISC 360-05 (0,75·F<sub>u</sub>·A<sub>b</sub>; 0,40·F<sub>u</sub>·A<sub>b</sub>; J3.7) + ACI 318-02</option></select></div>
     <div class="fld"><label>Zona roscada</label><select id="thr"><option value="1">Sí (A<sub>se</sub> por rosca)</option><option value="0">No (barra soldada, A<sub>se</sub>=A<sub>g</sub>)</option></select></div>
     <div class="fld"><label>Tipo de anclaje en el hormigón</label><select id="atype"><option value="H">Con cabeza / tuerca + arandela</option><option value="J">Con gancho (L o J)</option></select></div>
+    <div class="fld" id="fhead"><label>Cabeza del anclaje<small>lo que apoya contra el hormigón en el fondo</small></label><select id="head"><option value="nut">Tuerca hexagonal pesada</option><option value="plate">Placa de acero + tuerca</option></select></div>
+    <div id="fheadPl">
+      <div class="fld"><label>Placa de cabeza: lado a<small>mm</small></label><input id="hpa" type="number" step="5" min="0"></div>
+      <div class="fld"><label>Placa de cabeza: lado b<small>mm</small></label><input id="hpb" type="number" step="5" min="0"></div>
+      <div class="fld"><label>Placa de cabeza: espesor<small>mm</small></label><input id="hpt" type="number" step="0.1" min="0"></div>
+      <div class="fld"><label>F<sub>y</sub> de la placa de cabeza<small>MPa (F-24 = 235, F-36 = 355)</small></label><input id="hpfy" type="number"></div>
+      <div class="hint">Una placa por anclaje, sujeta con tuerca por debajo (o soldada a la barra). Se verifica el arrancamiento con su área de apoyo y el espesor de la placa a flexión con la presión del hormigón.</div>
+    </div>
     <div class="fld"><label>h<sub>ef</sub> profundidad efectiva<small>mm</small></label><input id="hef" type="number"></div>
     <div class="fld" id="fehook"><label>e<sub>h</sub> largo del gancho<small>mm (3·d<sub>a</sub> a 4,5·d<sub>a</sub>)</small></label><input id="eh" type="number"></div>
     <h3 class="sec">Disposición</h3>
@@ -836,7 +844,7 @@ const MAT = { F36:{n:'ASTM F1554 Gr.36',fy:248,fu:400}, F55:{n:'ASTM F1554 Gr.55
 // diámetro nominal (mm) → paso de rosca gruesa ISO (mm)
 const DIAS = [[12,1.75],[16,2],[19.05,2.54],[20,2.5],[22,2.5],[22.225,2.822],[24,3],[25.4,3.175],[27,3],[28.575,3.629],[30,3.5],[31.75,3.629],[33,3.5],[36,4],[38.1,4.233],[42,4.5],[48,5],[50.8,5.644],[56,5.5],[64,6]];
 const PRESETS = {
-  base:{nbt:0,dbt:12,nbv:0,dbv:8,llv:0,mdir:'N',vdir:'N',stfb:'0',sts:12.7,shs:150,sfy:'235',sw:6,reinf:'0',Ast:0,Asv:0,fyr:420,crot:'0',cinf:'0',Pu:600,Mu:90,Vu:60,ctype:'W',d:308,bf:305,tf:15.4,tw:9.9,N:500,B:500,Fy:250,tp:0,fc:25,N2:700,B2:700,ha:900,cracked:'1',lam:1,phic:0.65,mat:'F36',da:24,thr:'1',atype:'H',hef:400,eh:90,nrow:'2',aN:60,g:380,fric:'1',mu:0.55,grout:'1',nV:'all',pRows:'100,190,280',Dw:50.8,pAuto:'1',pm:'dg1',dwAuto:'1',steelM:'aci',tbeff:'45',Fyc:345,aw:8,lug:'none',lb:230,ld:40,lG:50,lt:0,lw:8,lc:240,lBp:500},
+  base:{head:'nut',hpa:100,hpb:100,hpt:19.05,hpfy:235,nbt:0,dbt:12,nbv:0,dbv:8,llv:0,mdir:'N',vdir:'N',stfb:'0',sts:12.7,shs:150,sfy:'235',sw:6,reinf:'0',Ast:0,Asv:0,fyr:420,crot:'0',cinf:'0',Pu:600,Mu:90,Vu:60,ctype:'W',d:308,bf:305,tf:15.4,tw:9.9,N:500,B:500,Fy:250,tp:0,fc:25,N2:700,B2:700,ha:900,cracked:'1',lam:1,phic:0.65,mat:'F36',da:24,thr:'1',atype:'H',hef:400,eh:90,nrow:'2',aN:60,g:380,fric:'1',mu:0.55,grout:'1',nV:'all',pRows:'100,190,280',Dw:50.8,pAuto:'1',pm:'dg1',dwAuto:'1',steelM:'aci',tbeff:'45',Fyc:345,aw:8,lug:'none',lb:230,ld:40,lG:50,lt:0,lw:8,lc:240,lBp:500},
   dg46:{Pu:1672.5,Mu:106.2,Vu:0,ctype:'W',d:322.6,bf:309.9,tf:22.9,tw:14.0,N:482.6,B:482.6,Fy:248.2,tp:0,fc:27.58,N2:482.6,B2:482.6,ha:900,cracked:'1',lam:1,phic:0.65,mat:'F36',da:19.05,thr:'1',atype:'H',hef:305,eh:60,nrow:'2',aN:50,g:380,fric:'1',mu:0.55,grout:'1',nV:'all'},
   dg41:{Pu:3113.8,Mu:0,Vu:0,ctype:'W',d:322.6,bf:309.9,tf:22.9,tw:14.0,N:558.8,B:508,Fy:248.2,tp:44.45,fc:20.68,N2:558.8,B2:508,ha:900,cracked:'1',lam:1,phic:0.65,mat:'F36',da:19.05,thr:'1',atype:'H',hef:305,eh:60,nrow:'2',aN:50,g:400,fric:'1',mu:0.55,grout:'1',nV:'all'},
   uplift:{Pu:-120,Mu:10,Vu:15,ctype:'W',d:257,bf:204,tf:15.7,tw:8.9,N:400,B:350,Fy:250,tp:25.4,fc:25,N2:800,B2:700,ha:900,cracked:'1',lam:1,phic:0.65,mat:'F36',da:24,thr:'1',atype:'H',hef:500,eh:80,nrow:'2',aN:50,g:250,fric:'1',mu:0.55,grout:'1',nV:'all'},
@@ -962,7 +970,7 @@ const sqrt = Math.sqrt, min = Math.min, max = Math.max, PI = Math.PI;
       setVals(o); run(); } catch (err) { alert('Archivo no válido'); } e.target.value = ''; }); };
   run();
 })();
-function setVals(o) { o = Object.assign({ nbt: 0, dbt: 12, nbv: 0, dbv: 8, llv: 0, mdir: 'N', vdir: 'N', stfb: '0', sts: 12.7, shs: 150, sfy: '235', sw: 6, crot: '0', cinf: '0', reinf: '0', Ast: 0, Asv: 0, fyr: 420 }, o); if (o.AsU !== 'cm2') { o.Ast = (+o.Ast || 0) / 100; o.Asv = (+o.Asv || 0) / 100; } IDS.forEach(k => { if (o[k] !== undefined && $(k)) $(k).value = o[k]; }); }
+function setVals(o) { o = Object.assign({ head: 'nut', hpa: 100, hpb: 100, hpt: 19.05, hpfy: 235, nbt: 0, dbt: 12, nbv: 0, dbv: 8, llv: 0, mdir: 'N', vdir: 'N', stfb: '0', sts: 12.7, shs: 150, sfy: '235', sw: 6, crot: '0', cinf: '0', reinf: '0', Ast: 0, Asv: 0, fyr: 420 }, o); if (o.AsU !== 'cm2') { o.Ast = (+o.Ast || 0) / 100; o.Asv = (+o.Asv || 0) / 100; } IDS.forEach(k => { if (o[k] !== undefined && $(k)) $(k).value = o[k]; }); }
 function getVals() { const o = {}; IDS.forEach(k => { const el = $(k); o[k] = el.tagName === 'SELECT' && isNaN(+el.value) ? el.value : (el.type === 'number' || !isNaN(+el.value) ? +el.value : el.value); }); o.ctype = $('ctype').value; o.AsU = 'cm2'; o.reinf = $('reinf').value; o.stfb = $('stfb').value; o.mat = $('mat').value; o.nV = $('nV').value; o.cracked = $('cracked').value; o.thr = $('thr').value; o.atype = $('atype').value; o.fric = $('fric').value; o.grout = $('grout').value; o.nrow = $('nrow').value; o.pRows = $('pRows').value; o.pAuto = $('pAuto').value; o.pm = $('pm').value; o.dwAuto = $('dwAuto').value; o.steelM = $('steelM').value; o.tbeff = $('tbeff').value; o.lug = $('lug').value; return o; }
 
 
@@ -1015,16 +1023,17 @@ function stripSolve(L, sups, dl, pl, EI) {
 function ldBar(db, v) { const fy = +v.fyr || 420, fc = +v.fc || 25, lam = +v.lam || 1; return Math.max(300, fy / ((db <= 19 ? 2.1 : 1.7) * lam * Math.sqrt(fc)) * db); }
 function effV(v) { if (!v || v._sw || v.mdir !== 'B' || v.ctype === 'P') return v;
   const nrow = +v.nrow || 1; if (nrow < 2) return Object.assign({}, v, { _swErr: 1 });
-  const o = Object.assign({}, v, { _sw: 1, _raw: { N: v.N, B: v.B, nrow, stfb: v.stfb }, N: v.B, B: v.N, N2: v.B2, B2: v.N2, aN: v.B / 2 - v.g / 2, g: v.N - 2 * v.aN, nrow: '2', vdir: v.vdir === 'B' ? 'N' : 'B', stfb: '0' });
+  const o = Object.assign({}, v, { _sw: 1, _raw: v, N: v.B, B: v.N, N2: v.B2, B2: v.N2, aN: v.B / 2 - v.g / 2, g: v.N - 2 * v.aN, nrow: '2', vdir: v.vdir === 'B' ? 'N' : 'B', stfb: '0' });
   if (v.ctype === 'W') o.crot = +v.crot === 1 ? '0' : '1'; else if (v.ctype === 'R') { o.d = v.bf; o.bf = v.d; }
   return o; }
 function calc(v) {
   if (v.ctype === 'P') return calcP(v);
   v = effV(v);
   const R = { steps: [], checks: [], warns: [] };
+  R.NuaGroup = 0;
   if (v._swErr) R.warns.push('Momento en dirección B con un solo anclaje por fila: no hay brazo entre anclajes en esa dirección. Se calcula como si el momento actuara en N; poné al menos 2 anclajes por fila.');
-  if (v._sw) { R.warns.push(`<b>Momento en dirección B:</b> el cálculo y los dibujos se hacen con la placa girada 90°. En los pasos y esquemas, «N» es tu lado B = ${n0(v.N)} mm y «B» es tu lado N = ${n0(v.B)} mm; las filas de anclajes son las de los extremos (separadas g = ${n0(v.g)} mm en la dirección del momento).`);
-    if (v._raw.nrow > 2) R.warns.push(`Con el momento en B, de los ${v._raw.nrow} anclajes por fila sólo se cuentan los 2 de los extremos (los intermedios están cerca del eje de giro): queda del lado seguro.`);
+  if (v._sw) { R.warns.push(`<b>Momento en dirección B:</b> el cálculo y los dibujos se hacen con la placa girada 90°. La planta se dibuja como la cargaste, sin girar; en los pasos de cálculo y en la elevación, «N» es tu lado B = ${n0(v.N)} mm y «B» es tu lado N = ${n0(v.B)} mm; las filas de anclajes son las de los extremos (separadas g = ${n0(v.g)} mm en la dirección del momento).`);
+    if (v._raw.nrow > 2) R.warns.push(`Con el momento en B, de los ${v._raw.nrow} anclajes por fila cada par forma una fila en la dirección del momento. Las filas intermedias toman tracción en proporción a su distancia al centro de compresión (placa rígida); el espesor de placa por tracción se sigue verificando con la fila más alejada.`);
     if (v._raw.stfb && v._raw.stfb !== '0') R.warns.push('Con el momento en dirección B los rigidizadores no se cuentan (están definidos respecto de la dirección N).'); }
   const Pu = v.Pu * 1e3, Mu = v.Mu * 1e6, Vu = Math.abs(v.Vu) * 1e3; // N, N·mm
   const { N, B, Fy, fc, phic } = v, lam = v.lam || 1;
@@ -1038,6 +1047,11 @@ function calc(v) {
   const futa = min(mat.fu, 1.9 * mat.fy, 860);
   const cracked = v.cracked === '1';
   R.geom = { f, s, Ase, Ag, futa, pitch };
+  /* Filas de anclajes en la dirección del momento. Con el momento en B y n anclajes por fila hay n filas de 2 anclajes.
+     Placa rígida que gira alrededor del centro de compresión x_c: la fuerza de cada fila es proporcional a su distancia a x_c. */
+  const MR = v._sw && v._raw && +v._raw.nrow > 2 ? { n: +v._raw.nrow, xs: Array.from({ length: +v._raw.nrow }, (_, i) => -f + i * 2 * f / (+v._raw.nrow - 1)), info: null } : null;
+  const rowsT = (xc, xlim) => { const xs = MR.xs.filter(x => x > Math.max(xc, xlim == null ? -1e9 : xlim) + 1), a = xs.map(x => (x - xc) / (f - xc)), Sa = a.reduce((p, q) => p + q, 0), Sa2 = a.reduce((p, q) => p + q * q, 0), xT = xs.reduce((p, x, i) => p + a[i] * x, 0) / (Sa || 1); return { xc, xs, a, Sa, Sa2, xT, k: xs.length, xin: Math.min(...xs), xm: xs.reduce((p, q) => p + q, 0) / (xs.length || 1) }; };
+  R.mr = MR;
 
   /* ---- 1. Geometría y área de apoyo ---- */
   const A1 = B * N;
@@ -1075,7 +1089,9 @@ function calc(v) {
       eqs2.push({ l: 'f<sub>p</sub>', f: 'q / B', s: `${n1(q)} N/mm / ${n0(B)} mm`, r: `${n2(fp)} MPa` });
     } else {
       caseName = 'Momento grande (e > e<sub>crít</sub>)';
-      const A = f + N / 2, disc = A * A - 2 * Pu * (e + f) / qmax;
+      let fE = f; if (MR) for (let it = 0; it < 30; it++) { const A0 = fE + N / 2, d0 = A0 * A0 - 2 * Pu * (e + fE) / qmax; if (d0 < 0) break; fE = rowsT(-N / 2 + (A0 - sqrt(d0)) / 2, -N / 2 + (A0 - sqrt(d0))).xT; }
+      if (MR) eqs2.push({ note: `Hay ${MR.n} filas de anclajes en la dirección del momento. La resultante de tracción no está en la fila extrema sino en x<sub>T</sub> = ${n1(fE)} mm del eje (cada fila toma una fuerza proporcional a su distancia al centro de compresión): en las fórmulas que siguen, f = ${n1(fE)} mm.` });
+      const A = fE + N / 2, disc = A * A - 2 * Pu * (e + fE) / qmax;
       eqs2.push({ l: 'f', f: 'N/2 − a (eje de placa a fila de anclajes)', s: `${n0(N)} mm/2 − ${n0(v.aN)} mm`, r: `${n1(f)} mm` });
       eqs2.push({ l: '(f + N/2)²', f: '≥ 2·P<sub>u</sub>·(e + f) / q<sub>máx</sub>', s: `${n0(A * A)} mm² ≥ ${n0(2 * Pu * (e + f) / qmax)} mm²`, r: disc >= 0 ? 'hay solución real' : 'NO hay solución: agrandar la placa', ok: disc >= 0 });
       if (disc >= 0) {
@@ -1083,23 +1099,25 @@ function calc(v) {
         eqs2.push({ l: 'Y', f: '(f + N/2) − √[(f + N/2)² − 2·P<sub>u</sub>·(e + f)/q<sub>máx</sub>]', s: `${n1(A)} mm − √(${n0(disc)} mm²)`, r: `${n1(Y)} mm` });
         eqs2.push({ l: 'T<sub>u</sub>', f: 'q<sub>máx</sub> · Y − P<sub>u</sub>', s: `${n1(qmax)} N/mm · ${n1(Y)} mm − ${n0(Pu)} N`, r: `${n1(Tu / 1e3)} kN (fila traccionada)` });
         tensionRows = 1; TuGroup = Tu;
+        if (MR) { MR.info = rowsT(-N / 2 + Y / 2, -N / 2 + Y); Tu = TuGroup / MR.info.Sa; eqs2.push({ l: 'T<sub>fila extrema</sub>', f: 'T<sub>u</sub> / Σa<sub>i</sub>,  a<sub>i</sub> = (x<sub>i</sub> − x<sub>c</sub>) / (x<sub>ext</sub> − x<sub>c</sub>)', s: `${n1(TuGroup / 1e3)} kN / ${n3(MR.info.Sa)}   (filas traccionadas: ${MR.info.k}; a<sub>i</sub> = ${MR.info.a.map(q => n2(q)).join(' ; ')})`, r: `${n1(Tu / 1e3)} kN en la fila más alejada (2 anclajes)` }); }
       } else { R.fail = true; Y = N; q = qmax; fp = fpmax; bearingRatio = 9.99; }
     }
   } else if (Pu < 0 || Mu > 0) {
     caseName = Pu < 0 ? 'Tracción neta (levantamiento)' : 'Flexión pura';
     const P = -Pu; // tracción positiva
-    const Tt = P / 2 + Mu / (2 * f), Tc = P / 2 - Mu / (2 * f);
+    const Sx2 = MR ? MR.xs.reduce((p, x) => p + x * x, 0) : 2 * f * f, nRw = MR ? MR.n : 2; const Tt = P / nRw + Mu * f / Sx2, Tc = P / nRw - Mu * f / Sx2;
     eqs2.push({ l: 'f', f: 'N/2 − a', s: `${n0(N)} mm/2 − ${n0(v.aN)} mm`, r: `${n1(f)} mm` });
     if (Tc >= 0) {
       eqs2.push({ l: 'T<sub>fila 1</sub>', f: '|P<sub>u</sub>|/2 + M<sub>u</sub>/(2·f)', s: `${n1(P / 1e3)} kN/2 + ${n1(v.Mu)} kN·m·10³/(2·${n1(f)} mm)`, r: `${n1(Tt / 1e3)} kN` });
       eqs2.push({ l: 'T<sub>fila 2</sub>', f: '|P<sub>u</sub>|/2 − M<sub>u</sub>/(2·f)', s: `${n1(P / 1e3)} kN/2 − ${n1(v.Mu)} kN·m·10³/(2·${n1(f)} mm)`, r: `${n1(Tc / 1e3)} kN` });
-      Tu = Tt; tensionRows = 2; TuGroup = P; R.Tc = Tc;
+      Tu = Tt; tensionRows = 2; TuGroup = P; R.Tc = Tc; if (MR) MR.info = { all: 1, xs: MR.xs, k: MR.n, a: MR.xs.map(x => (P / nRw + Mu * x / Sx2) / Tt) };
       eqs2.push({ note: `Las dos filas de anclajes traccionan. T<sub>u</sub> = ${n1(Tt / 1e3)} kN es la fuerza de <b>una fila</b> (${nrow} anclaje${nrow > 1 ? 's' : ''}: ${n1(Tt / 1e3 / nrow)} kN cada uno). El grupo completo toma ${n1(P / 1e3)} kN, que es lo que se usa para el cono de hormigón del grupo.` });
     } else {
       // una fila traccionada, la otra zona comprime: equilibrio simplificado con brazo 2f
       Tu = Tt - Tc * 0; // conservador: fila traccionada toma P/2 + M/2f
       eqs2.push({ l: 'T<sub>u</sub>', f: '|P<sub>u</sub>|/2 + M<sub>u</sub>/(2·f)  (la otra fila no tracciona)', s: `${n1(P / 1e3)} kN/2 + ${n1(v.Mu)} kN·m·10³/(2·${n1(f)} mm)`, r: `${n1(Tt / 1e3)} kN` });
       Tu = Tt; tensionRows = 1; TuGroup = Tt;
+      if (MR) { MR.info = rowsT(-f); Tu = (Mu + P * f) / (2 * f * MR.info.Sa2); TuGroup = Tu * MR.info.Sa; eqs2.push({ l: 'T<sub>fila extrema</sub>', f: '(M<sub>u</sub> + |P<sub>u</sub>|·f) / (2f · Σa<sub>i</sub>²),  a<sub>i</sub> = (x<sub>i</sub> + f) / 2f   (las filas intermedias también traccionan)', s: `Σa<sub>i</sub>² = ${n3(MR.info.Sa2)} · a<sub>i</sub> = ${MR.info.a.map(q => n2(q)).join(' ; ')}`, r: `${n1(Tu / 1e3)} kN en la fila más alejada · total ${n1(TuGroup / 1e3)} kN` }); }
     }
   } else { caseName = 'Sin cargas'; }
   R.caseName = caseName; R.Y = Y; R.q = q; R.Tu = Tu; R.e = e; R.ecrit = ecrit; R.fp = fp; R.tensionRows = tensionRows;
@@ -1278,8 +1296,8 @@ function calc(v) {
     if (Pu > 0 && Mu === 0) return { C: Pu, A: E.At, txt: 'P<sub>u</sub> (compresión centrada: toda el área efectiva)' };
     const zc = E.zc || d / 2, ev = Pu > 0 ? Mu / Pu : Infinity;
     if (Pu > 0 && ev <= zc) return { C: Pu / 2 + Mu / (2 * zc), A: E.Al, txt: 'P<sub>u</sub>/2 + M<sub>u</sub>/(2·z<sub>c</sub>)  (ambos lados comprimidos)' };
-    const C = (Pu * f + Mu) / (zc + f);
-    return { C: max(0, C), A: E.Al, tens: true, txt: '(P<sub>u</sub>·f + M<sub>u</sub>) / (z<sub>c</sub> + f)  (lado traccionado en los anclajes)' };
+    const mri = MR ? rowsT(-zc, -2) : null, fT = mri ? mri.xT : f; const C = (Pu * fT + Mu) / (zc + fT);
+    return { C: max(0, C), A: E.Al, tens: true, mri, txt: '(P<sub>u</sub>·f + M<sub>u</sub>) / (z<sub>c</sub> + f)  (lado traccionado en los anclajes)' };
   };
   const altM = meth => {
     const fj = meth === 'ec3' ? fjdE : fpmax, kf = cFac(meth, Fy, fj);
@@ -1347,7 +1365,7 @@ function calc(v) {
   R.tReq = tReq; R.m = m; R.n = n; R.lamn = lamn; R.x = x; R.beff = beff; R.ALT = ALT; R.sel = sel; R.fjdE = fjdE;
   if (sel !== 'dg1') {
     const a = ALT[sel];
-    if (a.Dm && a.Dm.tens) { Tu = a.T; TuGroup = a.T; tensionRows = a.T > 0 ? 1 : 0; R.Tu = Tu; R.tensionRows = tensionRows; }
+    if (a.Dm && a.Dm.tens) { Tu = a.T; TuGroup = a.T; if (MR && a.Dm.mri) { MR.info = a.Dm.mri; Tu = a.T / MR.info.Sa; } tensionRows = a.T > 0 ? 1 : 0; R.Tu = Tu; R.tensionRows = tensionRows; }
     if (a.at && !a.none) { const D = a.at.D; R.checks.unshift({ n: `Aplastamiento en el área efectiva — ${METH[sel].n}`, u: D.C / (a.fj * D.A), d: `${n1(D.C / 1e3)} / ${n1(a.fj * D.A / 1e3)} kN`, step: 'tpalt' }); }
   }
   R.steps.push(compareStep(ALT, sel, tAdopt));
@@ -1366,6 +1384,7 @@ function calc(v) {
     if (dir === 'N') {
       if (Tu > 0) anch.push({ x: half + f, P: -Tu / max(sel === 'dg1' ? beff : (geoT ? geoT.Sl : beff), 1) });
       if (R.tensionRows === 2 && R.Tc > 0) anch.push({ x: half - f, P: -R.Tc / max(sel === 'dg1' ? beff : (geoT ? geoT.Sl : beff), 1) });
+      const mi = R.mr && R.mr.info; if (mi && mi.xs && Tu > 0) mi.xs.forEach((xi, i) => { if (Math.abs(Math.abs(xi) - f) < 0.5) return; anch.push({ x: half + xi, P: -mi.a[i] * Tu / max(sel === 'dg1' ? beff : (geoT ? geoT.Sl : beff), 1) }); });
     }
     if (sel === 'dg1') {
       const sup = dir === 'N' ? [[half - mL, half + mL]] : [[half - nL, half + nL]];
@@ -1398,27 +1417,30 @@ function calc(v) {
   if (cN <= 0 || cB <= 0) R.warns.push('Hay anclajes fuera del pedestal: revisar a, g, N₂ y B₂.');
   const nT = tensionRows === 2 ? ntot : tensionRows === 1 ? nrow : 0;
   const NuaRod = nT ? (tensionRows === 2 ? max(Tu, 0) / nrow : Tu / nrow) : 0; // por anclaje de la fila más cargada
-  const NuaGroup = tensionRows === 2 ? TuGroup : Tu;
+  const NuaGroup = tensionRows === 2 || MR ? TuGroup : Tu;
   // acero
   const aisc = v.steelM === 'aisc';
   const phiNsa = aisc ? 0.75 * 0.75 * mat.fu * Ag : 0.75 * Ase * futa;
   // arrancamiento (grupo traccionado)
   function breakout(rows, hefIn) {
     let hefE = hefIn;
-    const depth = rows === 2 ? 2 * f : 0;
-    const edges = [cN, cB, cB, rows === 2 ? cN : cBack].map(c => c);
+    const mrk = MR && rows !== 2 && MR.info && !MR.info.all ? MR.info : null, cBackE = mrk ? v.N2 / 2 + mrk.xin : cBack;
+    const depth = rows === 2 ? 2 * f : mrk ? f - mrk.xin : 0;
+    const edges = [cN, cB, cB, rows === 2 ? cN : cBackE].map(c => c);
     const near = edges.filter(c => c < 1.5 * hefIn);
     let note = '';
     if (near.length >= 3) { hefE = min(hefIn, max(max(...near) / 1.5, s / 3, rows === 2 ? 2 * f / 3 : 0)); if (hefE < hefIn) note = `h<sub>ef</sub> reducido a ${n0(hefE)} mm (≥ 3 bordes a menos de 1,5·h<sub>ef</sub>, ACI 17.6.2.1.2)`; }
     const L1 = min(cB, 1.5 * hefE), L2 = min(cB, 1.5 * hefE);
-    const F1 = min(cN, 1.5 * hefE), F2 = min(rows === 2 ? cN : cBack, 1.5 * hefE);
+    const F1 = min(cN, 1.5 * hefE), F2 = min(rows === 2 ? cN : cBackE, 1.5 * hefE);
     const ANc = (L1 + (nrow > 1 ? v.g : 0) + L2) * (F1 + depth + F2);
     const ANco = 9 * hefE * hefE;
-    const camin = min(cN, cB, rows === 2 ? cN : cBack);
+    const camin = min(cN, cB, rows === 2 ? cN : cBackE);
     const psied = camin >= 1.5 * hefE ? 1 : 0.7 + 0.3 * camin / (1.5 * hefE);
     const psic = cracked ? 1.0 : (v.atype === 'H' ? 1.25 : 1.4);
     const Nb = hefE < 280 ? 10 * lam * sqrt(fc) * hefE ** 1.5 : 3.9 * lam * sqrt(fc) * hefE ** (5 / 3);
-    const Ncbg = min(ANc / ANco, (rows === 2 ? ntot : nrow) * 1) * psied * psic * Nb;
+    const eNp = mrk ? Math.abs(mrk.xT - mrk.xm) : 0, psiec = 1 / (1 + 2 * eNp / (3 * hefE));
+    if (mrk && eNp > 0.5) note += (note ? ' · ' : '') + `Grupo de ${mrk.k} filas traccionadas con fuerzas distintas: ψ<sub>ec,N</sub> = 1/(1 + 2·e′<sub>N</sub>/(3·h<sub>ef</sub>)) = ${n3(psiec)}, con e′<sub>N</sub> = ${n1(eNp)} mm (ACI 17.6.2.3); va incluido en N<sub>cbg</sub>`;
+    const Ncbg = min(ANc / ANco, (rows === 2 ? (MR ? 2 * MR.n : ntot) : mrk ? 2 * mrk.k : nrow) * 1) * psiec * psied * psic * Nb;
     return { hefE, ANc, ANco, camin, psied, psic, Nb, Ncbg, note, L1, L2, F1, F2, depth };
   }
   const bo = breakout(max(tensionRows, 1), hef);
@@ -1426,7 +1448,8 @@ function calc(v) {
   const phiNcbg = ArT ? 0.75 * AstMM * fyr : phiB * bo.Ncbg; R.reinf = { RF, phiB, ArT, ArV };
   // arrancamiento del anclaje (pullout)
   const Fnut = 1.5 * da + 3.2;
-  const Abrg = 0.866 * Fnut * Fnut - Ag;
+  const headPl = v.atype === 'H' && v.head === 'plate' && +v.hpa > 0 && +v.hpb > 0;
+  const Abrg = headPl ? v.hpa * v.hpb - Ag : 0.866 * Fnut * Fnut - Ag;
   const psicP = cracked ? 1.0 : 1.4;
   let Np, NpTxt;
   if (v.atype === 'H') { Np = 8 * Abrg * fc * psicP; NpTxt = { f: 'ψ<sub>c,P</sub> · 8 · A<sub>brg</sub> · f′<sub>c</sub>', s: `${n1(psicP)} · 8 · ${n0(Abrg)} mm² · ${n1(fc)} MPa` }; }
@@ -1460,8 +1483,18 @@ function calc(v) {
     if (ArT) eqs4.push({ note: `Sólo vale si las barras están <b>ancladas a ambos lados</b> de la superficie de falla: arriba con gancho o longitud de anclaje desde el plano de falla, abajo empalmadas con la armadura del pedestal o con su longitud de anclaje (ACI 318 R17.5.2.1). Como referencia, el cono de hormigón sin armadura daría φN<sub>cbg</sub> = ${n1(0.70 * bo.Ncbg / 1e3)} kN.` });
     if (!ArT) eqs4.push({ l: 'φN<sub>cbg</sub>', f: `φ · (A<sub>Nc</sub>/A<sub>Nco</sub>) · ψ<sub>ed,N</sub> · ψ<sub>c,N</sub> · ψ<sub>cp,N</sub> · N<sub>b</sub>   (φ = ${n2(phiB)})`, s: `${n2(phiB)} · ${n3(bo.ANc / bo.ANco)} · ${n3(bo.psied)} · ${n2(bo.psic)} · 1,0 · ${n1(bo.Nb / 1e3)} kN`, r: `${n1(phiNcbg / 1e3)} kN ≥ ${n1(NuaGroup / 1e3)} (grupo) → ${phiNcbg >= NuaGroup ? 'verifica' : 'NO verifica'}`, ok: phiNcbg >= NuaGroup });
     eqs4.push({ ref: 'Arrancamiento del anclaje (pullout) · ACI 17.6.3' });
-    if (v.atype === 'H') eqs4.push({ l: 'A<sub>brg</sub>', f: 'tuerca hexagonal pesada: 0,866·F² − A<sub>g</sub>,  F = 1,5·d<sub>a</sub> + 3,2', s: `0,866 · (${n1(Fnut)} mm)² − ${n0(Ag)} mm²`, r: `${n0(Abrg)} mm²` });
+    if (headPl) eqs4.push({ l: 'A<sub>brg</sub>', f: 'placa de cabeza: a · b − A<sub>g</sub>   (área neta que apoya contra el hormigón)', s: `${n0(v.hpa)} mm · ${n0(v.hpb)} mm − ${n0(Ag)} mm²`, r: `${n0(Abrg)} mm²` });
+    else if (v.atype === 'H') eqs4.push({ l: 'A<sub>brg</sub>', f: 'tuerca hexagonal pesada: 0,866·F² − A<sub>g</sub>,  F = 1,5·d<sub>a</sub> + 3,2', s: `0,866 · (${n1(Fnut)} mm)² − ${n0(Ag)} mm²`, r: `${n0(Abrg)} mm²` });
     eqs4.push({ l: 'φN<sub>pn</sub>', f: 'φ · ' + NpTxt.f + '   (φ = 0,70)', s: '0,70 · ' + NpTxt.s, r: `${n1(phiNpn / 1e3)} kN ≥ ${n1(NuaRod / 1e3)} → ${phiNpn >= NuaRod ? 'verifica' : 'NO verifica'}`, ok: phiNpn >= NuaRod });
+    if (headPl) { // la placa de cabeza trabaja como voladizo desde la cara de la tuerca, cargada por la presión del hormigón
+      const pH = NuaRod / Abrg, mH = max(0, (max(v.hpa, v.hpb) - Fnut) / 2), fyH = +v.hpfy || 235, tH = +v.hpt || 0, tReqH = mH * sqrt(2 * pH / (0.9 * fyH)), pMax = 0.70 * psicP * 8 * fc;
+      R.head = { a: +v.hpa, b: +v.hpb, t: tH, F: Fnut, m: mH, p: pH, tReq: tReqH, fy: fyH, pMax };
+      eqs4.push({ ref: 'Placa de cabeza · espesor a flexión (voladizo desde la tuerca, AISC 360 F11)' });
+      eqs4.push({ l: 'p', f: 'N<sub>ua</sub> / A<sub>brg</sub>   (presión del hormigón sobre la placa, por anclaje)', s: `${n0(NuaRod)} N / ${n0(Abrg)} mm²`, r: `${n2(pH)} MPa   (tope del hormigón: φ·ψ<sub>c,P</sub>·8·f′<sub>c</sub> = ${n1(pMax)} MPa)` });
+      eqs4.push({ l: 'm', f: '(lado mayor − F) / 2   (voladizo de la placa desde la cara de la tuerca, F = entre caras)', s: `(${n0(max(v.hpa, v.hpb))} mm − ${n1(Fnut)} mm) / 2`, r: `${n1(mH)} mm` });
+      eqs4.push({ l: 't<sub>req</sub>', f: 'm · √[2 · p / (φ · F<sub>y</sub>)]   (φ = 0,90; M<sub>u</sub> = p·m²/2 ≤ φ·F<sub>y</sub>·t²/4 por unidad de ancho)', s: `${n1(mH)} mm · √[2 · ${n2(pH)} MPa / (0,9 · ${n0(fyH)} MPa)]`, r: `${n1(tReqH)} mm ${tReqH <= tH ? '≤' : '>'} t = ${n1(tH)} mm → ${tReqH <= tH ? 'verifica' : 'NO verifica'}`, ok: tReqH <= tH });
+      eqs4.push({ note: 'La placa tiene que quedar sujeta a la barra: tuerca por debajo (mejor doble tuerca o tuerca punteada) o soldadura. Si la placa es mucho más grande que la tuerca conviene que sea gruesa: una placa fina se dobla y sólo trabaja la zona cercana a la tuerca.' });
+      R.checks.push({ n: 'Anclaje · placa de cabeza: espesor', u: tH > 0 ? tReqH / tH : 9.99, d: `${n1(tReqH)} / ${n1(tH)} mm`, step: 'anc' }); }
     if (sbTxt) { eqs4.push({ ref: 'Descascaramiento lateral · ACI 17.6.4' }); eqs4.push({ l: 'φN<sub>sb</sub>', f: 'φ · 13 · c<sub>a1</sub> · √A<sub>brg</sub> · λ<sub>a</sub> · √f′<sub>c</sub>   (h<sub>ef</sub> > 2,5·c<sub>a1</sub>)', s: `${n2(phiB)} · 13 · ${n0(sbTxt.ca1)} mm · √(${n0(Abrg)} mm²) · ${n2(lam)} · √(${n1(fc)} MPa)`, r: `${n1(phiNsb / 1e3)} kN ≥ ${n1(NuaRod / 1e3)} → ${phiNsb >= NuaRod ? 'verifica' : 'NO verifica'}`, ok: phiNsb >= NuaRod }); }
     R.checks.push({ n: 'Anclaje · acero a tracción', u: NuaRod / phiNsa, d: `${n1(NuaRod / 1e3)} / ${n1(phiNsa / 1e3)} kN`, step: 'anc' });
     R.checks.push({ n: ArT ? 'Anclaje · armadura de anclaje (reemplaza el cono)' : 'Anclaje · cono de hormigón (grupo)' + (RF === '1' ? ' · Condición A' : ''), u: NuaGroup / phiNcbg, d: `${n1(NuaGroup / 1e3)} / ${n1(phiNcbg / 1e3)} kN`, step: 'anc' });
@@ -1486,7 +1519,7 @@ function calc(v) {
     R.checks.push({ n: 'Corte por fricción', u: Vu / phiFric, d: `${n1(Vu / 1e3)} / ${n1(phiFric / 1e3)} kN`, step: 'corte' });
   } else {
     if (v.fric === '1' && Vu > 0) eqs5.push({ note: 'La fricción no alcanza: todo el corte lo toman los anclajes (no se suman ambos mecanismos).' });
-    const nVa = v.nV === 'half' ? ntot / 2 : ntot;
+    const ntotV = MR ? 2 * MR.n : ntot, nVa = v.nV === 'half' ? ntotV / 2 : ntotV;
     VuA = Vu / nVa;
     const phiVsa = aisc ? 0.75 * 0.40 * mat.fu * Ag : 0.65 * 0.6 * Ase * futa * (v.grout === '1' ? 0.8 : 1);
     // arrancamiento por corte hacia el borde (fila más cercana, todo el corte)
@@ -1527,7 +1560,7 @@ function calc(v) {
     if (aisc) {
       // DG1 Ej. 4.11: arandelas soldadas → todos toman corte y la barra se flexiona con palanca (t_p + 3,2)/2;
       // agujeros agrandados sin arandela soldada → sólo la mitad toma corte, se amplifica ×1,25 y no se considera la flexión
-      const nAll = ntot, half = v.nV === 'half';
+      const nAll = MR ? 2 * MR.n : ntot, half = v.nV === 'half';
       const fv = half ? 1.25 * Vu / (nAll / 2 * Ag) : Vu / (nAll * Ag);
       const tpl = v.tp > 0 ? v.tp : (R.tReq || 25), lev = (tpl + 3.175) / 2, S = da ** 3 / 6;
       const fb = half ? 0 : (Vu / nAll) * lev / S;
@@ -1864,7 +1897,7 @@ function run(ev) {
     const nv = +$('nbv').value || 0, dv = +$('dbv').value || 8, lv = +$('llv').value || 0; $('Asv').disabled = nv > 0; if (nv > 0) $('Asv').value = (lv >= ldBar(dv, pre) ? nv * Math.PI * dv * dv / 400 : 0).toFixed(2); { const ld0 = Math.round(ldBar(dv, pre)), a1 = (Math.PI * dv * dv / 400), okv = lv >= ld0; $('nbvHint').innerHTML = nv > 0 ? `${nv} rama${nv > 1 ? 's' : ''} Ø${dv} (= ${(nv / 2).toString().replace('.', ',')} horquilla${nv === 2 ? '' : 's'}) × ${a1.toFixed(2).replace('.', ',')} cm² = ${(nv * a1).toFixed(2).replace('.', ',')} cm². Largo de rama ${lv} mm ${okv ? '≥' : '<'} ℓ<sub>d</sub> = ${ld0} mm → <b style="color:${okv ? '#15803d' : '#b91c1c'}">${okv ? 'cuentan ' + (nv * a1).toFixed(2).replace('.', ',') + ' cm²' : 'NO cuentan: alargá las ramas'}</b>` : 'Con 0 ramas, cargá el área total a mano en el campo de abajo.'; } } catch (e) { console.warn(e); }
   let v = getVals();
   try { localStorage.setItem('pb-dg1', JSON.stringify(v)); } catch (e) {}
-  { const h = $('dirHint'); if (h) h.innerHTML = v.ctype === 'P' ? '' : (v.mdir === 'B' ? 'M<sub>u</sub> en dirección B: se calcula con la placa girada 90° (los esquemas también salen girados). ' : '') + (v.vdir === 'B' ? 'V<sub>u</sub> en dirección B: la cuña de corte se arma hacia el borde B del pedestal.' : ''); }
+  { const h = $('dirHint'); if (h) h.innerHTML = v.ctype === 'P' ? '' : (v.mdir === 'B' ? 'M<sub>u</sub> en dirección B: la planta se dibuja como la cargaste; la elevación y los pasos de cálculo se ven en la dirección B (ahí «N» es tu lado B). ' : '') + (v.vdir === 'B' ? 'V<sub>u</sub> en dirección B: la cuña de corte se arma hacia el borde B del pedestal.' : ''); }
   v = effV(v); window.__lastV = v;
   // visibilidad de campos según tipo
   const t = v.ctype;
@@ -1873,7 +1906,7 @@ function run(ev) {
   $('ld').innerHTML = t === 'C' ? 'D diámetro exterior<small>mm</small>' : t === 'R' ? 'd altura del tubo<small>mm (dirección N)</small>' : 'd altura<small>mm (dirección N)</small>';
   $('lbf').innerHTML = t === 'R' ? 'b ancho del tubo<small>mm (dirección B)</small>' : 'b<sub>f</sub> ancho de ala<small>mm (dirección B)</small>';
   $('ltf').innerHTML = t === 'W' ? 't<sub>f</sub> espesor de ala<small>mm</small>' : 't espesor de pared<small>mm</small>';
-  $('fehook').style.display = v.atype === 'J' ? '' : 'none';
+  $('fehook').style.display = v.atype === 'J' ? '' : 'none'; $('fhead').style.display = v.atype === 'H' ? '' : 'none'; $('fheadPl').style.display = v.atype === 'H' && v.head === 'plate' ? '' : 'none';
   $('lugF').style.display = v.lug === 'lug' ? '' : 'none';
   const isP = t === 'P';
   $('fP').style.display = isP ? '' : 'none'; ['fd', 'fbf', 'ftf'].forEach(id => $(id).style.display = isP ? 'none' : (id === 'fbf' && t === 'C' ? 'none' : ''));
@@ -1961,14 +1994,31 @@ var MF = (() => {
     const sB = (+v.nrow > 1 ? +v.g : 0), wB = bo.L1 + sB + bo.L2, wN = bo.F1 + bo.depth + bo.F2, kp = Math.min(200 / wN, 160 / wB), px = 340, py = 44;
     b += T(px + wN * kp / 2 + 20, 18, 'Planta: área proyectada A<tspan font-size="8" dy="3">Nc</tspan>', { s: 11.5, b: 1 });
     b += `<rect x="${px + 20}" y="${py}" width="${wN * kp}" height="${wB * kp}" fill="${C.area}" fill-opacity=".14" stroke="${C.area}" stroke-dasharray="5 3"/>`;
-    const nr = +v.nrow || 1, rowsN = bo.depth > 0 ? [bo.F1, bo.F1 + bo.depth] : [bo.F1]; rowsN.forEach(xn => { for (let i = 0; i < nr; i++) { const yb = bo.L1 + (nr > 1 ? i * sB / (nr - 1) : 0); b += `<circle cx="${px + 20 + xn * kp}" cy="${py + yb * kp}" r="4.5" fill="${C.rod}"/>`; } });
+    const nr = +v.nrow || 1, rowsN = R.mr && R.mr.info && R.mr.info.xs ? (R.tensionRows === 2 ? R.mr.xs : R.mr.info.xs).map(x => bo.F1 + (R.geom.f - x)) : bo.depth > 0 ? [bo.F1, bo.F1 + bo.depth] : [bo.F1]; rowsN.forEach(xn => { for (let i = 0; i < nr; i++) { const yb = bo.L1 + (nr > 1 ? i * sB / (nr - 1) : 0); b += `<circle cx="${px + 20 + xn * kp}" cy="${py + yb * kp}" r="4.5" fill="${C.rod}"/>`; } });
     const yB = py + wB * kp + 16; b += dH(px + 20, px + 20 + bo.F1 * kp, yB, f0(bo.F1)) + (bo.depth > 0 ? dH(px + 20 + bo.F1 * kp, px + 20 + (bo.F1 + bo.depth) * kp, yB, f0(bo.depth)) : '') + dH(px + 20 + (bo.F1 + bo.depth) * kp, px + 20 + wN * kp, yB, f0(bo.F2));
     const xB = px + 20 + wN * kp + 8; b += dV(xB, py, py + bo.L1 * kp, f0(bo.L1)) + (sB > 0 ? dV(xB, py + bo.L1 * kp, py + (bo.L1 + sB) * kp, f0(sB)) : '') + dV(xB, py + (bo.L1 + sB) * kp, py + wB * kp, f0(bo.L2));
     b += T(px + 20 + wN * kp / 2, yB + 22, `A<tspan font-size="8" dy="3">Nc</tspan><tspan dy="-3"> = ${f0(wB)} × ${f0(wN)} = ${f0(bo.ANc)} mm² · A</tspan><tspan font-size="8" dy="3">Nco</tspan><tspan dy="-3"> = 9·h</tspan><tspan font-size="8" dy="3">ef</tspan><tspan dy="-3">² = ${f0(bo.ANco)} mm²</tspan>`, { s: 10.5 });
     b += T(330, 262, 'Cada lado llega a 1,5·h<tspan font-size="8" dy="3">ef</tspan><tspan dy="-3"> del anclaje, o al borde del pedestal si está más cerca.</tspan>', { s: 10.5, c: C.mut });
     return svg(660, 274, b); }
   // 3) pullout
-  function pullout(v, R) { const da = +v.da, F = 1.5 * da + 3.2, hef = +v.hef; let b = '';
+  function pulloutPl(v, R) { const h = R.head, da = +v.da, hef = +v.hef, F = h.F; let b = '';
+    // elevación: la barra tira hacia arriba y el hormigón aprieta la cara superior de la placa
+    const k = Math.min(150 / h.a, 2.2), xc = 165, yP = 150, tp = Math.max(6, Math.min(22, h.t * k)), wa = h.a * k, wn = F * k, wr = Math.max(6, da * k);
+    b += T(150, 18, 'Elevación: el hormigón aprieta la placa', { s: 11, b: 1 }) + `<rect x="20" y="30" width="260" height="190" fill="${C.conc}" stroke="${C.concS}"/>`;
+    b += `<rect x="${xc - wr / 2}" y="30" width="${wr}" height="${yP + tp + 16 - 30}" fill="${C.rod}"/><rect x="${xc - wa / 2}" y="${yP}" width="${wa}" height="${tp}" fill="#475569" stroke="#1e293b"/><rect x="${xc - wn / 2}" y="${yP + tp}" width="${wn}" height="13" fill="#7f1d1d"/>`;
+    [[xc - wa / 2, xc - wr / 2], [xc + wr / 2, xc + wa / 2]].forEach(q => { b += `<rect x="${q[0]}" y="${yP - 20}" width="${q[1] - q[0]}" height="20" fill="${C.cone}" fill-opacity=".45" stroke="${C.cone}"/>`; const n = Math.max(2, Math.round((q[1] - q[0]) / 14)); for (let i = 0; i <= n; i++) { const xx = q[0] + (q[1] - q[0]) * i / n; b += `<path d="M${xx},${yP - 19} V${yP - 3} m-3,-5 l3,5 l3,-5" stroke="#b45309" stroke-width="1.2" fill="none"/>`; } });
+    b += T(xc + wa / 2 + 6, yP - 8, `p = ${f0(h.p, 1)} MPa`, { a: 'start', s: 10.5, c: '#b45309', b: 1 });
+    b += dH(xc - wa / 2, xc + wa / 2, yP + tp + 34, `a = ${f0(h.a)}`) + dH(xc + wn / 2, xc + wa / 2, yP + tp + 52, `m = ${f0(h.m, 1)}`, C.area);
+    b += `<line x1="${xc - wa / 2 - 8}" y1="${yP}" x2="${xc - wa / 2 - 8}" y2="${yP + tp}" stroke="${C.dim}"/>` + T(xc - wa / 2 - 12, yP + tp / 2 + 4, `t = ${f0(h.t, 1)}`, { a: 'end', s: 10.5 });
+    b += dV(72, 30, yP, `h<tspan font-size="8" dy="3">ef</tspan><tspan dy="-3"> = ${f0(hef)}</tspan>`, null, true);
+    // planta de la placa
+    const cx = 440, cy = 112, kp = Math.min(120 / h.a, 120 / h.b), hx = (q, r) => { let pts = ''; for (let i = 0; i < 6; i++) { const a = Math.PI / 6 + i * Math.PI / 3; pts += `${q + r * Math.cos(a)},${cy + r * Math.sin(a)} `; } return pts; };
+    b += T(cx, 18, 'Planta de la placa de cabeza', { s: 11, b: 1 }) + `<rect x="${cx - h.a * kp / 2}" y="${cy - h.b * kp / 2}" width="${h.a * kp}" height="${h.b * kp}" fill="${C.cone}" fill-opacity=".5" stroke="#7f1d1d"/><polygon points="${hx(cx, F * kp / Math.sqrt(3))}" fill="#7f1d1d" fill-opacity=".55"/><circle cx="${cx}" cy="${cy}" r="${da * kp / 2}" fill="${C.rod}"/>`;
+    b += dH(cx - h.a * kp / 2, cx + h.a * kp / 2, cy + h.b * kp / 2 + 20, `a = ${f0(h.a)}`) + dV(cx + h.a * kp / 2 + 14, cy - h.b * kp / 2, cy + h.b * kp / 2, `b = ${f0(h.b)}`);
+    b += T(cx, 214, `A<tspan font-size="8" dy="3">brg</tspan><tspan dy="-3"> = a·b − A</tspan><tspan font-size="8" dy="3">g</tspan><tspan dy="-3"> = ${f0(R.Abrg || 0)} mm² (naranja)</tspan>`, { s: 10.5 });
+    b += T(cx, 232, `espesor: necesita ${f0(h.tReq, 1)} mm · tiene ${f0(h.t, 1)} mm`, { s: 10.5, b: 1, c: h.tReq <= h.t ? C.ok : '#b91c1c' });
+    return svg(580, 244, b); }
+  function pullout(v, R) { if (R.head) return pulloutPl(v, R); const da = +v.da, F = 1.5 * da + 3.2, hef = +v.hef; let b = '';
     b += `<rect x="20" y="30" width="250" height="170" fill="${C.conc}" stroke="${C.concS}"/>` + rodE(145, 10, 150, 14) + `<rect x="${145 - F / da * 18}" y="150" width="${F / da * 36}" height="16" fill="#7f1d1d"/>`;
     b += `<path d="M${145 - F / da * 18},170 h${F / da * 36}" stroke="${C.cone}" stroke-width="5"/>` + T(145, 190, 'el hormigón aplasta contra la cabeza', { s: 10.5, c: '#b45309' }) + dV(60, 30, 158, `h<tspan font-size="8" dy="3">ef</tspan><tspan dy="-3"> = ${f0(hef)}</tspan>`, null, true);
     const cx = 420, cy = 105, k = 60 / F, hx = (q, r) => { let pts = ''; for (let i = 0; i < 6; i++) { const a = Math.PI / 6 + i * Math.PI / 3; pts += `${q + r * Math.cos(a)},${cy + r * Math.sin(a)} `; } return pts; };
@@ -2024,9 +2074,10 @@ function reinfFigs(v, R) {
   const fy = +v.fyr || 420, bars = need => { for (const d of [8, 10, 12, 16, 20, 25]) { const ab = Math.PI * d * d / 400; let n = Math.ceil(need / ab); if (n % 2) n++; n = Math.max(n, 2); if (n <= 6 || d === 25) return `${n} Ø${d} = ${f2(n * ab)} cm²`; } };
   const W = 340, svg = (h, b) => `<svg viewBox="0 0 ${W} ${h}" style="width:100%;height:auto;display:block;margin:8px 0"><rect x="0" y="0" width="${W}" height="${h}" rx="8" fill="#ffffff" stroke="#dbe1e8"/>${b}</svg>`;
   const f = R.geom.f, N2 = +v.N2, B2 = +v.B2, hef = +v.hef, nrow = +v.nrow || 1, g = nrow > 1 ? +v.g : 0, inf = v.cinf === '1', ys = nrow > 1 ? Array.from({ length: nrow }, (_, i) => -g / 2 + i * g / (nrow - 1)) : [0];
+  const mrI = R.mr && R.mr.info, aRows = R.mr ? R.mr.xs : [-f, f], tRows = mrI && mrI.xs ? (R.tensionRows === 2 ? R.mr.xs : mrI.xs) : (R.tensionRows === 2 ? [-f, f] : [f]);
   let out = '';
   // ---- tracción: elevación ----
-  { const rows = R.tensionRows === 2 ? [-f, f] : [f], eL = inf ? -1e9 : -N2 / 2, eR = inf ? 1e9 : N2 / 2, Wv = Math.min(inf ? 1e9 : N2 / 2 + 40, Math.abs(f) + 1.5 * hef + 0.25 * hef), Dv = 1.35 * hef, k = Math.min(300 / (2 * Wv), 150 / Dv), x0 = W / 2, yT = 80, yh = yT + hef * k, yB = yT + Dv * k, X = x => x0 + x * k, cl = x => Math.max(-Wv, Math.min(Wv, x));
+  { const rows = tRows, eL = inf ? -1e9 : -N2 / 2, eR = inf ? 1e9 : N2 / 2, Wv = Math.min(inf ? 1e9 : N2 / 2 + 40, Math.abs(f) + 1.5 * hef + 0.25 * hef), Dv = 1.35 * hef, k = Math.min(300 / (2 * Wv), 150 / Dv), x0 = W / 2, yT = 80, yh = yT + hef * k, yB = yT + Dv * k, X = x => x0 + x * k, cl = x => Math.max(-Wv, Math.min(Wv, x));
     let b = T(W / 2, 18, 'Tracción · corte vertical por los anclajes', { b: 1, s: 11.5 });
     b += `<rect x="${X(Math.max(eL, -Wv))}" y="${yT}" width="${(Math.min(eR, Wv) - Math.max(eL, -Wv)) * k}" height="${Dv * k}" fill="${c.conc}" stroke="${c.concS}"/>`;
     rows.forEach(xr => { const a = Math.max(xr - 1.5 * hef, eL), d = Math.min(xr + 1.5 * hef, eR), pts = [];
@@ -2036,7 +2087,7 @@ function reinfFigs(v, R) {
     rows.forEach(xr => { const a = Math.max(xr - 0.5 * hef, eL), d = Math.min(xr + 0.5 * hef, eR); b += `<rect x="${X(a)}" y="${yT}" width="${(d - a) * k}" height="${Dv * k}" fill="${c.band}" fill-opacity=".18" stroke="${c.band}" stroke-dasharray="4 3"/>`;
       [-0.32, 0.32].forEach(t => { const xb = xr + t * hef; if (xb < eL + 20 || xb > eR - 20) return; const hk = t < 0 ? 9 : -9; b += `<path d="M${X(xb) + hk},${yT + 9} L${X(xb)},${yT + 9} L${X(xb)},${yB - 3}" fill="none" stroke="${c.bar}" stroke-width="2.6" stroke-linejoin="round"/>`; }); });
     b += `<rect x="${X(-v.N / 2)}" y="${yT - 6}" width="${v.N * k}" height="6" fill="${c.pl}"/>`;
-    [-f, f].forEach(xr => { const on = rows.includes(xr); b += `<line x1="${X(xr)}" y1="${yT - 14}" x2="${X(xr)}" y2="${yh}" stroke="${on ? c.rod : '#94a3b8'}" stroke-width="4"/><rect x="${X(xr) - 7}" y="${yh - 3}" width="14" height="6" fill="${on ? '#7f1d1d' : '#64748b'}"/>`; });
+    aRows.forEach(xr => { const on = rows.includes(xr); b += `<line x1="${X(xr)}" y1="${yT - 14}" x2="${X(xr)}" y2="${yh}" stroke="${on ? c.rod : '#94a3b8'}" stroke-width="4"/><rect x="${X(xr) - 7}" y="${yh - 3}" width="14" height="6" fill="${on ? '#7f1d1d' : '#64748b'}"/>`; });
     const xr = rows[rows.length - 1]; b += dH(X(xr), X(Math.min(xr + 0.5 * hef, eR)), yT - 20, `0,5·h<tspan font-size="7.5" dy="3">ef</tspan><tspan dy="-3"> = ${f0(0.5 * hef)}</tspan>`, c.band) + dH(X(Math.max(xr - 1.5 * hef, eL, -Wv)), X(xr), yT - 40, xr - 1.5 * hef < eL ? `al borde = ${f0(xr - eL)}` : `1,5·h<tspan font-size="7.5" dy="3">ef</tspan><tspan dy="-3"> = ${f0(1.5 * hef)}</tspan>`);
     b += `<line x1="${X(xr) + 12}" y1="${yT}" x2="${X(xr) + 12}" y2="${yh}" stroke="${c.dim}"/>${tk(X(xr) + 12, yT)}${tk(X(xr) + 12, yh)}` + T(X(xr) + 16, (yT + yh) / 2 + 12, `h<tspan font-size="7.5" dy="3">ef</tspan><tspan dy="-3"> = ${f0(hef)}</tspan>`, { a: 'start', s: 10 });
     const Nu = R.NuaGroup || 0, need = Nu / (0.75 * fy) / 100; let y = yB + 16;
@@ -2046,7 +2097,7 @@ function reinfFigs(v, R) {
     if (Nu > 0) b += T(8, y + 44, `p. ej. ${bars(need)} · cargaste ${f2(+v.Ast || 0)} cm²`, { a: 'start', c: (+v.Ast || 0) >= need ? '#15803d' : '#b91c1c', b: 1 });
     out += svg(y + (+v.nbt > 0 ? 68 : 54), b); }
   // ---- tracción: planta (el cono es un volumen: se ve su huella en la superficie) ----
-  { const rows = R.tensionRows === 2 ? [-f, f] : [f], x1 = Math.min(...rows), x2 = Math.max(...rows), eL = inf ? -1e9 : -N2 / 2, eR = inf ? 1e9 : N2 / 2, eB = inf ? -1e9 : -B2 / 2, eT = inf ? 1e9 : B2 / 2, cl = (q, a, d) => Math.max(a, Math.min(d, q));
+  { const rows = tRows, x1 = Math.min(...rows), x2 = Math.max(...rows), eL = inf ? -1e9 : -N2 / 2, eR = inf ? 1e9 : N2 / 2, eB = inf ? -1e9 : -B2 / 2, eT = inf ? 1e9 : B2 / 2, cl = (q, a, d) => Math.max(a, Math.min(d, q));
     const A = [cl(x1 - 1.5 * hef, eL, eR), cl(x2 + 1.5 * hef, eL, eR), cl(-g / 2 - 1.5 * hef, eB, eT), cl(g / 2 + 1.5 * hef, eB, eT)], G = [cl(x1 - 0.5 * hef, eL, eR), cl(x2 + 0.5 * hef, eL, eR), cl(-g / 2 - 0.5 * hef, eB, eT), cl(g / 2 + 0.5 * hef, eB, eT)];
     const mg = 0.12 * hef, vx0 = A[0] - mg, vx1 = A[1] + mg, vy0 = A[2] - mg, vy1 = A[3] + mg, k = Math.min(300 / (vx1 - vx0), 210 / (vy1 - vy0)), xo = (W - (vx1 - vx0) * k) / 2, yT = 44, X = x => xo + (x - vx0) * k, Y = yy => yT + (vy1 - yy) * k, yB = Y(vy0);
     let b = T(W / 2, 18, 'Tracción · planta (huella del cono)', { b: 1, s: 11.5 });
@@ -2056,7 +2107,7 @@ function reinfFigs(v, R) {
     b += `<rect x="${X(G[0])}" y="${Y(G[3])}" width="${(G[1] - G[0]) * k}" height="${(G[3] - G[2]) * k}" rx="${Math.min(0.5 * hef * k, (G[1] - G[0]) * k / 2)}" fill="${c.band}" fill-opacity=".20" stroke="${c.band}" stroke-dasharray="4 3"/>`;
     b += `<rect x="${X(Math.max(-v.N / 2, vx0))}" y="${Y(Math.min(v.B / 2, vy1))}" width="${(Math.min(v.N / 2, vx1) - Math.max(-v.N / 2, vx0)) * k}" height="${(Math.min(v.B / 2, vy1) - Math.max(-v.B / 2, vy0)) * k}" fill="none" stroke="${c.pl}" stroke-dasharray="3 3"/>`;
     const bx = [G[0] + 0.15 * hef, G[1] - 0.15 * hef], by = [G[2] + 0.15 * hef, 0, G[3] - 0.15 * hef]; bx.forEach(xb => by.forEach(yb => { b += `<circle cx="${X(xb)}" cy="${Y(yb)}" r="3.6" fill="${c.bar}"/>`; }));
-    [-f, f].forEach(xr => ys.forEach(yy => { const on = rows.includes(xr); b += `<circle cx="${X(xr)}" cy="${Y(yy)}" r="4.4" fill="${on ? c.rod : '#cbd5e1'}" stroke="${on ? '#7f1d1d' : '#64748b'}"/>`; }));
+    aRows.forEach(xr => ys.forEach(yy => { const on = rows.includes(xr); b += `<circle cx="${X(xr)}" cy="${Y(yy)}" r="4.4" fill="${on ? c.rod : '#cbd5e1'}" stroke="${on ? '#7f1d1d' : '#64748b'}"/>`; }));
     if (x2 + 1.5 * hef <= eR + 1) b += dH(X(x2), X(A[1]), Y(A[2]) + 14, `1,5·h<tspan font-size="7.5" dy="3">ef</tspan><tspan dy="-3"> = ${f0(1.5 * hef)}</tspan>`); else b += dH(X(x2), X(A[1]), Y(A[2]) + 14, `al borde ${f0(A[1] - x2)}`);
     b += dH(X(x2), X(G[1]), Y(G[3]) - 4, `0,5·h<tspan font-size="7.5" dy="3">ef</tspan><tspan dy="-3"> = ${f0(0.5 * hef)}</tspan>`, '#166534');
     let y = Math.max(yB, Y(A[2]) + 14) + 18; b += T(8, y, 'Naranja: área proyectada del cono, A<tspan font-size="7.5" dy="3">Nc</tspan><tspan dy="-3"> (1,5·h</tspan><tspan font-size="7.5" dy="3">ef</tspan><tspan dy="-3"> a cada lado</tspan>', { a: 'start' }) + T(8, y + 13, 'o hasta el borde). Cuentan las barras verticales que caen', { a: 'start' }) + T(8, y + 26, 'dentro del contorno verde, en todo el perímetro del grupo.', { a: 'start' });
@@ -2443,7 +2494,60 @@ function drawElev(v, R) {
    ===================================================================== */
 
 /* ---------------- PLANTA (columna) ---------------- */
+/* ---------------- PLANTA con el momento en dirección B: se dibuja en los ejes del usuario (sin girar) ----------------
+   El cálculo trabaja girado 90°: un punto (x′, y′) del cálculo es (x = y′, y = x′) en la planta del usuario. */
+function drawPlanB(v, R) {
+  const r = v._raw, el = $('plan'), W = 600, H = 600; el.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const Nu = +r.N, Bu = +r.B, N2u = +r.N2, B2u = +r.B2, t = v.ctype, hef = +v.hef;
+  const sN = Math.min(N2u, Math.max(Nu * 2.0, Nu + 300)), sB = Math.min(B2u, Math.max(Bu * 2.0, Bu + 2 * Math.min(hef * 1.5, Bu))), cutN = N2u > sN + 1, cutB = B2u > sB + 1;
+  const L = 95, Rm = 60, T = 60, Bm = 105, sc = Math.min((W - L - Rm) / sN, (H - T - Bm) / sB), cx = L + (W - L - Rm) / 2, cy = T + (H - T - Bm) / 2, X = x => cx + x * sc, Y = y => cy - y * sc;
+  const cl = (q, a) => Math.max(-a, Math.min(a, q)), pt = (xe, ye) => `${X(cl(ye, sN / 2))},${Y(cl(xe, sB / 2))}`;
+  const rectE = (x0, x1, y0, y1, at) => { const a = cl(y0, sN / 2), b = cl(y1, sN / 2), c0 = cl(x0, sB / 2), c1 = cl(x1, sB / 2); return `<rect x="${X(a)}" y="${Y(c1)}" width="${Math.max(0, (b - a) * sc)}" height="${Math.max(0, (c1 - c0) * sc)}" ${at}/>`; };
+  const f = R.geom.f, g = +v.g, rotE = t === 'W' && +v.crot === 1, d = rotE ? v.bf : v.d, bf = t === 'C' ? v.d : rotE ? v.d : v.bf, tf = v.tf;
+  let s = G.defs();
+  s += `<rect x="${X(-sN / 2)}" y="${Y(sB / 2)}" width="${sN * sc}" height="${sB * sc}" fill="url(#gConc)" stroke="var(--conc)" stroke-width="2"/>`;
+  if ($('showANc').checked && R.tensionRows && R.bo) { const bo = R.bo, x0 = R.tensionRows === 2 ? -f - bo.F2 : f - bo.depth - bo.F2, x1 = f + bo.F1;
+    s += rectE(x0, x1, -g / 2 - bo.L2, g / 2 + bo.L1, 'fill="var(--area)" fill-opacity=".14" stroke="var(--area)" stroke-dasharray="6 4"');
+    s += G.txt(X(cl(g / 2 + bo.L1, sN / 2)) - 6, Y(cl(x1, sB / 2)) + 15, 'A<tspan baseline-shift="sub" font-size="8">Nc</tspan>', { anchor: 'end', col: 'var(--area)', bold: 1 }); }
+  if ($('showAVc').checked && R.shear) { const ca1 = R.shear.ca1, ca2 = R.shear.ca2 != null ? R.shear.ca2 : R.edge.cB, wv = Math.min(ca2, 1.5 * ca1), af = Math.abs(f);
+    const pts = R.shear.dirB ? [pt(-af, g / 2), pt(-af - wv, v.B2 / 2), pt(af + wv, v.B2 / 2), pt(af, g / 2)] : [pt(f, g / 2), pt(v.N2 / 2, g / 2 + wv), pt(v.N2 / 2, -g / 2 - wv), pt(f, -g / 2)];
+    s += `<polygon points="${pts.join(' ')}" fill="#0ea5e9" fill-opacity=".14" stroke="#0ea5e9" stroke-dasharray="5 3"/>`;
+    if (R.shear.dirB) s += `<line x1="${X(g / 2) + 10}" y1="${cy}" x2="${X(g / 2) + 44}" y2="${cy}" stroke="#0ea5e9" stroke-width="2.5"/><path d="M${X(g / 2) + 52},${cy} l-10,-6 v12 z" fill="#0ea5e9"/>` + G.txt(X(g / 2) + 30, cy - 8, 'V<tspan baseline-shift="sub" font-size="8">u</tspan>', { col: '#0ea5e9', bold: 1 });
+    else s += `<line x1="${cx}" y1="${Y(f) - 10}" x2="${cx}" y2="${Y(f) - 40}" stroke="#0ea5e9" stroke-width="2.5"/><path d="M${cx},${Y(f) - 48} l-6,10 h12 z" fill="#0ea5e9"/>` + G.txt(cx + 10, Y(f) - 28, 'V<tspan baseline-shift="sub" font-size="8">u</tspan>', { anchor: 'start', col: '#0ea5e9', bold: 1 }); }
+  // placa
+  s += `<rect x="${X(-Nu / 2)}" y="${Y(Bu / 2)}" width="${Nu * sc}" height="${Bu * sc}" fill="var(--plate)" fill-opacity=".14" stroke="var(--plate)" stroke-width="2.2"/>`;
+  if (R.sel === 'dg1') { const mL = t === 'C' ? 0.4 * d : 0.475 * d, nL = t === 'W' ? 0.4 * bf : t === 'R' ? 0.475 * bf : 0.4 * d;
+    if (R.Pu > 0 && R.Y > 0) s += rectE(-v.N / 2, -v.N / 2 + Math.min(R.Y, v.N), -v.B / 2, v.B / 2, 'fill="var(--press)" fill-opacity=".30"');
+    s += rectE(-mL, mL, -nL, nL, 'fill="none" stroke="var(--press)" stroke-width="1.6" stroke-dasharray="7 4"');
+    s += G.dimV(Y(-v.N / 2), Y(-mL), cx, `m = ${n0(R.m)}`, cx, cx, { col: '#c2410c' }) + G.dimH(X(-v.B / 2), X(-nL), cy + (t === 'W' ? 14 : 0), `n = ${n0(R.n)}`, cy, cy, { col: '#c2410c' }); }
+  // columna, tal como se cargó
+  if (t === 'W') { const D0 = +r.d, B0 = +r.bf, tw = +r.tw; let P = [[-D0 / 2, -B0 / 2], [-D0 / 2 + tf, -B0 / 2], [-D0 / 2 + tf, -tw / 2], [D0 / 2 - tf, -tw / 2], [D0 / 2 - tf, -B0 / 2], [D0 / 2, -B0 / 2], [D0 / 2, B0 / 2], [D0 / 2 - tf, B0 / 2], [D0 / 2 - tf, tw / 2], [-D0 / 2 + tf, tw / 2], [-D0 / 2 + tf, B0 / 2], [-D0 / 2, B0 / 2]]; if (+r.crot === 1) P = P.map(q => [q[1], q[0]]);
+    s += `<polygon points="${P.map(q => X(q[0]) + ',' + Y(q[1])).join(' ')}" fill="url(#gSteel)" stroke="#1e293b" stroke-width="1.2"/>`; }
+  else if (t === 'R') { const du = +r.d, bu = +r.bf; s += `<path d="M${X(-du / 2)},${Y(bu / 2)} h${du * sc} v${bu * sc} h${-du * sc} Z M${X(-du / 2 + tf)},${Y(bu / 2 - tf)} v${(bu - 2 * tf) * sc} h${(du - 2 * tf) * sc} v${-(bu - 2 * tf) * sc} Z" fill-rule="evenodd" fill="url(#gSteel)" stroke="#1e293b" stroke-width="1.2"/>`; }
+  else { const ro = +r.d / 2, ri = ro - tf; s += `<path d="M${X(-ro)},${cy} a${ro * sc},${ro * sc} 0 1,0 ${2 * ro * sc},0 a${ro * sc},${ro * sc} 0 1,0 ${-2 * ro * sc},0 Z M${X(-ri)},${cy} a${ri * sc},${ri * sc} 0 1,1 ${2 * ri * sc},0 a${ri * sc},${ri * sc} 0 1,1 ${-2 * ri * sc},0 Z" fill-rule="evenodd" fill="url(#gSteel)" stroke="#1e293b" stroke-width="1.2"/>`; }
+  // anclajes: todos los cargados; los intermedios no entran en el cálculo con el momento en B
+  const nru = +r.nrow || 1, gu = nru > 1 ? +r.g : 0, fu = Nu / 2 - +r.aN, ysu = Array.from({ length: nru }, (_, i) => nru > 1 ? -gu / 2 + i * gu / (nru - 1) : 0);
+  const rr = Math.max(3.5, v.da / 2 * sc), rw = Math.max(rr + 3, 1.1 * v.da * sc); let skipped = 0;
+  for (const side of [1, -1]) ysu.forEach(yu => { const ext = Math.abs(Math.abs(yu) - gu / 2) < 0.5;
+    const mi = R.mr && R.mr.info, tens = R.tensionRows === 2 || (R.tensionRows === 1 && (ext ? yu > 0 : !!(mi && mi.xs && mi.xs.some(q => Math.abs(q - yu) < 0.5))));
+    s += G.anchor(X(side * fu), Y(yu), rr, rw, tens); });
+  // cotas, con los nombres del usuario
+  const yb1 = Y(-sB / 2) + 22, yb2 = yb1 + 22, yb3 = yb2 + 22, eBot = Y(-Bu / 2);
+  s += G.chainH([X(-Nu / 2), X(-fu), X(fu), X(Nu / 2)], yb1, eBot, [n0(r.aN), n0(2 * fu), n0(r.aN)]);
+  s += G.dimH(X(-Nu / 2), X(Nu / 2), yb2, `N = ${n0(Nu)}`, eBot, eBot) + G.dimH(X(-sN / 2), X(sN / 2), yb3, `N₂ = ${n0(N2u)}${cutN ? ' (cortado)' : ''}`, Y(-sB / 2), Y(-sB / 2));
+  const xl1 = X(-sN / 2) - 22, xl2 = xl1 - 22, xl3 = xl2 - 22, eL = X(-Nu / 2), eB = Bu / 2 - gu / 2;
+  s += G.chainV([Y(Bu / 2), Y(gu / 2), Y(-gu / 2), Y(-Bu / 2)].filter((q, i, a) => i === 0 || Math.abs(q - a[i - 1]) > .5), xl1, eL, nru > 1 ? [n0(eB), n0(gu), n0(eB)] : [n0(Bu / 2), n0(Bu / 2)]);
+  s += G.dimV(Y(Bu / 2), Y(-Bu / 2), xl2, `B = ${n0(Bu)}`, eL, eL) + G.dimV(Y(sB / 2), Y(-sB / 2), xl3, `B₂ = ${n0(B2u)}${cutB ? ' (cortado)' : ''}`, X(-sN / 2), X(-sN / 2));
+  s += G.leader(X(0), Y(0), X(Nu / 2) + 18, Y(Bu / 2) + 26 < T ? T : Y(Bu / 2) - 26, t === 'W' ? 'Columna' : 'Tubo', { size: 11 });
+  s += G.txt(W - 10, cy + 4, 'N →', { anchor: 'end', col: 'var(--muted)', size: 12, bold: 1 }) + G.txt(cx, 18, 'B ↑', { col: 'var(--muted)', size: 12, bold: 1 });
+  s += G.txt(cx, 38, R.tensionRows === 2 ? 'M en dirección B · anclajes traccionados arriba y abajo' : R.tensionRows === 1 ? 'M en dirección B · tracción en los anclajes rojos, se comprime el borde de abajo' : 'M en dirección B · se comprime el borde de abajo', { col: 'var(--accent)', size: 11.5, bold: 1 });
+  const lg = [['var(--plate)', 'Placa', 'op'], ['var(--press)', R.sel === 'dg1' ? 'Zona comprimida / líneas críticas' : 'Área efectiva', 'op'], ['var(--tens)', 'Anclaje traccionado']]; if (skipped) lg.push(['#cbd5e1', 'Anclaje intermedio: no se cuenta']);
+  s += G.legend(lg, 16, H - 12);
+  el.innerHTML = s;
+}
+
 function drawPlan(v, R) {
+  if (v._sw && v._raw) return drawPlanB(v, R);
   const el = $('plan'), W = 600, H = 600; el.setAttribute('viewBox', `0 0 ${W} ${H}`);
   const t = v.ctype, rot = t === 'W' && +v.crot === 1, d = rot ? v.bf : v.d, bf = t === 'C' ? v.d : rot ? v.d : v.bf, tf = v.tf, nrow = +v.nrow, g = nrow > 1 ? v.g : 0, f = R.geom.f;
   // recorte del pedestal si es mucho mayor que la placa
@@ -2661,14 +2765,15 @@ function drawElev(v, R) {
   s += G.txt(X(v.N / 2) + 8, yPl + tpPx + 7, 'grout', { anchor: 'start', size: 10, col: 'var(--muted)' });
   // cono
   if (R.tensionRows && $('showANc').checked) {
-    const xa = X(f), hp = v.hef * sc, sp = 1.5 * v.hef * sc, xL = xa - (R.tensionRows === 2 ? 2 * f * sc : 0);
+    const xa = X(f), hp = v.hef * sc, sp = 1.5 * v.hef * sc, xL = xa - (R.bo && R.bo.depth != null ? R.bo.depth : R.tensionRows === 2 ? 2 * f : 0) * sc;
     s += `<clipPath id="clpPed2"><rect x="${X(-shN / 2)}" y="${pedTop}" width="${shN * sc}" height="${pedBot - pedTop}"/></clipPath>`;
     s += `<polygon clip-path="url(#clpPed2)" points="${xa},${pedTop + hp} ${xa + sp},${pedTop} ${xL - sp},${pedTop} ${xL},${pedTop + hp}" fill="var(--area)" fill-opacity=".08" stroke="var(--area)" stroke-dasharray="5 3"/>`;
   }
   // anclajes
   const hefPx = Math.min(pedBot - pedTop - 12, v.hef * sc);
-  for (const side of [1, -1]) {
-    const tens = R.tensionRows === 2 || (R.tensionRows === 1 && side === 1), c = tens ? 'var(--tens)' : 'var(--anchor)', xa = X(side * f), wa = Math.max(3, v.da * sc);
+  const MRe = R.mr, mie = MRe && MRe.info, rowsE = MRe ? MRe.xs : [f, -f];
+  for (const xr of rowsE) {
+    const side = xr >= 0 ? 1 : -1, ext = Math.abs(Math.abs(xr) - f) < 0.5, tens = R.tensionRows === 2 || (R.tensionRows === 1 && (ext ? side === 1 : !!(mie && mie.xs && mie.xs.some(q => Math.abs(q - xr) < 0.5)))), c = tens ? 'var(--tens)' : 'var(--anchor)', xa = X(xr), wa = Math.max(3, v.da * sc);
     s += `<rect x="${xa - wa / 2}" y="${yPl - 16}" width="${wa}" height="${pedTop + hefPx - yPl + 16}" fill="${c}"/>`;
     if (v.atype === 'H') s += `<rect x="${xa - 10}" y="${pedTop + hefPx - 3}" width="20" height="8" rx="1" fill="${c}"/>`;
     else s += `<path d="M${xa},${pedTop + hefPx} q0,12 ${-side * 16},12" fill="none" stroke="${c}" stroke-width="${wa}"/>`;
@@ -2709,9 +2814,11 @@ function drawElev(v, R) {
   else if (v.Vu) s += `<line x1="${X(-d / 2) - 70}" y1="${yPl - 30}" x2="${X(-d / 2) - 6}" y2="${yPl - 30}" stroke="var(--accent)" stroke-width="3.5" marker-end="url(#gA)"/>` + G.txt(X(-d / 2) - 70, yPl - 38, `V<tspan baseline-shift="sub" font-size="8">u</tspan> = ${n1(v.Vu)} kN`, { anchor: 'start', col: 'var(--accent)', bold: 1, size: 12 });
   if (R.Tu > 0 && R.tensionRows === 2) { const xb = X(-f), T2 = R.Tc != null ? R.Tc : R.Tu; s += `<line x1="${xb - 18}" y1="${yPl - 8}" x2="${xb - 18}" y2="${yPl - 58}" stroke="var(--tens)" stroke-width="3.5" marker-end="url(#gT)"/>` + G.txt(xb - 26, yPl - 40, `${n1(T2 / 1e3)} kN`, { anchor: 'end', size: 12.5, col: 'var(--tens)', bold: 1 }) + G.txt(X(0), yPl - 70, `${+v.nrow} anclaje${+v.nrow > 1 ? 's' : ''} por fila · total ${n1((R.Tu + T2) / 1e3)} kN`, { size: 11, col: 'var(--tens)' }); }
   if (R.Tu > 0) { const xa = X(f); s += `<line x1="${xa + 18}" y1="${yPl - 8}" x2="${xa + 18}" y2="${yPl - 58}" stroke="var(--tens)" stroke-width="3.5" marker-end="url(#gT)"/>` + G.txt(xa + 26, yPl - 40, `T<tspan baseline-shift="sub" font-size="8">u</tspan> = ${n1(R.Tu / 1e3)} kN`, { anchor: 'start', col: 'var(--tens)', bold: 1, size: 12.5 }); }
+  if (R.Tu > 0 && mie && mie.xs && mie.a) { mie.xs.forEach((xi, i) => { if (Math.abs(Math.abs(xi) - f) < 0.5) return; const xa = X(xi), Ti = mie.a[i] * R.Tu; s += `<line x1="${xa + 14}" y1="${yPl - 8}" x2="${xa + 14}" y2="${yPl - 50}" stroke="var(--tens)" stroke-width="3" marker-end="url(#gT)"/>` + G.txt(xa + 20, yPl - 34, `${n1(Ti / 1e3)} kN`, { anchor: 'start', col: 'var(--tens)', bold: 1, size: 12 }); });
+    s += G.txt(X(0), yPl - 74, `fuerza por fila de 2 anclajes · total ${n1((R.NuaGroup || 0) / 1e3)} kN`, { size: 11, col: 'var(--tens)' }); }
   // cotas
   s += G.dimH(X(-v.N / 2), X(v.N / 2), pedBot + 40, `N = ${n0(v.N)}`, yPl + tpPx, yPl + tpPx);
-  s += G.chainH([X(-v.N / 2), X(-f), X(f), X(v.N / 2)], yPl - 70 > 90 ? 96 : 96, yPl - 16, [n0(v.aN), n0(2 * f), n0(v.aN)]);
+  { const xsC = [-v.N / 2, ...[...rowsE].sort((a, b) => a - b), v.N / 2], lb = xsC.slice(1).map((q, i) => n0(q - xsC[i])); s += G.chainH(xsC.map(X), 104, yPl - 16, lb); }
   s += G.dimV(pedTop, pedTop + hefPx, X(f) + 30, `h<tspan baseline-shift="sub" font-size="8">ef</tspan> = ${n0(v.hef)}`, X(f) + 6, X(f) + 6);
   s += G.dimV(yPl, yPl + tpPx, X(-v.N / 2) - 14, `t = ${n1(v.tp || R.tReq)}`, X(-v.N / 2), X(-v.N / 2), { col: 'var(--plate)' });
   el.innerHTML = s;
